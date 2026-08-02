@@ -1,0 +1,19 @@
+component Features(props: { items: string[]; user: any }) {
+  const items = props.items.filter((x) => x.length > 2).map((x) => x.toUpperCase()).join(", ");
+  let name = props.user?.name ?? "Guest";
+  let enabled = props.enabled ?? false;
+  enabled ||= props.force;
+  const total = [1, 2, 3].reduce((acc, n) => acc + n, 0);
+  const first = props.items.find((x) => x.startsWith("a"));
+  const hasBig = props.items.some((x) => x.length > 5);
+  return (
+    <div>
+      <p>{items}</p>
+      <p>{name}</p>
+      <p>{enabled ? "on" : "off"}</p>
+      <p>{total}</p>
+      <p>{first}</p>
+      <p>{hasBig ? "big" : "small"}</p>
+    </div>
+  );
+}

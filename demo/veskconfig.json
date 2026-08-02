@@ -1,0 +1,17 @@
+{
+  "appId": "com.vesk.demo",
+  "appName": "Vesk Demo",
+  "versionName": "0.1.0",
+  "versionCode": 1,
+  "compileSdk": 34,
+  "minSdk": 24,
+  "targetSdk": 34,
+  "orientation": "portrait",
+  "colors": {
+    "primary": "#3B82F6",
+    "background": "#FFFFFF",
+    "surface": "#FFFFFF",
+    "onPrimary": "#FFFFFF",
+    "text": "#1F2937"
+  }
+}

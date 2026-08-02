@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@compiler-native/*": ["packages/compiler-native/src/*"],
+      "@cli-native/*": ["packages/cli-native/src/*"],
+      "@test-app/*": ["test-app/*"]
+    }
+  },
+  "include": ["packages/**/*.ts", "test-app/**/*.ts"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "packages/compiler-native/src/spike.ts",
+    "packages/compiler-native/src/driver.ts",
+    "packages/compiler-native/src/inspect-ast.ts",
+    "packages/compiler-native/src/inspect-props.ts"
+  ]
+}

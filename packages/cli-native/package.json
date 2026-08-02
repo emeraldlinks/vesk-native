@@ -1,0 +1,17 @@
+{
+  "name": "cli-native",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "vesk-native CLI — init/build/run a .vsk app as a native Kotlin + Compose app",
+  "main": "./src/index.ts",
+  "bin": {
+    "vesk-native": "./src/index.ts"
+  },
+  "dependencies": {
+    "compiler-native": "file:../compiler-native"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.0"
+  }
+}

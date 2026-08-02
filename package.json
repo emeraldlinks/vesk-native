@@ -1,0 +1,22 @@
+{
+  "name": "vesk-native-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "vesk-native — same .vsk syntax compiled to Kotlin + Compose Multiplatform (true native, no bridge)",
+  "workspaces": [
+    "packages/compiler-native",
+    "packages/cli-native"
+  ],
+  "scripts": {
+    "postinstall": "node scripts/fix-links.mjs",
+    "sync": "node scripts/fix-links.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "spike": "tsx packages/compiler-native/src/spike.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.2",
+    "tsx": "^4.19.0",
+    "typescript": "^5.8.0"
+  }
+}

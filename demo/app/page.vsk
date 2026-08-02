@@ -1,0 +1,30 @@
+component Counter(props: { initial: number }) {
+  let &[count] = track(props.initial);
+  let &[name] = track("");
+  let &[done] = track(false);
+
+  function increment() {
+    count++;
+  }
+
+  return (
+    <div class="flex flex-col items-center gap-4 p-8">
+      <h1 class="text-2xl font-bold text-gray-800">Count: {count}</h1>
+      <button class="px-4 py-2 bg-blue-500 text-white rounded" onClick={() => increment()}>
+        Increment
+      </button>
+      {count > 10 ? <p class="text-green-600">Big number!</p> : <p class="text-gray-400">Small number</p>}
+      <input ref={bindValue(name)} placeholder="Enter your name" class="w-full" />
+      <p>Hello, {name || "stranger"}!</p>
+      <label class="flex items-center gap-2">
+        <input type="checkbox" ref={bindChecked(done)} />
+        Done
+      </label>
+      <ul class="list-disc pl-4">
+        {[1, 2, 3].map((n) => (
+          <li key={n}>Item {n} — count is {count}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
