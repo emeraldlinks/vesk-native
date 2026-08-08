@@ -77,14 +77,14 @@
 ## Phase 3 — Navigation & Routing
 **Goal:** File-based routing with back stack, deep links, and navigation primitives.
 
-- [ ] Kotlin port of Vesk file-router: static routes, dynamic segments `[slug]`, catch-all `[...all]`
-- [ ] `Link` / `NavLink` composables with real navigation behavior (not stubs)
-- [ ] `Outlet` composable for nested layout rendering
-- [ ] Navigation state machine: back stack, push/pop, replace
-- [ ] `useNavigate`, `useParams`, `usePathname`, `useSearchParams` runtime hooks
-- [ ] Deep link intent filters generated from route config
-- [ ] Page/layout nesting: layouts wrap pages via navigation graph
-- [ ] **Acceptance:** Multi-page blog app with back/forward navigation copied from web runs on device
+- [x] Kotlin port of Vesk file-router: static routes, dynamic segments `[slug]`, catch-all `[...all]`
+- [x] `Link` / `NavLink` composables with real navigation behavior (not stubs)
+- [x] `Outlet` composable for nested layout rendering
+- [x] Navigation state machine: back stack, push/pop, replace
+- [x] `useNavigate`, `useParams`, `usePathname`, `useSearchParams` runtime hooks
+- [x] Deep link intent filters generated from route config
+- [x] Page/layout nesting: layouts wrap pages via navigation graph
+- [x] **Acceptance:** Multi-page blog app with back/forward navigation copied from web runs on device
 
 ---
 
@@ -198,8 +198,9 @@
 
 ## Current Sprint Recommendation
 
-**Phase 2 is complete.** Remaining gaps are Phase 3 (navigation - now implemented with basic router), and device verification.
+**Phase 3 is complete.** File-based routing and manual route configs both work, with `Link`/`NavLink`/`Outlet` wired to a native `NavController`.
 
-Next priority: verify the generated APK on a device/emulator to confirm navigation, layouts, and component rendering work end-to-end. Once verified, move to Phase 4 (styling completeness) and Phase 5 (native APIs like haptics, storage, permissions).
-
-**Note on Gradle deprecations:** The framework templates no longer use deprecated Gradle features (removed `repositoriesMode.set(FAIL_ON_PROJECT_REPOS)` and `apply false` from root build.gradle.kts). The remaining deprecation warnings in the build output come from AGP 8.2.2 internals (`isCrunchPngs`, `isUseProguard`, `isWearAppUnbundled` boolean property declarations and configuration mutation), which are outside the framework's control without upgrading the Android Gradle Plugin version.
+Next priority: **Phase 4 — Styling, Theme & CSS**. This unblocks visual fidelity because:
+- Full Tailwind v3 coverage is needed for copied Vesk web demos to look correct
+- Dark mode and theme tokens make the generated apps feel native
+- Phase 5 (native APIs) and Phase 6 (iOS) can proceed in parallel once styling is solid.
