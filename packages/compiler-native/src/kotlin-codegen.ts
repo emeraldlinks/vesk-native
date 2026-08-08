@@ -1,14 +1,15 @@
+import { parse } from '@vesk/compiler/src/parser';
+import { generateIR } from '@vesk/compiler/src/ir-generator';
 import {
-  parse,
-  generateIR,
   StaticNode,
   TextNode,
   DynamicBinding,
   OpaqueDynamicRegion,
   MapRegion,
+  ComponentCall,
+  Expression,
   TrackDecl,
   RuntimeStatement,
-  ComponentCall,
   HeadBlock,
   ServerBlock,
   ClientBlock,
@@ -17,11 +18,10 @@ import {
   SwitchBlock,
   TryCatch,
   ForLoop,
-  collectTrackedNames,
-  transformTrackedAst,
-} from '@vesk/compiler';
-import type { IRNode, Expression } from '@vesk/compiler';
-import type { TrackedInfo } from '@vesk/compiler';
+} from '@vesk/compiler/src/ir';
+import type { IRNode } from '@vesk/compiler/src/ir';
+import { collectTrackedNames, transformTracked } from '@vesk/compiler/src/client-codegen';
+import type { TrackedInfo } from '@vesk/compiler/src/client-codegen';
 import { Js2Kt, KtErrors } from '@compiler-native/js2kt.ts';
 import type { JsNode } from '@compiler-native/js2kt.ts';
 import { ktIdent } from '@compiler-native/js2kt.ts';
@@ -39,6 +39,8 @@ const CLASS_ATTRS = new Set(['class', 'className']);
 
 const IMPORTS = `import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -88,63 +90,86 @@ class Emitter {
   ensureAst(expr: Expression): JsNode | null {
     if (expr.ast) return expr.ast as JsNode;
     if (expr.raw) {
-      const program = parse(`let __vsk_expr = (${expr.raw});`) as unknown as {
-        body: Array<{ declarations: Array<{ init: JsNode | undefined }> }>;
-      };
-      const init = program.body[0]?.declarations[0]?.init;
-      if (init) {
-        (expr as { ast: unknown }).ast = init;
-        return init;
+      try {
+        const program = parse(`let __vsk_expr = (${expr.raw});`) as unknown as {
+          body: Array<{ declarations: Array<{ init: JsNode | undefined }> }>;
+        };
+        const init = program.body[0]?.declarations[0]?.init;
+        if (init) {
+          (expr as { ast: unknown }).ast = init;
+          return init;
+        }
+      } catch (e) {
+        this.err.warn(null, `could not parse expression: ${expr.raw}: ${(e as Error).message}`);
       }
     }
     return null;
   }
 
   exprOf(expr: Expression): string {
-    const ast = this.ensureAst(expr);
-    if (!ast) {
-      this.err.warn(null, `could not parse expression: ${expr.raw}`);
-      return 'null';
-    }
-    const transformed = transformTrackedAst(expr, this.tracked);
-    return this.j2k.expr(transformed as JsNode);
+    const transformed = transformTracked(expr, this.tracked);
+    const ast = this.parseExprInit(transformed);
+    return ast;
   }
 
   stmtOf(node: RuntimeStatement): string {
-    const transformed = transformTrackedAst(node, this.tracked);
-    return this.j2k.stmt(transformed as JsNode);
+    const transformed = transformTracked(node, this.tracked);
+    try {
+      const program = parse(`{ ${transformed} }`) as unknown as {
+        body: Array<{ body: Array<JsNode> }>;
+      };
+      const stmts = program.body[0]?.body;
+      if (!stmts || stmts.length === 0) {
+        this.err.warn(null, `could not parse runtime statement: ${transformed}`);
+        return transformed;
+      }
+      return stmts.map((s) => this.j2k.stmt(s)).join('\n');
+    } catch (e) {
+      this.err.warn(null, `could not parse runtime statement: ${transformed}: ${(e as Error).message}`);
+      return transformed;
+    }
   }
 
   parseExprInit(init: string): string {
-    const program = parse(`let __vsk_init = ${init};`) as unknown as {
-      body: Array<{ declarations: Array<{ init: JsNode }> }>;
-    };
-    const exprAst = program.body[0]?.declarations[0]?.init;
-    if (!exprAst) {
-      this.err.warn(null, `could not parse track init: ${init}`);
+    try {
+      const program = parse(`let __vsk_init = ${init};`) as unknown as {
+        body: Array<{ declarations: Array<{ init: JsNode }> }>;
+      };
+      const exprAst = program.body[0]?.declarations[0]?.init;
+      if (!exprAst) {
+        this.err.warn(null, `could not parse track init: ${init}`);
+        return init;
+      }
+      return this.j2k.expr(exprAst);
+    } catch (e) {
+      this.err.warn(null, `could not parse track init: ${init}: ${(e as Error).message}`);
       return init;
     }
-    return this.j2k.expr(exprAst);
   }
 
   parseTrackInit(init: string): string {
-    const program = parse(`let __vsk_init = ${init};`) as unknown as {
-      body: Array<{ declarations: Array<{ init: JsNode }> }>;
-    };
-    const exprAst = program.body[0]?.declarations[0]?.init;
-    if (!exprAst) {
-      this.err.warn(null, `could not parse track init: ${init}`);
+    try {
+      const program = parse(`let __vsk_init = ${init};`) as unknown as {
+        body: Array<{ declarations: Array<{ init: JsNode }> }>;
+      };
+      const exprAst = program.body[0]?.declarations[0]?.init;
+      if (!exprAst) {
+        this.err.warn(null, `could not parse track init: ${init}`);
+        return init;
+      }
+      const call = exprAst as unknown as {
+        type?: string;
+        callee?: { type?: string; name?: string };
+        arguments?: Array<unknown>;
+      };
+      if (call.type === 'CallExpression' && call.callee?.name === 'track' && call.arguments?.[0]) {
+        return this.j2k.expr(call.arguments[0] as JsNode);
+      }
+      return this.j2k.expr(exprAst);
+    } catch (e) {
+      this.err.warn(null, `could not parse track init: ${init}: ${(e as Error).message}`);
       return init;
     }
-    const call = exprAst as unknown as {
-      type?: string;
-      callee?: { type?: string; name?: string };
-      arguments?: Array<unknown>;
-    };
-    if (call.type === 'CallExpression' && call.callee?.name === 'track' && call.arguments?.[0]) {
-      return this.j2k.expr(call.arguments[0] as JsNode);
-    }
-    return this.j2k.expr(exprAst);
   }
 
   classList(node: StaticNode): string[] {
@@ -185,8 +210,20 @@ class Emitter {
     const out = new Map<string, JsNode>();
     for (const child of node.children) {
       if (child instanceof DynamicBinding && child.kind === 'attribute' && child.target) {
-        const transformed = transformTrackedAst(child.expression, this.tracked);
-        out.set(child.target, transformed as JsNode);
+        const transformed = transformTracked(child.expression, this.tracked);
+        try {
+          const program = parse(`let __vsk_attr = ${transformed};`) as unknown as {
+            body: Array<{ declarations: Array<{ init: JsNode }> }>;
+          };
+          const exprAst = program.body[0]?.declarations[0]?.init;
+          if (exprAst) {
+            out.set(child.target, exprAst);
+          } else {
+            this.err.warn(null, `could not parse dynamic attribute: ${transformed}`);
+          }
+        } catch (e) {
+          this.err.warn(null, `could not parse dynamic attribute: ${transformed}: ${(e as Error).message}`);
+        }
       }
     }
     return out;
@@ -337,6 +374,7 @@ function emitElement(node: StaticNode, em: Emitter, level: number): string[] {
     lines2.push(pad + 'OutlinedTextField(');
     lines2.push(`${padIn}value = ${value},`);
     lines2.push(`${padIn}onValueChange = ${onValueChange},`);
+    if (node.tag === 'textarea') lines2.push(`${padIn}singleLine = false,`);
     if (modLine) lines2.push(modLine);
     if (placeholder) lines2.push(`${padIn}placeholder = { Text(${em.ktString(placeholder)}) },`);
     lines2.push(pad + ')');
@@ -409,10 +447,10 @@ function emitChild(child: IRNode, em: Emitter, level: number): string[] {
     const item = child.itemVariable;
     const keyExpr = child.keyExpr ? em.exprOf(child.keyExpr) : null;
     const out: string[] = [];
-    out.push(pad + `${arrExpr}.forEach { ${item} ->`);
-    if (keyExpr) out.push(pad + `\tkey(${keyExpr}) {`);
-    for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1));
-    if (keyExpr) out.push(pad + `\t}`);
+    out.push(pad + `LazyColumn {`);
+    out.push(pad + `\titems(${arrExpr}${keyExpr ? `, key = { ${keyExpr} }` : ''}) { ${item} ->`);
+    for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 2));
+    out.push(pad + `\t}`);
     out.push(pad + `}`);
     return out;
   }
@@ -426,6 +464,7 @@ function emitChild(child: IRNode, em: Emitter, level: number): string[] {
     return splitLines(em.stmtOf(child)).map((l) => pad + l);
   }
   if (child instanceof HeadBlock) {
+    em.err.note('{#head} blocks are not supported in native');
     return [];
   }
   if (child instanceof ServerBlock) {
@@ -460,13 +499,6 @@ function emitChild(child: IRNode, em: Emitter, level: number): string[] {
     return out;
   }
   if (child instanceof TryCatch) {
-    const hasComposable = (nodes: IRNode[]): boolean => nodes.some((n) => n instanceof ComponentCall || n instanceof StaticNode || n instanceof DynamicBinding);
-    if (hasComposable(child.bodyTemplate)) {
-      em.err.note('try/catch around composable invocations is not supported in Compose; emitting try-body without catch');
-      const out: string[] = [];
-      for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level));
-      return out;
-    }
     const catchParam = child.catchParamName ?? 'e';
     const out: string[] = [];
     out.push(pad + `try {`);
@@ -517,8 +549,8 @@ function runCompile(source: string, filename: string, options: CompileOptions): 
       if (!propsClass) {
         const names = inferPropsFromUsage((decl?.node.body as JsNode | undefined) ?? null);
         propsClass = generateInferredPropsClass(comp.name, names);
-        propsParamDefault = true;
       }
+      propsParamDefault = true;
     }
     if (propsClass) out.push(propsClass);
 

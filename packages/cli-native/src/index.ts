@@ -3,9 +3,10 @@ import { join, relative, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { compileVskResult } from '@compiler-native/index.ts';
 import { parse } from '@vesk/compiler';
-import { findComponentDecls, propsDataType } from '@compiler-native/props.ts';
+import { findComponentDecls } from '@compiler-native/props.ts';
 import type { ComponentDecl } from '@compiler-native/props.ts';
 import type { JsNode } from '@compiler-native/js2kt.ts';
+import type { RouteConfig } from '@navigation-native/index.ts';
 
 const MONOREPO = resolve(import.meta.dirname ?? process.cwd(), '..', '..', '..');
 const TEMPLATE_DIR = join(MONOREPO, 'runtime', 'vesk-native-template');
@@ -35,6 +36,7 @@ interface VeskConfig {
   orientation: string;
   root: string;
   page?: string;
+  routes?: RouteConfig[];
   colors: VeskColors;
 }
 
@@ -56,6 +58,7 @@ const DEFAULT_CONFIG: VeskConfig = {
     onPrimary: '#FFFFFF',
     text: '#1F2937',
   },
+  routes: [],
 };
 
 function collectVskFiles(dir: string): string[] {
@@ -91,14 +94,6 @@ function log(step: string, msg: string): void {
 
 function slugify(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-}
-
-function defaultFor(type: string): string {
-  if (type === 'Int') return '0';
-  if (type === 'String') return '""';
-  if (type === 'Boolean') return 'false';
-  if (type.startsWith('List<')) return 'emptyList()';
-  return 'null';
 }
 
 function colorLiteral(hex: string): string {
@@ -208,7 +203,8 @@ function generateManifest(target: string, config: VeskConfig): void {
   writeFileSync(
     join(target, 'app', 'src', 'main', 'AndroidManifest.xml'),
     `<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="${config.appId}">
 
     <application
         android:label="${config.appName}"
@@ -323,9 +319,12 @@ function generateRuntimeKt(appDir: string): void {
     `package app
 
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.Modifier
+import app.navigation.*
 
 // Native counterparts of @vesk/runtime exports referenced by copied .vsk files.
-// Content is rendered via the trailing lambda; real navigation arrives in Phase 3.
 
 fun truthy(v: Any?): Boolean = when (v) {
     null -> false
@@ -349,7 +348,10 @@ data class LinkProps(
 
 @Composable
 fun Link(props: LinkProps, content: @Composable () -> Unit = {}) {
-    content()
+    val nav = LocalNavController.current
+    Box(modifier = Modifier.clickable(onClick = { nav.navigate(props.href) })) {
+        content()
+    }
 }
 
 data class NavLinkProps(
@@ -359,18 +361,44 @@ data class NavLinkProps(
 
 @Composable
 fun NavLink(props: NavLinkProps, content: @Composable () -> Unit = {}) {
-    content()
+    val nav = LocalNavController.current
+    Box(modifier = Modifier.clickable(onClick = { nav.navigate(props.href) })) {
+        content()
+    }
+}
+
+@Composable
+fun Outlet(content: @Composable () -> Unit = {}) {
+    val nav = LocalNavController.current
+    val route = nav.currentRoute.value
+    if (route.isNotEmpty()) {
+        content()
+    }
 }
 `,
   );
-  log('gen', 'Runtime.kt (Link/NavLink native stubs)');
+  log('gen', 'Runtime.kt (Link/NavLink/Outlet native stubs)');
+}
+
+function generateRouterKt(appDir: string): void {
+  const outDir = join(appDir, 'src', 'main', 'kotlin', 'app');
+  mkdirSync(outDir, { recursive: true });
+  const src = join(process.cwd(), 'packages', 'navigation-native', 'src', 'Router.kt');
+  if (existsSync(src)) {
+    const navDir = join(outDir, 'navigation');
+    mkdirSync(navDir, { recursive: true });
+    writeFileSync(join(navDir, 'Router.kt'), readFileSync(src, 'utf8'));
+    log('gen', 'navigation/Router.kt (from @navigation-native)');
+  } else {
+    log('warn', `navigation module not found at ${src}; skipping Router.kt`);
+  }
 }
 
 function compileVskFiles(appDir: string): void {
   const outDir = join(appDir, 'src', 'main', 'kotlin', 'app');
   mkdirSync(outDir, { recursive: true });
 
-  const KEEP = new Set(['App.kt', 'Runtime.kt', 'Theme.kt', 'MainActivity.kt']);
+  const KEEP = new Set(['App.kt', 'Runtime.kt', 'Router.kt', 'Theme.kt', 'MainActivity.kt']);
   for (const f of readdirSync(outDir)) {
     if (f.endsWith('.kt') && !KEEP.has(f)) unlinkSync(join(outDir, f));
   }
@@ -434,30 +462,53 @@ function generateAppKt(appDir: string, config: VeskConfig): void {
     process.exit(1);
   }
 
-  let call: string;
-  const props = root.params[0] ? propsDataType(root.params[0]) : null;
-  if (config.page) {
-    call = `${root.name} {\n        ${config.page}()\n    }`;
-  } else if (props && props.length > 0) {
-    const args = props.map((p) => `${p.name} = ${defaultFor(p.type)}`).join(', ');
-    call = `${root.name}(props = ${root.name}Props(${args}))`;
-  } else {
-    call = `${root.name}()`;
-  }
+  const pages = files
+    .map((f) => relative(appDir, f))
+    .filter((r) => !r.includes('layout.vsk'))
+    .map((r) => {
+      const source = readFileSync(join(appDir, r), 'utf8');
+      const decls = findComponentDecls(parse(source) as unknown as JsNode);
+      const compName = (decls[0]?.name ?? r.replace(/\.vsk$/, '').replace(/\/page$/, '')) || 'Page';
+      const relPath = r === 'page.vsk' ? '' : (r.replace(/\.vsk$/, '').replace(/\/page$/, '')) || 'page';
+      const path = '/' + relPath;
+      return { path, component: compName };
+    });
+
+  const routes = (config.routes && config.routes.length > 0)
+    ? config.routes
+    : pages;
+
+  const routeLines = routes
+    .map((p) => {
+      const routePath = (p.path || '').replace(/\[([^\]]+)\]/g, '{$1}');
+      return `Route("${routePath}") { ${p.component}() }`;
+    })
+    .join(',\n        ');
 
   writeFileSync(
     join(outDir, 'App.kt'),
     `package app
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.CompositionLocalProvider
+import app.navigation.*
 
 @Composable
 fun App() {
-    ${call}
+    val nav = rememberNavController()
+    LaunchedEffect(Unit) { nav.navigate("/") }
+    CompositionLocalProvider(LocalNavController provides nav) {
+        Layout {
+            AppRouter(start = "/", routes = listOf(
+                ${routeLines}
+            ))
+        }
+    }
 }
 `,
   );
-  log('gen', `App.kt -> renders root component ${root.name}`);
+  log('gen', `App.kt -> renders ${pages.length} routed pages`);
 }
 
 function generateProject(target: string, config: VeskConfig): void {
@@ -483,6 +534,7 @@ function generateProject(target: string, config: VeskConfig): void {
   generateMainActivity(target, config);
   generateThemeKt(target, config);
   generateRuntimeKt(appDir);
+  generateRouterKt(appDir);
   compileVskFiles(appDir);
   generateAppKt(appDir, config);
 }

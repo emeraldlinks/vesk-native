@@ -1,6 +1,6 @@
+import { parse } from '@vesk/compiler/src/parser';
+import { generateIR } from '@vesk/compiler/src/ir-generator';
 import {
-  parse,
-  generateIR,
   StaticNode,
   TextNode,
   DynamicBinding,
@@ -18,9 +18,8 @@ import {
   ClientBlock,
   HeadBlock,
   SlotNode,
-  collectTrackedNames,
-  transformTrackedAst,
-} from '@vesk/compiler';
+} from '@vesk/compiler/src/ir';
+import { collectTrackedNames, transformTracked } from '@vesk/compiler/src/client-codegen';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { testAppAppDir } from '@compiler-native/paths.ts';
@@ -87,12 +86,12 @@ for (const comp of ir.components) {
   console.log(`\n  tracked:`, JSON.stringify([...collectTrackedNames(comp.body).entries()]));
   for (const node of comp.body) {
     if (node instanceof RuntimeStatement) {
-      const out = transformTrackedAst(node, collectTrackedNames(comp.body));
-      console.log(`  runtimeStmt->`, (out as { raw: string }).raw ?? 'has-transformed-ast');
+      const out = transformTracked(node, collectTrackedNames(comp.body));
+      console.log(`  runtimeStmt->`, out);
     }
     if (node instanceof DynamicBinding) {
-      const out = transformTrackedAst(node, collectTrackedNames(comp.body));
-      console.log(`  binding->`, (out as { raw: string }).raw ?? 'has-transformed-ast');
+      const out = transformTracked(node, collectTrackedNames(comp.body));
+      console.log(`  binding->`, out);
     }
   }
 }

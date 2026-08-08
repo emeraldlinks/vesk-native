@@ -98,13 +98,25 @@ export function generatePropsClass(componentName: string, param: JsNode | null):
     if (!keyName) continue;
     const ann = member.typeAnnotation as JsNode | null;
     const inner = ann ? (ann.typeAnnotation as JsNode) : null;
-    lines.push(`\tval ${ktIdent(keyName)}: ${typeRefDeep(inner, `${componentName}${capName(keyName)}`, classes)},`);
+    const ktType = typeRefDeep(inner, `${componentName}${capName(keyName)}`, classes);
+    const defaultVal = defaultForType(ktType);
+    lines.push(`\tval ${ktIdent(keyName)}: ${ktType}${defaultVal ? ` = ${defaultVal}` : ''},`);
   }
   return `${[...classes.values()].join('')}data class ${componentName}Props(\n${lines.join('\n')}\n)\n`;
 }
 
 function capName(s: string): string {
   return s.length === 0 ? s : s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function defaultForType(type: string): string {
+  if (type === 'Int') return '0';
+  if (type === 'String') return '""';
+  if (type === 'Boolean') return 'false';
+  if (type.startsWith('List<')) return 'emptyList()';
+  if (type === 'Any') return 'null';
+  if (type === 'Any?') return 'null';
+  return `${type}()`;
 }
 
 function typeRefDeep(node: JsNode | null, prefix: string, classes: Map<string, string>): string {
@@ -121,7 +133,9 @@ function typeRefDeep(node: JsNode | null, prefix: string, classes: Map<string, s
         if (!keyName) continue;
         const ann = member.typeAnnotation as JsNode | null;
         const inner = ann ? (ann.typeAnnotation as JsNode) : null;
-        lines.push(`\tval ${ktIdent(keyName)}: ${typeRefDeep(inner, `${prefix}${capName(keyName)}`, classes)},`);
+        const ktType = typeRefDeep(inner, `${prefix}${capName(keyName)}`, classes);
+        const defaultVal = defaultForType(ktType);
+        lines.push(`\tval ${ktIdent(keyName)}: ${ktType}${defaultVal ? ` = ${defaultVal}` : ''},`);
       }
       classes.set(prefix, `data class ${prefix}(\n${lines.join('\n')}\n)\n`);
       return prefix;

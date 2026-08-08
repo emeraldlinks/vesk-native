@@ -121,9 +121,10 @@ export class Js2Kt {
         return this.arrayExpr(node);
       case 'ObjectExpression':
         return this.objectExpr(node);
-      case 'SequenceExpression':
-        this.err.warn(node, 'sequence expressions are not supported yet');
-        return `TODO(Sequence)`;
+      case 'SequenceExpression': {
+        const exprs = (node.expressions as JsNode[]) ?? [];
+        return `run { ${exprs.map((e) => this.expr(e)).join('; ')} }`;
+      }
       case 'ChainExpression':
         return this.expr(node.expression as JsNode);
       case 'TSAsExpression':
@@ -167,10 +168,11 @@ export class Js2Kt {
     }
 
     if (callee.type === 'MemberExpression') {
-      const member = callee as unknown as { object: JsNode; property: JsNode; computed: boolean };
+      const member = callee as unknown as { object: JsNode; property: JsNode; computed: boolean; optional: boolean };
       const method = member.property.type === 'Identifier' ? (member.property.name as string) : null;
       const receiver = this.expr(member.object);
       const first = args[0];
+      const safe = member.optional ? '?.' : '.';
 
       const LAMBDA_METHODS: Record<string, string> = {
         map: 'map', forEach: 'forEach', filter: 'filter', flatMap: 'flatMap',
@@ -179,17 +181,17 @@ export class Js2Kt {
       };
       if (method && method in LAMBDA_METHODS) {
         if (first && first.type === 'ArrowFunctionExpression') {
-          return `${receiver}.${LAMBDA_METHODS[method!]}${this.arrowLambda(first)}`;
+          return `${receiver}${safe}${LAMBDA_METHODS[method!]}${this.arrowLambda(first)}`;
         }
         if (first && first.type === 'Identifier') {
-          return `${receiver}.${LAMBDA_METHODS[method!]}(::${first.name})`;
+          return `${receiver}${safe}${LAMBDA_METHODS[method!]}(::${first.name})`;
         }
       }
       if (method === 'sortedWith' && first?.type === 'ArrowFunctionExpression') {
-        return `${receiver}.sortedWith(compareBy${this.arrowLambda(first)})`;
+        return `${receiver}${safe}sortedWith(compareBy${this.arrowLambda(first)})`;
       }
       if (method === 'reduce' && first?.type === 'ArrowFunctionExpression' && args[1]) {
-        return `${receiver}.fold(${this.expr(args[1]!)})${this.arrowLambda(first)}`;
+        return `${receiver}${safe}fold(${this.expr(args[1]!)})${this.arrowLambda(first)}`;
       }
 
       const ZERO_ARG_METHODS: Record<string, string> = {
@@ -203,48 +205,92 @@ export class Js2Kt {
         shift: 'removeFirst()',
       };
       if (method && method in ZERO_ARG_METHODS && args.length === 0) {
-        return `${receiver}.${ZERO_ARG_METHODS[method!]}`;
+        return `${receiver}${safe}${ZERO_ARG_METHODS[method!]}`;
       }
       const ZERO_ARG_ONE_OPT: Record<string, string> = {
         toString: 'toString()',
       };
       if (method && method in ZERO_ARG_ONE_OPT) {
-        return `${receiver}.${ZERO_ARG_ONE_OPT[method!]}`;
+        return `${receiver}${safe}${ZERO_ARG_ONE_OPT[method!]}`;
       }
 
       if (method === 'join' && first) {
-        return `${receiver}.joinToString(${this.expr(first)})`;
+        return `${receiver}${safe}joinToString(${this.expr(first)})`;
       }
       if (method === 'push' && first) {
-        return `${receiver}.add(${this.expr(first)})`;
+        return `${receiver}${safe}add(${this.expr(first)})`;
       }
       if ((method === 'includes' || method === 'contains') && first) {
-        return `${receiver}.contains(${this.expr(first)})`;
+        return `${receiver}${safe}contains(${this.expr(first)})`;
       }
       if (method === 'indexOf' && first) {
-        return `${receiver}.indexOf(${this.expr(first)})`;
+        return `${receiver}${safe}indexOf(${this.expr(first)})`;
+      }
+      if (method === 'lastIndexOf' && first) {
+        return `${receiver}${safe}lastIndexOf(${this.expr(first)})`;
       }
       if (method === 'startsWith' && first) {
-        return `${receiver}.startsWith(${this.expr(first)})`;
+        return `${receiver}${safe}startsWith(${this.expr(first)})`;
       }
       if (method === 'endsWith' && first) {
-        return `${receiver}.endsWith(${this.expr(first)})`;
+        return `${receiver}${safe}endsWith(${this.expr(first)})`;
       }
       if (method === 'split' && first) {
-        return `${receiver}.split(${this.expr(first)})`;
+        return `${receiver}${safe}split(${this.expr(first)})`;
       }
       if (method === 'concat' && first) {
-        return `${receiver} + ${this.expr(first)}`;
+        return `${receiver}${safe}plus(${this.expr(first)})`;
       }
       if (method === 'slice' && args.length >= 1) {
         const from = this.expr(args[0]!);
         const to = args[1] ? this.expr(args[1]!) : '';
-        return to ? `${receiver}.subList(${from}, ${to})` : `${receiver}.subList(${from}, ${receiver}.size)`;
+        return to ? `${receiver}${safe}subList(${from}, ${to})` : `${receiver}${safe}subList(${from}, ${receiver}${safe}size)`;
+      }
+      if (method === 'substring' && first) {
+        const start = this.expr(first);
+        const end = args[1] ? this.expr(args[1]!) : '';
+        return end ? `${receiver}${safe}substring(${start}, ${end})` : `${receiver}${safe}substring(${start})`;
+      }
+      if (method === 'replace' && first && args[1]) {
+        return `${receiver}${safe}replace(${this.expr(first)}, ${this.expr(args[1]!)})`;
+      }
+      if (method === 'repeat' && first) {
+        return `${receiver}${safe}repeat(${this.expr(first)})`;
+      }
+      if (method === 'padStart' && first) {
+        const padChar = args[1] ? this.expr(args[1]!) : `" "`;
+        return `${receiver}${safe}padStart(${this.expr(first)}, ${padChar})`;
+      }
+      if (method === 'padEnd' && first) {
+        const padChar = args[1] ? this.expr(args[1]!) : `" "`;
+        return `${receiver}${safe}padEnd(${this.expr(first)}, ${padChar})`;
+      }
+      if (method === 'trimStart' || method === 'trimLeft') {
+        return `${receiver}${safe}trimStart()`;
+      }
+      if (method === 'trimEnd' || method === 'trimRight') {
+        return `${receiver}${safe}trimEnd()`;
+      }
+      if (method === 'charAt' && first) {
+        return `${receiver}${safe}get(${this.expr(first)})`;
+      }
+      if (method === 'charCodeAt' && first) {
+        return `${receiver}${safe}get(${this.expr(first)}).code`;
+      }
+      if (method === 'match' && first) {
+        return `${receiver}${safe}matchOrNull(${this.expr(first)})`;
+      }
+      if (method === 'localeCompare' && first) {
+        return `${receiver}${safe}compareTo(${this.expr(first)})`;
       }
     }
 
     const calleeStr = this.expr(callee);
-    const argsStr = args.map((a) => (a as JsNode & { type?: string }).type === 'SpreadElement' ? `*${this.expr(a)}` : this.expr(a)).join(', ');
+    const argsStr = args.map((a) => {
+      const jsNode = a as JsNode & { type?: string; argument?: JsNode };
+      if (jsNode.type === 'SpreadElement') return `*${this.expr(jsNode.argument as JsNode)}`;
+      return this.expr(jsNode);
+    }).join(', ');
     return `${calleeStr}(${argsStr})`;
   }
 
@@ -392,6 +438,27 @@ export class Js2Kt {
       return this.pattern(arg);
     }
     if (node.type === 'AssignmentPattern') return `${this.pattern(node.left as JsNode)} = ${this.expr(node.right as JsNode)}`;
+    if (node.type === 'ObjectPattern') {
+      const props = (node.properties as JsNode[]) ?? [];
+      const parts = props.map((p) => {
+        if (p.type === 'Property') {
+          const key = p.key as JsNode;
+          const keyStr = key.type === 'Identifier' ? this.id(key.name as string) : this.expr(key);
+          const val = this.pattern(p.value as JsNode);
+          return `${keyStr} = ${val}`;
+        }
+        if (p.type === 'RestElement') {
+          return `*${this.pattern(p.argument as JsNode)}`;
+        }
+        return '?';
+      });
+      return `(${parts.join(', ')})`;
+    }
+    if (node.type === 'ArrayPattern') {
+      const elems = (node.elements as (JsNode | null)[]) ?? [];
+      const parts = elems.map((e) => (e === null ? '_' : this.pattern(e)));
+      return `(${parts.join(', ')})`;
+    }
     this.err.warn(node, `unsupported parameter pattern: ${node.type}`);
     return `TODO(Pattern)`;
   }
@@ -479,6 +546,36 @@ export class Js2Kt {
         return this.stmt(node.body as JsNode);
       case 'DebuggerStatement':
         return '';
+      case 'SwitchStatement': {
+        const disc = this.expr(node.discriminant as JsNode);
+        const cases = (node.cases as JsNode[]) ?? [];
+        const lines: string[] = [];
+        lines.push(`when (${disc}) {`);
+        for (const c of cases) {
+          const test = c.test ? this.expr(c.test as JsNode) : 'else';
+          lines.push(`\t${test} -> {`);
+          for (const s of (c.consequent as JsNode[]) ?? []) {
+            lines.push(`\t\t${this.stmt(s)}`);
+          }
+          lines.push('\t}');
+        }
+        lines.push('}');
+        return lines.join('\n');
+      }
+      case 'TryStatement': {
+        const body = this.blockLines(node.block as JsNode, 1).join('\n');
+        const catchClause = node.handler as JsNode | null;
+        const catchLines = catchClause ? this.blockLines(catchClause.body as JsNode, 1).join('\n') : '';
+        const out = [`try {`, body, '}'];
+        if (catchClause) {
+          const param = (catchClause.param as JsNode | null);
+          const paramStr = param ? this.pattern(param) : 'e';
+          out.push(`catch (${paramStr}: Exception) {`);
+          out.push(catchLines);
+          out.push('}');
+        }
+        return out.join('\n');
+      }
       case 'BreakStatement':
         return 'break;';
       case 'ContinueStatement':

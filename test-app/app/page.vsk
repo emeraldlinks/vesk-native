@@ -1,69 +1,27 @@
-import {track} from "@vesk/runtime"
-
-component Home (){
-	<Head> <title> VeskTS test app </title></Head>
-  const &[count] = track(10)
-  
- 
-	<h1 class="text-4xl font-bold mb-2">Welcome to Vesk</h1>
-	<p class="text-gray-500 mb-4">
-		A compiler-first reactive UI framework for the post-VDOM web.
-	</p>
-	<p>{count} </p>
-	if (2 > 3){
-		<p> 2 is higher</p>
-	} else{
-		<p> Hurray 3 xwon</p>
-	}
-	<button onClick={()=> count++}> + </button>
-	<div class="bg-white gg rounded-xl p-6 shadow-sm border border-gray-100">
-		<h2 class="text-xl  font-semibold mb-2">Getting Started</h2>
-		<p>Edit <code class="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono">app/page.vsk</code> to change this page.</p>
-	
-	<style>.gg {
-		color: red;
-	} </style>
-
-<Appx />
-<Appxx count={count} />
-
-
-	</div>
-}
-
-
-
-
-component Throws(props) {
-	if (props.fail) throw new Error(props.msg);
-	return <p>OK</p>
-}
-
-
-
-export component Appx {
-	try {
-		<Throws fail={true} msg="Boom!" />
-	} catch(e) {
-		<p class="error">Error: {e.message}</p>
-	}
-}
-
-component Throw(props) client {
-
-
-	if (props.count < 15) throw new Error(props.msg);
-		return <p>OK {props.count} </p>
-}
-
-
-
-
-export component Appxx(props)  {
-	<p> Count: {props.count} </p>
-	try {
-		<Throw count={props.count} msg={`Insufficient! ${props.count} `}/>
-	} catch(e) {
-		<p class="error">Error: {e.message}</p>
-	}
+component Page() {
+    const &[count] = track(0)
+    const &[name] = track("Vesk")
+    
+    <h1 class="text-4xl font-bold mb-2">Hello {name}</h1>
+    <p class="text-gray-500 mb-4">Counter: {count}</p>
+    
+    <div class="flex gap-2 mb-6">
+        <button onClick={() => count--} class="px-4 py-2 bg-gray-200 rounded">-</button>
+        <button onClick={() => count++} class="px-4 py-2 bg-blue-600 text-white rounded">+</button>
+    </div>
+    
+    if (count > 5) {
+        <p class="text-green-600 font-bold">Count is high!</p>
+    } else {
+        <p class="text-orange-600">Keep counting...</p>
+    }
+    
+    <div class="border rounded-lg p-4">
+        <h2 class="text-xl font-semibold mb-2">Features</h2>
+        <ul class="list-disc pl-6">
+            <li>Reactive state with track()</li>
+            <li>Conditional rendering</li>
+            <li>Event handlers</li>
+        </ul>
+    </div>
 }

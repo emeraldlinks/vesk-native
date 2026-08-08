@@ -12,8 +12,8 @@ import {
   ClientBlock,
   HeadBlock,
   Expression,
-} from '@vesk/compiler';
-import type { IRNode } from '@vesk/compiler';
+} from '@vesk/compiler/src/ir';
+import type { IRNode } from '@vesk/compiler/src/ir';
 
 export type Visitor = (node: IRNode, parent: IRNode | null) => void;
 

@@ -1,9 +1,12 @@
 package app
 
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.Modifier
+import app.navigation.*
 
 // Native counterparts of @vesk/runtime exports referenced by copied .vsk files.
-// Content is rendered via the trailing lambda; real navigation arrives in Phase 3.
 
 fun truthy(v: Any?): Boolean = when (v) {
     null -> false
@@ -27,7 +30,10 @@ data class LinkProps(
 
 @Composable
 fun Link(props: LinkProps, content: @Composable () -> Unit = {}) {
-    content()
+    val nav = LocalNavController.current
+    Box(modifier = Modifier.clickable(onClick = { nav.navigate(props.href) })) {
+        content()
+    }
 }
 
 data class NavLinkProps(
@@ -37,5 +43,17 @@ data class NavLinkProps(
 
 @Composable
 fun NavLink(props: NavLinkProps, content: @Composable () -> Unit = {}) {
-    content()
+    val nav = LocalNavController.current
+    Box(modifier = Modifier.clickable(onClick = { nav.navigate(props.href) })) {
+        content()
+    }
+}
+
+@Composable
+fun Outlet(content: @Composable () -> Unit = {}) {
+    val nav = LocalNavController.current
+    val route = nav.currentRoute.value
+    if (route.isNotEmpty()) {
+        content()
+    }
 }

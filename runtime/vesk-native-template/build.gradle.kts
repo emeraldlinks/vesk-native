@@ -1,4 +1,2 @@
-plugins {
-    id("com.android.application") version "8.2.2" apply false
-    id("org.jetbrains.kotlin.android") version "1.9.22" apply false
-}
+// Top-level build file for vesk-native apps.
+// Plugin versions are managed in settings.gradle.kts pluginManagement.

@@ -4,15 +4,15 @@ plugins {
 }
 
 android {
-    namespace = "com.vesk.app"
+    namespace = "com.vesk.demo3"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.vesk.app"
+        applicationId = "com.vesk.demo3"
         minSdk = 24
         targetSdk = 34
-        versionCode = 2
-        versionName = "0.2.0"
+        versionCode = 4
+        versionName = "0.4.0"
     }
 
     buildTypes {

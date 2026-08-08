@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "vesk-demo"
+rootProject.name = "vesk-demo-3"
 include(":app")

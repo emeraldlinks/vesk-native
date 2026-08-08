@@ -1,8 +1,8 @@
 {
-  "appId": "com.vesk.app",
-  "appName": "Vesk Demo",
-  "versionName": "0.2.0",
-  "versionCode": 2,
+  "appId": "com.vesk.demo3",
+  "appName": "Vesk Demo 3",
+  "versionName": "0.4.0",
+  "versionCode": 4,
   "compileSdk": 34,
   "minSdk": 24,
   "targetSdk": 34,

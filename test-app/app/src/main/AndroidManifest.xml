@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.vesk.demo3">
 
     <application
-        android:label="Vesk Demo"
+        android:label="Vesk Demo 3"
         android:theme="@style/Theme.VeskApp"
         android:allowBackup="false">
         <activity

@@ -34,29 +34,69 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun Blog(content: @Composable () -> Unit = {}) {
+fun Page(content: @Composable () -> Unit = {}) {
+	val count = remember { mutableStateOf(0) }
+	val name = remember { mutableStateOf("Vesk") }
 	Text(
-		text = "Blog",
+		text = "Hello " + (name.value).toString(),
 		style = TextStyle(fontSize = 36.sp, fontWeight = FontWeight.Bold),
 	)
+	Text(
+		text = "Counter: " + (count.value).toString(),
+		style = TextStyle(color = Color(0xFF6B7280)),
+	)
 	Column(
-		modifier = Modifier.padding(start = 24.dp),
+		verticalArrangement = Arrangement.spacedBy(8.dp),
 	) {
-		Column {
-			NavLink(props = NavLinkProps(href = "/blog/hello-world", `class` = "text-blue-600"))
-				{
-					Text(
-						text = "Hello World",
-					)
-				}
+		Button(
+			onClick = { count.value = count.value + -1 },
+			modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(Color(0xFFE5E7EB)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
+		) {
+			Text("-")
 		}
-		Column {
-			NavLink(props = NavLinkProps(href = "/blog/vesk-native", `class` = "text-blue-600"))
-				{
-					Text(
-						text = "Vesk Native",
-					)
-				}
+		Button(
+			onClick = { count.value = count.value + 1 },
+			modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(Color(0xFF2563EB)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
+		) {
+			Text("+")
+		}
+	}
+	if (truthy(num(count.value) > num(5))) {
+		Text(
+			text = "Count is high!",
+			style = TextStyle(color = Color(0xFF16A34A), fontWeight = FontWeight.Bold),
+		)
+	} else {
+		Text(
+			text = "Keep counting...",
+			style = TextStyle(color = Color(0xFFEA580C)),
+		)
+	}
+	Column(
+		modifier = Modifier.clip(RoundedCornerShape(8.dp)).border(1.dp, Color(0x1F000000)).padding(16.dp),
+	) {
+		Text(
+			text = "Features",
+			style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.SemiBold),
+		)
+		Column(
+			modifier = Modifier.padding(start = 24.dp),
+		) {
+			Column {
+				Text(
+					text = "Reactive state with track()",
+				)
+			}
+			Column {
+				Text(
+					text = "Conditional rendering",
+				)
+			}
+			Column {
+				Text(
+					text = "Event handlers",
+				)
+			}
 		}
 	}
 }

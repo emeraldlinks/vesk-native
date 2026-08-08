@@ -5,6 +5,7 @@
     "paths": {
       "@compiler-native/*": ["packages/compiler-native/src/*"],
       "@cli-native/*": ["packages/cli-native/src/*"],
+      "@navigation-native/*": ["packages/navigation-native/src/*"],
       "@test-app/*": ["test-app/*"]
     }
   },

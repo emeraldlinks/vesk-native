@@ -6,11 +6,10 @@
   "description": "vesk-native — same .vsk syntax compiled to Kotlin + Compose Multiplatform (true native, no bridge)",
   "workspaces": [
     "packages/compiler-native",
-    "packages/cli-native"
+    "packages/cli-native",
+    "packages/navigation-native"
   ],
   "scripts": {
-    "postinstall": "node scripts/fix-links.mjs",
-    "sync": "node scripts/fix-links.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "spike": "tsx packages/compiler-native/src/spike.ts"
   },
@@ -18,5 +17,12 @@
     "@types/node": "^26.1.2",
     "tsx": "^4.19.0",
     "typescript": "^5.8.0"
+  },
+  "dependencies": {
+    "@vesk/compiler": "file:tarballs/vesk-compiler-0.1.10.tgz",
+    "@vesk/runtime": "file:tarballs/vesk-runtime-0.1.9.tgz",
+    "@vesk/adapter": "file:tarballs/vesk-adapter-0.1.9.tgz",
+    "@vesk/plugin-tailwind": "file:tarballs/vesk-plugin-tailwind-0.1.4.tgz",
+    "vesk": "file:tarballs/vesk-0.1.12.tgz"
   }
 }

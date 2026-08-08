@@ -2,6 +2,8 @@ package app
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -31,33 +33,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-data class BlogPostParams(
-	val slug: String,
-)
-data class BlogPostProps(
-	val params: BlogPostParams,
-)
-
 @Composable
-fun BlogPost(props: BlogPostProps, content: @Composable () -> Unit = {}) {
-	Link(props = LinkProps(href = "/blog", `class` = "inline-block mb-6 text-blue-600 no-underline hover:underline"))
-		{
-			Text(
-				text = " ← Back to blog ",
-			)
-		}
+fun BlogPost(content: @Composable () -> Unit = {}) {
 	Text(
-		text = "Post: " + (props.params.slug).toString(),
-		style = TextStyle(fontSize = 30.sp, fontWeight = FontWeight.Bold),
+		text = "Hello World",
+		style = TextStyle(fontSize = 36.sp, fontWeight = FontWeight.Bold),
 	)
-	Column {
-		Column {
-			Text("This is a dynamic blog post rendered at " + ".")
-			Text(
-				text = "/" + (props.params.slug).toString(),
-				modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(Color(0xFFF3F4F6)).padding(horizontal = 6.dp).padding(vertical = 2.dp),
-				style = TextStyle(fontSize = 14.sp),
-			)
-		}
-	}
+	Text(
+		text = "This is the hello world post.",
+		style = TextStyle(color = Color(0xFF4B5563)),
+	)
 }

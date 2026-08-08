@@ -2,6 +2,8 @@ package app
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -34,15 +36,11 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun About(content: @Composable () -> Unit = {}) {
 	Text(
-		text = "About Vesk",
-		style = TextStyle(fontSize = 30.sp, fontWeight = FontWeight.Bold),
+		text = "About",
+		style = TextStyle(fontSize = 36.sp, fontWeight = FontWeight.Bold),
 	)
 	Text(
-		text = " Vesk is a compiler-first reactive UI framework. It compiles .vsk components to standard ESM with SSR, hydration, and fine-grained reactivity. ",
-		style = TextStyle(color = Color(0xFF4B5563)),
-	)
-	Text(
-		text = " Key features include zero-JS pages, islands architecture, AOT event delegation, and streaming SSR. ",
+		text = "This is the about page.",
 		style = TextStyle(color = Color(0xFF4B5563)),
 	)
 }

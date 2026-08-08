@@ -2,6 +2,8 @@ package app
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -38,22 +40,22 @@ data class LayoutProps(
 @Composable
 fun Layout(props: LayoutProps = LayoutProps(), content: @Composable () -> Unit = {}) {
 	Column(
-		modifier = Modifier.background(Color(0xFFFFFFFF)).border(1.dp, Color(0xFFE5E7EB)).padding(horizontal = 32.dp).padding(vertical = 16.dp),
-		verticalArrangement = Arrangement.spacedBy(24.dp),
+		modifier = Modifier.padding(16.dp),
+		verticalArrangement = Arrangement.spacedBy(16.dp),
 	) {
-		NavLink(props = NavLinkProps(href = "/", `class` = "text-gray-500 hover:text-black font-medium no-underline"))
+		NavLink(props = NavLinkProps(href = "/", `class` = "text-blue-600"))
 			{
 				Text(
 					text = "Home",
 				)
 			}
-		NavLink(props = NavLinkProps(href = "/about", `class` = "text-gray-500 hover:text-black font-medium no-underline"))
+		NavLink(props = NavLinkProps(href = "/about", `class` = "text-blue-600"))
 			{
 				Text(
 					text = "About",
 				)
 			}
-		NavLink(props = NavLinkProps(href = "/blog", `class` = "text-gray-500 hover:text-black font-medium no-underline"))
+		NavLink(props = NavLinkProps(href = "/blog", `class` = "text-blue-600"))
 			{
 				Text(
 					text = "Blog",
@@ -61,15 +63,8 @@ fun Layout(props: LayoutProps = LayoutProps(), content: @Composable () -> Unit =
 			}
 	}
 	Column(
-		modifier = Modifier.padding(horizontal = 16.dp),
+		modifier = Modifier.padding(16.dp),
 	) {
 		content()
-	}
-	Column(
-		modifier = Modifier.padding(vertical = 32.dp),
-	) {
-		Text(
-			text = "Powered by Vesk",
-		)
 	}
 }
