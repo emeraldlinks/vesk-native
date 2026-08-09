@@ -28,7 +28,7 @@ import { ktIdent } from '@compiler-native/js2kt.ts';
 import { findComponentDecls, generatePropsClass, inferPropsFromUsage, generateInferredPropsClass } from '@compiler-native/props.ts';
 import { elementInfo, CONTAINER_TAGS } from '@compiler-native/elements.ts';
 import { layoutArgs, elementAxis } from '@compiler-native/layout-args.ts';
-import { classify, buildModifier, buildTextStyle, isHidden } from '@compiler-native/tailwind.ts';
+import { classify, buildModifier, buildTextStyle, isHidden, RADIUS } from '@compiler-native/tailwind.ts';
 import type { ModifierParts } from '@compiler-native/tailwind.ts';
 import { parseCssClasses } from '@compiler-native/css.ts';
 
@@ -41,6 +41,81 @@ export interface CompileOptions {
 
 const CLASS_ATTRS = new Set(['class', 'className']);
 
+// Padding classes are lifted out of the Button modifier and turned into
+// contentPadding so the pill surface keeps its shape (a modifier padding on a
+// Button would inset the surface and leave a bare background ring).
+const BTN_PAD_RE = /^p(?:[trblxy])?-(\d+)$/;
+
+function buttonPadding(classes: string[]): { h: number; v: number } | null {
+  let h = 0;
+  let v = 0;
+  for (const c of classes) {
+    const m = c.match(/^p(?:([trblxy])-)?(\d+)$/);
+    if (!m) continue;
+    const dp = Number(m[2]) * 4;
+    const side = m[1] ?? 'all';
+    if (side === 'all' || side === 'x' || side === 'l' || side === 'r') h = Math.max(h, dp);
+    if (side === 'all' || side === 'y' || side === 't' || side === 'b') v = Math.max(v, dp);
+  }
+  return h === 0 && v === 0 ? null : { h, v };
+}
+
+function buttonShape(classes: string[]): string | null {
+  for (const c of classes) {
+    if (!c.startsWith('rounded')) continue;
+    if (c === 'rounded-full') return 'RoundedCornerShape(9999.dp)';
+    const suffix = c.slice('rounded'.length).replace(/^-/, '');
+    const r = RADIUS[suffix === '' ? 'DEFAULT' : suffix];
+    if (r !== undefined) return `RoundedCornerShape(${r}.dp)`;
+  }
+  return null;
+}
+
+// Button content: plain text children (static and/or dynamic) merge into one
+// Text styled with the button's text-* classes. Conditional regions, spans and
+// other nested elements are emitted as real children inside the Button.
+function emitButton(node: StaticNode, classes: string[], attrs: Map<string, JsNode>, em: Emitter, level: number, parentAxis: 'column' | 'row' | null, extraModifier: string | null): string[] {
+  const onClick = attrs.get('onClick');
+  const onClickKt = onClick ? em.j2k.expr(onClick).trimStart() : '{}';
+  const pad = '\t'.repeat(level);
+  const padIn = '\t'.repeat(level + 1);
+
+  const isTexty = (c: IRNode) => c instanceof TextNode || (c instanceof DynamicBinding && c.kind === 'text');
+  const blocker = node.children.filter((c) => !isTexty(c));
+
+  let contentLines: string[] = [];
+  if (blocker.length === 0) {
+    const t = textContent(node.children, em);
+    if (t !== '""') contentLines = splitLines(makeTextCall(t, classes, level, em, false, parentAxis, null));
+  } else {
+    for (const child of node.children) {
+      if (isTexty(child)) {
+        const t = child instanceof TextNode ? em.ktString(child.value) : dynamicText(em.exprOf((child as DynamicBinding).expression));
+        if (t !== '""') contentLines.push(...splitLines(makeTextCall(t, classes, level, em, false, parentAxis, null)));
+      } else {
+        contentLines.push(...emitChild(child, em, level, parentAxis, null));
+      }
+    }
+  }
+
+  const lines: string[] = [];
+  lines.push(pad + 'Button(');
+  lines.push(`${padIn}onClick = ${onClickKt},`);
+  const modClasses = classes.filter((c) => !BTN_PAD_RE.test(c));
+  const modifier = modifierFor(modClasses, em, parentAxis, false, extraModifier);
+  if (modifier) lines.push(`${padIn}modifier = ${modifier},`);
+  const shape = buttonShape(classes);
+  if (shape) lines.push(`${padIn}shape = ${shape},`);
+  lines.push(`${padIn}colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),`);
+  lines.push(`${padIn}elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),`);
+  const padVal = buttonPadding(classes);
+  if (padVal) lines.push(`${padIn}contentPadding = PaddingValues(horizontal = ${padVal.h}.dp, vertical = ${padVal.v}.dp),`);
+  lines.push(pad + ') {');
+  lines.push(...contentLines);
+  lines.push(pad + '}');
+  return lines;
+}
+
 const IMPORTS = `import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
@@ -52,6 +127,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowColumn
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -68,6 +144,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -426,18 +503,7 @@ function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: '
   }
 
   if (info.kind === 'button') {
-    const onClick = attrs.get('onClick');
-    const onClickKt = onClick ? em.j2k.expr(onClick).trimStart() : '{}';
-    const childText = textContent(node.children, em);
-    const lines: string[] = [];
-    lines.push(pad + 'Button(');
-    lines.push(`${padIn}onClick = ${onClickKt},`);
-    const modifier = modifierFor(classes, em, parentAxis, false, extraModifier);
-    if (modifier) lines.push(`${padIn}modifier = ${modifier},`);
-    lines.push(pad + ') {');
-    if (childText !== '""') lines.push(`${padIn}Text(${childText})`);
-    lines.push(pad + '}');
-    return lines;
+    return emitButton(node, classes, attrs, em, level, parentAxis, extraModifier);
   }
 
   if (info.kind === 'input') {

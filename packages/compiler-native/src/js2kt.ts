@@ -70,6 +70,42 @@ export class Js2Kt {
     return `TODO(${node.type})`;
   }
 
+  // JS Math.* maps to the kotlin.math / kotlin.random standard library with
+  // Java runtime semantics. Arguments are widened to Double like JS numbers,
+  // except for the Int-overloaded helpers (abs/min/max/sign).
+  private mathCall(fn: string | null, args: JsNode[]): string | null {
+    if (!fn) return null;
+    const a = (i: number): string => (args[i] ? this.expr(args[i]) : '');
+    const d = (i: number): string => `(${a(i)}).toDouble()`;
+    switch (fn) {
+      case 'abs': return `kotlin.math.abs(${a(0)})`;
+      case 'min': return `kotlin.math.min(${a(0)}, ${a(1)})`;
+      case 'max': return `kotlin.math.max(${a(0)}, ${a(1)})`;
+      case 'round': return `kotlin.math.round(${d(0)}).toInt()`;
+      case 'floor': return `kotlin.math.floor(${d(0)}).toInt()`;
+      case 'ceil': return `kotlin.math.ceil(${d(0)}).toInt()`;
+      case 'trunc': return `kotlin.math.truncate(${d(0)}).toInt()`;
+      case 'sign': return `kotlin.math.sign(${d(0)})`;
+      case 'sqrt': return `kotlin.math.sqrt(${d(0)})`;
+      case 'cbrt': return `kotlin.math.cbrt(${d(0)})`;
+      case 'pow': return `kotlin.math.pow(${d(0)}, ${d(1)})`;
+      case 'exp': return `kotlin.math.exp(${d(0)})`;
+      case 'log': return `kotlin.math.ln(${d(0)})`;
+      case 'log2': return `kotlin.math.log2(${d(0)})`;
+      case 'log10': return `kotlin.math.log10(${d(0)})`;
+      case 'hypot': return `kotlin.math.hypot(${d(0)}, ${d(1)})`;
+      case 'random': return `kotlin.random.Random.nextDouble()`;
+      case 'sin': return `kotlin.math.sin(${d(0)})`;
+      case 'cos': return `kotlin.math.cos(${d(0)})`;
+      case 'tan': return `kotlin.math.tan(${d(0)})`;
+      case 'asin': return `kotlin.math.asin(${d(0)})`;
+      case 'acos': return `kotlin.math.acos(${d(0)})`;
+      case 'atan': return `kotlin.math.atan(${d(0)})`;
+      case 'atan2': return `kotlin.math.atan2(${d(0)}, ${d(1)})`;
+      default: return null;
+    }
+  }
+
   expr(node: JsNode): string {
     switch (node.type) {
       case 'Identifier': {
@@ -144,6 +180,16 @@ export class Js2Kt {
     const prop = node.property as JsNode;
     const computed = node.computed as boolean;
     const optional = node.optional as boolean;
+    if (!computed && object.type === 'Identifier' && object.name === 'Math' && prop.type === 'Identifier') {
+      const MATH_CONSTS: Record<string, string> = {
+        PI: 'kotlin.math.PI',
+        E: 'kotlin.math.E',
+        Infinity: 'Double.POSITIVE_INFINITY',
+        NaN: 'Double.NaN',
+      };
+      const c = MATH_CONSTS[(prop as { name?: string }).name ?? ''];
+      if (c) return c;
+    }
     const obj = this.expr(object);
     if (computed) {
       return optional ? `${obj}?.get(${this.expr(prop)})` : `${obj}[${this.expr(prop)}]`;
@@ -173,6 +219,21 @@ export class Js2Kt {
       const receiver = this.expr(member.object);
       const first = args[0];
       const safe = member.optional ? '?.' : '.';
+
+      if (member.object.type === 'Identifier' && member.object.name === 'Math') {
+        const math = this.mathCall(method, args);
+        if (math !== null) return math;
+        this.err.warn(callee, `unsupported Math.${method ?? '?'}() call`);
+        return `TODO(Math.${method ?? '?'})`;
+      }
+      if (member.object.type === 'Identifier' && member.object.name === 'console') {
+        if (method === 'log' || method === 'warn' || method === 'error') {
+          const parts = args.map((a) => `println(${this.expr(a)})`);
+          return parts.length > 1 ? `run { ${parts.join('; ')} }` : (parts[0] ?? 'println()');
+        }
+        this.err.warn(callee, `unsupported console.${method ?? '?'}()`);
+        return `TODO(console.${method ?? '?'})`;
+      }
 
       const LAMBDA_METHODS: Record<string, string> = {
         map: 'map', forEach: 'forEach', filter: 'filter', flatMap: 'flatMap',
@@ -300,7 +361,7 @@ export class Js2Kt {
     const paramsStr = params.length === 0 ? '' : `${params.map((p) => this.pattern(p)).join(', ')} -> `;
     if (body.type === 'BlockStatement') {
       const lines = this.blockLines(body, 0);
-      return ` { ${paramsStr}${lines.join('; ')} }`;
+      return ` { ${paramsStr}${lines.map((l) => l.replace(/;\s*$/, '')).join('; ')} }`;
     }
     return ` { ${paramsStr}${this.expr(body)} }`;
   }
@@ -309,37 +370,45 @@ export class Js2Kt {
     return this.arrowLambda(node);
   }
 
+  // JS `*`/`+`/`if`-expression precedence differs from Kotlin; parenthesize
+  // composite operands so JS grouping survives the translation.
+  private operand(n: JsNode): string {
+    const s = this.expr(n);
+    const kinds = ['BinaryExpression', 'LogicalExpression', 'ConditionalExpression', 'SequenceExpression'];
+    return kinds.includes(n.type) ? `(${s})` : s;
+  }
+
   private binaryExpr(node: JsNode): string {
     const op = node.operator as string;
     const left = node.left as JsNode;
     const right = node.right as JsNode;
     switch (op) {
       case '===':
-      case '==': return `${this.expr(left)} == ${this.expr(right)}`;
+      case '==': return `${this.operand(left)} == ${this.operand(right)}`;
       case '!==':
-      case '!=': return `${this.expr(left)} != ${this.expr(right)}`;
+      case '!=': return `${this.operand(left)} != ${this.operand(right)}`;
       case '&&':
       case '||': {
         const isString = (n: JsNode) => n.type === 'Literal' && typeof (n.value as unknown) === 'string';
         if (op === '||' && (isString(left) || isString(right))) {
           const l = this.expr(left);
-          return `(if (truthy(${l})) ${l} else ${this.expr(right)})`;
+          return `(if (truthy(${l})) ${l} else ${this.operand(right)})`;
         }
-        return `truthy(${this.expr(left)}) ${op} truthy(${this.expr(right)})`;
+        return `truthy(${this.operand(left)}) ${op} truthy(${this.operand(right)})`;
       }
-      case '+': return `${this.expr(left)} + ${this.expr(right)}`;
-      case '-': return `${this.expr(left)} - ${this.expr(right)}`;
-      case '*': return `${this.expr(left)} * ${this.expr(right)}`;
-      case '/': return `${this.expr(left)} / ${this.expr(right)}`;
-      case '%': return `${this.expr(left)} % ${this.expr(right)}`;
-      case '<': return `num(${this.expr(left)}) < num(${this.expr(right)})`;
-      case '>': return `num(${this.expr(left)}) > num(${this.expr(right)})`;
-      case '<=': return `num(${this.expr(left)}) <= num(${this.expr(right)})`;
-      case '>=': return `num(${this.expr(left)}) >= num(${this.expr(right)})`;
-      case '??': return `${this.expr(left)} ?: ${this.expr(right)}`;
+      case '+': return `${this.operand(left)} + ${this.operand(right)}`;
+      case '-': return `${this.operand(left)} - ${this.operand(right)}`;
+      case '*': return `${this.operand(left)} * ${this.operand(right)}`;
+      case '/': return `${this.operand(left)} / ${this.operand(right)}`;
+      case '%': return `${this.operand(left)} % ${this.operand(right)}`;
+      case '<': return `num(${this.operand(left)}) < num(${this.operand(right)})`;
+      case '>': return `num(${this.operand(left)}) > num(${this.operand(right)})`;
+      case '<=': return `num(${this.operand(left)}) <= num(${this.operand(right)})`;
+      case '>=': return `num(${this.operand(left)}) >= num(${this.operand(right)})`;
+      case '??': return `${this.operand(left)} ?: ${this.operand(right)}`;
       case '**': {
         this.err.warn(node, '`**` power operator maps to Math.pow in Kotlin');
-        return `Math.pow(${this.expr(left)}, ${this.expr(right)})`;
+        return `kotlin.math.pow((${this.operand(left)}).toDouble(), (${this.operand(right)}).toDouble())`;
       }
       default:
         this.err.warn(node, `unsupported binary operator: ${op}`);
@@ -352,7 +421,11 @@ export class Js2Kt {
     const arg = node.argument as JsNode;
     switch (op) {
       case '!': return `!${this.expr(arg)}`;
-      case '-': return `-${this.expr(arg)}`;
+      case '-': {
+        const kinds = ['BinaryExpression', 'LogicalExpression', 'ConditionalExpression', 'SequenceExpression'];
+        const inner = this.expr(arg);
+        return kinds.includes(arg.type) ? `-(${inner})` : `-${inner}`;
+      }
       case '+': return this.expr(arg);
       case 'typeof':
         this.err.warn(node, 'typeof is not supported in Kotlin');
@@ -384,7 +457,13 @@ export class Js2Kt {
     const test = node.test as JsNode;
     const consequent = node.consequent as JsNode;
     const alternate = node.alternate as JsNode;
-    return `if (truthy(${this.expr(test)})) ${this.expr(consequent)} else ${this.expr(alternate)}`;
+    const isIntLit = (n: JsNode) => n.type === 'Literal' && typeof (n.value as unknown) === 'number' && Number.isInteger(n.value as number);
+    const isFloatLit = (n: JsNode) => n.type === 'Literal' && typeof (n.value as unknown) === 'number' && !Number.isInteger(n.value as number);
+    let con = this.expr(consequent);
+    let alt = this.expr(alternate);
+    if (isFloatLit(consequent) && isIntLit(alternate)) alt = `${alt}.0`;
+    else if (isIntLit(consequent) && isFloatLit(alternate)) con = `${con}.0`;
+    return `if (truthy(${this.expr(test)})) ${con} else ${alt}`;
   }
 
   private templateLiteral(node: JsNode): string {
@@ -400,7 +479,7 @@ export class Js2Kt {
         if (e.type === 'Identifier') {
           out += `$${e.name}`;
         } else {
-          out += `\${${this.expr(e)}}`;
+          out += '$' + '{' + this.expr(e) + '}';
         }
       }
     }
