@@ -253,6 +253,51 @@ fun Home(content: @Composable () -> Unit = {}) {
 				horizontalArrangement = Arrangement.SpaceBetween,
 			) {
 				Text(
+					text = "Motion & sound",
+					style = TextStyle(fontSize = 18.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold, letterSpacing = -0.2.sp),
+				)
+				Text(
+					text = "bundled + device files",
+					style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant),
+				)
+			}
+			Column(
+				modifier = Modifier.fillMaxWidth(),
+				verticalArrangement = Arrangement.spacedBy(16.dp),
+			) {
+				veskVideo(
+					url = "android.resource://com.vesk.demo3/" + com.vesk.demo3.R.raw.demo_1,
+					controls = true,
+					modifier = Modifier.clip(RoundedCornerShape(16.dp)).fillMaxWidth().aspectRatio(16f / 9f),
+				)
+				veskVideo(
+					url = "android.resource://com.vesk.demo3/" + com.vesk.demo3.R.raw.demo_1,
+					autoplay = true,
+					loop = true,
+					muted = true,
+					modifier = Modifier.clip(RoundedCornerShape(16.dp)).fillMaxWidth(0.5f),
+				)
+				veskAudio(
+					url = "android.resource://com.vesk.demo3/" + com.vesk.demo3.R.raw.last_train,
+					controls = true,
+					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).padding(horizontal = 12.dp).padding(vertical = 8.dp),
+				)
+				veskAudio(
+					url = "/storage/emulated/0/vesk_media/Last Train Home.mp3",
+					controls = true,
+					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).padding(horizontal = 12.dp).padding(vertical = 8.dp),
+				)
+			}
+		}
+		Column(
+			modifier = Modifier.fillMaxWidth(),
+		) {
+			Row(
+				modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+				verticalAlignment = Alignment.CenterVertically,
+				horizontalArrangement = Arrangement.SpaceBetween,
+			) {
+				Text(
 					text = "New arrivals",
 					style = TextStyle(fontSize = 18.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold, letterSpacing = -0.2.sp),
 				)

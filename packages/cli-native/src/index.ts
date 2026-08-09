@@ -2,7 +2,7 @@ import { chmodSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, re
 import { join, relative, resolve, dirname, basename, extname } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { homedir } from 'node:os';
-import { compileVskResult, collectCustomCss, extractStylesheetLinks, extractImageSources, parseCssClasses } from '@compiler-native/index.ts';
+import { compileVskResult, collectCustomCss, extractStylesheetLinks, extractMediaSources, parseCssClasses } from '@compiler-native/index.ts';
 import type { ModifierParts } from '@compiler-native/tailwind.ts';
 import { setAdaptiveDark } from '@compiler-native/tailwind.ts';
 import { parse } from '@vesk/compiler';
@@ -247,6 +247,8 @@ function generateManifest(target: string, config: VeskConfig, mediaFileAccess: b
   const orientationAttr = config.orientation ? `\n            android:screenOrientation="${config.orientation}"` : '';
   const mediaPerms = mediaFileAccess
     ? `    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
 `
     : '';
@@ -315,7 +317,11 @@ import androidx.activity.result.contract.ActivityResultContracts
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         if (Build.VERSION.SDK_INT >= 33) {
-            mediaPermLauncher.launch(arrayOf(android.Manifest.permission.READ_MEDIA_IMAGES))
+            mediaPermLauncher.launch(arrayOf(
+                android.Manifest.permission.READ_MEDIA_IMAGES,
+                android.Manifest.permission.READ_MEDIA_VIDEO,
+                android.Manifest.permission.READ_MEDIA_AUDIO,
+            ))
         } else {
             mediaPermLauncher.launch(arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE))
         }
@@ -464,8 +470,21 @@ const RUNTIME_IMPORTS = `package app
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
@@ -481,6 +500,14 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import android.media.AudioAttributes
+import android.media.MediaPlayer
+import android.net.Uri
+import android.widget.MediaController
+import android.widget.VideoView
 import app.navigation.*
 `;
 
@@ -504,6 +531,118 @@ fun num(v: Any?): Double = when (v) {
 `;
 
 const RUNTIME_HELPERS: Record<string, { deps: string[]; src: string }> = {
+  'veskVideo': { deps: [], src: `
+// <video src controls autoplay loop muted> -> platform VideoView. Bundled
+// assets arrive as android.resource:// URIs, device paths get a file:// prefix.
+@Composable
+fun veskVideo(
+    url: String,
+    controls: Boolean = false,
+    autoplay: Boolean = false,
+    loop: Boolean = false,
+    muted: Boolean = false,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    val videoView = remember { VideoView(context) }
+    DisposableEffect(Unit) {
+        onDispose { videoView.stopPlayback() }
+    }
+    AndroidView(
+        factory = { videoView },
+        modifier = modifier,
+        update = {
+            it.setOnCompletionListener { mp -> if (loop) { mp.seekTo(0); mp.start() } }
+            if (controls) {
+                val mc = MediaController(context)
+                it.setMediaController(mc)
+                mc.setAnchorView(it)
+            }
+            it.setVideoURI(
+                if (url.startsWith("/")) Uri.fromFile(java.io.File(url)) else Uri.parse(url)
+            )
+            it.setOnPreparedListener { mp ->
+                if (muted) mp.setVolume(0f, 0f)
+                if (autoplay) it.start()
+            }
+        },
+    )
+}
+` },
+  'veskAudio': { deps: [], src: `
+// <audio controls autoplay loop muted> -> MediaPlayer backed by a compact
+// play/pause bar. Without controls the player is invisible but still plays.
+@Composable
+fun veskAudio(
+    url: String,
+    controls: Boolean = true,
+    autoplay: Boolean = false,
+    loop: Boolean = false,
+    muted: Boolean = false,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    var playing by remember(url) { mutableStateOf(false) }
+    var ready by remember(url) { mutableStateOf(false) }
+    val player = remember(url) {
+        MediaPlayer().apply {
+            setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build()
+            )
+            isLooping = loop
+            if (muted) setVolume(0f, 0f)
+            setDataSource(context, if (url.startsWith("/")) Uri.fromFile(java.io.File(url)) else Uri.parse(url))
+            setOnPreparedListener {
+                ready = true
+                if (autoplay) {
+                    it.start()
+                    playing = true
+                }
+            }
+            setOnCompletionListener {
+                if (!loop) {
+                    playing = false
+                    it.seekTo(0)
+                }
+            }
+            setOnErrorListener { _, _, _ ->
+                playing = false
+                true
+            }
+            prepareAsync()
+        }
+    }
+    DisposableEffect(player) {
+        onDispose { player.release() }
+    }
+    if (!controls) return
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+        Button(
+            onClick = {
+                if (playing) {
+                    player.pause()
+                    playing = false
+                } else if (ready) {
+                    player.start()
+                    playing = true
+                }
+            },
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+        ) {
+            Text(if (playing) "Pause" else "Play", fontSize = 12.sp)
+        }
+        Spacer(Modifier.width(12.dp))
+        Text(
+            if (playing) "Playing" else "Paused",
+            fontSize = 12.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+` },
   'veskFileImage': { deps: [], src: `
 // <img src="/storage/..."> (or content:// and file://): runtime decode from
 // device storage. Missing/unreadable files render a transparent placeholder.
@@ -679,7 +818,7 @@ fun Outlet(content: @Composable () -> Unit = {}) {
 ` },
 };
 
-const RUNTIME_ORDER = ['veskFileImage', 'veskColorFilter', 'veskBrightness', 'veskContrast', 'veskGrayscale', 'veskSaturate', 'veskInvert', 'veskSepia', 'veskHueRotate', 'veskDashedBorder', 'veskSideBorder', 'veskDivideLine', 'veskSkew', 'Link', 'NavLink', 'Outlet'];
+const RUNTIME_ORDER = ['veskVideo', 'veskAudio', 'veskFileImage', 'veskColorFilter', 'veskBrightness', 'veskContrast', 'veskGrayscale', 'veskSaturate', 'veskInvert', 'veskSepia', 'veskHueRotate', 'veskDashedBorder', 'veskSideBorder', 'veskDivideLine', 'veskSkew', 'Link', 'NavLink', 'Outlet'];
 
 function collectRuntimeUsage(appDir: string): Set<string> {
   const used = new Set<string>();
@@ -782,44 +921,59 @@ function compileVskFiles(appDir: string, config: VeskConfig): void {
   }
   for (const s of new Set([...cssSkipped, ...linkSkipped])) log('css', s);
 
-  // <img src="/media/..."> project assets -> bundled into res/drawable-xxhdpi.
+  // <img src="/media/..."> project assets -> bundled into res/drawable-xxhdpi;
+  // <video>/<audio> project media -> bundled into res/raw (android.resource://
+  // at runtime). Resource names share one namespace, so dedupe across both.
   const imageResources = new Map<string, string>();
+  const mediaResources = new Map<string, string>();
   const usedNames = new Set<string>();
   const resDir = join(appDir, 'src', 'main', 'res');
   for (const e of readdirSync(resDir, { withFileTypes: true })) {
     if (e.name.startsWith('drawable') && e.isDirectory()) rmSync(join(resDir, e.name), { recursive: true, force: true });
   }
+  const rawDir = join(resDir, 'raw');
+  if (existsSync(rawDir)) rmSync(rawDir, { recursive: true, force: true });
+  const IMAGE_EXTS = new Set(['.png', '.jpg', '.jpeg', '.webp']);
+  const MEDIA_EXTS = new Set(['.mp4', '.webm', '.mp3', '.m4a', '.aac', '.ogg', '.wav']);
   for (const file of vskFiles) {
     const source = readFileSync(file, 'utf8');
-    for (const { src } of extractImageSources(source)) {
+    for (const { src, element } of extractMediaSources(source)) {
       if (isFileImageSrc(src)) continue;
-      const imgPath = src.startsWith('/') ? resolve(appDir, src.slice(1)) : resolve(dirname(file), src);
-      if (!existsSync(imgPath)) {
-        log('img', `${relative(appDir, file)}: <img src="${src}"> file not found`);
+      const mediaPath = src.startsWith('/') ? resolve(appDir, src.slice(1)) : resolve(dirname(file), src);
+      if (!existsSync(mediaPath)) {
+        log('media', `${relative(appDir, file)}: <${element} src="${src}"> file not found`);
         continue;
       }
-      const ext = extname(imgPath).toLowerCase();
-      if (!['.png', '.jpg', '.jpeg', '.webp'].includes(ext)) {
-        log('img', `${relative(appDir, file)}: unsupported image type ${ext} for "${src}"`);
+      const ext = extname(mediaPath).toLowerCase();
+      const isImage = element === 'img';
+      if (!(isImage ? IMAGE_EXTS : MEDIA_EXTS).has(ext)) {
+        log('media', `${relative(appDir, file)}: unsupported ${element} type ${ext} for "${src}"`);
         continue;
       }
-      const base = basename(imgPath, ext).toLowerCase().replace(/[^a-z0-9_]/g, '_') || 'img';
+      const base = basename(mediaPath, ext).toLowerCase().replace(/[^a-z0-9_]/g, '_') || (isImage ? 'img' : 'media');
       let name = base;
       let i = 1;
       while (usedNames.has(name)) name = `${base}_${i++}`;
       usedNames.add(name);
-      const drawable = join(resDir, 'drawable-xxhdpi');
-      mkdirSync(drawable, { recursive: true });
-      cpSync(imgPath, join(drawable, `${name}${ext === '.jpeg' ? '.jpg' : ext}`));
-      imageResources.set(src, name);
-      log('img', `${relative(appDir, file)} -> drawable-xxhdpi/${name}${ext}`);
+      if (isImage) {
+        const drawable = join(resDir, 'drawable-xxhdpi');
+        mkdirSync(drawable, { recursive: true });
+        cpSync(mediaPath, join(drawable, `${name}${ext === '.jpeg' ? '.jpg' : ext}`));
+        imageResources.set(src, name);
+        log('img', `${relative(appDir, file)} -> drawable-xxhdpi/${name}${ext}`);
+      } else {
+        mkdirSync(rawDir, { recursive: true });
+        cpSync(mediaPath, join(rawDir, `${name}${ext}`));
+        mediaResources.set(src, name);
+        log('media', `${relative(appDir, file)} -> res/raw/${name}${ext}`);
+      }
     }
   }
 
   const seen = new Map<string, number>();
   for (const file of vskFiles) {
     const source = readFileSync(file, 'utf8');
-    const result = compileVskResult(source, file, { componentsWithoutProps, customClasses, scopedCustomClasses: scopedClasses, imageResources, rClass: `${config.appId}.R`, rootName: config.root ?? '' });
+    const result = compileVskResult(source, file, { componentsWithoutProps, customClasses, scopedCustomClasses: scopedClasses, imageResources, mediaResources, rClass: `${config.appId}.R`, rootName: config.root ?? '' });
     if (result.errors.length > 0) {
       console.error(`  [compile] errors in ${relative(appDir, file)}:`);
       for (const e of result.errors) console.error(`    ! ${e}`);
@@ -946,7 +1100,7 @@ function generateProject(target: string, config: VeskConfig): void {
   setAdaptiveDark(!!config.darkColors);
   generateAppBuildGradleKts(target, config);
   const mediaFileAccess = collectVskFiles(appDir).some((f) =>
-    extractImageSources(readFileSync(f, 'utf8')).some(({ src }) => isFileImageSrc(src)),
+    extractMediaSources(readFileSync(f, 'utf8')).some(({ src }) => isFileImageSrc(src)),
   );
   generateManifest(target, config, mediaFileAccess);
   generateThemes(target, config);

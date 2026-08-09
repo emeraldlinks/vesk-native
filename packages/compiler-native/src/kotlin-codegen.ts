@@ -39,6 +39,7 @@ export interface CompileOptions {
   customClasses?: Map<string, ModifierParts>;
   scopedCustomClasses?: Map<string, Map<string, ModifierParts>>;
   imageResources?: Map<string, string>;
+  mediaResources?: Map<string, string>;
   rClass?: string;
   rootName?: string;
 }
@@ -127,15 +128,25 @@ function imageLines(node: StaticNode, em: Emitter, level: number, parentAxis: 'c
 
 // Collect every static src on <img> elements (AST-only, no regex).
 export function extractImageSources(source: string): Array<{ src: string; component: string }> {
-  const out: Array<{ src: string; component: string }> = [];
+  return extractMediaSources(source).filter((m) => m.element === 'img');
+}
+
+// Collect every static src on <img> / <video> / <audio> elements (AST-only,
+// no regex). The CLI uses this to bundle project assets (drawable/raw) and to
+// detect device-file references for storage permissions.
+export function extractMediaSources(source: string): Array<{ src: string; element: 'img' | 'video' | 'audio'; component: string }> {
+  const out: Array<{ src: string; element: 'img' | 'video' | 'audio'; component: string }> = [];
   try {
     const ast = parse(source, { filename: 'component.vsk' });
     const ir = generateIR(ast, source);
     for (const comp of ir.components) {
       walkIR(comp.body, (node) => {
-        if (node instanceof StaticNode && node.tag.toLowerCase() === 'img') {
-          const src = node.attributes.find((a) => a.name === 'src')?.value;
-          if (src) out.push({ src, component: comp.name });
+        if (node instanceof StaticNode) {
+          const tag = node.tag.toLowerCase();
+          if (tag === 'img' || tag === 'video' || tag === 'audio') {
+            const src = node.attributes.find((a) => a.name === 'src')?.value;
+            if (src) out.push({ src, element: tag, component: comp.name });
+          }
         }
       });
     }
@@ -143,6 +154,53 @@ export function extractImageSources(source: string): Array<{ src: string; compon
     // Unparsable files are reported by the compile step itself.
   }
   return out;
+}
+
+// <video src controls autoplay loop muted> / <audio ...> -> veskVideo /
+// veskAudio runtime helpers. Project-relative srcs are bundled to res/raw and
+// referenced via android.resource:// URIs; device paths/content URIs stream at
+// runtime. A video without explicit sizing gets a 16:9 default.
+function mediaLines(node: StaticNode, em: Emitter, level: number, parentAxis: 'column' | 'row' | null, extraModifier: string | null): string[] {
+  const classes = em.classList(node);
+  if (isHidden(classes, em.customClasses)) return [];
+  const pad = '\t'.repeat(level);
+  const padIn = '\t'.repeat(level + 1);
+  const parts = classify(classes, em.customClasses, parentAxis === 'row' ? 'row' : 'column');
+  if (parentAxis === null) stripScopeMods(parts);
+  let modifier = buildModifier(parts);
+  if (node.tag === 'video' && parts.size.length === 0) modifier = `${modifier ? modifier + '.' : ''}fillMaxWidth().aspectRatio(16f / 9f)`;
+  modifier = prependModifier(modifier, extraModifier);
+
+  const has = (name: string) => node.attributes.some((a) => a.name === name);
+  let urlArg: string | null = null;
+  const staticSrc = node.attributes.find((a) => a.name === 'src')?.value;
+  const dynSrc = em.dynamicAttrs(node).get('src');
+  if (staticSrc !== undefined) {
+    if (isFileImageSrc(staticSrc)) {
+      urlArg = em.ktString(staticSrc);
+    } else {
+      const res = em.mediaResources?.get(staticSrc);
+      if (res) {
+        urlArg = `"android.resource://${em.rClass.replace(/\.R$/, '')}/" + ${em.rClass}.raw.${res}`;
+      } else {
+        em.err.warn(null, `<${node.tag} src="${staticSrc}">: project file not found (looked up ${em.mediaResources ? 'bundled media' : 'no media map'})`);
+      }
+    }
+  } else if (dynSrc) {
+    urlArg = em.exprOf(dynSrc as unknown as Expression);
+  } else {
+    em.err.warn(null, `<${node.tag}> is missing a src attribute`);
+  }
+
+  if (!urlArg) return [pad + 'Box {}'];
+  const args: string[] = [];
+  args.push(`${padIn}url = ${urlArg},`);
+  const boolAttrs: Array<[string, string]> = [['controls', 'controls'], ['autoplay', 'autoplay'], ['loop', 'loop'], ['muted', 'muted']];
+  for (const [name, kt] of boolAttrs) {
+    if (has(name)) args.push(`${padIn}${kt} = true,`);
+  }
+  if (modifier) args.push(`${padIn}modifier = ${modifier},`);
+  return [pad + `${node.tag === 'video' ? 'veskVideo' : 'veskAudio'}(`, ...args, pad + ')'];
 }
 
 // Button content: plain text children (static and/or dynamic) merge into one
@@ -261,15 +319,17 @@ class Emitter {
   componentsWithoutProps?: Set<string>;
   customClasses?: Map<string, ModifierParts>;
   imageResources?: Map<string, string>;
+  mediaResources?: Map<string, string>;
   rClass: string;
 
-  constructor(err: KtErrors, tracked: Map<string, TrackedInfo>, componentsWithoutProps?: Set<string>, customClasses?: Map<string, ModifierParts>, imageResources?: Map<string, string>, rClass = 'app.R') {
+  constructor(err: KtErrors, tracked: Map<string, TrackedInfo>, componentsWithoutProps?: Set<string>, customClasses?: Map<string, ModifierParts>, imageResources?: Map<string, string>, mediaResources?: Map<string, string>, rClass = 'app.R') {
     this.err = err;
     this.j2k = new Js2Kt(err);
     this.tracked = tracked;
     this.componentsWithoutProps = componentsWithoutProps;
     this.customClasses = customClasses;
     this.imageResources = imageResources;
+    this.mediaResources = mediaResources;
     this.rClass = rClass;
   }
 
@@ -565,6 +625,10 @@ function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: '
 
   if (info.kind === 'image') {
     return imageLines(node, em, level, parentAxis, extraModifier);
+  }
+
+  if (info.kind === 'video' || info.kind === 'audio') {
+    return mediaLines(node, em, level, parentAxis, extraModifier);
   }
 
   if (info.kind === 'text') {
@@ -914,7 +978,7 @@ function runCompile(source: string, filename: string, options: CompileOptions): 
       resolvedClasses = new Map(customClasses);
       for (const [k, v] of own) resolvedClasses.set(k, v); // scoped wins over global
     }
-    const em = new Emitter(err, tracked, options.componentsWithoutProps, resolvedClasses, options.imageResources, options.rClass);
+    const em = new Emitter(err, tracked, options.componentsWithoutProps, resolvedClasses, options.imageResources, options.mediaResources, options.rClass);
 
     const propsArg = propsClass ? `props: ${comp.name}Props${propsParamDefault ? ` = ${comp.name}Props()` : ''}` : '';
     const params = [propsArg, 'content: @Composable () -> Unit = {}'].filter(Boolean).join(', ');

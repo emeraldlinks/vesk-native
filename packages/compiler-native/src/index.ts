@@ -1,4 +1,4 @@
-export { compileVsk, getCompileErrors, compileVskResult, collectCustomCss, extractStylesheetLinks, extractImageSources } from '@compiler-native/kotlin-codegen.ts';
+export { compileVsk, getCompileErrors, compileVskResult, collectCustomCss, extractStylesheetLinks, extractImageSources, extractMediaSources } from '@compiler-native/kotlin-codegen.ts';
 export type { CompileOptions, CompileResult } from '@compiler-native/kotlin-codegen.ts';
 export { parseCssClasses } from '@compiler-native/css.ts';
 export type { CssParseResult } from '@compiler-native/css.ts';

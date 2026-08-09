@@ -1,4 +1,4 @@
-export type ElementKind = 'container' | 'text' | 'button' | 'input' | 'image';
+export type ElementKind = 'container' | 'text' | 'button' | 'input' | 'image' | 'video' | 'audio';
 
 const TEXT_TAGS = new Set([
   'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
@@ -20,6 +20,8 @@ export function elementInfo(tag: string): ElementInfo {
   if (tag === 'button') return { kind: 'button', composable: 'Button' };
   if (tag === 'input' || tag === 'textarea') return { kind: 'input', composable: 'OutlinedTextField' };
   if (tag === 'img') return { kind: 'image', composable: 'Image' };
+  if (tag === 'video') return { kind: 'video', composable: 'veskVideo' };
+  if (tag === 'audio') return { kind: 'audio', composable: 'veskAudio' };
   if (TEXT_TAGS.has(tag)) return { kind: 'text', composable: 'Text' };
   if (CONTAINER_TAGS.has(tag)) return { kind: 'container', composable: 'container' };
   return { kind: 'container', composable: 'container' };
@@ -28,6 +30,7 @@ export function elementInfo(tag: string): ElementInfo {
 export function isVoidTag(tag: string): boolean {
   return (
     tag === 'br' || tag === 'hr' || tag === 'img' || tag === 'meta' ||
-    tag === 'link' || tag === 'input' || tag === 'wbr'
+    tag === 'link' || tag === 'input' || tag === 'wbr' ||
+    tag === 'video' || tag === 'audio'
   );
 }

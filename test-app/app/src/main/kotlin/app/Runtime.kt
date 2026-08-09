@@ -2,8 +2,21 @@ package app
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
@@ -19,6 +32,14 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import android.media.AudioAttributes
+import android.media.MediaPlayer
+import android.net.Uri
+import android.widget.MediaController
+import android.widget.VideoView
 import app.navigation.*
 
 // Native counterparts of @vesk/runtime exports referenced by copied .vsk files.
@@ -37,6 +58,118 @@ fun num(v: Any?): Double = when (v) {
     is Boolean -> if (v) 1.0 else 0.0
     else -> 0.0
 }
+
+// <video src controls autoplay loop muted> -> platform VideoView. Bundled
+// assets arrive as android.resource:// URIs, device paths get a file:// prefix.
+@Composable
+fun veskVideo(
+    url: String,
+    controls: Boolean = false,
+    autoplay: Boolean = false,
+    loop: Boolean = false,
+    muted: Boolean = false,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    val videoView = remember { VideoView(context) }
+    DisposableEffect(Unit) {
+        onDispose { videoView.stopPlayback() }
+    }
+    AndroidView(
+        factory = { videoView },
+        modifier = modifier,
+        update = {
+            it.setOnCompletionListener { mp -> if (loop) { mp.seekTo(0); mp.start() } }
+            if (controls) {
+                val mc = MediaController(context)
+                it.setMediaController(mc)
+                mc.setAnchorView(it)
+            }
+            it.setVideoURI(
+                if (url.startsWith("/")) Uri.fromFile(java.io.File(url)) else Uri.parse(url)
+            )
+            it.setOnPreparedListener { mp ->
+                if (muted) mp.setVolume(0f, 0f)
+                if (autoplay) it.start()
+            }
+        },
+    )
+}
+
+
+// <audio controls autoplay loop muted> -> MediaPlayer backed by a compact
+// play/pause bar. Without controls the player is invisible but still plays.
+@Composable
+fun veskAudio(
+    url: String,
+    controls: Boolean = true,
+    autoplay: Boolean = false,
+    loop: Boolean = false,
+    muted: Boolean = false,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    var playing by remember(url) { mutableStateOf(false) }
+    var ready by remember(url) { mutableStateOf(false) }
+    val player = remember(url) {
+        MediaPlayer().apply {
+            setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build()
+            )
+            isLooping = loop
+            if (muted) setVolume(0f, 0f)
+            setDataSource(context, if (url.startsWith("/")) Uri.fromFile(java.io.File(url)) else Uri.parse(url))
+            setOnPreparedListener {
+                ready = true
+                if (autoplay) {
+                    it.start()
+                    playing = true
+                }
+            }
+            setOnCompletionListener {
+                if (!loop) {
+                    playing = false
+                    it.seekTo(0)
+                }
+            }
+            setOnErrorListener { _, _, _ ->
+                playing = false
+                true
+            }
+            prepareAsync()
+        }
+    }
+    DisposableEffect(player) {
+        onDispose { player.release() }
+    }
+    if (!controls) return
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+        Button(
+            onClick = {
+                if (playing) {
+                    player.pause()
+                    playing = false
+                } else if (ready) {
+                    player.start()
+                    playing = true
+                }
+            },
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+        ) {
+            Text(if (playing) "Pause" else "Play", fontSize = 12.sp)
+        }
+        Spacer(Modifier.width(12.dp))
+        Text(
+            if (playing) "Playing" else "Paused",
+            fontSize = 12.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
 
 // Tailwind color filter base: color-matrix saveLayer; works on all API levels.
 private fun Modifier.veskColorFilter(matrix: ColorMatrix): Modifier = drawWithContent {
