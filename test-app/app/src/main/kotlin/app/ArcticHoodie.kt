@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowColumn
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -27,6 +28,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -60,6 +62,8 @@ import androidx.compose.ui.zIndex
 @Composable
 fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 	val qty = remember { mutableStateOf(1) }
+	val size = remember { mutableStateOf("M") }
+	val color = remember { mutableStateOf("Pine") }
 	val added = remember { mutableStateOf(false) }
 	Column(
 		modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(vertical = 8.dp),
@@ -71,7 +75,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 			horizontalArrangement = Arrangement.Center,
 		) {
 			Text(
-				text = "Since 2019 · best seller",
+				text = "Fleece · 330 gsm",
 				modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0x33FFFFFF)).padding(horizontal = 12.dp).padding(vertical = 6.dp),
 				style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
 			)
@@ -100,7 +104,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 					style = TextStyle(color = Color(0xFFF59E0B), letterSpacing = 0.4.sp, fontWeight = FontWeight.Medium),
 				)
 				Text(
-					text = "4.7 (212 reviews)",
+					text = "4.5 (212 reviews)",
 					style = TextStyle(color = Color(0xFF6B7280)),
 				)
 			}
@@ -124,97 +128,198 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 					style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF16A34A), fontWeight = FontWeight.SemiBold),
 				)
 			}
+			Text(
+				text = " Brushed-back polar fleece with a storm hood and zippered chest pocket. The classic layer for everything from trail to town. ",
+				modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+				style = TextStyle(fontSize = 14.sp, lineHeight = 24.sp, color = Color(0xFF4B5563)),
+			)
 		}
 		Column(
 			modifier = Modifier.fillMaxWidth(),
+			verticalArrangement = Arrangement.spacedBy(8.dp),
 		) {
 			Text(
-				text = "Color — pine green",
-				modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-				style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
+				text = ("Color — " + (color.value).toString()).uppercase(),
+				modifier = Modifier.fillMaxWidth(),
+				style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF374151), letterSpacing = 0.2.sp),
 			)
 			Row(
 				modifier = Modifier.fillMaxWidth(),
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
-				Column(
-					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF047857)).border(2.dp, Color(0xFF047857)).width(32.dp).height(32.dp),
+				Button(
+					onClick = { color.value = "Pine" },
+					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
+				if (truthy(color.value == "Pine")) {
+					Column(
+						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF047857)).border(2.dp, Color(0xFF2563EB)).width(36.dp).height(36.dp),
+					) {
+					}
+				} else {
+					Column(
+						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF047857)).width(36.dp).height(36.dp),
+					) {
+					}
 				}
-				Column(
-					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF1E293B)).width(32.dp).height(32.dp),
-				) {
 				}
-				Column(
-					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFE11D48)).width(32.dp).height(32.dp),
+				Button(
+					onClick = { color.value = "Storm" },
+					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
+				if (truthy(color.value == "Storm")) {
+					Column(
+						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF4B5563)).border(2.dp, Color(0xFF2563EB)).width(36.dp).height(36.dp),
+					) {
+					}
+				} else {
+					Column(
+						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF4B5563)).width(36.dp).height(36.dp),
+					) {
+					}
 				}
-				Column(
-					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFF59E0B)).width(32.dp).height(32.dp),
+				}
+				Button(
+					onClick = { color.value = "Oat" },
+					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
+				if (truthy(color.value == "Oat")) {
+					Column(
+						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFFEF3C7)).border(1.dp, Color(0xFFE5E7EB)).border(2.dp, Color(0xFF2563EB)).width(36.dp).height(36.dp),
+					) {
+					}
+				} else {
+					Column(
+						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFFEF3C7)).border(1.dp, Color(0xFFE5E7EB)).width(36.dp).height(36.dp),
+					) {
+					}
+				}
 				}
 			}
 		}
 		Column(
 			modifier = Modifier.fillMaxWidth(),
+			verticalArrangement = Arrangement.spacedBy(8.dp),
 		) {
 			Text(
-				text = "Size",
-				modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-				style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
+				text = ("Size — " + (size.value).toString()).uppercase(),
+				modifier = Modifier.fillMaxWidth(),
+				style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF374151), letterSpacing = 0.2.sp),
 			)
 			Row(
 				modifier = Modifier.fillMaxWidth(),
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
-				Row(
-					modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(Color(0xFF2563EB)).width(40.dp).height(40.dp),
-					verticalAlignment = Alignment.CenterVertically,
-					horizontalArrangement = Arrangement.Center,
+				Button(
+					onClick = { size.value = "S" },
+					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
-					Text(
-						text = "S",
-					)
+				if (truthy(size.value == "S")) {
+					Row(
+						modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Color(0xFF2563EB)).width(44.dp).height(44.dp),
+						verticalAlignment = Alignment.CenterVertically,
+						horizontalArrangement = Arrangement.Center,
+					) {
+						Text(
+							text = "S",
+						)
+					}
+				} else {
+					Row(
+						modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Color(0xFFF3F4F6)).width(44.dp).height(44.dp),
+						verticalAlignment = Alignment.CenterVertically,
+						horizontalArrangement = Arrangement.Center,
+					) {
+						Text(
+							text = "S",
+						)
+					}
 				}
-				Row(
-					modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(Color(0xFFF3F4F6)).width(40.dp).height(40.dp),
-					verticalAlignment = Alignment.CenterVertically,
-					horizontalArrangement = Arrangement.Center,
-				) {
-					Text(
-						text = "M",
-					)
 				}
-				Row(
-					modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(Color(0xFFF3F4F6)).width(40.dp).height(40.dp),
-					verticalAlignment = Alignment.CenterVertically,
-					horizontalArrangement = Arrangement.Center,
+				Button(
+					onClick = { size.value = "M" },
+					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
-					Text(
-						text = "L",
-					)
+				if (truthy(size.value == "M")) {
+					Row(
+						modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Color(0xFF2563EB)).width(44.dp).height(44.dp),
+						verticalAlignment = Alignment.CenterVertically,
+						horizontalArrangement = Arrangement.Center,
+					) {
+						Text(
+							text = "M",
+						)
+					}
+				} else {
+					Row(
+						modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Color(0xFFF3F4F6)).width(44.dp).height(44.dp),
+						verticalAlignment = Alignment.CenterVertically,
+						horizontalArrangement = Arrangement.Center,
+					) {
+						Text(
+							text = "M",
+						)
+					}
 				}
-				Row(
-					modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(Color(0xFFF3F4F6)).width(40.dp).height(40.dp),
-					verticalAlignment = Alignment.CenterVertically,
-					horizontalArrangement = Arrangement.Center,
-				) {
-					Text(
-						text = "XL",
-					)
 				}
-				Row(
-					modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(Color(0xFFF3F4F6)).width(40.dp).height(40.dp),
-					verticalAlignment = Alignment.CenterVertically,
-					horizontalArrangement = Arrangement.Center,
+				Button(
+					onClick = { size.value = "L" },
+					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
-					Text(
-						text = "2XL",
-					)
-					Text(
-						text = "(low)",
-						style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp),
-					)
+				if (truthy(size.value == "L")) {
+					Row(
+						modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Color(0xFF2563EB)).width(44.dp).height(44.dp),
+						verticalAlignment = Alignment.CenterVertically,
+						horizontalArrangement = Arrangement.Center,
+					) {
+						Text(
+							text = "L",
+						)
+					}
+				} else {
+					Row(
+						modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Color(0xFFF3F4F6)).width(44.dp).height(44.dp),
+						verticalAlignment = Alignment.CenterVertically,
+						horizontalArrangement = Arrangement.Center,
+					) {
+						Text(
+							text = "L",
+						)
+					}
+				}
+				}
+				Button(
+					onClick = { size.value = "XL" },
+					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
+				) {
+				if (truthy(size.value == "XL")) {
+					Row(
+						modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Color(0xFF2563EB)).width(44.dp).height(44.dp),
+						verticalAlignment = Alignment.CenterVertically,
+						horizontalArrangement = Arrangement.Center,
+					) {
+						Text(
+							text = "XL",
+						)
+					}
+				} else {
+					Row(
+						modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Color(0xFFF3F4F6)).width(44.dp).height(44.dp),
+						verticalAlignment = Alignment.CenterVertically,
+						horizontalArrangement = Arrangement.Center,
+					) {
+						Text(
+							text = "XL",
+						)
+					}
+				}
 				}
 			}
 		}
@@ -224,191 +329,69 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 			horizontalArrangement = Arrangement.spacedBy(12.dp),
 		) {
 			Row(
-				modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFF3F4F6)).padding(horizontal = 8.dp),
+				modifier = Modifier.shadow(1.dp).clip(RoundedCornerShape(9999.dp)).background(Color(0xFFFFFFFF)).border(1.dp, Color(0xFFE5E7EB)).padding(4.dp),
 				verticalAlignment = Alignment.CenterVertically,
+				horizontalArrangement = Arrangement.spacedBy(4.dp),
 			) {
 				Button(
-					onClick = { if (truthy(num(qty.value) > num(1))) qty.value = qty.value + -1; },
-					modifier = Modifier.width(36.dp).height(36.dp),
+					onClick = { if (truthy(num(qty.value) > num(1))) qty.value = qty.value + -1 },
+					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFF3F4F6)).width(36.dp).height(36.dp),
+					shape = RoundedCornerShape(9999.dp),
+					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
-					Text("−")
+				Text(
+					text = "−",
+					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFF3F4F6)).width(36.dp).height(36.dp),
+					style = TextStyle(fontSize = 18.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold, color = Color(0xFF4B5563)),
+				)
 				}
 				Text(
 					text = (qty.value).toString(),
-					modifier = Modifier.width(24.dp),
+					modifier = Modifier.width(32.dp),
 					style = TextStyle(textAlign = TextAlign.Center, fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
 				)
 				Button(
 					onClick = { qty.value = qty.value + 1 },
-					modifier = Modifier.width(36.dp).height(36.dp),
+					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)).width(36.dp).height(36.dp),
+					shape = RoundedCornerShape(9999.dp),
+					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
-					Text("+")
+				Text(
+					text = "+",
+					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)).width(36.dp).height(36.dp),
+					style = TextStyle(fontSize = 18.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold, color = Color(0xFFFFFFFF)),
+				)
 				}
 			}
 			Button(
-				onClick = { added.value = true },
-				modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF2563EB)).weight(1f).padding(vertical = 12.dp),
+				onClick = { added.value = !added.value },
+				modifier = Modifier.shadow(1.dp).clip(RoundedCornerShape(9999.dp)).background(Color(0xFF2563EB)).weight(1f).padding(vertical = 14.dp),
+				shape = RoundedCornerShape(9999.dp),
+				colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+				elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 			) {
+			if (truthy(added.value)) {
+				Text(
+					text = ("Added to bag ✓").toString(),
+				)
+			} else {
+				Text(
+					text = ("Add to cart · ${'$'}" + (89 * qty.value)).toString(),
+				)
+			}
 			}
 		}
-		Column(
-			modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).border(1.dp, Color(0xFFE5E7EB)).padding(16.dp),
-			verticalArrangement = Arrangement.spacedBy(12.dp),
-		) {
-			Row(
-				modifier = Modifier.fillMaxWidth(),
-				horizontalArrangement = Arrangement.spacedBy(12.dp),
-			) {
-				Row(
-					modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(Color(0xFFDCFCE7)).width(36.dp).height(36.dp),
-					verticalAlignment = Alignment.CenterVertically,
-					horizontalArrangement = Arrangement.Center,
-				) {
-					Text(
-						text = "✓",
-						style = TextStyle(color = Color(0xFF15803D), fontWeight = FontWeight.Bold, fontSize = 14.sp, lineHeight = 20.sp),
-					)
-				}
-				Column {
-					Text(
-						text = "Free shipping",
-						modifier = Modifier.fillMaxWidth(),
-						style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
-					)
-					Text(
-						text = "Delivered free on orders over ${'$'}150",
-						modifier = Modifier.fillMaxWidth(),
-						style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF6B7280)),
-					)
-				}
-			}
-			Row(
-				modifier = Modifier.fillMaxWidth(),
-				horizontalArrangement = Arrangement.spacedBy(12.dp),
-			) {
-				Row(
-					modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(Color(0xFFDCFCE7)).width(36.dp).height(36.dp),
-					verticalAlignment = Alignment.CenterVertically,
-					horizontalArrangement = Arrangement.Center,
-				) {
-					Text(
-						text = "✓",
-						style = TextStyle(color = Color(0xFF15803D), fontWeight = FontWeight.Bold, fontSize = 14.sp, lineHeight = 20.sp),
-					)
-				}
-				Column {
-					Text(
-						text = "30-day returns",
-						modifier = Modifier.fillMaxWidth(),
-						style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
-					)
-					Text(
-						text = "Free returns within 30 days of delivery",
-						modifier = Modifier.fillMaxWidth(),
-						style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF6B7280)),
-					)
-				}
-			}
-		}
-		Column(
-			modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).veskDashedBorder(2.dp, Color(0xFFA5B4FC), floatArrayOf(12f, 12f)).padding(16.dp),
-		) {
-			Text(
-				text = "Nordi+ member price",
-				modifier = Modifier.fillMaxWidth(),
-				style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF4338CA)),
-			)
-			Text(
-				text = "Members save an extra 10% on this item at checkout.",
-				modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-				style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF6B7280)),
-			)
-		}
-		Column(
-			modifier = Modifier.fillMaxWidth(),
-		) {
-			Text(
-				text = "You may also like",
-				modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
-				style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
-			)
-			Row(
-				modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(bottom = 8.dp),
-				horizontalArrangement = Arrangement.spacedBy(12.dp),
-			) {
+		NavLink(props = NavLinkProps(href = "/cart"))
+			{
 				Column(
-					modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(Color(0xFFF3F4F6)).width(144.dp),
+					modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)).padding(vertical = 14.dp),
 				) {
-					Column(
-						modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFF4ADE80), Color(0xFF059669)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
-					) {
-					}
-					Column(
-						modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(vertical = 8.dp),
-					) {
-						Text(
-							text = "Storm Shell",
-							modifier = Modifier.fillMaxWidth(),
-							style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold),
-							maxLines = 1,
-							overflow = TextOverflow.Ellipsis,
-						)
-						Text(
-							text = "${'$'}189",
-							modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-							style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
-						)
-					}
-				}
-				Column(
-					modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(Color(0xFFF3F4F6)).width(144.dp),
-				) {
-					Column(
-						modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFFC084FC), Color(0xFF7C3AED)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
-					) {
-					}
-					Column(
-						modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(vertical = 8.dp),
-					) {
-						Text(
-							text = "Down Puffer",
-							modifier = Modifier.fillMaxWidth(),
-							style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold),
-							maxLines = 1,
-							overflow = TextOverflow.Ellipsis,
-						)
-						Text(
-							text = "${'$'}240",
-							modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-							style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
-						)
-					}
-				}
-				Column(
-					modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(Color(0xFFF3F4F6)).width(144.dp),
-				) {
-					Column(
-						modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFFFB923C), Color(0xFFD97706)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
-					) {
-					}
-					Column(
-						modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(vertical = 8.dp),
-					) {
-						Text(
-							text = "Base Layer Set",
-							modifier = Modifier.fillMaxWidth(),
-							style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold),
-							maxLines = 1,
-							overflow = TextOverflow.Ellipsis,
-						)
-						Text(
-							text = "${'$'}62",
-							modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-							style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
-						)
-					}
+					Text(
+						text = "Go to bag",
+					)
 				}
 			}
-		}
 	}
 }

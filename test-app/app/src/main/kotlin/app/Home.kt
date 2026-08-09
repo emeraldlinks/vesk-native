@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowColumn
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -27,6 +28,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -59,6 +61,7 @@ import androidx.compose.ui.zIndex
 
 @Composable
 fun Home(content: @Composable () -> Unit = {}) {
+	val joined = remember { mutableStateOf(false) }
 	Column(
 		modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(vertical = 16.dp),
 		verticalArrangement = Arrangement.spacedBy(24.dp),
@@ -67,7 +70,7 @@ fun Home(content: @Composable () -> Unit = {}) {
 			modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(Brush.linearGradient(listOf(Color(0xFF4F46E5), Color(0xFF9333EA), Color(0xFFEC4899)), start = Offset(0f, 0f), end = Offset(1f, 1f))).heightIn(min = 160.dp).padding(28.dp),
 		) {
 			Text(
-				text = ("Winter collection 2026").uppercase(),
+				text = ("Winter collection 2026 · Members save " + (kotlin.math.floor(((kotlin.random.Random.nextDouble() * 10) + 5).toDouble()).toInt()).toString() + "% today").uppercase(),
 				modifier = Modifier.fillMaxWidth(),
 				style = TextStyle(color = Color(0xE5FFFFFF), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.8.sp),
 			)
@@ -104,45 +107,61 @@ fun Home(content: @Composable () -> Unit = {}) {
 				modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
 				style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.2.sp, color = Color(0xFF374151)),
 			)
-			Row(
-				modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(bottom = 4.dp),
-				horizontalArrangement = Arrangement.spacedBy(12.dp),
+			@OptIn(ExperimentalLayoutApi::class)
+			FlowRow(
+				modifier = Modifier.fillMaxWidth(),
+				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
-				Column(
-					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF2563EB)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
-				) {
-					Text(
-						text = "All outerwear",
-					)
-				}
-				Column(
-					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFF3F4F6)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
-				) {
-					Text(
-						text = "Knitwear",
-					)
-				}
-				Column(
-					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFF3F4F6)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
-				) {
-					Text(
-						text = "Base layers",
-					)
-				}
-				Column(
-					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFF3F4F6)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
-				) {
-					Text(
-						text = "Bags",
-					)
-				}
-				Column(
-					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFF3F4F6)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
-				) {
-					Text(
-						text = "Accessories",
-					)
-				}
+				NavLink(props = NavLinkProps(href = "/shop"))
+					{
+						Column(
+							modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(9999.dp)).background(Color(0xFF2563EB)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
+						) {
+							Text(
+								text = "All outerwear",
+							)
+						}
+					}
+				NavLink(props = NavLinkProps(href = "/shop"))
+					{
+						Column(
+							modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(9999.dp)).background(Color(0xFFF3F4F6)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
+						) {
+							Text(
+								text = "Knitwear",
+							)
+						}
+					}
+				NavLink(props = NavLinkProps(href = "/shop"))
+					{
+						Column(
+							modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(9999.dp)).background(Color(0xFFF3F4F6)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
+						) {
+							Text(
+								text = "Base layers",
+							)
+						}
+					}
+				NavLink(props = NavLinkProps(href = "/shop"))
+					{
+						Column(
+							modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(9999.dp)).background(Color(0xFFF3F4F6)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
+						) {
+							Text(
+								text = "Bags",
+							)
+						}
+					}
+				NavLink(props = NavLinkProps(href = "/shop"))
+					{
+						Column(
+							modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(9999.dp)).background(Color(0xFFF3F4F6)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
+						) {
+							Text(
+								text = "Accessories",
+							)
+						}
+					}
 			}
 		}
 		Column(
@@ -353,10 +372,22 @@ fun Home(content: @Composable () -> Unit = {}) {
 				style = TextStyle(color = Color(0xB3FFFFFF), fontSize = 14.sp, lineHeight = 24.sp),
 			)
 			Button(
-				onClick = {},
-				modifier = Modifier.padding(top = 16.dp).clip(RoundedCornerShape(9999.dp)).background(Color(0xFFFFFFFF)).padding(horizontal = 20.dp).padding(vertical = 10.dp),
+				onClick = { println("Nordi+ membership toggled"); joined.value = !joined.value },
+				modifier = Modifier.padding(top = 16.dp).clip(RoundedCornerShape(9999.dp)).background(Color(0xFFFFFFFF)).padding(vertical = 10.dp),
+				shape = RoundedCornerShape(9999.dp),
+				colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+				elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
+				contentPadding = PaddingValues(horizontal = 20.dp, vertical = 0.dp),
 			) {
-				Text("Join Nordi+")
+			if (truthy(joined.value)) {
+				Text(
+					text = ("You’re a member ✓").toString(),
+				)
+			} else {
+				Text(
+					text = ("Join Nordi+").toString(),
+				)
+			}
 			}
 		}
 	}

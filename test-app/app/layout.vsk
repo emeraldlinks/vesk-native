@@ -12,7 +12,7 @@ component Layout(props) {
                 </NavLink>
                 <div class="flex-1"></div>
                 <NavLink href="/shop" class="text-sm font-semibold text-gray-600">Shop</NavLink>
-                <NavLink href="/cart" class="text-sm font-semibold text-gray-600">Cart (2)</NavLink>
+                <NavLink href="/cart" class="text-sm font-semibold text-gray-600">Bag</NavLink>
             </div>
         </nav>
         <main class="w-full">

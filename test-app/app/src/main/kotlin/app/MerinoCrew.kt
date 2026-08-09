@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowColumn
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -27,6 +28,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -60,6 +62,7 @@ import androidx.compose.ui.zIndex
 @Composable
 fun MerinoCrew(content: @Composable () -> Unit = {}) {
 	val qty = remember { mutableStateOf(1) }
+	val added = remember { mutableStateOf(false) }
 	Column(
 		modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(vertical = 8.dp),
 		verticalArrangement = Arrangement.spacedBy(24.dp),
@@ -120,32 +123,58 @@ fun MerinoCrew(content: @Composable () -> Unit = {}) {
 			horizontalArrangement = Arrangement.spacedBy(12.dp),
 		) {
 			Row(
-				modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFF3F4F6)).padding(horizontal = 8.dp),
+				modifier = Modifier.shadow(1.dp).clip(RoundedCornerShape(9999.dp)).background(Color(0xFFFFFFFF)).border(1.dp, Color(0xFFE5E7EB)).padding(4.dp),
 				verticalAlignment = Alignment.CenterVertically,
+				horizontalArrangement = Arrangement.spacedBy(4.dp),
 			) {
 				Button(
-					onClick = { if (truthy(num(qty.value) > num(1))) qty.value = qty.value + -1; },
-					modifier = Modifier.width(36.dp).height(36.dp),
+					onClick = { if (truthy(num(qty.value) > num(1))) qty.value = qty.value + -1 },
+					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFF3F4F6)).width(36.dp).height(36.dp),
+					shape = RoundedCornerShape(9999.dp),
+					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
-					Text("−")
+				Text(
+					text = "−",
+					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFF3F4F6)).width(36.dp).height(36.dp),
+					style = TextStyle(fontSize = 18.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold, color = Color(0xFF4B5563)),
+				)
 				}
 				Text(
 					text = (qty.value).toString(),
-					modifier = Modifier.width(24.dp),
+					modifier = Modifier.width(32.dp),
 					style = TextStyle(textAlign = TextAlign.Center, fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
 				)
 				Button(
 					onClick = { qty.value = qty.value + 1 },
-					modifier = Modifier.width(36.dp).height(36.dp),
+					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)).width(36.dp).height(36.dp),
+					shape = RoundedCornerShape(9999.dp),
+					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
-					Text("+")
+				Text(
+					text = "+",
+					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)).width(36.dp).height(36.dp),
+					style = TextStyle(fontSize = 18.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold, color = Color(0xFFFFFFFF)),
+				)
 				}
 			}
 			Button(
-				onClick = {},
-				modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFD97706)).weight(1f).padding(vertical = 12.dp),
+				onClick = { added.value = !added.value },
+				modifier = Modifier.shadow(1.dp).clip(RoundedCornerShape(9999.dp)).background(Color(0xFFD97706)).weight(1f).padding(vertical = 14.dp),
+				shape = RoundedCornerShape(9999.dp),
+				colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+				elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 			) {
-				Text("Add to cart · ${'$'}75")
+			if (truthy(added.value)) {
+				Text(
+					text = ("Added to bag ✓").toString(),
+				)
+			} else {
+				Text(
+					text = ("Add to cart · ${'$'}" + (75 * qty.value)).toString(),
+				)
+			}
 			}
 		}
 	}

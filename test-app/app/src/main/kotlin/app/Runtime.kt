@@ -48,14 +48,6 @@ fun Modifier.veskGrayscale(factor: Float): Modifier = veskColorFilter(
 )
 
 
-// Dashed/dotted borders (border-dashed / border-dotted) drawn as strokes
-// behind the element content.
-fun Modifier.veskDashedBorder(width: Dp, color: Color, dashes: FloatArray): Modifier = drawBehind {
-    val stroke = Stroke(width = width.toPx(), pathEffect = PathEffect.dashPathEffect(dashes))
-    drawRoundRect(color = color, style = stroke)
-}
-
-
 // Per-side borders (border-t/r/b/l, border-x/y).
 fun Modifier.veskSideBorder(top: Dp, end: Dp, bottom: Dp, start: Dp, color: Color): Modifier = drawBehind {
     val w = floatArrayOf(top.toPx(), end.toPx(), bottom.toPx(), start.toPx())

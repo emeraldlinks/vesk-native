@@ -16,7 +16,7 @@ fun App() {
         Route("/blog/hello-world") { BlogPost() },
         Route("/blog") { Blog() },
         Route("/blog/vesk-native") { VeskNativePost() },
-        Route("/cart") { CartPage() },
+        Route("/cart") { Cart() },
         Route("/checkout") { CheckoutPage() },
         Route("/lab") { Lab() },
         Route("/") { Home() },
