@@ -84,14 +84,15 @@ function emitButton(node: StaticNode, classes: string[], attrs: Map<string, JsNo
   const blocker = node.children.filter((c) => !isTexty(c));
 
   let contentLines: string[] = [];
+  const btnDefaultColor = 'MaterialTheme.colorScheme.onSurface';
   if (blocker.length === 0) {
     const t = textContent(node.children, em);
-    if (t !== '""') contentLines = splitLines(makeTextCall(t, classes, level, em, false, parentAxis, null));
+    if (t !== '""') contentLines = splitLines(makeTextCall(t, classes, level, em, false, parentAxis, null, btnDefaultColor));
   } else {
     for (const child of node.children) {
       if (isTexty(child)) {
         const t = child instanceof TextNode ? em.ktString(child.value) : dynamicText(em.exprOf((child as DynamicBinding).expression));
-        if (t !== '""') contentLines.push(...splitLines(makeTextCall(t, classes, level, em, false, parentAxis, null)));
+        if (t !== '""') contentLines.push(...splitLines(makeTextCall(t, classes, level, em, false, parentAxis, null, btnDefaultColor)));
       } else {
         contentLines.push(...emitChild(child, em, level, parentAxis, null));
       }
@@ -106,7 +107,7 @@ function emitButton(node: StaticNode, classes: string[], attrs: Map<string, JsNo
   if (modifier) lines.push(`${padIn}modifier = ${modifier},`);
   const shape = buttonShape(classes);
   if (shape) lines.push(`${padIn}shape = ${shape},`);
-  lines.push(`${padIn}colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),`);
+  lines.push(`${padIn}colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),`);
   lines.push(`${padIn}elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),`);
   const padVal = buttonPadding(classes);
   if (padVal) lines.push(`${padIn}contentPadding = PaddingValues(horizontal = ${padVal.h}.dp, vertical = ${padVal.v}.dp),`);
@@ -146,6 +147,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -420,10 +422,10 @@ function textContent(children: IRNode[], em: Emitter): string {
   return parts.length === 0 ? '""' : parts.join(' + ');
 }
 
-function makeTextCall(text: string, classes: string[], level: number, em: Emitter, fillWidth = false, parentAxis: 'column' | 'row' | null = null, extraModifier: string | null = null): string {
+function makeTextCall(text: string, classes: string[], level: number, em: Emitter, fillWidth = false, parentAxis: 'column' | 'row' | null = null, extraModifier: string | null = null, defaultColor: string | null = null, flowParent = false): string {
   const pad = '\t'.repeat(level);
   const parts = classify(classes, em.customClasses, parentAxis === 'row' ? 'row' : 'column');
-  if (parentAxis === null) stripScopeMods(parts);
+  if (parentAxis === null || flowParent) stripScopeMods(parts);
   let modifier = buildModifier(parts);
   if (fillWidth) modifier = prependFill(modifier);
   modifier = prependModifier(modifier, extraModifier);
@@ -437,6 +439,7 @@ function makeTextCall(text: string, classes: string[], level: number, em: Emitte
   lines.push(`${pad}\ttext = ${textExpr},`);
   if (modifier) lines.push(`${pad}\tmodifier = ${modifier},`);
   if (style) lines.push(`${pad}\tstyle = ${style},`);
+  if (defaultColor && !(style ?? '').includes('color =')) lines.push(`${pad}\tcolor = ${defaultColor},`);
   const tp = parts.text;
   if (tp.maxLines !== undefined) lines.push(`${pad}\tmaxLines = ${tp.maxLines},`);
   if (tp.softWrap === false) lines.push(`${pad}\tsoftWrap = false,`);
@@ -445,7 +448,7 @@ function makeTextCall(text: string, classes: string[], level: number, em: Emitte
   return lines.join('\n');
 }
 
-function componentCallLines(node: ComponentCall, em: Emitter, level: number): string {
+function componentCallLines(node: ComponentCall, em: Emitter, level: number, parentAxis: 'column' | 'row' | null = null, flowParent = false): string {
   const propArgs = node.props.map((p) => `${ktIdent(p.name)} = ${em.exprOf(p.value)}`);
   for (const sp of node.spreadProps) {
     em.err.warn(null, `spread props are not supported in component calls: ...${sp.raw}`);
@@ -463,14 +466,14 @@ function componentCallLines(node: ComponentCall, em: Emitter, level: number): st
   if (node.children.length > 0) {
     out.push(padIn + '{');
     for (const child of node.children) {
-      out.push(...emitChild(child, em, level + 2, null));
+      out.push(...emitChild(child, em, level + 2, parentAxis, null, flowParent));
     }
     out.push(padIn + '}');
   }
   return out.join('\n');
 }
 
-function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: 'column' | 'row' | null, extraModifier: string | null = null): string[] {
+function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: 'column' | 'row' | null, extraModifier: string | null = null, flowParent = false): string[] {
   const info = elementInfo(node.tag);
   const classes = em.classList(node);
   if (isHidden(classes, em.customClasses)) return [];
@@ -548,13 +551,13 @@ function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: '
 
   const argLines: string[] = [];
   const containerParts = classify(classes, em.customClasses, axis);
-  if (parentAxis === null) stripScopeMods(containerParts);
+  const flow = containerParts.flow === true;
+  if (parentAxis === null || flow || flowParent) stripScopeMods(containerParts); // Flow layouts have no align/weight scope
   let modifier = buildModifier(containerParts);
   if (fillWidth) modifier = prependFill(modifier);
   modifier = prependModifier(modifier, extraModifier);
   if (modifier) argLines.push(`${padIn}modifier = ${modifier},`);
 
-  const flow = containerParts.flow === true;
   const composable = flow
     ? (axis === 'row' ? 'FlowRow' : 'FlowColumn')
     : (axis === 'row' ? 'Row' : 'Column');
@@ -590,9 +593,9 @@ const alignArgs = flow
           ? `Modifier.veskSideBorder(top = ${divide.width}.dp, end = 0.dp, bottom = 0.dp, start = 0.dp, ${divide.color})`
           : `Modifier.veskSideBorder(top = 0.dp, end = 0.dp, bottom = 0.dp, start = ${divide.width}.dp, ${divide.color})`;
       }
-      childrenLines.push(...emitChild(child, em, level + 1, axis, borderMod));
+      childrenLines.push(...emitChild(child, em, level + 1, axis, borderMod, flow));
     } else {
-      childrenLines.push(...emitChild(child, em, level + 1, axis));
+      childrenLines.push(...emitChild(child, em, level + 1, axis, null, flow));
     }
   }
 
@@ -615,17 +618,17 @@ const alignArgs = flow
   return lines;
 }
 
-function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'column' | 'row' | null, extraModifier: string | null = null): string[] {
+function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'column' | 'row' | null, extraModifier: string | null = null, flowParent = false): string[] {
   const pad = '\t'.repeat(level);
 
   if (child instanceof StaticNode) {
-    return emitElement(child, em, level, parentAxis, extraModifier);
+    return emitElement(child, em, level, parentAxis, extraModifier, flowParent);
   }
   if (child instanceof TextNode) {
-    return splitLines(makeTextCall(em.ktString(child.value), [], level, em, false, parentAxis, extraModifier));
+    return splitLines(makeTextCall(em.ktString(child.value), [], level, em, false, parentAxis, extraModifier, null, flowParent));
   }
   if (child instanceof DynamicBinding) {
-    if (child.kind === 'text') return splitLines(makeTextCall(dynamicText(em.exprOf(child.expression)), [], level, em, false, parentAxis, extraModifier));
+    if (child.kind === 'text') return splitLines(makeTextCall(dynamicText(em.exprOf(child.expression)), [], level, em, false, parentAxis, extraModifier, null, flowParent));
     return [];
   }
   if (child instanceof OpaqueDynamicRegion) {
@@ -651,7 +654,7 @@ function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'colum
     return out;
   }
   if (child instanceof ComponentCall) {
-    return splitLines(componentCallLines(child, em, level));
+    return splitLines(componentCallLines(child, em, level, parentAxis, flowParent));
   }
   if (child instanceof TrackDecl) {
     return splitLines(em.trackDecl(child)).map((l) => pad + l);

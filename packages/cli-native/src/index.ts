@@ -3,6 +3,7 @@ import { join, relative, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { homedir } from 'node:os';
 import { compileVskResult, collectCustomCss } from '@compiler-native/index.ts';
+import { setAdaptiveDark } from '@compiler-native/tailwind.ts';
 import { parse } from '@vesk/compiler';
 import { findComponentDecls } from '@compiler-native/props.ts';
 import type { ComponentDecl } from '@compiler-native/props.ts';
@@ -825,6 +826,9 @@ function generateProject(target: string, config: VeskConfig): void {
   }
 
   generateSettingsGradleKts(target, config);
+  // Semantic Tailwind neutrals (surface/onSurface/outline tokens) activate when
+  // the project declares darkColors — same .vsk matches web in light and dark.
+  setAdaptiveDark(!!config.darkColors);
   generateAppBuildGradleKts(target, config);
   generateManifest(target, config);
   generateThemes(target, config);

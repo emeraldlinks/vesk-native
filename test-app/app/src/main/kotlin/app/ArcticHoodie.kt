@@ -30,6 +30,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -105,7 +106,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 				)
 				Text(
 					text = "4.5 (212 reviews)",
-					style = TextStyle(color = Color(0xFF6B7280)),
+					style = TextStyle(color = MaterialTheme.colorScheme.onSurfaceVariant),
 				)
 			}
 			Row(
@@ -120,7 +121,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 				Text(
 					text = "${'$'}120",
 					modifier = Modifier.padding(bottom = 4.dp),
-					style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, color = Color(0xFF9CA3AF), textDecoration = TextDecoration.LineThrough),
+					style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
 				)
 				Text(
 					text = "save 26%",
@@ -131,7 +132,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 			Text(
 				text = " Brushed-back polar fleece with a storm hood and zippered chest pocket. The classic layer for everything from trail to town. ",
 				modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-				style = TextStyle(fontSize = 14.sp, lineHeight = 24.sp, color = Color(0xFF4B5563)),
+				style = TextStyle(fontSize = 14.sp, lineHeight = 24.sp, color = MaterialTheme.colorScheme.onSurfaceVariant),
 			)
 		}
 		Column(
@@ -141,7 +142,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 			Text(
 				text = ("Color — " + (color.value).toString()).uppercase(),
 				modifier = Modifier.fillMaxWidth(),
-				style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF374151), letterSpacing = 0.2.sp),
+				style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, letterSpacing = 0.2.sp),
 			)
 			Row(
 				modifier = Modifier.fillMaxWidth(),
@@ -149,7 +150,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 			) {
 				Button(
 					onClick = { color.value = "Pine" },
-					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
 				if (truthy(color.value == "Pine")) {
@@ -166,7 +167,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 				}
 				Button(
 					onClick = { color.value = "Storm" },
-					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
 				if (truthy(color.value == "Storm")) {
@@ -183,17 +184,17 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 				}
 				Button(
 					onClick = { color.value = "Oat" },
-					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
 				if (truthy(color.value == "Oat")) {
 					Column(
-						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFFEF3C7)).border(1.dp, Color(0xFFE5E7EB)).border(2.dp, Color(0xFF2563EB)).width(36.dp).height(36.dp),
+						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFFEF3C7)).border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)).border(2.dp, Color(0xFF2563EB)).width(36.dp).height(36.dp),
 					) {
 					}
 				} else {
 					Column(
-						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFFEF3C7)).border(1.dp, Color(0xFFE5E7EB)).width(36.dp).height(36.dp),
+						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFFEF3C7)).border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)).width(36.dp).height(36.dp),
 					) {
 					}
 				}
@@ -207,7 +208,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 			Text(
 				text = ("Size — " + (size.value).toString()).uppercase(),
 				modifier = Modifier.fillMaxWidth(),
-				style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF374151), letterSpacing = 0.2.sp),
+				style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, letterSpacing = 0.2.sp),
 			)
 			Row(
 				modifier = Modifier.fillMaxWidth(),
@@ -215,7 +216,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 			) {
 				Button(
 					onClick = { size.value = "S" },
-					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
 				if (truthy(size.value == "S")) {
@@ -230,7 +231,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 					}
 				} else {
 					Row(
-						modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Color(0xFFF3F4F6)).width(44.dp).height(44.dp),
+						modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(44.dp).height(44.dp),
 						verticalAlignment = Alignment.CenterVertically,
 						horizontalArrangement = Arrangement.Center,
 					) {
@@ -242,7 +243,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 				}
 				Button(
 					onClick = { size.value = "M" },
-					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
 				if (truthy(size.value == "M")) {
@@ -257,7 +258,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 					}
 				} else {
 					Row(
-						modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Color(0xFFF3F4F6)).width(44.dp).height(44.dp),
+						modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(44.dp).height(44.dp),
 						verticalAlignment = Alignment.CenterVertically,
 						horizontalArrangement = Arrangement.Center,
 					) {
@@ -269,7 +270,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 				}
 				Button(
 					onClick = { size.value = "L" },
-					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
 				if (truthy(size.value == "L")) {
@@ -284,7 +285,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 					}
 				} else {
 					Row(
-						modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Color(0xFFF3F4F6)).width(44.dp).height(44.dp),
+						modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(44.dp).height(44.dp),
 						verticalAlignment = Alignment.CenterVertically,
 						horizontalArrangement = Arrangement.Center,
 					) {
@@ -296,7 +297,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 				}
 				Button(
 					onClick = { size.value = "XL" },
-					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
 				if (truthy(size.value == "XL")) {
@@ -311,7 +312,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 					}
 				} else {
 					Row(
-						modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Color(0xFFF3F4F6)).width(44.dp).height(44.dp),
+						modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(44.dp).height(44.dp),
 						verticalAlignment = Alignment.CenterVertically,
 						horizontalArrangement = Arrangement.Center,
 					) {
@@ -329,21 +330,21 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 			horizontalArrangement = Arrangement.spacedBy(12.dp),
 		) {
 			Row(
-				modifier = Modifier.shadow(1.dp).clip(RoundedCornerShape(9999.dp)).background(Color(0xFFFFFFFF)).border(1.dp, Color(0xFFE5E7EB)).padding(4.dp),
+				modifier = Modifier.shadow(1.dp).clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)).padding(4.dp),
 				verticalAlignment = Alignment.CenterVertically,
 				horizontalArrangement = Arrangement.spacedBy(4.dp),
 			) {
 				Button(
 					onClick = { if (truthy(num(qty.value) > num(1))) qty.value = qty.value + -1 },
-					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFF3F4F6)).width(36.dp).height(36.dp),
+					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(36.dp).height(36.dp),
 					shape = RoundedCornerShape(9999.dp),
-					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
 				Text(
 					text = "−",
-					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFF3F4F6)).width(36.dp).height(36.dp),
-					style = TextStyle(fontSize = 18.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold, color = Color(0xFF4B5563)),
+					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(36.dp).height(36.dp),
+					style = TextStyle(fontSize = 18.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant),
 				)
 				}
 				Text(
@@ -355,7 +356,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 					onClick = { qty.value = qty.value + 1 },
 					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)).width(36.dp).height(36.dp),
 					shape = RoundedCornerShape(9999.dp),
-					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
 				Text(
@@ -369,7 +370,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 				onClick = { added.value = !added.value },
 				modifier = Modifier.shadow(1.dp).clip(RoundedCornerShape(9999.dp)).background(Color(0xFF2563EB)).weight(1f).padding(vertical = 14.dp),
 				shape = RoundedCornerShape(9999.dp),
-				colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+				colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 				elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 			) {
 			if (truthy(added.value)) {

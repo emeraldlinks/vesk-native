@@ -30,6 +30,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -75,7 +76,7 @@ fun Lab(content: @Composable () -> Unit = {}) {
 			)
 		}
 		Row(
-			modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Color(0xFFF3F4F6)).padding(16.dp),
+			modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).padding(16.dp),
 			horizontalArrangement = Arrangement.spacedBy(16.dp),
 		) {
 			Column(
@@ -86,14 +87,14 @@ fun Lab(content: @Composable () -> Unit = {}) {
 				)
 			}
 			Column(
-				modifier = Modifier.veskSideBorder(top = 0.dp, end = 0.dp, bottom = 0.dp, start = 1.dp, Color(0xFFD1D5DB)).weight(1f).padding(8.dp),
+				modifier = Modifier.veskSideBorder(top = 0.dp, end = 0.dp, bottom = 0.dp, start = 1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.22f)).weight(1f).padding(8.dp),
 			) {
 				Text(
 					text = "B",
 				)
 			}
 			Column(
-				modifier = Modifier.veskSideBorder(top = 0.dp, end = 0.dp, bottom = 0.dp, start = 1.dp, Color(0xFFD1D5DB)).weight(1f).padding(8.dp),
+				modifier = Modifier.veskSideBorder(top = 0.dp, end = 0.dp, bottom = 0.dp, start = 1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.22f)).weight(1f).padding(8.dp),
 			) {
 				Text(
 					text = "C",
@@ -101,7 +102,7 @@ fun Lab(content: @Composable () -> Unit = {}) {
 			}
 		}
 		Column(
-			modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(Color(0xFFFFFFFF)).veskSideBorder(top = 2.dp, end = 0.dp, bottom = 0.dp, start = 0.dp, Color(0xFFE5E7EB)).padding(16.dp),
+			modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.surface).veskSideBorder(top = 2.dp, end = 0.dp, bottom = 0.dp, start = 0.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)).padding(16.dp),
 		) {
 			Text(
 				text = "Top border only",
@@ -110,7 +111,7 @@ fun Lab(content: @Composable () -> Unit = {}) {
 			)
 		}
 		Row(
-			modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFFFFFFF)).border(2.dp, Color(0xFF3B82F6)).width(80.dp).height(80.dp).padding(12.dp),
+			modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.surface).border(2.dp, Color(0xFF3B82F6)).width(80.dp).height(80.dp).padding(12.dp),
 			verticalAlignment = Alignment.CenterVertically,
 			horizontalArrangement = Arrangement.Center,
 		) {
@@ -160,12 +161,12 @@ fun Lab(content: @Composable () -> Unit = {}) {
 		Text(
 			text = " This is a very long paragraph that should be clamped to two lines with an ellipsis. It keeps going and going and going and going and going and going and going and going and going. ",
 			modifier = Modifier.fillMaxWidth(),
-			style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, color = Color(0xFF374151)),
+			style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, color = MaterialTheme.colorScheme.onSurfaceVariant),
 			maxLines = 2,
 			overflow = TextOverflow.Ellipsis,
 		)
 		Column(
-			modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).clip(RoundedCornerShape(8.dp)).background(Color(0xFFF9FAFB)).height(96.dp).padding(12.dp),
+			modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f)).height(96.dp).padding(12.dp),
 		) {
 			Column(
 				modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
@@ -211,7 +212,7 @@ fun Lab(content: @Composable () -> Unit = {}) {
 			}
 		}
 		Column(
-			modifier = Modifier.fillMaxWidth().shadow(20.dp).clip(RoundedCornerShape(8.dp)).background(Color(0xFFFFFFFF)).padding(16.dp),
+			modifier = Modifier.fillMaxWidth().shadow(20.dp).clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.surface).padding(16.dp),
 		) {
 			Text(
 				text = "Shadow card",
@@ -221,7 +222,7 @@ fun Lab(content: @Composable () -> Unit = {}) {
 			Text(
 				text = "Box shadows map to elevation.",
 				modifier = Modifier.fillMaxWidth(),
-				style = TextStyle(color = Color(0xFF4B5563), fontSize = 14.sp, lineHeight = 20.sp),
+				style = TextStyle(color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp, lineHeight = 20.sp),
 			)
 		}
 		Column(
@@ -234,7 +235,7 @@ fun Lab(content: @Composable () -> Unit = {}) {
 			)
 		}
 		Column(
-			modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(Color(0xFFFFFFFF)).padding(16.dp),
+			modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.surface).padding(16.dp),
 		) {
 			Text(
 				text = "Wrap + case + neg margin",
@@ -292,12 +293,12 @@ fun Lab(content: @Composable () -> Unit = {}) {
 			Text(
 				text = ("shout this").uppercase(),
 				modifier = Modifier.fillMaxWidth(),
-				style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, color = Color(0xFF4B5563)),
+				style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, color = MaterialTheme.colorScheme.onSurfaceVariant),
 			)
 			Text(
 				text = ("capital me").replaceFirstChar { it.uppercase() },
 				modifier = Modifier.fillMaxWidth(),
-				style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, color = Color(0xFF4B5563)),
+				style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, color = MaterialTheme.colorScheme.onSurfaceVariant),
 			)
 		}
 		Row(

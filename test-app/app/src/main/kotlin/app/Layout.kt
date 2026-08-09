@@ -30,6 +30,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -69,20 +70,19 @@ fun Layout(props: LayoutProps = LayoutProps(), content: @Composable () -> Unit =
 		modifier = Modifier.fillMaxSize(),
 	) {
 		Column(
-			modifier = Modifier.verticalScroll(rememberScrollState()).fillMaxWidth(),
+			modifier = Modifier.fillMaxWidth().fillMaxHeight(),
 		) {
 			Column(
-				modifier = Modifier.fillMaxWidth().background(Color(0xFFFFFFFF)).veskSideBorder(top = 0.dp, end = 0.dp, bottom = 1.dp, start = 0.dp, Color(0x1F000000)),
+				modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).veskSideBorder(top = 0.dp, end = 0.dp, bottom = 1.dp, start = 0.dp, MaterialTheme.colorScheme.outlineVariant).padding(horizontal = 16.dp).padding(vertical = 8.dp),
 			) {
 				Row(
-					modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(vertical = 8.dp),
+					modifier = Modifier.fillMaxWidth(),
 					verticalAlignment = Alignment.CenterVertically,
 					horizontalArrangement = Arrangement.spacedBy(12.dp),
 				) {
 					NavLink(props = NavLinkProps(href = "/"))
 						{
 							Row(
-								modifier = Modifier.fillMaxWidth(),
 								verticalAlignment = Alignment.CenterVertically,
 								horizontalArrangement = Arrangement.spacedBy(8.dp),
 							) {
@@ -112,27 +112,31 @@ fun Layout(props: LayoutProps = LayoutProps(), content: @Composable () -> Unit =
 								text = "Shop",
 							)
 						}
-					NavLink(props = NavLinkProps(href = "/cart", `class` = "text-sm font-semibold text-gray-600"))
+					NavLink(props = NavLinkProps(href = "/cart", `class` = "text-lg leading-6"))
 						{
 							Text(
-								text = "Bag",
+								text = "🛒",
 							)
 						}
 				}
 			}
 			Column(
-				modifier = Modifier.fillMaxWidth(),
+				modifier = Modifier.verticalScroll(rememberScrollState()).fillMaxWidth().weight(1f),
 			) {
-				content()
-			}
-			Column(
-				modifier = Modifier.fillMaxWidth().background(Color(0xFFFFFFFF)).veskSideBorder(top = 1.dp, end = 0.dp, bottom = 0.dp, start = 0.dp, Color(0x1F000000)).padding(horizontal = 16.dp).padding(vertical = 16.dp),
-			) {
-				Text(
-					text = "Nordi Clothing — built with vesk-native",
+				Column(
 					modifier = Modifier.fillMaxWidth(),
-					style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, color = Color(0xFF4B5563), textAlign = TextAlign.Center),
-				)
+				) {
+					content()
+				}
+				Column(
+					modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).veskSideBorder(top = 1.dp, end = 0.dp, bottom = 0.dp, start = 0.dp, MaterialTheme.colorScheme.outlineVariant).padding(horizontal = 16.dp).padding(vertical = 16.dp),
+				) {
+					Text(
+						text = "Nordi Clothing Co — built with vesk-native",
+						modifier = Modifier.fillMaxWidth(),
+						style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center),
+					)
+				}
 			}
 		}
 	}

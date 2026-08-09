@@ -30,6 +30,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -80,7 +81,7 @@ fun Cart(content: @Composable () -> Unit = {}) {
 			Text(
 				text = "3 items",
 				modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-				style = TextStyle(color = Color(0xFF4B5563), fontSize = 14.sp, lineHeight = 20.sp),
+				style = TextStyle(color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp, lineHeight = 20.sp),
 			)
 		}
 		Column(
@@ -88,7 +89,7 @@ fun Cart(content: @Composable () -> Unit = {}) {
 			verticalArrangement = Arrangement.spacedBy(16.dp),
 		) {
 			Row(
-				modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color(0xFFF9FAFB)).padding(16.dp),
+				modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f)).padding(16.dp),
 				verticalAlignment = Alignment.CenterVertically,
 				horizontalArrangement = Arrangement.spacedBy(12.dp),
 			) {
@@ -107,7 +108,7 @@ fun Cart(content: @Composable () -> Unit = {}) {
 					Text(
 						text = "M · Pine green",
 						modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-						style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF9CA3AF)),
+						style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
 					)
 					Row(
 						modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
@@ -115,21 +116,21 @@ fun Cart(content: @Composable () -> Unit = {}) {
 						horizontalArrangement = Arrangement.SpaceBetween,
 					) {
 						Row(
-							modifier = Modifier.shadow(1.dp).clip(RoundedCornerShape(9999.dp)).background(Color(0xFFFFFFFF)).border(1.dp, Color(0xFFE5E7EB)).padding(4.dp),
+							modifier = Modifier.shadow(1.dp).clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)).padding(4.dp),
 							verticalAlignment = Alignment.CenterVertically,
 							horizontalArrangement = Arrangement.spacedBy(4.dp),
 						) {
 							Button(
 								onClick = { if (truthy(num(qty1.value) > num(1))) qty1.value = qty1.value + -1 },
-								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFF3F4F6)).width(28.dp).height(28.dp),
+								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(28.dp).height(28.dp),
 								shape = RoundedCornerShape(9999.dp),
-								colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+								colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 								elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 							) {
 							Text(
 								text = "−",
-								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFF3F4F6)).width(28.dp).height(28.dp),
-								style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF4B5563)),
+								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(28.dp).height(28.dp),
+								style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant),
 							)
 							}
 							Text(
@@ -141,7 +142,7 @@ fun Cart(content: @Composable () -> Unit = {}) {
 								onClick = { qty1.value = qty1.value + 1 },
 								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)).width(28.dp).height(28.dp),
 								shape = RoundedCornerShape(9999.dp),
-								colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+								colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 								elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 							) {
 							Text(
@@ -159,7 +160,7 @@ fun Cart(content: @Composable () -> Unit = {}) {
 				}
 			}
 			Row(
-				modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color(0xFFF9FAFB)).padding(16.dp),
+				modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f)).padding(16.dp),
 				verticalAlignment = Alignment.CenterVertically,
 				horizontalArrangement = Arrangement.spacedBy(12.dp),
 			) {
@@ -178,7 +179,7 @@ fun Cart(content: @Composable () -> Unit = {}) {
 					Text(
 						text = "L · Storm gray",
 						modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-						style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF9CA3AF)),
+						style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
 					)
 					Row(
 						modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
@@ -186,21 +187,21 @@ fun Cart(content: @Composable () -> Unit = {}) {
 						horizontalArrangement = Arrangement.SpaceBetween,
 					) {
 						Row(
-							modifier = Modifier.shadow(1.dp).clip(RoundedCornerShape(9999.dp)).background(Color(0xFFFFFFFF)).border(1.dp, Color(0xFFE5E7EB)).padding(4.dp),
+							modifier = Modifier.shadow(1.dp).clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)).padding(4.dp),
 							verticalAlignment = Alignment.CenterVertically,
 							horizontalArrangement = Arrangement.spacedBy(4.dp),
 						) {
 							Button(
 								onClick = { if (truthy(num(qty2.value) > num(1))) qty2.value = qty2.value + -1 },
-								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFF3F4F6)).width(28.dp).height(28.dp),
+								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(28.dp).height(28.dp),
 								shape = RoundedCornerShape(9999.dp),
-								colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+								colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 								elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 							) {
 							Text(
 								text = "−",
-								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFF3F4F6)).width(28.dp).height(28.dp),
-								style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF4B5563)),
+								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(28.dp).height(28.dp),
+								style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant),
 							)
 							}
 							Text(
@@ -212,7 +213,7 @@ fun Cart(content: @Composable () -> Unit = {}) {
 								onClick = { qty2.value = qty2.value + 1 },
 								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)).width(28.dp).height(28.dp),
 								shape = RoundedCornerShape(9999.dp),
-								colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+								colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 								elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 							) {
 							Text(
@@ -230,7 +231,7 @@ fun Cart(content: @Composable () -> Unit = {}) {
 				}
 			}
 			Row(
-				modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color(0xFFF9FAFB)).padding(16.dp),
+				modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f)).padding(16.dp),
 				verticalAlignment = Alignment.CenterVertically,
 				horizontalArrangement = Arrangement.spacedBy(12.dp),
 			) {
@@ -249,7 +250,7 @@ fun Cart(content: @Composable () -> Unit = {}) {
 					Text(
 						text = "S · Oat",
 						modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-						style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF9CA3AF)),
+						style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
 					)
 					Row(
 						modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
@@ -257,21 +258,21 @@ fun Cart(content: @Composable () -> Unit = {}) {
 						horizontalArrangement = Arrangement.SpaceBetween,
 					) {
 						Row(
-							modifier = Modifier.shadow(1.dp).clip(RoundedCornerShape(9999.dp)).background(Color(0xFFFFFFFF)).border(1.dp, Color(0xFFE5E7EB)).padding(4.dp),
+							modifier = Modifier.shadow(1.dp).clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)).padding(4.dp),
 							verticalAlignment = Alignment.CenterVertically,
 							horizontalArrangement = Arrangement.spacedBy(4.dp),
 						) {
 							Button(
 								onClick = { if (truthy(num(qty3.value) > num(1))) qty3.value = qty3.value + -1 },
-								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFF3F4F6)).width(28.dp).height(28.dp),
+								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(28.dp).height(28.dp),
 								shape = RoundedCornerShape(9999.dp),
-								colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+								colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 								elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 							) {
 							Text(
 								text = "−",
-								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFF3F4F6)).width(28.dp).height(28.dp),
-								style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF4B5563)),
+								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(28.dp).height(28.dp),
+								style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant),
 							)
 							}
 							Text(
@@ -283,7 +284,7 @@ fun Cart(content: @Composable () -> Unit = {}) {
 								onClick = { qty3.value = qty3.value + 1 },
 								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)).width(28.dp).height(28.dp),
 								shape = RoundedCornerShape(9999.dp),
-								colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+								colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 								elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 							) {
 							Text(
@@ -302,7 +303,7 @@ fun Cart(content: @Composable () -> Unit = {}) {
 			}
 		}
 		Column(
-			modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).border(1.dp, Color(0xFFE5E7EB)).padding(16.dp),
+			modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)).padding(16.dp),
 			verticalArrangement = Arrangement.spacedBy(4.dp),
 		) {
 			Row(
@@ -312,7 +313,7 @@ fun Cart(content: @Composable () -> Unit = {}) {
 			) {
 				Text(
 					text = "Subtotal",
-					style = TextStyle(color = Color(0xFF6B7280)),
+					style = TextStyle(color = MaterialTheme.colorScheme.onSurfaceVariant),
 				)
 				Text(
 					text = "${'$'}" + (((89 * qty1.value) + (219 * qty2.value)) + (75 * qty3.value)).toString(),
@@ -326,7 +327,7 @@ fun Cart(content: @Composable () -> Unit = {}) {
 			) {
 				Text(
 					text = "Shipping",
-					style = TextStyle(color = Color(0xFF6B7280)),
+					style = TextStyle(color = MaterialTheme.colorScheme.onSurfaceVariant),
 				)
 				Text(
 					text = "Free",
@@ -341,7 +342,7 @@ fun Cart(content: @Composable () -> Unit = {}) {
 				) {
 					Text(
 						text = "Promo — CODE10",
-						style = TextStyle(color = Color(0xFF6B7280)),
+						style = TextStyle(color = MaterialTheme.colorScheme.onSurfaceVariant),
 					)
 					Text(
 						text = ("−${'$'}${kotlin.math.round(((((89 * qty1.value) + (219 * qty2.value)) + (75 * qty3.value)) * 0.1).toDouble()).toInt()}").toString(),
@@ -353,7 +354,7 @@ fun Cart(content: @Composable () -> Unit = {}) {
 			Button(
 				onClick = { promo.value = !promo.value },
 				modifier = Modifier.padding(top = 4.dp).align(Alignment.Start),
-				colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+				colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 				elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 			) {
 			if (truthy(promo.value)) {
@@ -367,7 +368,7 @@ fun Cart(content: @Composable () -> Unit = {}) {
 			}
 			}
 			Row(
-				modifier = Modifier.fillMaxWidth().padding(top = 8.dp).veskSideBorder(top = 1.dp, end = 0.dp, bottom = 0.dp, start = 0.dp, Color(0xFFF3F4F6)).padding(top = 12.dp),
+				modifier = Modifier.fillMaxWidth().padding(top = 8.dp).veskSideBorder(top = 1.dp, end = 0.dp, bottom = 0.dp, start = 0.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)).padding(top = 12.dp),
 				verticalAlignment = Alignment.CenterVertically,
 				horizontalArrangement = Arrangement.SpaceBetween,
 			) {

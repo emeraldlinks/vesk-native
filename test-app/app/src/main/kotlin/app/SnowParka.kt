@@ -30,6 +30,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -103,7 +104,7 @@ fun SnowParka(content: @Composable () -> Unit = {}) {
 				)
 				Text(
 					text = "4.8 (96 reviews)",
-					style = TextStyle(color = Color(0xFF6B7280)),
+					style = TextStyle(color = MaterialTheme.colorScheme.onSurfaceVariant),
 				)
 			}
 			Row(
@@ -118,7 +119,7 @@ fun SnowParka(content: @Composable () -> Unit = {}) {
 				Text(
 					text = "${'$'}260",
 					modifier = Modifier.padding(bottom = 4.dp),
-					style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, color = Color(0xFF9CA3AF), textDecoration = TextDecoration.LineThrough),
+					style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
 				)
 				Text(
 					text = "save 16%",
@@ -129,7 +130,7 @@ fun SnowParka(content: @Composable () -> Unit = {}) {
 			Text(
 				text = " Waterproof 2L shell with 850-fill power down. Taped seams, helmet-compatible hood, pit zips and a two-way front zipper. ",
 				modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-				style = TextStyle(fontSize = 14.sp, lineHeight = 24.sp, color = Color(0xFF4B5563)),
+				style = TextStyle(fontSize = 14.sp, lineHeight = 24.sp, color = MaterialTheme.colorScheme.onSurfaceVariant),
 			)
 		}
 		Row(
@@ -138,21 +139,21 @@ fun SnowParka(content: @Composable () -> Unit = {}) {
 			horizontalArrangement = Arrangement.spacedBy(12.dp),
 		) {
 			Row(
-				modifier = Modifier.shadow(1.dp).clip(RoundedCornerShape(9999.dp)).background(Color(0xFFFFFFFF)).border(1.dp, Color(0xFFE5E7EB)).padding(4.dp),
+				modifier = Modifier.shadow(1.dp).clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)).padding(4.dp),
 				verticalAlignment = Alignment.CenterVertically,
 				horizontalArrangement = Arrangement.spacedBy(4.dp),
 			) {
 				Button(
 					onClick = { if (truthy(num(qty.value) > num(1))) qty.value = qty.value + -1 },
-					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFF3F4F6)).width(36.dp).height(36.dp),
+					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(36.dp).height(36.dp),
 					shape = RoundedCornerShape(9999.dp),
-					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
 				Text(
 					text = "−",
-					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFF3F4F6)).width(36.dp).height(36.dp),
-					style = TextStyle(fontSize = 18.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold, color = Color(0xFF4B5563)),
+					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(36.dp).height(36.dp),
+					style = TextStyle(fontSize = 18.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant),
 				)
 				}
 				Text(
@@ -164,7 +165,7 @@ fun SnowParka(content: @Composable () -> Unit = {}) {
 					onClick = { qty.value = qty.value + 1 },
 					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)).width(36.dp).height(36.dp),
 					shape = RoundedCornerShape(9999.dp),
-					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
 				Text(
@@ -178,7 +179,7 @@ fun SnowParka(content: @Composable () -> Unit = {}) {
 				onClick = { added.value = !added.value },
 				modifier = Modifier.shadow(1.dp).clip(RoundedCornerShape(9999.dp)).background(Color(0xFF059669)).weight(1f).padding(vertical = 14.dp),
 				shape = RoundedCornerShape(9999.dp),
-				colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+				colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 				elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 			) {
 			if (truthy(added.value)) {

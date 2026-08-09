@@ -30,6 +30,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -88,11 +89,11 @@ fun CheckoutPage(content: @Composable () -> Unit = {}) {
 			Text(
 				text = " Thanks for shopping with Nordi. We sent a receipt to you by email and your items will ship within 24 hours. ",
 				modifier = Modifier.widthIn(max = 384.dp),
-				style = TextStyle(fontSize = 14.sp, lineHeight = 24.sp, color = Color(0xFF4B5563), textAlign = TextAlign.Center),
+				style = TextStyle(fontSize = 14.sp, lineHeight = 24.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center),
 			)
 		}
 		Column(
-			modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).border(1.dp, Color(0xFFE5E7EB)).padding(16.dp),
+			modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)).padding(16.dp),
 			verticalArrangement = Arrangement.spacedBy(8.dp),
 		) {
 			Row(
@@ -102,7 +103,7 @@ fun CheckoutPage(content: @Composable () -> Unit = {}) {
 			) {
 				Text(
 					text = ("Order number").uppercase(),
-					style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF9CA3AF), letterSpacing = 0.4.sp, fontWeight = FontWeight.SemiBold),
+					style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), letterSpacing = 0.4.sp, fontWeight = FontWeight.SemiBold),
 				)
 				Text(
 					text = "#ND-2841-9302",
@@ -116,7 +117,7 @@ fun CheckoutPage(content: @Composable () -> Unit = {}) {
 			) {
 				Text(
 					text = ("Estimated delivery").uppercase(),
-					style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF9CA3AF), letterSpacing = 0.4.sp, fontWeight = FontWeight.SemiBold),
+					style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), letterSpacing = 0.4.sp, fontWeight = FontWeight.SemiBold),
 				)
 				Text(
 					text = "Thu, Aug 20",
@@ -130,7 +131,7 @@ fun CheckoutPage(content: @Composable () -> Unit = {}) {
 			) {
 				Text(
 					text = ("Payment").uppercase(),
-					style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF9CA3AF), letterSpacing = 0.4.sp, fontWeight = FontWeight.SemiBold),
+					style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), letterSpacing = 0.4.sp, fontWeight = FontWeight.SemiBold),
 				)
 				Text(
 					text = "Visa •••• 4021",
@@ -139,7 +140,7 @@ fun CheckoutPage(content: @Composable () -> Unit = {}) {
 			}
 		}
 		Column(
-			modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color(0xFFF9FAFB)).padding(16.dp),
+			modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f)).padding(16.dp),
 		) {
 			Row(
 				modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
@@ -161,7 +162,7 @@ fun CheckoutPage(content: @Composable () -> Unit = {}) {
 					Text(
 						text = "M · Pine green · 1 × ${'$'}89",
 						modifier = Modifier.fillMaxWidth(),
-						style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF9CA3AF)),
+						style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
 					)
 				}
 				Text(
@@ -170,7 +171,7 @@ fun CheckoutPage(content: @Composable () -> Unit = {}) {
 				)
 			}
 			Row(
-				modifier = Modifier.veskSideBorder(top = 1.dp, end = 0.dp, bottom = 0.dp, start = 0.dp, Color(0xFFE5E7EB)).fillMaxWidth().padding(vertical = 12.dp),
+				modifier = Modifier.veskSideBorder(top = 1.dp, end = 0.dp, bottom = 0.dp, start = 0.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)).fillMaxWidth().padding(vertical = 12.dp),
 				verticalAlignment = Alignment.CenterVertically,
 				horizontalArrangement = Arrangement.spacedBy(12.dp),
 			) {
@@ -189,7 +190,7 @@ fun CheckoutPage(content: @Composable () -> Unit = {}) {
 					Text(
 						text = "L · Storm gray · 2 × ${'$'}219",
 						modifier = Modifier.fillMaxWidth(),
-						style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF9CA3AF)),
+						style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
 					)
 				}
 				Text(
@@ -198,7 +199,7 @@ fun CheckoutPage(content: @Composable () -> Unit = {}) {
 				)
 			}
 			Row(
-				modifier = Modifier.veskSideBorder(top = 1.dp, end = 0.dp, bottom = 0.dp, start = 0.dp, Color(0xFFE5E7EB)).fillMaxWidth().padding(vertical = 12.dp),
+				modifier = Modifier.veskSideBorder(top = 1.dp, end = 0.dp, bottom = 0.dp, start = 0.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)).fillMaxWidth().padding(vertical = 12.dp),
 				verticalAlignment = Alignment.CenterVertically,
 				horizontalArrangement = Arrangement.spacedBy(12.dp),
 			) {
@@ -217,7 +218,7 @@ fun CheckoutPage(content: @Composable () -> Unit = {}) {
 					Text(
 						text = "S · Oat · 1 × ${'$'}75",
 						modifier = Modifier.fillMaxWidth(),
-						style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF9CA3AF)),
+						style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
 					)
 				}
 				Text(
@@ -234,7 +235,7 @@ fun CheckoutPage(content: @Composable () -> Unit = {}) {
 			NavLink(props = NavLinkProps(href = "/"))
 				{
 					Column(
-						modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(9999.dp)).background(Color(0xFFF3F4F6)).padding(horizontal = 20.dp).padding(vertical = 12.dp),
+						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).padding(horizontal = 20.dp).padding(vertical = 12.dp),
 					) {
 						Text(
 							text = "Continue shopping",
@@ -244,7 +245,7 @@ fun CheckoutPage(content: @Composable () -> Unit = {}) {
 			NavLink(props = NavLinkProps(href = "/shop"))
 				{
 					Column(
-						modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(9999.dp)).background(Color(0xFF2563EB)).padding(horizontal = 20.dp).padding(vertical = 12.dp),
+						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF2563EB)).padding(horizontal = 20.dp).padding(vertical = 12.dp),
 					) {
 						Text(
 							text = "Track order",

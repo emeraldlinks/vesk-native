@@ -30,6 +30,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -90,7 +91,7 @@ fun Home(content: @Composable () -> Unit = {}) {
 				NavLink(props = NavLinkProps(href = "/shop"))
 					{
 						Column(
-							modifier = Modifier.fillMaxWidth().shadow(6.dp).clip(RoundedCornerShape(9999.dp)).background(Color(0xFFFFFFFF)).padding(horizontal = 20.dp).padding(vertical = 10.dp),
+							modifier = Modifier.fillMaxWidth().shadow(6.dp).clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.surface).padding(horizontal = 20.dp).padding(vertical = 10.dp).align(Alignment.Start),
 						) {
 							Text(
 								text = "Shop the drop",
@@ -105,17 +106,16 @@ fun Home(content: @Composable () -> Unit = {}) {
 			Text(
 				text = ("Categories").uppercase(),
 				modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
-				style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.2.sp, color = Color(0xFF374151)),
+				style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.2.sp, color = MaterialTheme.colorScheme.onSurfaceVariant),
 			)
-			@OptIn(ExperimentalLayoutApi::class)
-			FlowRow(
-				modifier = Modifier.fillMaxWidth(),
+			Row(
+				modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				NavLink(props = NavLinkProps(href = "/shop"))
 					{
 						Column(
-							modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(9999.dp)).background(Color(0xFF2563EB)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
+							modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF2563EB)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
 						) {
 							Text(
 								text = "All outerwear",
@@ -125,7 +125,7 @@ fun Home(content: @Composable () -> Unit = {}) {
 				NavLink(props = NavLinkProps(href = "/shop"))
 					{
 						Column(
-							modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(9999.dp)).background(Color(0xFFF3F4F6)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
+							modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
 						) {
 							Text(
 								text = "Knitwear",
@@ -135,7 +135,7 @@ fun Home(content: @Composable () -> Unit = {}) {
 				NavLink(props = NavLinkProps(href = "/shop"))
 					{
 						Column(
-							modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(9999.dp)).background(Color(0xFFF3F4F6)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
+							modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
 						) {
 							Text(
 								text = "Base layers",
@@ -145,7 +145,7 @@ fun Home(content: @Composable () -> Unit = {}) {
 				NavLink(props = NavLinkProps(href = "/shop"))
 					{
 						Column(
-							modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(9999.dp)).background(Color(0xFFF3F4F6)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
+							modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
 						) {
 							Text(
 								text = "Bags",
@@ -155,7 +155,7 @@ fun Home(content: @Composable () -> Unit = {}) {
 				NavLink(props = NavLinkProps(href = "/shop"))
 					{
 						Column(
-							modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(9999.dp)).background(Color(0xFFF3F4F6)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
+							modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
 						) {
 							Text(
 								text = "Accessories",
@@ -190,7 +190,7 @@ fun Home(content: @Composable () -> Unit = {}) {
 				NavLink(props = NavLinkProps(href = "/shop/arctic-hoodie"))
 					{
 						Column(
-							modifier = Modifier.padding(8.dp).clip(RoundedCornerShape(16.dp)).background(Color(0xFFF3F4F6)).width(160.dp),
+							modifier = Modifier.padding(8.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(160.dp),
 						) {
 							Column(
 								modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFF60A5FA), Color(0xFF4F46E5)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
@@ -222,7 +222,7 @@ fun Home(content: @Composable () -> Unit = {}) {
 									)
 									Text(
 										text = "${'$'}120",
-										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF9CA3AF), textDecoration = TextDecoration.LineThrough),
+										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
 									)
 								}
 							}
@@ -231,7 +231,7 @@ fun Home(content: @Composable () -> Unit = {}) {
 				NavLink(props = NavLinkProps(href = "/shop/snow-parka"))
 					{
 						Column(
-							modifier = Modifier.padding(8.dp).clip(RoundedCornerShape(16.dp)).background(Color(0xFFF3F4F6)).width(160.dp),
+							modifier = Modifier.padding(8.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(160.dp),
 						) {
 							Column(
 								modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFF34D399), Color(0xFF0D9488)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
@@ -263,7 +263,7 @@ fun Home(content: @Composable () -> Unit = {}) {
 									)
 									Text(
 										text = "${'$'}260",
-										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF9CA3AF), textDecoration = TextDecoration.LineThrough),
+										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
 									)
 								}
 							}
@@ -272,7 +272,7 @@ fun Home(content: @Composable () -> Unit = {}) {
 				NavLink(props = NavLinkProps(href = "/shop/merino-crew"))
 					{
 						Column(
-							modifier = Modifier.padding(8.dp).clip(RoundedCornerShape(16.dp)).background(Color(0xFFF3F4F6)).width(160.dp),
+							modifier = Modifier.padding(8.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(160.dp),
 						) {
 							Column(
 								modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFFFBBF24), Color(0xFFEA580C)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
@@ -304,7 +304,7 @@ fun Home(content: @Composable () -> Unit = {}) {
 									)
 									Text(
 										text = "${'$'}95",
-										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF9CA3AF), textDecoration = TextDecoration.LineThrough),
+										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
 									)
 								}
 							}
@@ -313,7 +313,7 @@ fun Home(content: @Composable () -> Unit = {}) {
 				NavLink(props = NavLinkProps(href = "/shop/splitshirt-tee"))
 					{
 						Column(
-							modifier = Modifier.padding(8.dp).clip(RoundedCornerShape(16.dp)).background(Color(0xFFF3F4F6)).width(160.dp),
+							modifier = Modifier.padding(8.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(160.dp),
 						) {
 							Column(
 								modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFFFB7185), Color(0xFFDB2777)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
@@ -345,7 +345,7 @@ fun Home(content: @Composable () -> Unit = {}) {
 									)
 									Text(
 										text = "${'$'}55",
-										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF9CA3AF), textDecoration = TextDecoration.LineThrough),
+										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
 									)
 								}
 							}
@@ -373,9 +373,9 @@ fun Home(content: @Composable () -> Unit = {}) {
 			)
 			Button(
 				onClick = { println("Nordi+ membership toggled"); joined.value = !joined.value },
-				modifier = Modifier.padding(top = 16.dp).clip(RoundedCornerShape(9999.dp)).background(Color(0xFFFFFFFF)).padding(vertical = 10.dp),
+				modifier = Modifier.padding(top = 16.dp).clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.surface).padding(vertical = 10.dp),
 				shape = RoundedCornerShape(9999.dp),
-				colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+				colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 				elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				contentPadding = PaddingValues(horizontal = 20.dp, vertical = 0.dp),
 			) {

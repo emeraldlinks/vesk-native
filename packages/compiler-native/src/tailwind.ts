@@ -199,6 +199,55 @@ export function tailwindColor(className: string): string | null {
   return hex === null ? null : colorLiteral(hex);
 }
 
+// ---------- semantic (theme-aware) neutrals ----------
+// When the project config declares darkColors, Tailwind neutral utilities map
+// to MaterialTheme color scheme roles instead of literal hex. Day and night
+// modes then both match the web layout (Tailwind's neutral palette is
+// theme-neutral by design). Colored utilities and alpha overlays stay literal.
+
+let adaptiveDark = false;
+
+export function setAdaptiveDark(enabled: boolean): void {
+  adaptiveDark = enabled;
+}
+
+type NeutralKind = 'bg' | 'text' | 'border';
+
+function neutralToken(raw: string, kind: NeutralKind): string | null {
+  if (!adaptiveDark) return null;
+  let base = raw;
+  const slash = raw.lastIndexOf('/');
+  if (slash > 0) {
+    const opRaw = raw.slice(slash + 1);
+    const n = opRaw.endsWith('%') ? Number(opRaw.slice(0, -1)) : Number(opRaw);
+    if (!Number.isNaN(n)) return null;
+  }
+  const o = (a: number) => `MaterialTheme.colorScheme.onSurface.copy(alpha = ${a}f)`;
+  switch (kind) {
+    case 'bg':
+      if (base === 'white') return 'MaterialTheme.colorScheme.surface';
+      if (base === 'gray-50') return o(0.04);
+      if (base === 'gray-100') return o(0.07);
+      if (base === 'gray-200') return o(0.11);
+      return null;
+    case 'text':
+      if (base === 'black' || base === 'gray-800' || base === 'gray-900') return 'MaterialTheme.colorScheme.onSurface';
+      if (base === 'gray-400') return `MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)`;
+      if (base === 'gray-500' || base === 'gray-600' || base === 'gray-700') return 'MaterialTheme.colorScheme.onSurfaceVariant';
+      return null;
+    case 'border':
+      if (base === 'gray-100') return o(0.08);
+      if (base === 'gray-200') return o(0.12);
+      if (base === 'gray-300') return o(0.22);
+      return null;
+  }
+  return null;
+}
+
+function defaultBorder(): string {
+  return adaptiveDark ? 'MaterialTheme.colorScheme.outlineVariant' : 'Color(0x1F000000)';
+}
+
 // ---------- value resolution ----------
 
 type Namespace = 'spacing' | 'size' | 'color' | 'fontSize' | 'radius' | 'shadowSize' | 'weight' | 'family' | 'leading' | 'tracking' | 'opacity' | 'zIndex' | 'rotate' | 'scale' | 'skew' | 'blur' | 'lineClamp';
@@ -570,7 +619,7 @@ function sideBorder(side: 'top' | 'end' | 'bottom' | 'start'): (r: Resolved, ctx
     const v = r.raw;
     if (v === '' || v === 'px') { ctx.borderSides[side] = 1; return; }
     if (/^\d+$/.test(v)) { ctx.borderSides[side] = Number(v); return; }
-    const c = resolveColor(v);
+    const c = neutralToken(v, 'border') ?? resolveColor(v);
     if (c) { ctx.borderColor = c; ctx.borderColorFromSide = true; }
   };
 }
@@ -595,7 +644,7 @@ const UTILITIES: UtilitySpec[] = [
       const lh = FONT_LINE_HEIGHT[r.raw];
       if (lh !== undefined) pushText(ctx, `lineHeight = ${lh}.sp`);
     } else if (r.kind === 'color') {
-      pushText(ctx, `color = ${r.color}`);
+      pushText(ctx, `color = ${neutralToken(r.raw, 'text') ?? r.color}`);
     }
   } },
   { name: 'font', bucket: 'textStyle', ns: ['weight', 'family'], render: (r, ctx) => {
@@ -671,7 +720,7 @@ const UTILITIES: UtilitySpec[] = [
     if (expr) ctx.parts.size.push(expr);
   } },
   // ---- color surfaces ----
-  { name: 'bg', bucket: 'background', ns: ['color'], render: (r, ctx) => { if (r.kind === 'color') ctx.parts.background.push(`background(${r.color})`); } },
+  { name: 'bg', bucket: 'background', ns: ['color'], render: (r, ctx) => { if (r.kind === 'color') ctx.parts.background.push(`background(${neutralToken(r.raw, 'bg') ?? r.color})`); } },
   { name: 'opacity', bucket: 'alpha', ns: ['opacity'], render: (r, ctx) => { if (r.kind === 'fraction') ctx.parts.alpha.push(`alpha(${r.fraction.toFixed(3)}f)`); } },
   { name: 'invisible', bucket: 'alpha', ns: [], render: (_r, ctx) => { ctx.parts.alpha.push('alpha(0.000f)'); } },
   // ---- gradients ----
@@ -726,7 +775,7 @@ const UTILITIES: UtilitySpec[] = [
     if (v === '' || v === 'px') { ctx.borderWidth = 1; return; }
     if (v === 'none') { ctx.borderWidth = 0; return; }
     if (/^\d+$/.test(v)) { ctx.borderWidth = Number(v); return; }
-    const c = resolveColor(v);
+    const c = neutralToken(v, 'border') ?? resolveColor(v);
     if (c) { ctx.borderColor = c; return; }
   } },
   { name: 'border-t', bucket: 'border', ns: [], render: sideBorder('top') },
@@ -744,14 +793,14 @@ const UTILITIES: UtilitySpec[] = [
     if (v === 'none' || v === 'inset') { ctx.ringWidth = 0; return; }
     const w = RING[v];
     if (w !== undefined) { ctx.ringWidth = w; return; }
-    const c = resolveColor(v);
+    const c = neutralToken(v, 'border') ?? resolveColor(v);
     if (c) { ctx.ringColor = c; return; }
   } },
   { name: 'outline', bucket: 'border', ns: [], render: (r, ctx) => {
     const v = r.raw;
     if (v === '' || v === 'none') return;
     if (/^\d+$/.test(v)) { ctx.outlineWidth = Number(v); return; }
-    const c = resolveColor(v);
+    const c = neutralToken(v, 'border') ?? resolveColor(v);
     if (c) { ctx.outlineColor = c; return; }
   } },
   { name: 'outline-dashed', bucket: 'border', ns: [], render: (_r, ctx) => { ctx.outlineStyle = 'dashed'; } },
@@ -774,7 +823,7 @@ const UTILITIES: UtilitySpec[] = [
     if (v === '') return;
     if (v === 'px') { ctx.divide.width = 1; return; }
     if (/^\d+$/.test(v)) { ctx.divide.width = Number(v); return; }
-    const c = resolveColor(v);
+    const c = neutralToken(v, 'border') ?? resolveColor(v);
     if (c) { ctx.divide.color = c; }
   } },
   { name: 'divide-solid', bucket: 'border', ns: [], render: (_r, ctx) => { ctx.divide.style = 'solid'; } },
@@ -1110,16 +1159,16 @@ export function classify(classes: string[], custom?: Map<string, ModifierParts>,
     if (ctx.borderWidth > 0) {
       if (ctx.borderStyle && !hasSideBorder) {
         const dashes = ctx.borderStyle === 'dotted' ? 'floatArrayOf(0.1f, 8f)' : 'floatArrayOf(12f, 12f)';
-        parts.border.push(`veskDashedBorder(${ctx.borderWidth}.dp, ${ctx.borderColor ?? 'Color(0x1F000000)'}, ${dashes})`);
+        parts.border.push(`veskDashedBorder(${ctx.borderWidth}.dp, ${ctx.borderColor ?? defaultBorder()}, ${dashes})`);
       } else {
-        parts.border.push(`border(${ctx.borderWidth}.dp, ${ctx.borderColor ?? 'Color(0x1F000000)'})`);
+        parts.border.push(`border(${ctx.borderWidth}.dp, ${ctx.borderColor ?? defaultBorder()})`);
       }
     }
   } else if (ctx.borderColor !== null && !ctx.borderColorFromSide && !hasSideBorder) {
     parts.border.push(`border(1.dp, ${ctx.borderColor})`);
   }
   if (hasSideBorder) {
-    parts.border.push(`veskSideBorder(top = ${s.top ?? 0}.dp, end = ${s.end ?? 0}.dp, bottom = ${s.bottom ?? 0}.dp, start = ${s.start ?? 0}.dp, ${ctx.borderColor ?? 'Color(0x1F000000)'})`);
+    parts.border.push(`veskSideBorder(top = ${s.top ?? 0}.dp, end = ${s.end ?? 0}.dp, bottom = ${s.bottom ?? 0}.dp, start = ${s.start ?? 0}.dp, ${ctx.borderColor ?? defaultBorder()})`);
   }
   // ring -> border approximation
   if (ctx.ringWidth !== null && ctx.ringWidth > 0) {
@@ -1131,9 +1180,9 @@ export function classify(classes: string[], custom?: Map<string, ModifierParts>,
   if (ctx.outlineWidth !== null && ctx.outlineWidth > 0) {
     if (ctx.outlineStyle) {
       const dashes = ctx.outlineStyle === 'dotted' ? 'floatArrayOf(0.1f, 8f)' : 'floatArrayOf(12f, 12f)';
-      parts.border.push(`veskDashedBorder(${ctx.outlineWidth}.dp, ${ctx.outlineColor ?? 'Color(0x1F000000)'}, ${dashes})`);
+      parts.border.push(`veskDashedBorder(${ctx.outlineWidth}.dp, ${ctx.outlineColor ?? defaultBorder()}, ${dashes})`);
     } else {
-      parts.border.push(`border(${ctx.outlineWidth}.dp, ${ctx.outlineColor ?? 'Color(0x1F000000)'})`);
+      parts.border.push(`border(${ctx.outlineWidth}.dp, ${ctx.outlineColor ?? defaultBorder()})`);
     }
   } else if (ctx.outlineColor !== null) {
     parts.border.push(`border(1.dp, ${ctx.outlineColor})`);
@@ -1153,7 +1202,7 @@ export function classify(classes: string[], custom?: Map<string, ModifierParts>,
   // divide
   if (ctx.divide.axis && ctx.divide.width > 0 && ctx.divide.style !== 'none') {
     const style = ctx.divide.style === 'dotted' || ctx.divide.style === 'dashed' ? ctx.divide.style : 'solid';
-    parts.divide = { axis: ctx.divide.axis, width: ctx.divide.width, color: ctx.divide.color ?? 'Color(0x1F000000)', style };
+    parts.divide = { axis: ctx.divide.axis, width: ctx.divide.width, color: ctx.divide.color ?? defaultBorder(), style };
   }
 
   if (custom) {

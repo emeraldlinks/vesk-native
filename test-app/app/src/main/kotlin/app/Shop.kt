@@ -30,6 +30,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -85,14 +86,13 @@ fun Shop(content: @Composable () -> Unit = {}) {
 					)
 				}
 			}
-			@OptIn(ExperimentalLayoutApi::class)
-			FlowRow(
-				modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+			Row(
+				modifier = Modifier.fillMaxWidth().padding(top = 12.dp).horizontalScroll(rememberScrollState()),
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				Button(
 					onClick = { filter.value = "All" },
-					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
 				if (truthy(filter.value == "All")) {
@@ -104,14 +104,14 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				} else {
 					Text(
 						text = "All",
-						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFF3F4F6)).padding(horizontal = 12.dp).padding(vertical = 6.dp),
-						style = TextStyle(color = Color(0xFF374151), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Medium),
+						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).padding(horizontal = 12.dp).padding(vertical = 6.dp),
+						style = TextStyle(color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Medium),
 					)
 				}
 				}
 				Button(
 					onClick = { filter.value = "Parkas" },
-					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
 				if (truthy(filter.value == "Parkas")) {
@@ -123,14 +123,14 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				} else {
 					Text(
 						text = "Parkas",
-						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFF3F4F6)).padding(horizontal = 12.dp).padding(vertical = 6.dp),
-						style = TextStyle(color = Color(0xFF374151), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Medium),
+						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).padding(horizontal = 12.dp).padding(vertical = 6.dp),
+						style = TextStyle(color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Medium),
 					)
 				}
 				}
 				Button(
 					onClick = { filter.value = "Hoodies" },
-					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
 				if (truthy(filter.value == "Hoodies")) {
@@ -142,14 +142,14 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				} else {
 					Text(
 						text = "Hoodies",
-						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFF3F4F6)).padding(horizontal = 12.dp).padding(vertical = 6.dp),
-						style = TextStyle(color = Color(0xFF374151), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Medium),
+						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).padding(horizontal = 12.dp).padding(vertical = 6.dp),
+						style = TextStyle(color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Medium),
 					)
 				}
 				}
 				Button(
 					onClick = { filter.value = "Shells" },
-					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
 				if (truthy(filter.value == "Shells")) {
@@ -161,14 +161,14 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				} else {
 					Text(
 						text = "Shells",
-						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFF3F4F6)).padding(horizontal = 12.dp).padding(vertical = 6.dp),
-						style = TextStyle(color = Color(0xFF374151), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Medium),
+						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).padding(horizontal = 12.dp).padding(vertical = 6.dp),
+						style = TextStyle(color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Medium),
 					)
 				}
 				}
 				Button(
 					onClick = { filter.value = "Base layers" },
-					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
 				if (truthy(filter.value == "Base layers")) {
@@ -180,14 +180,14 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				} else {
 					Text(
 						text = "Base layers",
-						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFF3F4F6)).padding(horizontal = 12.dp).padding(vertical = 6.dp),
-						style = TextStyle(color = Color(0xFF374151), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Medium),
+						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).padding(horizontal = 12.dp).padding(vertical = 6.dp),
+						style = TextStyle(color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Medium),
 					)
 				}
 				}
 				Button(
 					onClick = { filter.value = "Accessories" },
-					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
 				if (truthy(filter.value == "Accessories")) {
@@ -199,8 +199,8 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				} else {
 					Text(
 						text = "Accessories",
-						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFF3F4F6)).padding(horizontal = 12.dp).padding(vertical = 6.dp),
-						style = TextStyle(color = Color(0xFF374151), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Medium),
+						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).padding(horizontal = 12.dp).padding(vertical = 6.dp),
+						style = TextStyle(color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Medium),
 					)
 				}
 				}
@@ -215,7 +215,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				NavLink(props = NavLinkProps(href = "/shop/arctic-hoodie"))
 					{
 						Column(
-							modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(Color(0xFFF3F4F6)).width(176.dp),
+							modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(176.dp),
 						) {
 							Row(
 								modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFF60A5FA), Color(0xFF4F46E5)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
@@ -241,7 +241,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 								Text(
 									text = "4.5 ★ (212)",
 									modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-									style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF9CA3AF)),
+									style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
 								)
 								Row(
 									modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
@@ -254,7 +254,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 									)
 									Text(
 										text = "${'$'}120",
-										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF9CA3AF), textDecoration = TextDecoration.LineThrough),
+										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
 									)
 								}
 							}
@@ -266,7 +266,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				NavLink(props = NavLinkProps(href = "/shop/snow-parka"))
 					{
 						Column(
-							modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(Color(0xFFF3F4F6)).width(176.dp),
+							modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(176.dp),
 						) {
 							Row(
 								modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFF34D399), Color(0xFF0D9488)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
@@ -292,7 +292,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 								Text(
 									text = "4.8 ★ (96)",
 									modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-									style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF9CA3AF)),
+									style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
 								)
 								Row(
 									modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
@@ -305,7 +305,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 									)
 									Text(
 										text = "${'$'}260",
-										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF9CA3AF), textDecoration = TextDecoration.LineThrough),
+										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
 									)
 								}
 							}
@@ -317,7 +317,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				NavLink(props = NavLinkProps(href = "/shop/merino-crew"))
 					{
 						Column(
-							modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(Color(0xFFF3F4F6)).width(176.dp),
+							modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(176.dp),
 						) {
 							Row(
 								modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFFFBBF24), Color(0xFFEA580C)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
@@ -343,7 +343,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 								Text(
 									text = "4.6 · (340)",
 									modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-									style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF9CA3AF)),
+									style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
 								)
 								Row(
 									modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
@@ -356,7 +356,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 									)
 									Text(
 										text = "${'$'}95",
-										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF9CA3AF), textDecoration = TextDecoration.LineThrough),
+										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
 									)
 								}
 							}
@@ -365,7 +365,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				NavLink(props = NavLinkProps(href = "/shop/splitshirt-tee"))
 					{
 						Column(
-							modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(Color(0xFFF3F4F6)).width(176.dp),
+							modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(176.dp),
 						) {
 							Row(
 								modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFFFB7185), Color(0xFFDB2777)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
@@ -391,7 +391,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 								Text(
 									text = "4.6 ★ (88)",
 									modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-									style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF9CA3AF)),
+									style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
 								)
 								Row(
 									modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
@@ -404,7 +404,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 									)
 									Text(
 										text = "${'$'}55",
-										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF9CA3AF), textDecoration = TextDecoration.LineThrough),
+										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
 									)
 								}
 							}
@@ -414,7 +414,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 			}
 			if (truthy(filter.value == "Shells")) {
 				Column(
-					modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(Color(0xFFF3F4F6)).width(176.dp),
+					modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(176.dp),
 				) {
 					Row(
 						modifier = Modifier.fillMaxWidth().veskGrayscale(1f).clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFF64748B), Color(0xFF1E293B)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
@@ -440,7 +440,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 						Text(
 							text = "Ships in 2 weeks",
 							modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-							style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF9CA3AF)),
+							style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
 						)
 						Text(
 							text = "${'$'}189",
@@ -455,7 +455,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				NavLink(props = NavLinkProps(href = "/shop/yellowstone-beanie"))
 					{
 						Column(
-							modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(Color(0xFFF3F4F6)).width(176.dp),
+							modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(176.dp),
 						) {
 							Row(
 								modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFFFACC15), Color(0xFFD97706)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
@@ -481,7 +481,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 								Text(
 									text = "4.9 ★ (57)",
 									modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-									style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF9CA3AF)),
+									style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
 								)
 								Text(
 									text = "${'$'}28",
@@ -492,7 +492,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 						}
 					}
 				Column(
-					modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(Color(0xFFF3F4F6)).width(176.dp),
+					modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(176.dp),
 				) {
 					Row(
 						modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFFA78BFA), Color(0xFF9333EA)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
@@ -518,7 +518,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 						Text(
 							text = "4.5 ★ (41)",
 							modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-							style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF9CA3AF)),
+							style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
 						)
 						Row(
 							modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
@@ -531,7 +531,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 							)
 							Text(
 								text = "${'$'}80",
-								style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF9CA3AF), textDecoration = TextDecoration.LineThrough),
+								style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
 							)
 						}
 					}
@@ -542,7 +542,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				NavLink(props = NavLinkProps(href = "/shop/arctic-hoodie"))
 					{
 						Column(
-							modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(Color(0xFFF3F4F6)).width(176.dp),
+							modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(176.dp),
 						) {
 							Row(
 								modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFF60A5FA), Color(0xFF4F46E5)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
@@ -568,7 +568,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 								Text(
 									text = "4.5 ★ (212)",
 									modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-									style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF9CA3AF)),
+									style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
 								)
 								Row(
 									modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
@@ -581,7 +581,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 									)
 									Text(
 										text = "${'$'}120",
-										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF9CA3AF), textDecoration = TextDecoration.LineThrough),
+										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
 									)
 								}
 							}
@@ -590,7 +590,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				NavLink(props = NavLinkProps(href = "/shop/snow-parka"))
 					{
 						Column(
-							modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(Color(0xFFF3F4F6)).width(176.dp),
+							modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(176.dp),
 						) {
 							Row(
 								modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFF34D399), Color(0xFF0D9488)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
@@ -616,7 +616,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 								Text(
 									text = "4.8 ★ (96)",
 									modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-									style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF9CA3AF)),
+									style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
 								)
 								Row(
 									modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
@@ -629,7 +629,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 									)
 									Text(
 										text = "${'$'}260",
-										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF9CA3AF), textDecoration = TextDecoration.LineThrough),
+										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
 									)
 								}
 							}
@@ -638,7 +638,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				NavLink(props = NavLinkProps(href = "/shop/merino-crew"))
 					{
 						Column(
-							modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(Color(0xFFF3F4F6)).width(176.dp),
+							modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(176.dp),
 						) {
 							Row(
 								modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFFFBBF24), Color(0xFFEA580C)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
@@ -664,7 +664,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 								Text(
 									text = "4.6 · (340)",
 									modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-									style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF9CA3AF)),
+									style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
 								)
 								Row(
 									modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
@@ -677,14 +677,14 @@ fun Shop(content: @Composable () -> Unit = {}) {
 									)
 									Text(
 										text = "${'$'}95",
-										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF9CA3AF), textDecoration = TextDecoration.LineThrough),
+										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
 									)
 								}
 							}
 						}
 					}
 				Column(
-					modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(Color(0xFFF3F4F6)).width(176.dp),
+					modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(176.dp),
 				) {
 					Row(
 						modifier = Modifier.fillMaxWidth().veskGrayscale(1f).clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFF64748B), Color(0xFF1E293B)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
@@ -710,7 +710,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 						Text(
 							text = "Ships in 2 weeks",
 							modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-							style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF9CA3AF)),
+							style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
 						)
 						Text(
 							text = "${'$'}189",
@@ -722,7 +722,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				NavLink(props = NavLinkProps(href = "/shop/splitshirt-tee"))
 					{
 						Column(
-							modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(Color(0xFFF3F4F6)).width(176.dp),
+							modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(176.dp),
 						) {
 							Row(
 								modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFFFB7185), Color(0xFFDB2777)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
@@ -748,7 +748,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 								Text(
 									text = "4.6 ★ (88)",
 									modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-									style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF9CA3AF)),
+									style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
 								)
 								Row(
 									modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
@@ -761,7 +761,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 									)
 									Text(
 										text = "${'$'}55",
-										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF9CA3AF), textDecoration = TextDecoration.LineThrough),
+										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
 									)
 								}
 							}
@@ -770,7 +770,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				NavLink(props = NavLinkProps(href = "/shop/yellowstone-beanie"))
 					{
 						Column(
-							modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(Color(0xFFF3F4F6)).width(176.dp),
+							modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(176.dp),
 						) {
 							Row(
 								modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFFFACC15), Color(0xFFD97706)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
@@ -796,7 +796,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 								Text(
 									text = "4.9 ★ (57)",
 									modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-									style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF9CA3AF)),
+									style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
 								)
 								Text(
 									text = "${'$'}28",
@@ -807,7 +807,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 						}
 					}
 				Column(
-					modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(Color(0xFFF3F4F6)).width(176.dp),
+					modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(176.dp),
 				) {
 					Row(
 						modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFFA78BFA), Color(0xFF9333EA)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
@@ -833,7 +833,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 						Text(
 							text = "4.5 ★ (41)",
 							modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-							style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF9CA3AF)),
+							style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
 						)
 						Row(
 							modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
@@ -846,7 +846,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 							)
 							Text(
 								text = "${'$'}80",
-								style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF9CA3AF), textDecoration = TextDecoration.LineThrough),
+								style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
 							)
 						}
 					}
