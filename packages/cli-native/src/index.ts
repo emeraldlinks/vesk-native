@@ -15,7 +15,7 @@ const SAMPLE_VSK = join(MONOREPO, 'test-app', 'app');
 const CONFIG_TS = 'veskconfig.ts';
 const CONFIG_JSON = 'veskconfig.json';
 const DEFAULT_SDK = '/opt/vesk-native-toolchain/sdk';
-const DEFAULT_GRADLE = '/opt/vesk-native-toolchain/gradle-8.13/bin/gradle';
+const DEFAULT_GRADLE = '/opt/vesk-native-toolchain/gradle-9.7.0/bin/gradle';
 const TERMUX_BIN = '/data/data/com.termux/files/usr/bin';
 const TERMUX_HOME = '/data/data/com.termux/files/home';
 
@@ -24,9 +24,9 @@ const DEFAULT_CONFIG: VeskConfig = {
   appName: 'Vesk Demo',
   versionName: '0.1.0',
   versionCode: 1,
-  compileSdk: 34,
+  compileSdk: 37,
   minSdk: 24,
-  targetSdk: 34,
+  targetSdk: 36,
   orientation: 'portrait',
   root: '',
   page: '',
@@ -149,9 +149,12 @@ include(":app")
 function generateAppBuildGradleKts(target: string, config: VeskConfig): void {
   writeFileSync(
     join(target, 'app', 'build.gradle.kts'),
-    `plugins {
+    `import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
+plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 android {
@@ -177,27 +180,25 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
-    }
-
     buildFeatures {
         compose = true
     }
+}
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.8"
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
     }
 }
 
 dependencies {
-    implementation(platform("androidx.compose:compose-bom:2024.02.00"))
+    implementation(platform("androidx.compose:compose-bom:2026.06.01"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
-    implementation("androidx.activity:activity-compose:1.8.2")
-    implementation("androidx.core:core-ktx:1.12.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
+    implementation("androidx.activity:activity-compose:1.13.0")
+    implementation("androidx.core:core-ktx:1.19.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.11.0")
 }
 `,
   );
@@ -209,8 +210,7 @@ function generateManifest(target: string, config: VeskConfig): void {
   writeFileSync(
     join(target, 'app', 'src', 'main', 'AndroidManifest.xml'),
     `<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="${config.appId}">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application
         android:label="${config.appName}"
