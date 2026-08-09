@@ -43,6 +43,24 @@ component Home() {
 
         <section>
             <div class="flex items-center justify-between mb-3">
+                <h2 class="text-lg font-bold tracking-tight">On home screens</h2>
+                <p class="text-xs text-gray-500">bundled images</p>
+            </div>
+            <div class="flex gap-3 flex-nowrap overflow-x-auto">
+                <img src="/media/lookbook.jpg" class="w-44 h-56 rounded-2xl object-cover" />
+                <img src="/media/crew.jpg" class="w-44 h-56 rounded-2xl object-cover" />
+                <img src="/media/coast.jpg" class="w-44 h-56 rounded-2xl object-cover" />
+                <img src="/media/hills.jpg" class="w-44 h-56 rounded-2xl object-cover" />
+                <img src="/media/beach-1.png" class="w-44 h-56 rounded-2xl object-cover" />
+                <img src={"/media/beach-2.png"} class="w-44 h-56 rounded-2xl object-cover" />
+                <img src="/media/water.jpg" class="w-44 h-56 rounded-2xl object-cover" />
+                <img src="/media/sunset.jpg" class="w-44 h-56 rounded-2xl object-cover" />
+                <img src="/media/beach-party.jpg" class="w-44 h-56 rounded-2xl object-cover" />
+            </div>
+        </section>
+
+        <section>
+            <div class="flex items-center justify-between mb-3">
                 <h2 class="text-lg font-bold tracking-tight">New arrivals</h2>
                 <NavLink href="/shop" class="text-sm font-semibold text-blue-600">See all</NavLink>
             </div>

@@ -1,5 +1,6 @@
 package app
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
@@ -49,6 +50,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
@@ -162,6 +165,83 @@ fun Home(content: @Composable () -> Unit = {}) {
 							)
 						}
 					}
+			}
+		}
+		Column(
+			modifier = Modifier.fillMaxWidth(),
+		) {
+			Row(
+				modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+				verticalAlignment = Alignment.CenterVertically,
+				horizontalArrangement = Arrangement.SpaceBetween,
+			) {
+				Text(
+					text = "On home screens",
+					style = TextStyle(fontSize = 18.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold, letterSpacing = -0.2.sp),
+				)
+				Text(
+					text = "bundled images",
+					style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant),
+				)
+			}
+			Row(
+				modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+				horizontalArrangement = Arrangement.spacedBy(12.dp),
+			) {
+				Image(
+					painter = painterResource(com.vesk.demo3.R.drawable.lookbook),
+					contentDescription = null,
+					modifier = Modifier.clip(RoundedCornerShape(16.dp)).width(176.dp).height(224.dp),
+					contentScale = ContentScale.Crop,
+				)
+				Image(
+					painter = painterResource(com.vesk.demo3.R.drawable.crew),
+					contentDescription = null,
+					modifier = Modifier.clip(RoundedCornerShape(16.dp)).width(176.dp).height(224.dp),
+					contentScale = ContentScale.Crop,
+				)
+				Image(
+					painter = painterResource(com.vesk.demo3.R.drawable.coast),
+					contentDescription = null,
+					modifier = Modifier.clip(RoundedCornerShape(16.dp)).width(176.dp).height(224.dp),
+					contentScale = ContentScale.Crop,
+				)
+				Image(
+					painter = painterResource(com.vesk.demo3.R.drawable.hills),
+					contentDescription = null,
+					modifier = Modifier.clip(RoundedCornerShape(16.dp)).width(176.dp).height(224.dp),
+					contentScale = ContentScale.Crop,
+				)
+				Image(
+					painter = painterResource(com.vesk.demo3.R.drawable.beach_1),
+					contentDescription = null,
+					modifier = Modifier.clip(RoundedCornerShape(16.dp)).width(176.dp).height(224.dp),
+					contentScale = ContentScale.Crop,
+				)
+				Image(
+					painter = painterResource(com.vesk.demo3.R.drawable.beach_2),
+					contentDescription = null,
+					modifier = Modifier.clip(RoundedCornerShape(16.dp)).width(176.dp).height(224.dp),
+					contentScale = ContentScale.Crop,
+				)
+				Image(
+					painter = painterResource(com.vesk.demo3.R.drawable.water),
+					contentDescription = null,
+					modifier = Modifier.clip(RoundedCornerShape(16.dp)).width(176.dp).height(224.dp),
+					contentScale = ContentScale.Crop,
+				)
+				Image(
+					painter = painterResource(com.vesk.demo3.R.drawable.sunset),
+					contentDescription = null,
+					modifier = Modifier.clip(RoundedCornerShape(16.dp)).width(176.dp).height(224.dp),
+					contentScale = ContentScale.Crop,
+				)
+				Image(
+					painter = painterResource(com.vesk.demo3.R.drawable.beach_party),
+					contentDescription = null,
+					modifier = Modifier.clip(RoundedCornerShape(16.dp)).width(176.dp).height(224.dp),
+					contentScale = ContentScale.Crop,
+				)
 			}
 		}
 		Column(

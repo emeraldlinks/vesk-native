@@ -1,8 +1,8 @@
-import { chmodSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
-import { join, relative, resolve, dirname } from 'node:path';
+import { chmodSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
+import { join, relative, resolve, dirname, basename, extname } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { homedir } from 'node:os';
-import { compileVskResult, collectCustomCss, extractStylesheetLinks, parseCssClasses } from '@compiler-native/index.ts';
+import { compileVskResult, collectCustomCss, extractStylesheetLinks, extractImageSources, parseCssClasses } from '@compiler-native/index.ts';
 import type { ModifierParts } from '@compiler-native/tailwind.ts';
 import { setAdaptiveDark } from '@compiler-native/tailwind.ts';
 import { parse } from '@vesk/compiler';
@@ -243,13 +243,18 @@ dependencies {
   log('gen', 'app/build.gradle.kts (appId, sdk levels, version from config)');
 }
 
-function generateManifest(target: string, config: VeskConfig): void {
+function generateManifest(target: string, config: VeskConfig, mediaFileAccess: boolean): void {
   const orientationAttr = config.orientation ? `\n            android:screenOrientation="${config.orientation}"` : '';
+  const mediaPerms = mediaFileAccess
+    ? `    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+`
+    : '';
   writeFileSync(
     join(target, 'app', 'src', 'main', 'AndroidManifest.xml'),
     `<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-
+${mediaPerms}
     <application
         android:label="${config.appName}"
         android:theme="@style/Theme.VeskApp"
@@ -293,15 +298,38 @@ function generateThemes(target: string, config: VeskConfig): void {
   log('gen', 'themes.xml (colors from config)');
 }
 
-function generateMainActivity(target: string, config: VeskConfig): void {
+function generateMainActivity(target: string, config: VeskConfig, requestMediaPerms = false): void {
   const pkgPath = config.appId.split('.').join('/');
   const outDir = join(target, 'app', 'src', 'main', 'kotlin', pkgPath);
   mkdirSync(outDir, { recursive: true });
+  const permImports = requestMediaPerms
+    ? `import android.os.Build
+import androidx.activity.result.contract.ActivityResultContracts
+`
+    : '';
+  const permLaunch = requestMediaPerms
+    ? `
+    private val mediaPermLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        if (Build.VERSION.SDK_INT >= 33) {
+            mediaPermLauncher.launch(arrayOf(android.Manifest.permission.READ_MEDIA_IMAGES))
+        } else {
+            mediaPermLauncher.launch(arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE))
+        }
+        setContent {`
+    : `
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        setContent {`;
   writeFileSync(
     join(outDir, 'MainActivity.kt'),
     `package ${config.appId}
 
-import android.os.Bundle
+${permImports}import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -310,11 +338,7 @@ import androidx.compose.ui.Modifier
 import app.App
 import app.VeskTheme
 
-class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
+class MainActivity : ComponentActivity() {${permLaunch}
             VeskTheme {
                 Surface(modifier = Modifier) {
                     App()
@@ -439,6 +463,7 @@ fun VeskTheme(content: @Composable () -> Unit) {
 const RUNTIME_IMPORTS = `package app
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.Modifier
@@ -449,9 +474,12 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import app.navigation.*
 `;
@@ -476,6 +504,27 @@ fun num(v: Any?): Double = when (v) {
 `;
 
 const RUNTIME_HELPERS: Record<string, { deps: string[]; src: string }> = {
+  'veskFileImage': { deps: [], src: `
+// <img src="/storage/..."> (or content:// and file://): runtime decode from
+// device storage. Missing/unreadable files render a transparent placeholder.
+@Composable
+fun veskFileImage(path: String): ImageBitmap {
+    val context = LocalContext.current
+    val bmp = remember(path) {
+        runCatching {
+            if (path.startsWith("content://")) {
+                context.contentResolver.openInputStream(android.net.Uri.parse(path))?.use {
+                    android.graphics.BitmapFactory.decodeStream(it)
+                }
+            } else {
+                android.graphics.BitmapFactory.decodeFile(path)
+            }
+        }.getOrNull()
+    }
+    if (bmp != null) return bmp.asImageBitmap()
+    return remember(path) { ImageBitmap(1, 1) }
+}
+` },
   'veskColorFilter': { deps: [], src: `
 // Tailwind color filter base: color-matrix saveLayer; works on all API levels.
 private fun Modifier.veskColorFilter(matrix: ColorMatrix): Modifier = drawWithContent {
@@ -630,7 +679,7 @@ fun Outlet(content: @Composable () -> Unit = {}) {
 ` },
 };
 
-const RUNTIME_ORDER = ['veskColorFilter', 'veskBrightness', 'veskContrast', 'veskGrayscale', 'veskSaturate', 'veskInvert', 'veskSepia', 'veskHueRotate', 'veskDashedBorder', 'veskSideBorder', 'veskDivideLine', 'veskSkew', 'Link', 'NavLink', 'Outlet'];
+const RUNTIME_ORDER = ['veskFileImage', 'veskColorFilter', 'veskBrightness', 'veskContrast', 'veskGrayscale', 'veskSaturate', 'veskInvert', 'veskSepia', 'veskHueRotate', 'veskDashedBorder', 'veskSideBorder', 'veskDivideLine', 'veskSkew', 'Link', 'NavLink', 'Outlet'];
 
 function collectRuntimeUsage(appDir: string): Set<string> {
   const used = new Set<string>();
@@ -684,7 +733,11 @@ function generateRouterKt(appDir: string): void {
   }
 }
 
-function compileVskFiles(appDir: string, rootName: string): void {
+function isFileImageSrc(src: string): boolean {
+  return src.startsWith('/storage/') || src.startsWith('/data/') || src.startsWith('content://') || src.startsWith('file://');
+}
+
+function compileVskFiles(appDir: string, config: VeskConfig): void {
   const outDir = join(appDir, 'src', 'main', 'kotlin', 'app');
   mkdirSync(outDir, { recursive: true });
 
@@ -716,7 +769,7 @@ function compileVskFiles(appDir: string, rootName: string): void {
   for (const file of vskFiles) {
     const source = readFileSync(file, 'utf8');
     for (const href of extractStylesheetLinks(source)) {
-      const cssPath = resolve(dirname(file), href);
+      const cssPath = href.startsWith('/') ? resolve(appDir, href.slice(1)) : resolve(dirname(file), href);
       if (!existsSync(cssPath)) {
         linkSkipped.push(`${relative(appDir, file)}: <link rel="stylesheet" href="${href}"> file not found`);
         continue;
@@ -729,10 +782,44 @@ function compileVskFiles(appDir: string, rootName: string): void {
   }
   for (const s of new Set([...cssSkipped, ...linkSkipped])) log('css', s);
 
+  // <img src="/media/..."> project assets -> bundled into res/drawable-xxhdpi.
+  const imageResources = new Map<string, string>();
+  const usedNames = new Set<string>();
+  const resDir = join(appDir, 'src', 'main', 'res');
+  for (const e of readdirSync(resDir, { withFileTypes: true })) {
+    if (e.name.startsWith('drawable') && e.isDirectory()) rmSync(join(resDir, e.name), { recursive: true, force: true });
+  }
+  for (const file of vskFiles) {
+    const source = readFileSync(file, 'utf8');
+    for (const { src } of extractImageSources(source)) {
+      if (isFileImageSrc(src)) continue;
+      const imgPath = src.startsWith('/') ? resolve(appDir, src.slice(1)) : resolve(dirname(file), src);
+      if (!existsSync(imgPath)) {
+        log('img', `${relative(appDir, file)}: <img src="${src}"> file not found`);
+        continue;
+      }
+      const ext = extname(imgPath).toLowerCase();
+      if (!['.png', '.jpg', '.jpeg', '.webp'].includes(ext)) {
+        log('img', `${relative(appDir, file)}: unsupported image type ${ext} for "${src}"`);
+        continue;
+      }
+      const base = basename(imgPath, ext).toLowerCase().replace(/[^a-z0-9_]/g, '_') || 'img';
+      let name = base;
+      let i = 1;
+      while (usedNames.has(name)) name = `${base}_${i++}`;
+      usedNames.add(name);
+      const drawable = join(resDir, 'drawable-xxhdpi');
+      mkdirSync(drawable, { recursive: true });
+      cpSync(imgPath, join(drawable, `${name}${ext === '.jpeg' ? '.jpg' : ext}`));
+      imageResources.set(src, name);
+      log('img', `${relative(appDir, file)} -> drawable-xxhdpi/${name}${ext}`);
+    }
+  }
+
   const seen = new Map<string, number>();
   for (const file of vskFiles) {
     const source = readFileSync(file, 'utf8');
-    const result = compileVskResult(source, file, { componentsWithoutProps, customClasses, scopedCustomClasses: scopedClasses, rootName });
+    const result = compileVskResult(source, file, { componentsWithoutProps, customClasses, scopedCustomClasses: scopedClasses, imageResources, rClass: `${config.appId}.R`, rootName: config.root ?? '' });
     if (result.errors.length > 0) {
       console.error(`  [compile] errors in ${relative(appDir, file)}:`);
       for (const e of result.errors) console.error(`    ! ${e}`);
@@ -858,12 +945,15 @@ function generateProject(target: string, config: VeskConfig): void {
   // the project declares darkColors — same .vsk matches web in light and dark.
   setAdaptiveDark(!!config.darkColors);
   generateAppBuildGradleKts(target, config);
-  generateManifest(target, config);
+  const mediaFileAccess = collectVskFiles(appDir).some((f) =>
+    extractImageSources(readFileSync(f, 'utf8')).some(({ src }) => isFileImageSrc(src)),
+  );
+  generateManifest(target, config, mediaFileAccess);
   generateThemes(target, config);
-  generateMainActivity(target, config);
+  generateMainActivity(target, config, mediaFileAccess);
   generateThemeKt(target, config);
   generateRouterKt(appDir);
-  compileVskFiles(appDir, config.root ?? '');
+  compileVskFiles(appDir, config);
   generateAppKt(appDir, config);
   // Last: Runtime.kt is pruned to the helpers the generated pages actually use.
   generateRuntimeKt(appDir);

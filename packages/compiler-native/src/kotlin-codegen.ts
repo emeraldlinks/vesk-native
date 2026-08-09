@@ -38,6 +38,8 @@ export interface CompileOptions {
   componentsWithoutProps?: Set<string>;
   customClasses?: Map<string, ModifierParts>;
   scopedCustomClasses?: Map<string, Map<string, ModifierParts>>;
+  imageResources?: Map<string, string>;
+  rClass?: string;
   rootName?: string;
 }
 
@@ -71,6 +73,76 @@ function buttonShape(classes: string[]): string | null {
     if (r !== undefined) return `RoundedCornerShape(${r}.dp)`;
   }
   return null;
+}
+
+// Absolute on-device paths and content/file URIs resolve at runtime; anything
+// else is a project asset bundled to res/drawable (web-style /media/... path).
+function isFileImageSrc(src: string): boolean {
+  return src.startsWith('/storage/') || src.startsWith('/data/') || src.startsWith('content://') || src.startsWith('file://');
+}
+
+// <img src="..."> -> Image(painter = painterResource(R.drawable.x)) for bundled
+// assets, Image(bitmap = veskFileImage(path)) for runtime file paths.
+function imageLines(node: StaticNode, em: Emitter, level: number, parentAxis: 'column' | 'row' | null, extraModifier: string | null): string[] {
+  const classes = em.classList(node);
+  if (isHidden(classes, em.customClasses)) return [];
+  const pad = '\t'.repeat(level);
+  const padIn = '\t'.repeat(level + 1);
+  const parts = classify(classes, em.customClasses, parentAxis === 'row' ? 'row' : 'column');
+  if (parentAxis === null) stripScopeMods(parts);
+  let modifier = buildModifier(parts);
+  modifier = prependModifier(modifier, extraModifier);
+
+  let painterArg: string | null = null;
+  let bitmapArg: string | null = null;
+  const staticSrc = node.attributes.find((a) => a.name === 'src')?.value;
+  const dynSrc = em.dynamicAttrs(node).get('src');
+  if (staticSrc !== undefined) {
+    if (isFileImageSrc(staticSrc)) {
+      bitmapArg = `veskFileImage(${em.ktString(staticSrc)})`;
+    } else {
+      const res = em.imageResources?.get(staticSrc);
+      if (res) {
+        painterArg = `painterResource(${em.rClass}.drawable.${res})`;
+      } else {
+        em.err.warn(null, `<img src="${staticSrc}">: project file not found (looked up ${em.imageResources ? 'bundled assets' : 'no image map'})`);
+      }
+    }
+  } else if (dynSrc) {
+    bitmapArg = `veskFileImage(${em.exprOf(dynSrc as unknown as Expression)})`;
+  } else {
+    em.err.warn(null, `<img> is missing a src attribute`);
+  }
+
+  if (!painterArg && !bitmapArg) return [pad + 'Box {}'];
+  const scale = parts.scale[0] ?? 'ContentScale.Fit';
+  const lines = [pad + 'Image('];
+  lines.push(padIn + (painterArg ? `painter = ${painterArg},` : `bitmap = ${bitmapArg},`));
+  lines.push(padIn + 'contentDescription = null,');
+  if (modifier) lines.push(padIn + `modifier = ${modifier},`);
+  if (scale !== 'ContentScale.Fit') lines.push(padIn + `contentScale = ${scale},`);
+  lines.push(pad + ')');
+  return lines;
+}
+
+// Collect every static src on <img> elements (AST-only, no regex).
+export function extractImageSources(source: string): Array<{ src: string; component: string }> {
+  const out: Array<{ src: string; component: string }> = [];
+  try {
+    const ast = parse(source, { filename: 'component.vsk' });
+    const ir = generateIR(ast, source);
+    for (const comp of ir.components) {
+      walkIR(comp.body, (node) => {
+        if (node instanceof StaticNode && node.tag.toLowerCase() === 'img') {
+          const src = node.attributes.find((a) => a.name === 'src')?.value;
+          if (src) out.push({ src, component: comp.name });
+        }
+      });
+    }
+  } catch {
+    // Unparsable files are reported by the compile step itself.
+  }
+  return out;
 }
 
 // Button content: plain text children (static and/or dynamic) merge into one
@@ -119,7 +191,8 @@ function emitButton(node: StaticNode, classes: string[], attrs: Map<string, JsNo
   return lines;
 }
 
-const IMPORTS = `import androidx.compose.foundation.background
+const IMPORTS = `import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyColumn
@@ -168,6 +241,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
@@ -185,13 +260,17 @@ class Emitter {
   tracked: Map<string, TrackedInfo>;
   componentsWithoutProps?: Set<string>;
   customClasses?: Map<string, ModifierParts>;
+  imageResources?: Map<string, string>;
+  rClass: string;
 
-  constructor(err: KtErrors, tracked: Map<string, TrackedInfo>, componentsWithoutProps?: Set<string>, customClasses?: Map<string, ModifierParts>) {
+  constructor(err: KtErrors, tracked: Map<string, TrackedInfo>, componentsWithoutProps?: Set<string>, customClasses?: Map<string, ModifierParts>, imageResources?: Map<string, string>, rClass = 'app.R') {
     this.err = err;
     this.j2k = new Js2Kt(err);
     this.tracked = tracked;
     this.componentsWithoutProps = componentsWithoutProps;
     this.customClasses = customClasses;
+    this.imageResources = imageResources;
+    this.rClass = rClass;
   }
 
   ktString(value: string): string {
@@ -483,6 +562,10 @@ function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: '
   const pad = '\t'.repeat(level);
   const padIn = '\t'.repeat(level + 1);
   const fillWidth = fillMaxWidth(classes, node.tag, parentAxis);
+
+  if (info.kind === 'image') {
+    return imageLines(node, em, level, parentAxis, extraModifier);
+  }
 
   if (info.kind === 'text') {
     const content = textContent(node.children, em);
@@ -831,7 +914,7 @@ function runCompile(source: string, filename: string, options: CompileOptions): 
       resolvedClasses = new Map(customClasses);
       for (const [k, v] of own) resolvedClasses.set(k, v); // scoped wins over global
     }
-    const em = new Emitter(err, tracked, options.componentsWithoutProps, resolvedClasses);
+    const em = new Emitter(err, tracked, options.componentsWithoutProps, resolvedClasses, options.imageResources, options.rClass);
 
     const propsArg = propsClass ? `props: ${comp.name}Props${propsParamDefault ? ` = ${comp.name}Props()` : ''}` : '';
     const params = [propsArg, 'content: @Composable () -> Unit = {}'].filter(Boolean).join(', ');

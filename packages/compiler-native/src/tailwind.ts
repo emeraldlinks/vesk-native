@@ -250,7 +250,7 @@ function defaultBorder(): string {
 
 // ---------- value resolution ----------
 
-type Namespace = 'spacing' | 'size' | 'color' | 'fontSize' | 'radius' | 'shadowSize' | 'weight' | 'family' | 'leading' | 'tracking' | 'opacity' | 'zIndex' | 'rotate' | 'scale' | 'skew' | 'blur' | 'lineClamp';
+type Namespace = 'spacing' | 'size' | 'color' | 'fontSize' | 'radius' | 'shadowSize' | 'weight' | 'family' | 'leading' | 'tracking' | 'opacity' | 'zIndex' | 'rotate' | 'scale' | 'skew' | 'blur' | 'lineClamp' | 'fit';
 
 type Resolved =
   | { kind: 'dp'; dp: number; raw: string }
@@ -259,6 +259,7 @@ type Resolved =
   | { kind: 'weight'; weight: string; raw: string }
   | { kind: 'family'; family: string; raw: string }
   | { kind: 'fraction'; fraction: number; raw: string }
+  | { kind: 'fit'; raw: string }
   | { kind: 'none'; raw: string };
 
 function resolveDp(raw: string): number | null {
@@ -368,18 +369,20 @@ function resolveValue(ns: Namespace, raw: string): Resolved | null {
       const v = TRACKING[raw];
       return v === undefined ? null : { kind: 'sp', sp: v, raw };
     }
-    case 'opacity': {
+case 'opacity': {
       let f: number | null = null;
       if (raw.startsWith('[') && raw.endsWith(']')) {
         const v = raw.slice(1, -1);
         f = v.endsWith('%') ? Number.parseFloat(v) / 100 : Number.parseFloat(v);
         if (f === null || Number.isNaN(f)) f = null;
       } else {
-        const n = Number(raw);
-        f = OPACITY_VALUES.has(n) ? n / 100 : null;
+        f = OPACITY_VALUES.has(Number(raw)) ? Number(raw) / 100 : null;
       }
       if (f === null) return null;
       return { kind: 'fraction', fraction: Math.max(0, Math.min(1, f)), raw };
+    }
+    case 'fit': {
+      return { kind: 'fit', raw };
     }
     case 'zIndex': {
       return Z_INDEX.has(raw) ? { kind: 'dp', dp: Number(raw), raw } : null;
@@ -445,16 +448,16 @@ export interface ModifierParts {
   stacking: string[];
   align: string[];
   textStyle: string[];
+  scale: string[];
   text: TextParams;
   hidden?: boolean;
   flow?: boolean;
   divide?: { axis: 'x' | 'y'; width: number; color: string; style: 'solid' | 'dashed' | 'dotted' };
 }
-
 export function emptyParts(): ModifierParts {
   return {
     alpha: [], margin: [], scroll: [], transform: [], shadow: [], clip: [], background: [],
-    border: [], size: [], padding: [], stacking: [], align: [], textStyle: [], text: {},
+    border: [], size: [], padding: [], stacking: [], align: [], textStyle: [], scale: [], text: {},
   };
 }
 
@@ -490,7 +493,7 @@ export interface LayoutArgs {
 
 // ---------- utility spec table ----------
 
-type Bucket = 'alpha' | 'margin' | 'scroll' | 'transform' | 'shadow' | 'clip' | 'background' | 'border' | 'size' | 'padding' | 'stacking' | 'align' | 'textStyle' | 'text' | 'layout' | 'flow' | 'drop';
+type Bucket = 'alpha' | 'margin' | 'scroll' | 'transform' | 'shadow' | 'clip' | 'background' | 'border' | 'size' | 'padding' | 'stacking' | 'align' | 'textStyle' | 'scale' | 'text' | 'layout' | 'flow' | 'drop';
 
 // Order in which modifier fragments are chained (outermost first).
 const BUCKET_ORDER: Array<'alpha' | 'margin' | 'scroll' | 'transform' | 'shadow' | 'clip' | 'background' | 'border' | 'size' | 'padding' | 'stacking' | 'align'> = ['alpha', 'margin', 'scroll', 'transform', 'shadow', 'clip', 'background', 'border', 'size', 'padding', 'stacking', 'align'];
@@ -831,6 +834,14 @@ const UTILITIES: UtilitySpec[] = [
   { name: 'divide-dotted', bucket: 'border', ns: [], render: (_r, ctx) => { ctx.divide.style = 'dotted'; } },
   { name: 'divide-double', bucket: 'border', ns: [], render: (_r, ctx) => { ctx.divide.style = 'solid'; } },
   { name: 'divide-none', bucket: 'border', ns: [], render: (_r, ctx) => { ctx.divide.style = 'none'; } },
+  // ---- object-fit (Image content scale) ----
+  { name: 'object', bucket: 'scale', ns: ['fit'], render: (r, ctx) => {
+    if (r.kind === 'fit') {
+      const m: Record<string, string> = { cover: 'ContentScale.Crop', contain: 'ContentScale.Fit', fill: 'ContentScale.FillBounds', none: 'ContentScale.None', 'scale-down': 'ContentScale.Inside' };
+      const v = m[r.raw];
+      if (v) ctx.parts.scale.push(v);
+    }
+  } },
   // ---- overflow / scrolling ----
   { name: 'overflow', bucket: 'clip', ns: [], render: (r, ctx) => {
     const v = r.raw;
