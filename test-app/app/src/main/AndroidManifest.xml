@@ -4,11 +4,17 @@
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:label="Vesk Demo 3"
         android:theme="@style/Theme.VeskApp"
         android:allowBackup="false">
+    <receiver android:name="app.VeskMediaReceiver" android:exported="true">
+        <intent-filter>
+            <action android:name="android.intent.action.MEDIA_BUTTON" />
+        </intent-filter>
+    </receiver>
         <activity
             android:name=".MainActivity"
             android:exported="true"

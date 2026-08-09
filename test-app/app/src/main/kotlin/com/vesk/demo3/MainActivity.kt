@@ -19,9 +19,10 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         if (Build.VERSION.SDK_INT >= 33) {
             mediaPermLauncher.launch(arrayOf(
-                android.Manifest.permission.READ_MEDIA_IMAGES,
+                                android.Manifest.permission.READ_MEDIA_IMAGES,
                 android.Manifest.permission.READ_MEDIA_VIDEO,
                 android.Manifest.permission.READ_MEDIA_AUDIO,
+                android.Manifest.permission.POST_NOTIFICATIONS,
             ))
         } else {
             mediaPermLauncher.launch(arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE))

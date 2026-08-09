@@ -66,7 +66,7 @@ component Home() {
             </div>
             <div class="flex-col gap-4">
                 <video src="/media/demo.mp4" controls class="rounded-2xl" />
-                <video src="/media/demo.mp4" autoplay loop muted class="w-1/2 rounded-2xl" />
+                <video src="/media/demo.mp4" autoplay loop muted object-cover class="w-1/2 h-28 rounded-2xl" />
                 <audio src="/media/last-train.mp3" controls class="bg-gray-100 rounded-full px-3 py-2" />
                 <audio src="/storage/emulated/0/vesk_media/Last Train Home.mp3" controls class="bg-gray-100 rounded-full px-3 py-2" />
             </div>

@@ -33,5 +33,8 @@ export default defineConfig({
     mode: 'stack',
     doubleBackToExit: true,
     exitDelayMs: 2000,
+    exitRoutes: [],
   },
+  permissions: [],
+  device: 'phone',
 })

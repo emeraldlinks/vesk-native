@@ -15,8 +15,8 @@ fun App() {
     val nav = rememberNavController()
     LaunchedEffect(Unit) { nav.navigate("/") }
     CompositionLocalProvider(LocalNavController provides nav) {
-        // System bars are drawn edge-to-edge; push the app content below the
-        // status bar and above the navigation bar.
+                // System bars are drawn edge-to-edge; push the app content below the
+                // status bar and above the navigation bar.
         Box(modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
             Layout {
                 AppRouter(start = "/", routes = listOf(
@@ -35,7 +35,7 @@ fun App() {
         Route("/shop/splitshirt-tee") { SplitTee() },
         Route("/shop/yellowstone-beanie") { Beanie() }
                 ),
-            back = BackBehavior(mode = "stack", doubleBackToExit = true, exitDelayMs = 2000),)
+            back = BackBehavior(mode = "stack", doubleBackToExit = true, exitDelayMs = 2000, exitRoutes = listOf("/")),)
             }
         }
     }

@@ -275,7 +275,7 @@ fun Home(content: @Composable () -> Unit = {}) {
 					autoplay = true,
 					loop = true,
 					muted = true,
-					modifier = Modifier.clip(RoundedCornerShape(16.dp)).fillMaxWidth(0.5f),
+					modifier = Modifier.clip(RoundedCornerShape(16.dp)).fillMaxWidth(0.5f).height(112.dp),
 				)
 				veskAudio(
 					url = "android.resource://com.vesk.demo3/" + com.vesk.demo3.R.raw.last_train,

@@ -12,7 +12,8 @@
   ],
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "spike": "tsx packages/compiler-native/src/spike.ts"
+    "spike": "tsx packages/compiler-native/src/spike.ts",
+    "demo": "tsx packages/cli-native/src/index.ts install test-app"
   },
   "devDependencies": {
     "@types/node": "^26.1.2",

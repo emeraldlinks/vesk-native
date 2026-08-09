@@ -26,6 +26,9 @@ data class BackBehavior(
     val mode: String = "stack",
     val doubleBackToExit: Boolean = true,
     val exitDelayMs: Long = 2000,
+    // Routes where a double back press exits the app. Empty means only the
+    // start/root route.
+    val exitRoutes: List<String> = emptyList(),
 )
 
 class NavController {
@@ -40,11 +43,20 @@ class NavController {
         _currentRoute.value = path
     }
 
-    // Push a new route onto the history stack.
+    // Navigate like a browser: routes already on the stack pop back to them
+    // instead of pushing duplicates, tapping the current route is a no-op.
     fun navigate(path: String) {
-        if (path == _currentRoute.value && _history.value.size > 1) return
-        _history.value = _history.value + path
-        _currentRoute.value = path
+        if (path == _currentRoute.value) return
+        val stack = _history.value.toMutableList()
+        val idx = stack.indexOf(path)
+        if (idx >= 0) {
+            while (stack.size > idx + 1) stack.removeAt(stack.size - 1)
+            _history.value = stack
+            _currentRoute.value = path
+        } else {
+            _history.value = stack + path
+            _currentRoute.value = path
+        }
     }
 
     fun canPop(): Boolean = _history.value.size > 1
@@ -77,9 +89,17 @@ fun AppRouter(start: String, routes: List<Route>, back: BackBehavior = BackBehav
 
     LaunchedEffect(start) { nav.start(start) }
 
+    // Exit pages (root by default, or listed in back.exitRoutes / route-level
+    // exitOnBack): a double back press exits the app, regardless of what is
+    // underneath on the stack. Every other page pops the history first.
+    val exitRoutes = if (back.exitRoutes.isEmpty()) listOf(start) else back.exitRoutes
     BackHandler {
-        if (nav.pop()) return@BackHandler
-        if (back.mode != "stack" || !back.doubleBackToExit) return@BackHandler
+        val exitHere = back.mode == "stack" && nav.currentRoute.value in exitRoutes
+        if (!exitHere) {
+            nav.pop()
+            return@BackHandler
+        }
+        if (!back.doubleBackToExit) return@BackHandler
         val now = SystemClock.uptimeMillis()
         if (now - lastBackPress.longValue <= back.exitDelayMs) {
             context.findActivity()?.finish()

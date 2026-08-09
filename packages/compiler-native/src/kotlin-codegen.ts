@@ -200,6 +200,15 @@ function mediaLines(node: StaticNode, em: Emitter, level: number, parentAxis: 'c
     if (has(name)) args.push(`${padIn}${kt} = true,`);
   }
   if (modifier) args.push(`${padIn}modifier = ${modifier},`);
+  const SCALE_SHORT: Record<string, string> = {
+    'ContentScale.Crop': 'crop',
+    'ContentScale.FillBounds': 'fill',
+    'ContentScale.None': 'none',
+    'ContentScale.Fit': 'fit',
+    'ContentScale.Inside': 'fit',
+  };
+  const scale = parts.scale[0] ? SCALE_SHORT[parts.scale[0]!] : null;
+  if (node.tag === 'video' && scale && scale !== 'fit') args.push(`${padIn}scale = "${scale}",`);
   return [pad + `${node.tag === 'video' ? 'veskVideo' : 'veskAudio'}(`, ...args, pad + ')'];
 }
 
