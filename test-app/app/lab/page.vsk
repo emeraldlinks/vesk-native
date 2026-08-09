@@ -1,0 +1,63 @@
+component Lab() {
+    <div class="p-4 flex-col gap-4">
+        <div class="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-xl p-6">
+            <h1 class="text-white text-2xl font-bold">Gradient card</h1>
+        </div>
+        <div class="bg-gray-100 rounded-xl p-4 flex space-x-4 divide-x divide-gray-300">
+            <div class="p-2 flex-1">A</div>
+            <div class="p-2 flex-1">B</div>
+            <div class="p-2 flex-1">C</div>
+        </div>
+        <div class="bg-white border-t-2 border-gray-200 rounded-lg p-4">
+            <h2 class="text-lg font-semibold">Top border only</h2>
+        </div>
+        <div class="bg-white ring-2 ring-blue-500 rounded-full p-3 w-20 h-20 flex items-center justify-center">
+            <span class="text-sm font-bold text-blue-600">ring</span>
+        </div>
+        <div class="flex items-center justify-between">
+            <div class="bg-green-500 rounded-lg p-4 rotate-45">rot</div>
+            <div class="bg-orange-500 rounded-lg p-4 scale-125">big</div>
+            <div class="bg-purple-500 rounded-lg p-4 translate-x-4">x4</div>
+            <div class="bg-red-500 rounded-lg p-4 skew-x-6">skew</div>
+        </div>
+        <div class="w-full aspect-video bg-cyan-200 rounded-xl"></div>
+        <p class="text-sm text-gray-700 line-clamp-2">
+            This is a very long paragraph that should be clamped to two lines
+            with an ellipsis. It keeps going and going and going and going and
+            going and going and going and going and going.
+        </p>
+        <div class="h-24 overflow-y-auto bg-gray-50 rounded-lg p-3">
+            <div class="mb-2">Item one</div>
+            <div class="mb-2">Item two</div>
+            <div class="mb-2">Item three</div>
+            <div class="mb-2">Item four</div>
+            <div class="mb-2">Item five</div>
+            <div class="mb-2">Item six</div>
+        </div>
+        <div class="bg-white rounded-lg p-4 shadow-xl">
+            <h3 class="font-semibold mb-1">Shadow card</h3>
+            <p class="text-gray-600 text-sm">Box shadows map to elevation.</p>
+        </div>
+        <div class="bg-black/50 rounded-lg p-4 invisible">
+            <p class="text-white">Hidden with invisible</p>
+        </div>
+        <div class="bg-white rounded-lg p-4">
+            <h3 class="font-semibold mb-1">Wrap + case + neg margin</h3>
+            <div class="flex flex-wrap gap-2">
+                <div class="bg-blue-100 rounded px-3 py-1 text-sm">one</div>
+                <div class="bg-blue-100 rounded px-3 py-1 text-sm">two</div>
+                <div class="bg-blue-100 rounded px-3 py-1 text-sm">three</div>
+                <div class="bg-blue-100 rounded px-3 py-1 text-sm">four</div>
+                <div class="bg-blue-100 rounded px-3 py-1 text-sm">five</div>
+                <div class="bg-blue-100 rounded px-3 py-1 text-sm -mt-4">lifted</div>
+            </div>
+            <p class="text-sm text-gray-600 uppercase">shout this</p>
+            <p class="text-sm text-gray-600 capitalize">capital me</p>
+        </div>
+        <div class="flex divide-x divide-dashed divide-slate-300">
+            <div class="p-2 flex-1">D</div>
+            <div class="p-2 flex-1">E</div>
+            <div class="p-2 flex-1">F</div>
+        </div>
+    </div>
+}

@@ -9,7 +9,8 @@
     "vesk-native": "./src/index.ts"
   },
   "dependencies": {
-    "compiler-native": "file:../compiler-native"
+    "compiler-native": "file:../compiler-native",
+    "vesk-native": "file:../native"
   },
   "devDependencies": {
     "typescript": "^5.8.0"

@@ -7,11 +7,19 @@
   "minSdk": 24,
   "targetSdk": 34,
   "orientation": "portrait",
+  "theme": "system",
   "colors": {
     "primary": "#3B82F6",
     "background": "#FFFFFF",
     "surface": "#FFFFFF",
     "onPrimary": "#FFFFFF",
     "text": "#1F2937"
+  },
+  "darkColors": {
+    "primary": "#60A5FA",
+    "background": "#0F172A",
+    "surface": "#1E293B",
+    "onPrimary": "#0F172A",
+    "text": "#E2E8F0"
   }
 }

@@ -16,8 +16,18 @@ fun App() {
         Route("/blog/hello-world") { BlogPost() },
         Route("/blog") { Blog() },
         Route("/blog/vesk-native") { VeskNativePost() },
-        Route("/") { Page() }
-            ))
+        Route("/cart") { CartPage() },
+        Route("/checkout") { CheckoutPage() },
+        Route("/lab") { Lab() },
+        Route("/") { Home() },
+        Route("/shop/arctic-hoodie") { ArcticHoodie() },
+        Route("/shop/merino-crew") { MerinoCrew() },
+        Route("/shop") { Shop() },
+        Route("/shop/snow-parka") { SnowParka() },
+        Route("/shop/splitshirt-tee") { SplitTee() },
+        Route("/shop/yellowstone-beanie") { Beanie() }
+            ),
+            back = BackBehavior(mode = "stack", doubleBackToExit = true, exitDelayMs = 2000),)
         }
     }
 }

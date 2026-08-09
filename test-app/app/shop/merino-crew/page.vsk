@@ -1,0 +1,30 @@
+component MerinoCrew() {
+    const &[qty] = track(1)
+
+    <div class="flex-col gap-6 px-4 py-2">
+        <div class="bg-gradient-to-br from-amber-400 to-orange-600 rounded-2xl h-72 flex items-center justify-center">
+            <p class="bg-white/20 text-white text-xs font-bold px-3 py-1.5 rounded-full">100% merino · 18.5 micron</p>
+        </div>
+        <h1 class="text-2xl font-extrabold leading-7 tracking-tight">Merino Crew</h1>
+        <div class="flex items-center gap-2 text-sm">
+            <span class="text-amber-500 tracking-wider font-medium">★★★★☆</span>
+            <span class="text-gray-500">4.8 (340 reviews)</span>
+        </div>
+        <div class="flex items-end gap-2 mt-1">
+            <p class="text-2xl font-extrabold">$75</p>
+            <p class="text-sm text-gray-400 line-through mb-1">$95</p>
+        </div>
+        <p class="text-sm text-gray-600 leading-6 mt-2">
+            Odor-resistant, temperature-regulating merino knit. Smooth neck, raglan
+            sleeves and a relaxed fit that layers under any shell.
+        </p>
+        <section class="flex items-center gap-3">
+            <div class="flex items-center bg-gray-100 rounded-full px-2">
+                <button class="w-9 h-9 text-lg font-bold text-gray-500" onClick={() => { if (qty > 1) qty-- }}>−</button>
+                <span class="w-6 text-center text-sm font-bold">{qty}</span>
+                <button class="w-9 h-9 text-lg font-bold text-gray-500" onClick={() => qty++}>+</button>
+            </div>
+            <button class="flex-1 bg-amber-600 text-white font-bold text-sm rounded-full py-3">Add to cart · $75</button>
+        </section>
+    </div>
+}

@@ -1,0 +1,27 @@
+component Beanie() {
+    const &[qty] = track(2)
+
+    <div class="flex-col gap-6 px-4 py-2">
+        <div class="bg-gradient-to-br from-yellow-400 to-amber-600 rounded-2xl h-72 flex items-center justify-center">
+            <p class="bg-white/20 text-white text-xs font-bold px-3 py-1.5 rounded-full">Hand-knitted</p>
+        </div>
+        <h1 class="text-2xl font-extrabold leading-7 tracking-tight">Yellowstone Beanie</h1>
+        <div class="flex items-center gap-2 text-sm">
+            <span class="text-amber-500 tracking-wider font-medium">★★★★★</span>
+            <span class="text-gray-500">4.9 (57 reviews)</span>
+        </div>
+        <p class="text-2xl font-extrabold mt-1">$28</p>
+        <p class="text-sm text-gray-600 leading-6 mt-2">
+            Chunky wool-blend beanie with a folded cuff. One size fits most,
+            doubles as the perfect cabin companion.
+        </p>
+        <section class="flex items-center gap-3">
+            <div class="flex items-center bg-gray-100 rounded-full px-2">
+                <button class="w-9 h-9 text-lg font-bold text-gray-500" onClick={() => { if (qty > 1) qty-- }}>−</button>
+                <span class="w-6 text-center text-sm font-bold">{qty}</span>
+                <button class="w-9 h-9 text-lg font-bold text-gray-500" onClick={() => qty++}>+</button>
+            </div>
+            <button class="flex-1 bg-yellow-500 text-gray-900 font-bold text-sm rounded-full py-3">Add to cart · $28</button>
+        </section>
+    </div>
+}

@@ -91,15 +91,17 @@
 ## Phase 4 — Styling, Theme & CSS
 **Goal:** Copied Tailwind-styled pages match web layout. Dark mode and theming via config.
 
-- [ ] Full Tailwind v3 utility coverage (extend Phase 2d table)
-- [ ] Responsive utilities: `md:`, `lg:` prefixes (compile-time variants or documented limitation)
-- [ ] `global.css` / `<style>` blocks in `.vsk`:
-  - Custom class extraction → inline `Modifier` equivalents where possible
-  - CSS variables (`var(--token)`) → Compose theme tokens
-  - `@theme` / `@layer` → error or documented limitation
-- [ ] Dark mode via `veskconfig.json` theme tokens → emitted as `darkColorScheme` in `Theme.kt`
-- [ ] System dark mode listener → auto-switch theme
-- [ ] Typography scale from config: `fontFamily`, `fontSize` base values
+- [x] Tokenizer-driven Tailwind v3 coverage: value tables (spacing/sizes/shadow/weights/etc.) + declarative `UTILITIES` spec table in `tailwind.ts`
+  - Adding a utility = one row (name + bucket + value namespace + one-line render); matching, ordering, arbitrary values, variants are generic
+  - Arbitrary values `[4px]`, `[#ff0000]`, `[50%]`; color opacity `bg-blue-500/50`; fractions `w-1/2`, `w-full`, `w-screen`
+  - Negative utilities (`-m-4`) skipped (not expressible in Compose)
+- [x] Responsive utilities: `sm:`/`md:`/`lg:` applied at compile time; state variants (`hover:`, `dark:` etc.) dropped
+- [x] `<style>` blocks in `.vsk` (custom class extraction → `Modifier` equivalents, cross-file via `collectCustomCss`)
+  - CSS variables (`var(--token)`) skipped with a note
+  - `@-rules` ignored with a note
+- [x] Dark mode via `veskconfig.json` `darkColors` → `darkColorScheme` in `Theme.kt`
+- [x] System dark mode listener → auto-switch theme (`isSystemInDarkTheme`)
+- [x] Typography from config: `fontFamily`, `fontSize` base values
 - [ ] **Acceptance:** Copied Tailwind-styled page matches web layout under both light and dark modes
 
 ---

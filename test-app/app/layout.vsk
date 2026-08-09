@@ -1,10 +1,25 @@
 component Layout(props) {
-    <nav class="flex gap-4 p-4 border-b">
-        <NavLink href="/" class="text-blue-600">Home</NavLink>
-        <NavLink href="/about" class="text-blue-600">About</NavLink>
-        <NavLink href="/blog" class="text-blue-600">Blog</NavLink>
-    </nav>
-    <main class="p-4">
-        {props.children}
-    </main>
+    <div class="flex-col w-full overflow-y-auto">
+        <nav class="border-b bg-white">
+            <div class="flex items-center gap-3 px-4 py-2">
+                <NavLink href="/">
+                    <div class="flex items-center gap-2">
+                        <div class="bg-blue-600 rounded-md w-6 h-6 flex items-center justify-center">
+                            <span class="text-white font-bold text-xs">N</span>
+                        </div>
+                        <span class="text-base font-extrabold tracking-tight">Nordi</span>
+                    </div>
+                </NavLink>
+                <div class="flex-1"></div>
+                <NavLink href="/shop" class="text-sm font-semibold text-gray-600">Shop</NavLink>
+                <NavLink href="/cart" class="text-sm font-semibold text-gray-600">Cart (2)</NavLink>
+            </div>
+        </nav>
+        <main class="w-full">
+            {props.children}
+        </main>
+        <footer class="border-t bg-white px-4 py-4">
+            <p class="text-sm text-gray-600 text-center">Nordi Clothing — built with vesk-native</p>
+        </footer>
+    </div>
 }

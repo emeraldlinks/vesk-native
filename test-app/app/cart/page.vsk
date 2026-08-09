@@ -1,0 +1,83 @@
+component CartPage() {
+    const &[qty1] = track(1)
+    const &[qty2] = track(2)
+    const &[qty3] = track(1)
+
+    <div class="flex-col gap-6 px-4 py-2">
+        <h1 class="text-2xl font-extrabold tracking-tight">Your bag</h1>
+
+        <section class="flex-col divide-y divide-dashed divide-gray-200 rounded-2xl border border-gray-200 bg-white">
+            <div class="flex gap-3 p-4 items-center">
+                <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-600 shrink-0"></div>
+                <div class="flex-1 shrink-0">
+                    <p class="text-sm font-semibold leading-5 line-clamp-1">Arctic Fleece Hoodie</p>
+                    <p class="text-xs text-gray-400 mt-0.5">Pine green · M</p>
+                    <div class="flex items-center justify-between mt-2">
+                        <div class="flex items-center bg-gray-100 rounded-full px-1">
+                            <button class="w-7 h-7 text-base font-bold text-gray-500" onClick={() => { if (qty1 > 1) qty1-- }}>−</button>
+                            <span class="w-5 text-center text-xs font-bold">{qty1}</span>
+                            <button class="w-7 h-7 text-base font-bold text-gray-500" onClick={() => qty1++}>+</button>
+                        </div>
+                        <p class="text-sm font-bold">$89</p>
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-3 p-4 items-center">
+                <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 shrink-0"></div>
+                <div class="flex-1 shrink-0">
+                    <p class="text-sm font-semibold leading-5 line-clamp-1">Snowdrift Parka</p>
+                    <p class="text-xs text-gray-400 mt-0.5">Storm gray · L</p>
+                    <div class="flex items-center justify-between mt-2">
+                        <div class="flex items-center bg-gray-100 rounded-full px-1">
+                            <button class="w-7 h-7 text-base font-bold text-gray-500" onClick={() => { if (qty2 > 1) qty2-- }}>−</button>
+                            <span class="w-5 text-center text-xs font-bold">{qty2}</span>
+                            <button class="w-7 h-7 text-base font-bold text-gray-500" onClick={() => qty2++}>+</button>
+                        </div>
+                        <p class="text-sm font-bold">$219</p>
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-3 p-4 items-center">
+                <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-amber-400 to-orange-600 shrink-0"></div>
+                <div class="flex-1 shrink-0">
+                    <p class="text-sm font-semibold leading-5 line-clamp-1">Merino Crew</p>
+                    <p class="text-xs text-gray-400 mt-0.5">Oat · S</p>
+                    <div class="flex items-center justify-between mt-2">
+                        <div class="flex items-center bg-gray-100 rounded-full px-1">
+                            <button class="w-7 h-7 text-base font-bold text-gray-500" onClick={() => { if (qty3 > 1) qty3-- }}>−</button>
+                            <span class="w-5 text-center text-xs font-bold">{qty3}</span>
+                            <button class="w-7 h-7 text-base font-bold text-gray-500" onClick={() => qty3++}>+</button>
+                        </div>
+                        <p class="text-sm font-bold">$75</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-gray-50 rounded-2xl p-4 flex-col gap-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex-1 bg-white rounded-full border border-gray-200 px-4 py-2.5">
+                    <p class="text-sm text-gray-500">Have a promo code?</p>
+                </div>
+                <button class="bg-gray-900 text-white text-sm font-semibold px-4 py-2.5 rounded-full self-start">Apply</button>
+            </div>
+            <div class="flex items-center justify-between mt-1">
+                <p class="text-sm text-gray-600">Subtotal</p>
+                <p class="text-sm font-semibold">{89 * qty1 + 219 * qty2 + 75 * qty3}</p>
+            </div>
+            <div class="flex items-center justify-between">
+                <p class="text-sm text-gray-600">Shipping</p>
+                <p class="text-sm text-green-600 font-semibold">Free</p>
+            </div>
+            <div class="flex items-center justify-between pt-2 border-t border-gray-200">
+                <p class="text-base font-bold">Total</p>
+                <p class="text-base font-extrabold">$ {89 * qty1 + 219 * qty2 + 75 * qty3}</p>
+            </div>
+        </section>
+
+        <NavLink href="/checkout">
+            <div class="bg-blue-600 text-white text-center font-bold text-sm rounded-full py-3.5 shadow-lg">Checkout · $ {89 * qty1 + 219 * qty2 + 75 * qty3}</div>
+        </NavLink>
+        <p class="text-xs text-gray-400 text-center">Free returns within 30 days · Secure checkout</p>
+    </div>
+}

@@ -6,7 +6,7 @@ const TEXT_TAGS = new Set([
   'blockquote', 'pre', 'code', 'a', 'abbr', 'b', 'i', 'u', 'mark', 'sub', 'sup', 'time',
 ]);
 
-const CONTAINER_TAGS = new Set([
+export const CONTAINER_TAGS = new Set([
   'div', 'section', 'header', 'footer', 'main', 'nav', 'article', 'aside',
   'ul', 'ol', 'form', 'figure', 'details', 'summary', 'fieldset',
 ]);

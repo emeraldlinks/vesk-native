@@ -26,31 +26,47 @@ import { Js2Kt, KtErrors } from '@compiler-native/js2kt.ts';
 import type { JsNode } from '@compiler-native/js2kt.ts';
 import { ktIdent } from '@compiler-native/js2kt.ts';
 import { findComponentDecls, generatePropsClass, inferPropsFromUsage, generateInferredPropsClass } from '@compiler-native/props.ts';
-import { elementInfo } from '@compiler-native/elements.ts';
+import { elementInfo, CONTAINER_TAGS } from '@compiler-native/elements.ts';
 import { layoutArgs, elementAxis } from '@compiler-native/layout-args.ts';
-import { resolveModifier, resolveTextStyle } from '@compiler-native/tailwind.ts';
+import { classify, buildModifier, buildTextStyle, isHidden } from '@compiler-native/tailwind.ts';
+import type { ModifierParts } from '@compiler-native/tailwind.ts';
+import { parseCssClasses } from '@compiler-native/css.ts';
 
 export interface CompileOptions {
   packageName?: string;
   componentsWithoutProps?: Set<string>;
+  customClasses?: Map<string, ModifierParts>;
+  rootName?: string;
 }
 
 const CLASS_ATTRS = new Set(['class', 'className']);
 
 const IMPORTS = `import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowColumn
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.OutlinedTextField
@@ -61,26 +77,40 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp`;
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex`;
 
 class Emitter {
   err: KtErrors;
   j2k: Js2Kt;
   tracked: Map<string, TrackedInfo>;
   componentsWithoutProps?: Set<string>;
+  customClasses?: Map<string, ModifierParts>;
 
-  constructor(err: KtErrors, tracked: Map<string, TrackedInfo>, componentsWithoutProps?: Set<string>) {
+  constructor(err: KtErrors, tracked: Map<string, TrackedInfo>, componentsWithoutProps?: Set<string>, customClasses?: Map<string, ModifierParts>) {
     this.err = err;
     this.j2k = new Js2Kt(err);
     this.tracked = tracked;
     this.componentsWithoutProps = componentsWithoutProps;
+    this.customClasses = customClasses;
   }
 
   ktString(value: string): string {
@@ -237,16 +267,62 @@ class Emitter {
     return `val ${node.name} = remember { mutableStateOf(${init}) }`;
   }
 
-  emitTopLevel(node: IRNode, level: number): string[] {
+  emitTopLevel(node: IRNode, level: number, parentAxis: 'column' | 'row' | null = null): string[] {
     if (node instanceof StaticNode) {
-      return emitElement(node, this, level);
+      return emitElement(node, this, level, parentAxis);
     }
-    return emitChild(node, this, level);
+    return emitChild(node, this, level, parentAxis);
   }
 }
 
 function splitLines(code: string): string[] {
   return code.split('\n');
+}
+
+// Web block-level boxes: fill the parent width in block flow (Column), but stay
+// content-sized as flex items (Row children). Form elements and custom
+// components behave inline-block and keep their natural size.
+const BLOCK_TAGS = new Set<string>([
+  ...CONTAINER_TAGS,
+  'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'blockquote', 'pre',
+]);
+
+function hasExplicitWidth(classes: string[]): boolean {
+  for (const c of classes) {
+    if (c.startsWith('w-') || c.startsWith('min-w-') || c.startsWith('max-w-') || c.startsWith('size-')) return true;
+  }
+  return false;
+}
+
+function fillMaxWidth(classes: string[], tag: string, parentAxis: 'column' | 'row' | null): boolean {
+  return parentAxis !== 'row' && BLOCK_TAGS.has(tag) && !hasExplicitWidth(classes);
+}
+
+function prependFill(modifier: string | null): string | null {
+  if (modifier === null) return 'Modifier.fillMaxWidth()';
+  return `Modifier.fillMaxWidth().${modifier.slice('Modifier.'.length)}`;
+}
+
+// Modifier.weight() and Modifier.align() are only valid inside Row/Column
+// scope, so they are stripped from top-level elements. extraModifier is
+// prepended (outermost) — used by divide-* child borders.
+function stripScopeMods(parts: ModifierParts): void {
+  parts.size = parts.size.filter((s) => !s.startsWith('weight('));
+  parts.align = parts.align.filter((s) => !s.startsWith('align(') && !s.startsWith('fillMax'));
+}
+
+function modifierFor(classes: string[], em: Emitter, parentAxis: 'column' | 'row' | null, fillWidth: boolean, extraModifier: string | null = null): string | null {
+  const parts = classify(classes, em.customClasses, parentAxis === 'row' ? 'row' : 'column');
+  if (parentAxis === null) stripScopeMods(parts);
+  let modifier = buildModifier(parts);
+  if (fillWidth) modifier = prependFill(modifier);
+  return prependModifier(modifier, extraModifier);
+}
+
+function prependModifier(modifier: string | null, extra: string | null): string | null {
+  if (extra === null || extra === '') return modifier;
+  if (modifier === null) return extra;
+  return `${extra}.${modifier.slice('Modifier.'.length)}`;
 }
 
 function dynamicText(expr: string): string {
@@ -267,14 +343,27 @@ function textContent(children: IRNode[], em: Emitter): string {
   return parts.length === 0 ? '""' : parts.join(' + ');
 }
 
-function makeTextCall(text: string, classes: string[], level: number): string {
+function makeTextCall(text: string, classes: string[], level: number, em: Emitter, fillWidth = false, parentAxis: 'column' | 'row' | null = null, extraModifier: string | null = null): string {
   const pad = '\t'.repeat(level);
+  const parts = classify(classes, em.customClasses, parentAxis === 'row' ? 'row' : 'column');
+  if (parentAxis === null) stripScopeMods(parts);
+  let modifier = buildModifier(parts);
+  if (fillWidth) modifier = prependFill(modifier);
+  modifier = prependModifier(modifier, extraModifier);
+  const style = buildTextStyle(parts);
+  let textExpr = text;
+  const xform = parts.text.transform;
+  if (xform === 'upper') textExpr = `(${text}).uppercase()`;
+  else if (xform === 'lower') textExpr = `(${text}).lowercase()`;
+  else if (xform === 'cap') textExpr = `(${text}).replaceFirstChar { it.uppercase() }`;
   const lines = [pad + 'Text('];
-  lines.push(`${pad}\ttext = ${text},`);
-  const modifier = resolveModifier(classes);
-  const style = resolveTextStyle(classes);
+  lines.push(`${pad}\ttext = ${textExpr},`);
   if (modifier) lines.push(`${pad}\tmodifier = ${modifier},`);
   if (style) lines.push(`${pad}\tstyle = ${style},`);
+  const tp = parts.text;
+  if (tp.maxLines !== undefined) lines.push(`${pad}\tmaxLines = ${tp.maxLines},`);
+  if (tp.softWrap === false) lines.push(`${pad}\tsoftWrap = false,`);
+  if (tp.overflow !== undefined) lines.push(`${pad}\toverflow = TextOverflow.${tp.overflow},`);
   lines.push(pad + ')');
   return lines.join('\n');
 }
@@ -297,19 +386,21 @@ function componentCallLines(node: ComponentCall, em: Emitter, level: number): st
   if (node.children.length > 0) {
     out.push(padIn + '{');
     for (const child of node.children) {
-      out.push(...emitChild(child, em, level + 2));
+      out.push(...emitChild(child, em, level + 2, null));
     }
     out.push(padIn + '}');
   }
   return out.join('\n');
 }
 
-function emitElement(node: StaticNode, em: Emitter, level: number): string[] {
+function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: 'column' | 'row' | null, extraModifier: string | null = null): string[] {
   const info = elementInfo(node.tag);
   const classes = em.classList(node);
+  if (isHidden(classes, em.customClasses)) return [];
   const attrs = em.dynamicAttrs(node);
   const pad = '\t'.repeat(level);
   const padIn = '\t'.repeat(level + 1);
+  const fillWidth = fillMaxWidth(classes, node.tag, parentAxis);
 
   if (info.kind === 'text') {
     const content = textContent(node.children, em);
@@ -317,10 +408,10 @@ function emitElement(node: StaticNode, em: Emitter, level: number): string[] {
       (c) => !(c instanceof TextNode) && !(c instanceof DynamicBinding)
     );
     if (nonText.length === 0) {
-      return splitLines(makeTextCall(content, classes, level));
+      return splitLines(makeTextCall(content, classes, level, em, fillWidth, parentAxis, extraModifier));
     }
     const lines: string[] = [];
-    const modifier = resolveModifier(classes);
+    const modifier = modifierFor(classes, em, parentAxis, fillWidth, extraModifier);
     if (modifier) {
       lines.push(pad + `Column(modifier = ${modifier}) {`);
     } else {
@@ -328,7 +419,7 @@ function emitElement(node: StaticNode, em: Emitter, level: number): string[] {
     }
     if (content !== '""') lines.push(`${padIn}Text(${content})`);
     for (const child of nonText) {
-      lines.push(...emitChild(child, em, level + 1));
+      lines.push(...emitChild(child, em, level + 1, 'column'));
     }
     lines.push(pad + '}');
     return lines;
@@ -341,7 +432,7 @@ function emitElement(node: StaticNode, em: Emitter, level: number): string[] {
     const lines: string[] = [];
     lines.push(pad + 'Button(');
     lines.push(`${padIn}onClick = ${onClickKt},`);
-    const modifier = resolveModifier(classes);
+    const modifier = modifierFor(classes, em, parentAxis, false, extraModifier);
     if (modifier) lines.push(`${padIn}modifier = ${modifier},`);
     lines.push(pad + ') {');
     if (childText !== '""') lines.push(`${padIn}Text(${childText})`);
@@ -354,7 +445,7 @@ function emitElement(node: StaticNode, em: Emitter, level: number): string[] {
     const bindVar = em.bindRefVar(node);
     const valueExpr = attrs.get('value');
     const checkedExpr = attrs.get('checked');
-    const modifier = resolveModifier(classes);
+    const modifier = modifierFor(classes, em, parentAxis, false, extraModifier);
     const modLine = modifier ? `${padIn}modifier = ${modifier},` : '';
     const lines: string[] = [];
     if (type === 'checkbox' || type === 'radio') {
@@ -389,29 +480,68 @@ function emitElement(node: StaticNode, em: Emitter, level: number): string[] {
   if (layout.horizontalArrangement) layoutArgsLines.push(`${padIn}horizontalArrangement = ${layout.horizontalArrangement},`);
   if (layout.verticalArrangement) layoutArgsLines.push(`${padIn}verticalArrangement = ${layout.verticalArrangement},`);
 
-  const composable = axis === 'row' ? 'Row' : 'Column';
   const argLines: string[] = [];
-  const modifier = resolveModifier(classes);
+  const containerParts = classify(classes, em.customClasses, axis);
+  if (parentAxis === null) stripScopeMods(containerParts);
+  let modifier = buildModifier(containerParts);
+  if (fillWidth) modifier = prependFill(modifier);
+  modifier = prependModifier(modifier, extraModifier);
   if (modifier) argLines.push(`${padIn}modifier = ${modifier},`);
-  argLines.push(...layoutArgsLines);
 
+  const flow = containerParts.flow === true;
+  const composable = flow
+    ? (axis === 'row' ? 'FlowRow' : 'FlowColumn')
+    : (axis === 'row' ? 'Row' : 'Column');
+  // Flow layouts share Row/Column arrangement param names but have no
+// vertical/horizontalAlignment: cross-axis centering maps to Arrangement.Center.
+const alignArgs = flow
+  ? [
+      ...layoutArgsLines.filter((l) => !l.replace(/^\s+/, '').startsWith('verticalAlignment =') && !l.replace(/^\s+/, '').startsWith('horizontalAlignment =')),
+      ...(axis === 'row' && layout.verticalAlignment === 'Alignment.CenterVertically' && !layout.verticalArrangement
+        ? [`${padIn}verticalArrangement = Arrangement.Center,`]
+        : []),
+      ...(axis === 'column' && layout.horizontalAlignment === 'Alignment.CenterHorizontally' && !layout.horizontalArrangement
+        ? [`${padIn}horizontalArrangement = Arrangement.Center,`]
+        : []),
+    ]
+  : layoutArgsLines;
+  argLines.push(...alignArgs);
+
+  const divide = containerParts.divide;
   const lines: string[] = [];
   const childrenLines: string[] = [];
-  for (const child of node.children) {
-    childrenLines.push(...emitChild(child, em, level + 1));
+  for (let i = 0; i < node.children.length; i++) {
+    const child = node.children[i]!;
+    if (divide && i > 0) {
+      let borderMod: string;
+      if (divide.style === 'dashed' || divide.style === 'dotted') {
+        const dashes = divide.style === 'dotted' ? 'floatArrayOf(0.1f, 8f)' : 'floatArrayOf(12f, 12f)';
+        borderMod = divide.axis === 'y'
+          ? `Modifier.veskDivideLine(horizontal = true, width = ${divide.width}.dp, color = ${divide.color}, dashes = ${dashes})`
+          : `Modifier.veskDivideLine(horizontal = false, width = ${divide.width}.dp, color = ${divide.color}, dashes = ${dashes})`;
+      } else {
+        borderMod = divide.axis === 'y'
+          ? `Modifier.veskSideBorder(top = ${divide.width}.dp, end = 0.dp, bottom = 0.dp, start = 0.dp, ${divide.color})`
+          : `Modifier.veskSideBorder(top = 0.dp, end = 0.dp, bottom = 0.dp, start = ${divide.width}.dp, ${divide.color})`;
+      }
+      childrenLines.push(...emitChild(child, em, level + 1, axis, borderMod));
+    } else {
+      childrenLines.push(...emitChild(child, em, level + 1, axis));
+    }
   }
 
+  const callPad = flow ? `${pad}@OptIn(ExperimentalLayoutApi::class)\n${pad}` : pad;
   if (argLines.length === 0 && childrenLines.length === 0) {
-    lines.push(pad + `${composable} {}`);
+    lines.push(callPad + `${composable} {}`);
     return lines;
   }
   if (argLines.length === 0) {
-    lines.push(pad + `${composable} {`);
+    lines.push(callPad + `${composable} {`);
     lines.push(...childrenLines);
     lines.push(pad + '}');
     return lines;
   }
-  lines.push(pad + `${composable}(`);
+  lines.push(callPad + `${composable}(`);
   lines.push(...argLines);
   lines.push(pad + ') {');
   lines.push(...childrenLines);
@@ -419,26 +549,26 @@ function emitElement(node: StaticNode, em: Emitter, level: number): string[] {
   return lines;
 }
 
-function emitChild(child: IRNode, em: Emitter, level: number): string[] {
+function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'column' | 'row' | null, extraModifier: string | null = null): string[] {
   const pad = '\t'.repeat(level);
 
   if (child instanceof StaticNode) {
-    return emitElement(child, em, level);
+    return emitElement(child, em, level, parentAxis, extraModifier);
   }
   if (child instanceof TextNode) {
-    return splitLines(makeTextCall(em.ktString(child.value), [], level));
+    return splitLines(makeTextCall(em.ktString(child.value), [], level, em, false, parentAxis, extraModifier));
   }
   if (child instanceof DynamicBinding) {
-    if (child.kind === 'text') return splitLines(makeTextCall(dynamicText(em.exprOf(child.expression)), [], level));
+    if (child.kind === 'text') return splitLines(makeTextCall(dynamicText(em.exprOf(child.expression)), [], level, em, false, parentAxis, extraModifier));
     return [];
   }
   if (child instanceof OpaqueDynamicRegion) {
     const cond = em.exprOf(child.condition);
     const out: string[] = [];
     out.push(pad + `if (truthy(${cond})) {`);
-    for (const n of child.consequentNodes) out.push(...emitChild(n, em, level + 1));
+    for (const n of child.consequentNodes) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier));
     out.push(pad + `} else {`);
-    for (const n of child.alternateNodes) out.push(...emitChild(n, em, level + 1));
+    for (const n of child.alternateNodes) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier));
     out.push(pad + `}`);
     return out;
   }
@@ -449,7 +579,7 @@ function emitChild(child: IRNode, em: Emitter, level: number): string[] {
     const out: string[] = [];
     out.push(pad + `LazyColumn {`);
     out.push(pad + `\titems(${arrExpr}${keyExpr ? `, key = { ${keyExpr} }` : ''}) { ${item} ->`);
-    for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 2));
+    for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 2, 'column', extraModifier));
     out.push(pad + `\t}`);
     out.push(pad + `}`);
     return out;
@@ -472,7 +602,7 @@ function emitChild(child: IRNode, em: Emitter, level: number): string[] {
     return [pad + `error("server block not supported in vesk-native")`];
   }
   if (child instanceof ClientBlock) {
-    return child.children.length ? emitChild(child.children[0]!, em, level) : [];
+    return child.children.length ? emitChild(child.children[0]!, em, level, parentAxis, extraModifier) : [];
   }
   if (child instanceof SlotNode) {
     return [pad + `content()`];
@@ -481,7 +611,7 @@ function emitChild(child: IRNode, em: Emitter, level: number): string[] {
     const cond = em.exprOf(child.condition);
     const out: string[] = [];
     out.push(pad + `while (truthy(${cond})) {`);
-    for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1));
+    for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier));
     out.push(pad + `}`);
     return out;
   }
@@ -492,7 +622,7 @@ function emitChild(child: IRNode, em: Emitter, level: number): string[] {
     for (const c of child.cases) {
       const test = c.test ? em.exprOf(c.test) : null;
       out.push(pad + `\t${test === null ? 'else' : test} -> {`);
-      for (const n of c.body) out.push(...emitChild(n, em, level + 2));
+      for (const n of c.body) out.push(...emitChild(n, em, level + 2, parentAxis, extraModifier));
       out.push(pad + '\t}');
     }
     out.push(pad + `}`);
@@ -502,9 +632,9 @@ function emitChild(child: IRNode, em: Emitter, level: number): string[] {
     const catchParam = child.catchParamName ?? 'e';
     const out: string[] = [];
     out.push(pad + `try {`);
-    for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1));
+    for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier));
     out.push(pad + `} catch (${catchParam}: Exception) {`);
-    for (const n of child.catchBody) out.push(...emitChild(n, em, level + 1));
+    for (const n of child.catchBody) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier));
     out.push(pad + `}`);
     return out;
   }
@@ -514,7 +644,7 @@ function emitChild(child: IRNode, em: Emitter, level: number): string[] {
     const update = child.update.replace(/;$/, '');
     const out: string[] = [];
     out.push(pad + `for (${init}; ${cond}; ${update}) {`);
-    for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1));
+    for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier));
     out.push(pad + `}`);
     return out;
   }
@@ -527,6 +657,27 @@ export interface CompileResult {
   notes: string[];
 }
 
+export function collectCustomCss(sources: Array<{ source: string; filename?: string }>): { classes: Map<string, ModifierParts>; skipped: string[] } {
+  const classes = new Map<string, ModifierParts>();
+  const skipped: string[] = [];
+  for (const { source, filename } of sources) {
+    try {
+      const ast = parse(source, { filename: filename ?? 'component.vsk' });
+      const ir = generateIR(ast, source);
+      for (const comp of ir.components) {
+        if (comp.style) {
+          const r = parseCssClasses(comp.style);
+          for (const [k, v] of r.classes) classes.set(k, v);
+          skipped.push(...r.skipped);
+        }
+      }
+    } catch (e) {
+      skipped.push(`could not parse styles in ${filename ?? '?'}: ${(e as Error).message}`);
+    }
+  }
+  return { classes, skipped };
+}
+
 function runCompile(source: string, filename: string, options: CompileOptions): CompileResult {
   const err = new KtErrors();
   const pkg = options.packageName ?? 'app';
@@ -534,6 +685,13 @@ function runCompile(source: string, filename: string, options: CompileOptions): 
   const ast = parse(source, { filename });
   const ir = generateIR(ast, source);
   const decls = findComponentDecls(ast as unknown as JsNode);
+
+  const customClasses = options.customClasses ?? new Map<string, ModifierParts>();
+  if (!options.customClasses) {
+    const r = collectCustomCss([{ source, filename }]);
+    for (const [k, v] of r.classes) customClasses.set(k, v);
+    for (const s of new Set(r.skipped)) err.note(s);
+  }
 
   const out: string[] = [];
   out.push(`package ${pkg}`, '', IMPORTS, '');
@@ -555,17 +713,24 @@ function runCompile(source: string, filename: string, options: CompileOptions): 
     if (propsClass) out.push(propsClass);
 
     const tracked = collectTrackedNames(comp.body);
-    const em = new Emitter(err, tracked, options.componentsWithoutProps);
+    const em = new Emitter(err, tracked, options.componentsWithoutProps, customClasses);
 
     const propsArg = propsClass ? `props: ${comp.name}Props${propsParamDefault ? ` = ${comp.name}Props()` : ''}` : '';
     const params = [propsArg, 'content: @Composable () -> Unit = {}'].filter(Boolean).join(', ');
     out.push('@Composable', `fun ${comp.name}(${params}) {`);
 
+    const isRoot = comp.name === options.rootName;
     const bodyLines: string[] = [];
-    for (const node of comp.body) {
-      bodyLines.push(...em.emitTopLevel(node, 1));
+    if (isRoot) {
+      out.push('\tColumn(');
+      out.push('\t\tmodifier = Modifier.fillMaxSize(),');
+      out.push('\t) {');
+      for (const node of comp.body) bodyLines.push(...em.emitTopLevel(node, 2, 'column'));
+      out.push(...bodyLines, '\t}', '}', '');
+    } else {
+      for (const node of comp.body) bodyLines.push(...em.emitTopLevel(node, 1));
+      out.push(...bodyLines, '}', '');
     }
-    out.push(...bodyLines, '}', '');
   }
 
   return { kt: out.join('\n').trimEnd() + '\n', errors: err.errors, notes: err.notes };
