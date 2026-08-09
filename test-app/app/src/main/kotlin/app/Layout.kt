@@ -69,6 +69,9 @@ fun Layout(props: LayoutProps = LayoutProps(), content: @Composable () -> Unit =
 	Column(
 		modifier = Modifier.fillMaxSize(),
 	) {
+		Column {
+			Column {}
+		}
 		Column(
 			modifier = Modifier.fillMaxWidth().fillMaxHeight(),
 		) {
@@ -133,8 +136,8 @@ fun Layout(props: LayoutProps = LayoutProps(), content: @Composable () -> Unit =
 				) {
 					Text(
 						text = "Nordi Clothing Co — built with vesk-native",
-						modifier = Modifier.fillMaxWidth(),
-						style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center),
+						modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+						style = TextStyle(textAlign = TextAlign.Center, color = Color(0xFF6B7280), fontSize = 12.sp),
 					)
 				}
 			}

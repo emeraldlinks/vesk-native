@@ -1,12 +1,16 @@
 component Home() {
     const &[joined] = track(false)
 
+    <style>
+        .hero-summary { color: rgb(75, 85, 99); }
+    </style>
+
     <div class="flex-col gap-6 px-4 py-4">
 
         <section class="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 rounded-3xl p-7 min-h-40">
             <p class="text-white/90 text-xs font-semibold tracking-widest uppercase">Winter collection 2026 · Members save {Math.floor(Math.random() * 10 + 5)}% today</p>
             <h1 class="text-white mt-1 text-3xl font-extrabold leading-9">Layers for the long cold night</h1>
-            <p class="text-white/90 mt-2 text-sm leading-6 max-w-xs">
+            <p class="hero-summary mt-2 text-sm leading-6 max-w-xs">
                 Heattech knits, insulated shells and merino base layers. Engineered for warmth, tuned for style.
             </p>
             <div class="mt-6">

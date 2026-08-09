@@ -1,8 +1,9 @@
 import { chmodSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
-import { join, relative, resolve } from 'node:path';
+import { join, relative, resolve, dirname } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { homedir } from 'node:os';
-import { compileVskResult, collectCustomCss } from '@compiler-native/index.ts';
+import { compileVskResult, collectCustomCss, extractStylesheetLinks, parseCssClasses } from '@compiler-native/index.ts';
+import type { ModifierParts } from '@compiler-native/tailwind.ts';
 import { setAdaptiveDark } from '@compiler-native/tailwind.ts';
 import { parse } from '@vesk/compiler';
 import { findComponentDecls } from '@compiler-native/props.ts';
@@ -303,6 +304,7 @@ function generateMainActivity(target: string, config: VeskConfig): void {
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import app.App
@@ -311,6 +313,7 @@ import app.VeskTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         setContent {
             VeskTheme {
                 Surface(modifier = Modifier) {
@@ -705,15 +708,31 @@ function compileVskFiles(appDir: string, rootName: string): void {
     }
   }
 
-  const { classes: customClasses, skipped: cssSkipped } = collectCustomCss(
+  const { scoped: scopedClasses, skipped: cssSkipped } = collectCustomCss(
     vskFiles.map((f) => ({ source: readFileSync(f, 'utf8'), filename: relative(appDir, f) })),
   );
-  for (const s of new Set(cssSkipped)) log('css', s);
+  const customClasses = new Map<string, ModifierParts>();
+  const linkSkipped: string[] = [];
+  for (const file of vskFiles) {
+    const source = readFileSync(file, 'utf8');
+    for (const href of extractStylesheetLinks(source)) {
+      const cssPath = resolve(dirname(file), href);
+      if (!existsSync(cssPath)) {
+        linkSkipped.push(`${relative(appDir, file)}: <link rel="stylesheet" href="${href}"> file not found`);
+        continue;
+      }
+      const r = parseCssClasses(readFileSync(cssPath, 'utf8'));
+      for (const [k, v] of r.classes) customClasses.set(k, v);
+      linkSkipped.push(...r.skipped);
+      log('css', `${relative(appDir, file)} -> ${href}`);
+    }
+  }
+  for (const s of new Set([...cssSkipped, ...linkSkipped])) log('css', s);
 
   const seen = new Map<string, number>();
   for (const file of vskFiles) {
     const source = readFileSync(file, 'utf8');
-    const result = compileVskResult(source, file, { componentsWithoutProps, customClasses, rootName });
+    const result = compileVskResult(source, file, { componentsWithoutProps, customClasses, scopedCustomClasses: scopedClasses, rootName });
     if (result.errors.length > 0) {
       console.error(`  [compile] errors in ${relative(appDir, file)}:`);
       for (const e of result.errors) console.error(`    ! ${e}`);
@@ -784,9 +803,14 @@ function generateAppKt(appDir: string, config: VeskConfig): void {
     join(outDir, 'App.kt'),
     `package app
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
 import app.navigation.*
 
 @Composable
@@ -794,10 +818,14 @@ fun App() {
     val nav = rememberNavController()
     LaunchedEffect(Unit) { nav.navigate("/") }
     CompositionLocalProvider(LocalNavController provides nav) {
-        Layout {
-            AppRouter(start = "/", routes = listOf(
-                ${routeLines}
-            ),${backArgs})
+        // System bars are drawn edge-to-edge; push the app content below the
+        // status bar and above the navigation bar.
+        Box(modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
+            Layout {
+                AppRouter(start = "/", routes = listOf(
+                    ${routeLines}
+                ),${backArgs})
+            }
         }
     }
 }

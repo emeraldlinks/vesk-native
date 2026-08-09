@@ -31,11 +31,13 @@ import { layoutArgs, elementAxis } from '@compiler-native/layout-args.ts';
 import { classify, buildModifier, buildTextStyle, isHidden, RADIUS } from '@compiler-native/tailwind.ts';
 import type { ModifierParts } from '@compiler-native/tailwind.ts';
 import { parseCssClasses } from '@compiler-native/css.ts';
+import { walkIR } from '@compiler-native/walk-ir.ts';
 
 export interface CompileOptions {
   packageName?: string;
   componentsWithoutProps?: Set<string>;
   customClasses?: Map<string, ModifierParts>;
+  scopedCustomClasses?: Map<string, Map<string, ModifierParts>>;
   rootName?: string;
 }
 
@@ -726,8 +728,42 @@ export interface CompileResult {
   notes: string[];
 }
 
-export function collectCustomCss(sources: Array<{ source: string; filename?: string }>): { classes: Map<string, ModifierParts>; skipped: string[] } {
+// <head><link rel="stylesheet" href="..."> — CSS files are global; <style>
+// blocks inside a component are component-scoped: they resolve only for
+// elements of that component (scoped wins over global on name clashes).
+export interface CssCollection {
+  classes: Map<string, ModifierParts>;
+  scoped: Map<string, Map<string, ModifierParts>>;
+  skipped: string[];
+}
+
+export function extractStylesheetLinks(source: string): string[] {
+  const out: string[] = [];
+  try {
+    const ast = parse(source, { filename: 'component.vsk' });
+    const ir = generateIR(ast, source);
+    for (const comp of ir.components) {
+      walkIR(comp.body, (node) => {
+        if (node instanceof StaticNode && node.tag.toLowerCase() === 'head') {
+          for (const child of node.children) {
+            if (!(child instanceof StaticNode) || child.tag.toLowerCase() !== 'link') continue;
+            const attrs = new Map(child.attributes.map((a) => [a.name.toLowerCase(), a.value]));
+            const rel = (attrs.get('rel') ?? '').toLowerCase();
+            const href = attrs.get('href');
+            if (rel === 'stylesheet' && href) out.push(href);
+          }
+        }
+      });
+    }
+  } catch {
+    // Unparsable files are reported by the compile step itself.
+  }
+  return out;
+}
+
+export function collectCustomCss(sources: Array<{ source: string; filename?: string }>): CssCollection {
   const classes = new Map<string, ModifierParts>();
+  const scoped = new Map<string, Map<string, ModifierParts>>();
   const skipped: string[] = [];
   for (const { source, filename } of sources) {
     try {
@@ -736,7 +772,12 @@ export function collectCustomCss(sources: Array<{ source: string; filename?: str
       for (const comp of ir.components) {
         if (comp.style) {
           const r = parseCssClasses(comp.style);
-          for (const [k, v] of r.classes) classes.set(k, v);
+          let own = scoped.get(comp.name);
+          if (!own) {
+            own = new Map<string, ModifierParts>();
+            scoped.set(comp.name, own);
+          }
+          for (const [k, v] of r.classes) own.set(k, v);
           skipped.push(...r.skipped);
         }
       }
@@ -744,7 +785,7 @@ export function collectCustomCss(sources: Array<{ source: string; filename?: str
       skipped.push(`could not parse styles in ${filename ?? '?'}: ${(e as Error).message}`);
     }
   }
-  return { classes, skipped };
+  return { classes, scoped, skipped };
 }
 
 function runCompile(source: string, filename: string, options: CompileOptions): CompileResult {
@@ -756,9 +797,11 @@ function runCompile(source: string, filename: string, options: CompileOptions): 
   const decls = findComponentDecls(ast as unknown as JsNode);
 
   const customClasses = options.customClasses ?? new Map<string, ModifierParts>();
+  const scoped = options.scopedCustomClasses ?? new Map<string, Map<string, ModifierParts>>();
   if (!options.customClasses) {
     const r = collectCustomCss([{ source, filename }]);
     for (const [k, v] of r.classes) customClasses.set(k, v);
+    for (const [comp, own] of r.scoped) scoped.set(comp, own);
     for (const s of new Set(r.skipped)) err.note(s);
   }
 
@@ -782,7 +825,13 @@ function runCompile(source: string, filename: string, options: CompileOptions): 
     if (propsClass) out.push(propsClass);
 
     const tracked = collectTrackedNames(comp.body);
-    const em = new Emitter(err, tracked, options.componentsWithoutProps, customClasses);
+    let resolvedClasses = customClasses;
+    const own = scoped.get(comp.name);
+    if (own) {
+      resolvedClasses = new Map(customClasses);
+      for (const [k, v] of own) resolvedClasses.set(k, v); // scoped wins over global
+    }
+    const em = new Emitter(err, tracked, options.componentsWithoutProps, resolvedClasses);
 
     const propsArg = propsClass ? `props: ${comp.name}Props${propsParamDefault ? ` = ${comp.name}Props()` : ''}` : '';
     const params = [propsArg, 'content: @Composable () -> Unit = {}'].filter(Boolean).join(', ');

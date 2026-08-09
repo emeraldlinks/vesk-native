@@ -83,7 +83,7 @@ fun Home(content: @Composable () -> Unit = {}) {
 			Text(
 				text = " Heattech knits, insulated shells and merino base layers. Engineered for warmth, tuned for style. ",
 				modifier = Modifier.padding(top = 8.dp).widthIn(max = 320.dp),
-				style = TextStyle(color = Color(0xE5FFFFFF), fontSize = 14.sp, lineHeight = 24.sp),
+				style = TextStyle(fontSize = 14.sp, lineHeight = 24.sp, color = Color(0xFF4B5563)),
 			)
 			Column(
 				modifier = Modifier.fillMaxWidth().padding(top = 24.dp),

@@ -1,4 +1,7 @@
 component Layout(props) {
+    <head>
+        <link rel="stylesheet" href="./theme.css" />
+    </head>
     <div class="flex-col w-full h-full">
         <nav class="bg-white px-4 py-2 border-b">
             <div class="flex items-center gap-3">
@@ -20,7 +23,7 @@ component Layout(props) {
                 {props.children}
             </main>
             <footer class="bg-white px-4 py-4 border-t">
-                <p class="text-sm text-gray-600 text-center">Nordi Clothing Co — built with vesk-native</p>
+                <p class="tagline text-center">Nordi Clothing Co — built with vesk-native</p>
             </footer>
         </div>
     </div>
