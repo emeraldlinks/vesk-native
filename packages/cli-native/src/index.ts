@@ -1,6 +1,7 @@
-import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
+import { chmodSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { homedir } from 'node:os';
 import { compileVskResult, collectCustomCss } from '@compiler-native/index.ts';
 import { parse } from '@vesk/compiler';
 import { findComponentDecls } from '@compiler-native/props.ts';
@@ -14,10 +15,44 @@ const TEMPLATE_DIR = join(MONOREPO, 'runtime', 'vesk-native-template');
 const SAMPLE_VSK = join(MONOREPO, 'test-app', 'app');
 const CONFIG_TS = 'veskconfig.ts';
 const CONFIG_JSON = 'veskconfig.json';
-const DEFAULT_SDK = '/opt/vesk-native-toolchain/sdk';
-const DEFAULT_GRADLE = '/opt/vesk-native-toolchain/gradle-9.7.0/bin/gradle';
 const TERMUX_BIN = '/data/data/com.termux/files/usr/bin';
 const TERMUX_HOME = '/data/data/com.termux/files/home';
+
+const GRADLE_VERSION = '9.7.0';
+const GRADLE_URL = `https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip`;
+const CMDLINE_TOOLS_REV = '11076708';
+const SDK_PACKAGES = ['platform-tools', 'build-tools;34.0.0', 'platforms;android-34', 'platforms;android-36'];
+const TERMUX_LIB = '/data/data/com.termux/files/usr/lib';
+const TERMUX_AAPT2 = '/data/data/com.termux/files/usr/bin/aapt2';
+
+interface HostInfo {
+  os: 'linux' | 'darwin' | 'windows';
+  arch: 'aarch64' | 'x86_64' | 'arm' | 'x86' | string;
+  termux: boolean;
+}
+
+function hostInfo(): HostInfo {
+  const termux = existsSync('/data/data/com.termux/files/usr/bin');
+  const os = process.platform === 'win32' ? 'windows' : process.platform === 'darwin' ? 'darwin' : 'linux';
+  const arch = process.arch === 'arm64' ? 'aarch64' : process.arch === 'x64' ? 'x86_64' : process.arch;
+  return { os, arch, termux };
+}
+
+function cmdlineToolsUrl(os: HostInfo['os']): string {
+  const slug = os === 'darwin' ? 'mac' : os === 'windows' ? 'win' : 'linux';
+  return `https://dl.google.com/android/repository/commandlinetools-${slug}-${CMDLINE_TOOLS_REV}_latest.zip`;
+}
+
+function toolchainRoot(): string {
+  if (process.env.VESK_HOME) return resolve(process.env.VESK_HOME);
+  if (existsSync('/opt/vesk-native-toolchain')) return '/opt/vesk-native-toolchain';
+  return join(homedir(), '.vesk-native');
+}
+
+const TOOLCHAIN_ROOT = toolchainRoot();
+const DEFAULT_SDK = join(TOOLCHAIN_ROOT, 'sdk');
+const DEFAULT_GRADLE = join(TOOLCHAIN_ROOT, `gradle-${GRADLE_VERSION}`, 'bin', 'gradle');
+const AAPT2_OVERRIDE = join(TOOLCHAIN_ROOT, 'aapt2-veck', 'aapt2');
 
 const DEFAULT_CONFIG: VeskConfig = {
   appId: 'com.vesk.demo',
@@ -73,9 +108,10 @@ function usage(): void {
   console.log(`vesk-native — compile .vsk to Kotlin + Compose, build & install natively
 
 Usage:
-  vesk-native init <dir>       Scaffold a native app in <dir> (from veskconfig.json + .vsk sources)
+  vesk-native init <dir>       Scaffold a native app in <dir> (from veskconfig.ts + .vsk sources)
   vesk-native build [dir]      Regenerate everything from source + gradle assembleDebug (default: .)
   vesk-native run [dir]        Build, stage APK, open the on-device installer, launch (default: .)
+  vesk-native setup            Install the toolchain (JDK check, Android SDK, Gradle) for this OS/arch
   vesk-native dev [dir]        (not yet implemented — Phase 7)
 `);
 }
@@ -781,6 +817,9 @@ function generateProject(target: string, config: VeskConfig): void {
     if (!existsSync(src)) continue;
     if (!existsSync(dest)) cpSync(src, dest);
   }
+  // Point the aapt2 override at this machine's toolchain (or drop the line
+  // when no custom aapt2 is needed — AGP ships a bundled one for x86_64).
+  syncAapt2Override(join(target, 'gradle.properties'));
   if (!existsSync(join(target, 'local.properties'))) {
     writeFileSync(join(target, 'local.properties'), `sdk.dir=${DEFAULT_SDK}\n`);
   }
@@ -796,6 +835,14 @@ function generateProject(target: string, config: VeskConfig): void {
   generateAppKt(appDir, config);
   // Last: Runtime.kt is pruned to the helpers the generated pages actually use.
   generateRuntimeKt(appDir);
+}
+
+function syncAapt2Override(gradleProperties: string): void {
+  if (!existsSync(gradleProperties)) return;
+  const lines = readFileSync(gradleProperties, 'utf8').split('\n');
+  const kept = lines.filter((l) => !l.startsWith('android.aapt2FromMavenOverride'));
+  if (existsSync(AAPT2_OVERRIDE)) kept.push(`android.aapt2FromMavenOverride=${AAPT2_OVERRIDE}`);
+  writeFileSync(gradleProperties, `${kept.join('\n').replace(/\n{3,}/g, '\n\n').trim()}\n`);
 }
 
 function writeDefaultConfig(target: string): void {
@@ -875,6 +922,151 @@ async function initApp(dir: string): Promise<void> {
 
   generateProject(target, config);
   console.log(`\n  done. next: vesk-native build ${target} && vesk-native run ${target}`);
+}
+
+function findJava(): string {
+  if (process.env.JAVA_HOME) {
+    const jh = join(process.env.JAVA_HOME!, 'bin', 'java');
+    if (existsSync(jh)) return jh;
+  }
+  const found = spawnSync('which', ['java'], { encoding: 'utf8' });
+  if (found.status === 0 && found.stdout.trim()) return found.stdout.trim();
+  return 'java';
+}
+
+function javaMajor(): number | null {
+  const r = spawnSync(findJava(), ['-version'], { encoding: 'utf8' });
+  const raw = (r.stderr || r.stdout || '') as string;
+  const m = raw.match(/version "(\d+)(?:\.(\d+))?/);
+  if (!m) return null;
+  const major = Number(m[1]);
+  return major === 1 ? Number(m[2]) : major;
+}
+
+function run(what: string, cmd: string, args: string[]): boolean {
+  log('setup', `$ ${cmd} ${args.join(' ')}`);
+  const r = spawnSync(cmd, args, { stdio: 'inherit' });
+  if (r.status !== 0) {
+    console.error(`  [setup] ${what} failed (exit ${r.status})`);
+    return false;
+  }
+  return true;
+}
+
+function unzipTo(zip: string, dest: string): boolean {
+  if (run('extract zip', 'unzip', ['-q', '-o', zip, '-d', dest])) return true;
+  if (run('extract zip', 'tar', ['-xf', zip, '-C', dest])) return true;
+  return run('extract zip', 'powershell', ['-NoProfile', '-Command', `Expand-Archive -Force -Path '${zip}' -DestinationPath '${dest}'`]);
+}
+
+function sdkmanagerPath(root: string, os: HostInfo['os']): string {
+  return join(root, 'sdk', 'cmdline-tools', 'latest', 'bin', os === 'windows' ? 'sdkmanager.bat' : 'sdkmanager');
+}
+
+function sdkmanagerRun(root: string, os: HostInfo['os'], args: string[]): boolean {
+  const sm = sdkmanagerPath(root, os);
+  if (os === 'windows') {
+    const r = spawnSync(sm, args, { input: 'y\n'.repeat(50), stdio: ['pipe', 'inherit', 'inherit'] });
+    if (r.status !== 0) {
+      console.error('  [setup] sdkmanager failed');
+      return false;
+    }
+    return true;
+  }
+  return run('sdkmanager', 'bash', ['-c', `yes | "${sm}" ${args.map((a) => `"${a}"`).join(' ')}`]);
+}
+
+function setupToolchain(root: string): void {
+  const host = hostInfo();
+  console.log(`\n  vesk-native setup — provisioning the native toolchain at:\n    ${root}`);
+  console.log(`  host: ${host.os} / ${host.arch}${host.termux ? ' (termux)' : ''}\n`);
+  mkdirSync(root, { recursive: true });
+
+  const java = findJava();
+  const jmajor = javaMajor();
+  if (jmajor === null) {
+    console.warn('  [setup] java not found — need JDK 17+ (arch: pacman -S jdk17-openjdk / debian: apt install openjdk-17-jdk / windows: winget install Microsoft.OpenJDK.17)');
+  } else if (jmajor < 17) {
+    console.warn(`  [setup] java ${jmajor} is too old — need JDK 17+ (set JAVA_HOME or install OpenJDK 17)`);
+  } else {
+    log('setup', `java ${jmajor} OK (${java})`);
+  }
+
+  const sdkman = sdkmanagerPath(root, host.os);
+  if (!existsSync(sdkman)) {
+    log('setup', `downloading Android commandline-tools (${host.os}/${host.arch})...`);
+    const zip = join('/tmp', 'cmdtools.zip');
+    if (!run('download', 'curl', ['-fsSL', cmdlineToolsUrl(host.os), '-o', zip])) process.exit(1);
+    const staging = join(root, 'sdk', 'cmdline-tools', 'dl');
+    mkdirSync(staging, { recursive: true });
+    if (!unzipTo(zip, staging)) process.exit(1);
+    const inner = readdirSync(staging).find((d) => existsSync(join(staging, d, 'bin', 'sdkmanager')) || existsSync(join(staging, d, 'bin', 'sdkmanager.bat')));
+    if (!inner) {
+      console.error('  [setup] commandline-tools zip layout unexpected — aborting');
+      process.exit(1);
+    }
+    mkdirSync(join(root, 'sdk', 'cmdline-tools', 'latest'), { recursive: true });
+    for (const e of readdirSync(join(staging, inner))) {
+      renameSync(join(staging, inner, e), join(root, 'sdk', 'cmdline-tools', 'latest', e));
+    }
+  } else {
+    log('setup', `sdkmanager found (${sdkman})`);
+  }
+  if (!existsSync(sdkman)) {
+    console.error('  [setup] sdkmanager missing after install — aborting');
+    process.exit(1);
+  }
+
+  const adb = join(root, 'sdk', 'platform-tools', host.os === 'windows' ? 'adb.exe' : 'adb');
+  if (!existsSync(adb)) {
+    log('setup', 'accepting SDK licenses + installing packages (platform-tools, build-tools, platforms 34/36)...');
+    if (!sdkmanagerRun(root, host.os, ['--licenses'])) process.exit(1);
+    if (!sdkmanagerRun(root, host.os, ['--install', ...SDK_PACKAGES])) process.exit(1);
+  } else {
+    log('setup', 'SDK packages already installed');
+  }
+
+  const gradleBin = join(root, `gradle-${GRADLE_VERSION}`, 'bin', host.os === 'windows' ? 'gradle.bat' : 'gradle');
+  if (!existsSync(gradleBin)) {
+    log('setup', `downloading Gradle ${GRADLE_VERSION} (universal JVM distribution)...`);
+    const zip = join('/tmp', `gradle-${GRADLE_VERSION}-bin.zip`);
+    if (!run('download', 'curl', ['-fSL', GRADLE_URL, '-o', zip])) process.exit(1);
+    if (!unzipTo(zip, root)) process.exit(1);
+  } else {
+    log('setup', `gradle ${GRADLE_VERSION} found`);
+  }
+
+  if (existsSync(TERMUX_AAPT2) && !existsSync(AAPT2_OVERRIDE)) {
+    mkdirSync(join(root, 'aapt2-veck'), { recursive: true });
+    writeFileSync(AAPT2_OVERRIDE, `#!/bin/sh
+export LD_LIBRARY_PATH=${TERMUX_LIB}
+exec ${TERMUX_AAPT2} "$@"
+`);
+    chmodSync(AAPT2_OVERRIDE, 0o755);
+    log('setup', `aapt2 proxied through termux binary (${host.arch})`);
+  } else if (existsSync(AAPT2_OVERRIDE)) {
+    log('setup', 'aapt2 override present');
+  } else if (host.os === 'linux' && host.arch !== 'x86_64') {
+    console.warn('  [setup] arch: ' + host.arch + ' linux, but Gradle\'s bundled aapt2 is x86_64-only — install an aarch64 aapt2 (e.g. from Android Studio) and set android.aapt2FromMavenOverride');
+  } else {
+    log('setup', 'aapt2: using AGP\'s bundled (maven) binary — fine for this arch');
+  }
+
+  if (host.os !== 'windows' && !existsSync(join(root, 'env.sh'))) {
+    const smBin = join(root, 'sdk', 'cmdline-tools', 'latest', 'bin');
+    const ptBin = join(root, 'sdk', 'platform-tools');
+    const gBin = join(root, `gradle-${GRADLE_VERSION}`, 'bin');
+    writeFileSync(join(root, 'env.sh'), `export ANDROID_HOME=${join(root, 'sdk')}
+export ANDROID_SDK_ROOT="$ANDROID_HOME"
+export GRADLE_HOME=${join(root, `gradle-${GRADLE_VERSION}`)}
+export PATH="${smBin}:${ptBin}:${gBin}:$PATH"
+`);
+    log('setup', `env.sh written — source it: source ${join(root, 'env.sh')}`);
+  } else if (host.os === 'windows') {
+    log('setup', 'windows: add to PATH manually: ' + [join(root, 'sdk', 'cmdline-tools', 'latest', 'bin'), join(root, 'sdk', 'platform-tools'), join(root, `gradle-${GRADLE_VERSION}`, 'bin')].join(';'));
+  }
+
+  console.log(`\n  [setup] done. run: vesk-native build <app>`);
 }
 
 function findGradle(): string {
@@ -979,6 +1171,9 @@ async function main(): Promise<void> {
       break;
     case 'install':
       await runApp(arg ? resolve(arg) : process.cwd());
+      break;
+    case 'setup':
+      setupToolchain(TOOLCHAIN_ROOT);
       break;
     case 'dev':
       console.log('  [dev] not implemented yet (Phase 7)');
