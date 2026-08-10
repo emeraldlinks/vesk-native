@@ -1,8 +1,8 @@
 import { parse, generateIR, DynamicBinding, OpaqueDynamicRegion, collectTrackedNames, transformTrackedAst } from '@vesk/compiler';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { testAppAppDir } from '@compiler-native/paths.ts';
-import { walkIR } from '@compiler-native/walk-ir.ts';
+import { testAppAppDir } from '@compiler-native/paths';
+import { walkIR } from '@compiler-native/walk-ir';
 
 const source = readFileSync(resolve(testAppAppDir, 'page.vsk'), 'utf-8');
 const ir = generateIR(parse(source), source);

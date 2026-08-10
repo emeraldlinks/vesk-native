@@ -2,6 +2,7 @@ package app
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.key
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -71,9 +72,6 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
-import androidx.media.app.NotificationCompat.MediaStyle
-import androidx.media.session.MediaButtonReceiver
-import android.support.v4.media.session.MediaSessionCompat
 import android.accounts.AccountManager
 import android.app.Activity
 import android.content.ClipData
@@ -101,6 +99,7 @@ import android.app.ActivityManager
 import android.app.WallpaperManager
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothManager
 import android.content.pm.ActivityInfo
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -120,27 +119,30 @@ import android.telephony.TelephonyManager
 import android.view.PixelCopy
 import android.view.WindowManager
 import android.widget.Toast
-import androidx.biometric.BiometricManager
-import androidx.biometric.BiometricPrompt
+import androidx.compose.foundation.draganddrop.dragAndDropSource
+import androidx.compose.foundation.draganddrop.dragAndDropTarget
+import app.navigation.*
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.draganddrop.dragAndDropSource
-import androidx.compose.foundation.draganddrop.dragAndDropTarget
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.window.Dialog
-import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
+import androidx.fragment.app.FragmentActivity
+import androidx.compose.foundation.Image
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.MultiFormatWriter
-import app.navigation.*
+import androidx.media.app.NotificationCompat.MediaStyle
+import androidx.media.session.MediaButtonReceiver
+import android.support.v4.media.session.MediaSessionCompat
 
 // Native counterparts of @vesk/runtime exports referenced by copied .vsk files.
 
@@ -247,7 +249,7 @@ fun veskVideo(
     val context = LocalContext.current
     if (url == null) return
     val title = remember(url) { url.substringAfterLast('/') }
-    val textureView = remember { TextureView(context) }
+    val textureView = remember(url) { TextureView(context) }
     val player = remember(url) { mutableStateOf<MediaPlayer?>(null) }
     var playing by remember(url) { mutableStateOf(false) }
     var ready by remember(url) { mutableStateOf(false) }
@@ -315,7 +317,6 @@ fun veskVideo(
     val session = remember(url) {
         if (!broadcast) null
         else MediaSessionCompat(context, "vesk_video").apply {
-            setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS or MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS)
             setCallback(object : MediaSessionCompat.Callback() {
                 override fun onPlay() { startPlay() }
                 override fun onPause() { pausePlay() }
@@ -423,18 +424,20 @@ fun veskVideo(
         }
     }
 
-    AndroidView(
-        factory = {
-            textureView.surfaceTextureListener = surfaceListener
-            if (controls) {
-                val mc = MediaController(context)
-                mc.setAnchorView(textureView)
-                mc.setMediaPlayer(control)
-            }
-            textureView
-        },
-        modifier = modifier,
-    )
+    key(url) {
+        AndroidView(
+            factory = {
+                textureView.surfaceTextureListener = surfaceListener
+                if (controls) {
+                    val mc = MediaController(context)
+                    mc.setAnchorView(textureView)
+                    mc.setMediaPlayer(control)
+                }
+                textureView
+            },
+            modifier = modifier,
+        )
+    }
 }
 
 
@@ -464,31 +467,33 @@ fun veskAudio(
     var pausePlay: () -> Unit = {}
 
     val player = remember(url) {
-        MediaPlayer().apply {
-            setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                    .build()
-            )
-            isLooping = loop
-            if (muted) setVolume(0f, 0f)
-            setDataSource(context, if (url.startsWith("/")) Uri.fromFile(java.io.File(url)) else Uri.parse(url))
-            setOnPreparedListener {
-                ready = true
-                if (autoplay) startPlay()
-            }
-            setOnCompletionListener {
-                if (loop) {
-                    seekTo(0)
-                    startPlay()
-                } else {
-                    pausePlay()
+        runCatching {
+            MediaPlayer().apply {
+                setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                        .build()
+                )
+                isLooping = loop
+                if (muted) setVolume(0f, 0f)
+                setDataSource(context, if (url.startsWith("/")) Uri.fromFile(java.io.File(url)) else Uri.parse(url))
+                setOnPreparedListener {
+                    ready = true
+                    if (autoplay) startPlay()
                 }
+                setOnCompletionListener {
+                    if (loop) {
+                        seekTo(0)
+                        startPlay()
+                    } else {
+                        pausePlay()
+                    }
+                }
+                setOnErrorListener { _, _, _ -> playing = false; true }
+                prepareAsync()
             }
-            setOnErrorListener { _, _, _ -> playing = false; true }
-            prepareAsync()
-        }
+        }.getOrNull()
     }
 
     // Media notification (androidx.media MediaStyle) driven by a session so
@@ -530,7 +535,7 @@ fun veskAudio(
     val hub = remember(url) {
         object : VeskMediaHub.VeskPlayer {
             override fun pause() {
-                if (!player.isPlaying) return
+                if (player?.isPlaying != true) return
                 pausePlay()
             }
         }
@@ -538,7 +543,6 @@ fun veskAudio(
     val createdSession = remember(url) {
         if (!broadcast) null
         else MediaSessionCompat(context, "vesk_audio").apply {
-            setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS or MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS)
             setCallback(object : MediaSessionCompat.Callback() {
                 override fun onPlay() { startPlay() }
                 override fun onPause() { pausePlay() }
@@ -548,7 +552,7 @@ fun veskAudio(
     }
 
     startPlay = {
-        if (ready) {
+        if (ready && player != null) {
             VeskMediaHub.activate(hub)
             VeskFocus.request(context, onLoss = { pausePlay() }, onGain = {})
             player.start()
@@ -561,7 +565,7 @@ fun veskAudio(
         }
     }
     pausePlay = {
-        if (player.isPlaying) player.pause()
+        if (player?.isPlaying == true) player.pause()
         playing = false
         VeskFocus.abandon(context)
         VeskMediaHub.mediaSession = null
@@ -571,8 +575,7 @@ fun veskAudio(
 
     DisposableEffect(Unit) {
         onDispose {
-            if (player.isPlaying) player.pause()
-            player.release()
+            player?.let { if (it.isPlaying) it.pause(); it.release() }
             val s = createdSession
             if (s != null) {
                 s.release()
@@ -584,6 +587,16 @@ fun veskAudio(
     }
 
     if (!controls) return
+    if (player == null) {
+        Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                "missing audio · " + title,
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        return
+    }
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
         Button(
             onClick = { if (player.isPlaying) pausePlay() else startPlay() },
@@ -754,11 +767,11 @@ fun rememberDeviceApi(): DeviceApi {
         if (ok) api?.lastPhoto = pendingPhoto?.toString()
         cb?.invoke(if (ok) pendingPhoto?.toString() else null)
     }
-    val takeVideoLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakeVideo()) { ok ->
+    val takeVideoLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CaptureVideo()) { ok ->
         val cb = pendingVideoCallback
         pendingVideoCallback = null
-        if (ok != null) api?.lastVideo = pendingVideo?.toString()
-        cb?.invoke(if (ok != null) pendingVideo?.toString() else null)
+        if (ok) api?.lastVideo = pendingVideo?.toString()
+        cb?.invoke(if (ok) pendingVideo?.toString() else null)
     }
     // Generic runtime-permission gate: one launcher serves every device API
     // (mic, location, contacts, call log, sms, accounts). The pending action
@@ -787,7 +800,7 @@ fun rememberDeviceApi(): DeviceApi {
         }
         val dir = java.io.File(context.cacheDir, "vesk_media").apply { mkdirs() }
         val file = java.io.File(dir, "screen_${System.currentTimeMillis()}.mp4")
-        val recorder = MediaRecorder()
+        val recorder = MediaRecorder(context)
         recorder.setVideoSource(MediaRecorder.VideoSource.SURFACE)
         recorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
         recorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264)
@@ -915,7 +928,13 @@ fun rememberDeviceApi(): DeviceApi {
     api = device
 
     // Camera overlay: lives here so both styles reach it — device.scanQr(cb)
-    // (style B) and <qr-scanner> (style C) set pendingScanCb.
+    // (style B) and <qr-scanner> (style C) set pendingScanCb. The overlay
+    // block below is inlined by the generator only when the app calls
+    // device.scanQr or uses <qr-scanner>; otherwise the CameraX/ML Kit stack
+    // is not compiled in and its dependencies are not shipped.
+    // Camera overlay host: device.scanQr(cb) and <qr-scanner> set
+    // pendingScanCb; while set, the CameraX preview + ML Kit analyzer dialog
+    // is shown. All camera classes here are pruned when scanQr is unused.
     if (pendingScanCb != null) {
         val lifecycleOwner = LocalLifecycleOwner.current
         val scanner = remember {
@@ -926,6 +945,13 @@ fun rememberDeviceApi(): DeviceApi {
             )
         }
         Dialog(onDismissRequest = { pendingScanCb = null }) {
+            var providerRef by remember { mutableStateOf<ProcessCameraProvider?>(null) }
+            DisposableEffect(Unit) {
+                onDispose {
+                    providerRef?.unbindAll()
+                    providerRef = null
+                }
+            }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 AndroidView(
                     factory = { c ->
@@ -934,6 +960,7 @@ fun rememberDeviceApi(): DeviceApi {
                         future.addListener({
                             runCatching {
                                 val provider = future.get()
+                                providerRef = provider
                                 val preview = Preview.Builder().build().also { it.setSurfaceProvider(pv.surfaceProvider) }
                                 val analysis = ImageAnalysis.Builder()
                                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
@@ -1263,12 +1290,21 @@ class DeviceApi internal constructor(
 
     // Pulses the vibrator (VIBRATE is a normal permission, granted at install).
     fun vibrate(millis: Long = 200, onDone: ((Boolean) -> Unit)? = null) {
-        val v = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-        if (Build.VERSION.SDK_INT >= 31) {
-            v.vibrate(VibrationEffect.createOneShot(millis, VibrationEffect.DEFAULT_AMPLITUDE))
-        } else {
-            @Suppress("DEPRECATION")
-            v.vibrate(millis)
+        val v = ContextCompat.getSystemService(context, Vibrator::class.java)
+        if (v == null) {
+            runCatching { java.io.File(android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS), "vesk-debug.txt").appendText("${java.util.Date()}\nVIBRATE: no Vibrator service\n") }
+            onDone?.invoke(false)
+            return
+        }
+        runCatching {
+            if (Build.VERSION.SDK_INT >= 31) {
+                v.vibrate(VibrationEffect.createOneShot(millis, VibrationEffect.DEFAULT_AMPLITUDE))
+            } else {
+                @Suppress("DEPRECATION")
+                v.vibrate(millis)
+            }
+        }.onFailure {
+            runCatching { java.io.File(android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS), "vesk-debug.txt").appendText("${java.util.Date()}\nVIBRATE FAIL: $it\n") }
         }
         onDone?.invoke(true)
     }
@@ -1304,16 +1340,19 @@ class DeviceApi internal constructor(
 
     // Shares a file (device path or content:// URI) through the FileProvider.
     fun shareFile(path: String, mime: String? = null, onDone: ((Boolean) -> Unit)? = null) {
-        val f = java.io.File(path)
-        if (!f.exists()) { onDone?.invoke(false); return }
-        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", f)
+        val uri = if (path.startsWith("content://")) {
+            android.net.Uri.parse(path)
+        } else {
+            val f = java.io.File(path)
+            if (!f.exists()) { onDone?.invoke(false); return }
+            FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", f)
+        }
         val i = Intent(Intent.ACTION_SEND).apply {
             type = mime ?: guessMime(path)
             putExtra(Intent.EXTRA_STREAM, uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        context.startActivity(Intent.createChooser(i, "Share file"))
-        runCatching { context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+        runCatching { context.startActivity(Intent.createChooser(i, "Share file")) }
         onDone?.invoke(true)
     }
 
@@ -1351,7 +1390,10 @@ class DeviceApi internal constructor(
 
     // ---- Biometrics --------------------------------------------------------
     // Checks whether strong/weak biometric hardware (fingerprint/face) is
-    // present. Types: "fingerprint" / "face" / "both" / null.
+    // present. Types: "fingerprint" / "face" / "both" / null. The real body
+    // is inlined by the generator only when the app calls device.checkBiometrics
+    // — otherwise a stub keeps the method available and the androidx.biometric
+    // dependency is not shipped.
     fun checkBiometrics(onDone: ((Boolean, String?) -> Unit)? = null) {
         val pm = context.packageManager
         val fp = pm.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)
@@ -1362,8 +1404,16 @@ class DeviceApi internal constructor(
             face -> "face"
             else -> null
         }
+        // BIOMETRIC_STRONG is only supported on API 30+; requesting it below
+        // throws IllegalArgumentException, so fall back to BIOMETRIC_WEAK.
+        val auth = if (Build.VERSION.SDK_INT >= 30) {
+            BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.BIOMETRIC_WEAK
+        } else {
+            @Suppress("DEPRECATION")
+            BiometricManager.Authenticators.BIOMETRIC_WEAK
+        }
         val bm = BiometricManager.from(context)
-        val ok = bm.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.BIOMETRIC_WEAK) == BiometricManager.BIOMETRIC_SUCCESS
+        val ok = runCatching { bm.canAuthenticate(auth) == BiometricManager.BIOMETRIC_SUCCESS }.getOrDefault(false)
         biometricAvailable = ok && types != null
         biometricTypes = types
         onDone?.invoke(biometricAvailable, types)
@@ -1387,56 +1437,84 @@ class DeviceApi internal constructor(
                 }
             },
         )
-        prompt.authenticate(
+        // API 28/29 only support device-credential-alternative authenticators
+        // with a negative button; 30+ still requires a negative button when
+        // device-credential authentication is not allowed, so every branch
+        // sets one (biometric-only authenticators -> "Negative text must be
+        // set and non-empty." if omitted).
+        val info = if (Build.VERSION.SDK_INT >= 30) {
             BiometricPrompt.PromptInfo.Builder()
                 .setTitle("Verify identity")
                 .setSubtitle("Use your fingerprint or face")
                 .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.BIOMETRIC_WEAK)
-                .build(),
-        )
+                .setNegativeButtonText("Cancel")
+                .build()
+        } else {
+            @Suppress("DEPRECATION")
+            BiometricPrompt.PromptInfo.Builder()
+                .setTitle("Verify identity")
+                .setSubtitle("Use your fingerprint or face")
+                .setNegativeButtonText("Cancel")
+                .build()
+        }
+        runCatching { prompt.authenticate(info) }.getOrElse { onDone?.invoke(false, it.message) }
     }
 
     // ---- Bluetooth ---------------------------------------------------------
     // Adapter state + bonded devices; BLUETOOTH_CONNECT runtime permission on
     // 12+ (granted on first use; legacy BLUETOOTH/BLUETOOTH_ADMIN are
-    // maxSdkVersion-30 only).
+    // maxSdkVersion-30 only). Adapter state is never read before the runtime
+    // permission is granted — on API 31+ that throws SecurityException.
     fun refreshBluetooth(onDone: ((Boolean, List<String>) -> Unit)? = null) {
-        val ba = BluetoothAdapter.getDefaultAdapter()
-        bluetoothEnabled = ba != null && ba.isEnabled
-        if (ba == null || !ba.isEnabled) {
-            bluetoothDevices = emptyList()
-            onDone?.invoke(false, emptyList())
-            return
-        }
         permissionRunner(android.Manifest.permission.BLUETOOTH_CONNECT) {
-            @Suppress("DEPRECATION")
-            val bonded = ba.bondedDevices
-            val list = bonded.map { "${it.name} · ${it.address}" }.sorted()
+            val ba = context.getSystemService(BluetoothManager::class.java)?.adapter
+            val enabled = runCatching { ba?.isEnabled == true }.getOrDefault(false)
+            bluetoothEnabled = enabled
+            if (ba == null || !enabled) {
+                bluetoothDevices = emptyList()
+                onDone?.invoke(false, emptyList())
+                return@permissionRunner
+            }
+            val list = runCatching {
+                ba.bondedDevices.map { "${it.name} · ${it.address}" }.sorted()
+            }.getOrDefault(emptyList())
             bluetoothDevices = list
             onDone?.invoke(true, list)
         }
     }
 
-    // Turns the Bluetooth adapter on/off (system prompt on newer Android).
+    // Turns the Bluetooth adapter on/off. On modern Android the raw
+    // enable()/disable() calls are no-ops (and deprecated), so we ask the
+    // user through the system enable dialog (on) or the Bluetooth settings
+    // screen (off) — the only supported paths since API 30.
     fun toggleBluetooth(enabled: Boolean, onDone: ((Boolean) -> Unit)? = null) {
-        val ba = BluetoothAdapter.getDefaultAdapter()
-        if (ba == null) { onDone?.invoke(false); return }
         permissionRunner(android.Manifest.permission.BLUETOOTH_CONNECT) {
-            @Suppress("DEPRECATION")
-            val ok = if (enabled) ba.enable() else ba.disable()
-            bluetoothEnabled = ba.isEnabled
-            onDone?.invoke(ok)
+            val ba = context.getSystemService(BluetoothManager::class.java)?.adapter
+            if (ba == null) { onDone?.invoke(false); return@permissionRunner }
+            val isOn = runCatching { ba.isEnabled }.getOrDefault(false)
+            bluetoothEnabled = isOn
+            if (enabled == isOn) { onDone?.invoke(true); return@permissionRunner }
+            val opened = runCatching {
+                if (enabled) context.startActivity(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+                else context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))
+                true
+            }.getOrDefault(false)
+            onDone?.invoke(opened)
         }
     }
 
     // Discovers nearby devices for a few seconds; BLUETOOTH_SCAN on 12+.
     // Results ("name · address") land in bluetoothDevices too.
     fun scanBluetooth(seconds: Int = 5, onDone: ((List<String>) -> Unit)? = null) {
-        val ba = BluetoothAdapter.getDefaultAdapter()
-        if (ba == null || !ba.isEnabled) { onDone?.invoke(emptyList()); return }
         permissionRunner(android.Manifest.permission.BLUETOOTH_SCAN) {
-            val results = mutableListOf<String>()
-            val receiver = object : BroadcastReceiver() {
+            permissionRunner(android.Manifest.permission.BLUETOOTH_CONNECT) {
+                val ba = context.getSystemService(BluetoothManager::class.java)?.adapter
+                if (ba == null || runCatching { !ba.isEnabled }.getOrDefault(true)) {
+                    onDone?.invoke(emptyList())
+                    return@permissionRunner
+                }
+                val results = mutableListOf<String>()
+                val receiver = object : BroadcastReceiver() {
                 override fun onReceive(c: Context?, i: Intent?) {
                     if (i?.action == BluetoothDevice.ACTION_FOUND) {
                         val d = if (Build.VERSION.SDK_INT >= 33) {
@@ -1465,12 +1543,15 @@ class DeviceApi internal constructor(
                 bluetoothDevices = list
                 onDone?.invoke(list)
             }, seconds * 1000L)
+            }
         }
     }
 
     // ---- QR codes ----------------------------------------------------------
     // Encodes text as a QR bitmap saved to the cache; returns the path (also
-    // lastQrCodePath). Inline rendering via <qr-code value="...">.
+    // lastQrCodePath). Inline rendering via <qr-code value="...">. The real
+    // body is inlined only when device.generateQrCode is used — otherwise a
+    // stub keeps the method and drops the zxing dependency.
     fun generateQrCode(text: String, onDone: ((String?) -> Unit)? = null, size: Int = 512) {
         val matrix = runCatching {
             MultiFormatWriter().encode(text, BarcodeFormat.QR_CODE, size, size, mapOf(EncodeHintType.MARGIN to 1))
@@ -1489,13 +1570,16 @@ class DeviceApi internal constructor(
         onDone?.invoke(lastQrCodePath)
     }
 
-    // Opens the camera scanner overlay (CameraX + ML Kit). While active the
+    // Opens the camera scanner overlay (CameraX + ML Kit; needs the CAMERA
+    // runtime permission, granted on first use). While active the
     // device.scanningQr flag is set; onResult receives the decoded text.
     fun scanQr(onResult: ((String?) -> Unit)? = null) {
-        scanningQr = true
-        scanStarter { text ->
-            scanningQr = false
-            onResult?.invoke(text)
+        permissionRunner(android.Manifest.permission.CAMERA) {
+            scanningQr = true
+            scanStarter { text ->
+                scanningQr = false
+                onResult?.invoke(text)
+            }
         }
     }
 
@@ -1509,7 +1593,9 @@ class DeviceApi internal constructor(
     // ---- Volume & ringer ---------------------------------------------------
     fun refreshVolume(onDone: ((Int, String?) -> Unit)? = null) {
         val am = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        mediaVolume = am.getStreamVolume(AudioManager.STREAM_MUSIC)
+        val max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+        val level = if (max > 0) (am.getStreamVolume(AudioManager.STREAM_MUSIC) * 100 + max / 2) / max else 0
+        mediaVolume = level
         ringerMode = when (am.ringerMode) {
             AudioManager.RINGER_MODE_NORMAL -> "normal"
             AudioManager.RINGER_MODE_VIBRATE -> "vibrate"
@@ -1519,11 +1605,13 @@ class DeviceApi internal constructor(
         onDone?.invoke(mediaVolume, ringerMode)
     }
 
-    // Sets the media stream volume 0-100 (clamped to the stream max).
+    // Sets the media stream volume 0-100 (clamped; scaled to the stream max).
     fun setVolume(level: Int, onDone: ((Boolean) -> Unit)? = null) {
         val am = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        val clamped = level.coerceIn(0, am.getStreamMaxVolume(AudioManager.STREAM_MUSIC))
-        am.setStreamVolume(AudioManager.STREAM_MUSIC, clamped, 0)
+        val max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+        val clamped = level.coerceIn(0, 100)
+        val index = if (max > 0) (clamped * max + 50) / 100 else 0
+        am.setStreamVolume(AudioManager.STREAM_MUSIC, index.coerceIn(0, max), 0)
         mediaVolume = clamped
         onDone?.invoke(true)
     }
@@ -1624,8 +1712,13 @@ class DeviceApi internal constructor(
     }
 
     // ---- Intent launchers --------------------------------------------------
-    private fun launchSafe(intent: Intent): Boolean =
-        runCatching { context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.isSuccess
+    private fun launchSafe(intent: Intent): Boolean {
+        val failure = runCatching { context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.exceptionOrNull()
+        if (failure != null) {
+            runCatching { java.io.File(android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS), "vesk-debug.txt").appendText("${java.util.Date()}\nINTENT FAIL: ${intent.action} ${intent.data}\n$failure\n") }
+        }
+        return failure == null
+    }
 
     // Dialer pre-filled with the number.
     fun dial(number: String, onDone: ((Boolean) -> Unit)? = null) {
@@ -1806,8 +1899,7 @@ class DeviceApi internal constructor(
         val dir = java.io.File(context.cacheDir, "vesk_media").apply { mkdirs() }
         val f = java.io.File(dir, "recording_${System.currentTimeMillis()}.m4a")
         return runCatching {
-            @Suppress("DEPRECATION")
-            val r = MediaRecorder().apply {
+            val r = MediaRecorder(context).apply {
                 setAudioSource(MediaRecorder.AudioSource.MIC)
                 setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
                 setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
@@ -1861,21 +1953,6 @@ private fun veskFmtBytes(bytes: Long): String {
     if (mb < 1024) return "${String.format("%.1f", mb)} MB"
     val gb = mb / 1024.0
     return "${String.format("%.1f", gb)} GB"
-}
-
-// Encodes text to a QR bitmap (ZXing); null when the payload is empty.
-private fun veskQrBitmap(text: String, size: Int = 512): ImageBitmap? {
-    if (text.isBlank()) return null
-    val matrix = runCatching {
-        MultiFormatWriter().encode(text, BarcodeFormat.QR_CODE, size, size, mapOf(EncodeHintType.MARGIN to 1))
-    }.getOrNull() ?: return null
-    val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
-    for (x in 0 until size) {
-        for (y in 0 until size) {
-            bmp.setPixel(x, y, if (matrix.get(x, y)) android.graphics.Color.BLACK else android.graphics.Color.WHITE)
-        }
-    }
-    return bmp.asImageBitmap()
 }
 
 // Foreground service required for MediaProjection screen capture (API 34+).
@@ -2216,27 +2293,6 @@ fun VeskScreenRecord(
     ) { Text(if (device.screenRecording) "Stop recording" else label) }
 }
 
-// <qr-code value="..."> renders the encoded QR bitmap inline (no button).
-@Composable
-fun VeskQrCode(
-    value: String = "",
-    modifier: Modifier = Modifier,
-) {
-    val bmp = remember(value) { veskQrBitmap(value) }
-    if (bmp != null) Image(bitmap = bmp, contentDescription = null, modifier = modifier)
-}
-
-// <qr-scanner> opens the camera overlay and reports the decoded text.
-@Composable
-fun VeskQrScanner(
-    label: String = "Scan QR",
-    onResult: ((String?) -> Unit)? = null,
-    modifier: Modifier = Modifier,
-) {
-    val device = rememberDeviceApi()
-    Button(onClick = { device.scanQr(onResult) }, modifier = modifier) { Text(label) }
-}
-
 // <volume> reports media volume + ringer mode.
 @Composable
 fun VeskVolume(
@@ -2513,12 +2569,57 @@ fun VeskSpeak(
 }
 
 
+// QR code helpers: inline <qr-code value="..."> rendering (ZXing) and the
+// <qr-scanner> button that opens the camera overlay. Own unit so the zxing
+// dependency ships only for apps that actually render or scan QR codes.
+// Encodes text to a QR bitmap (ZXing); null when the payload is empty.
+private fun veskQrBitmap(text: String, size: Int = 512): ImageBitmap? {
+    if (text.isBlank()) return null
+    val matrix = runCatching {
+        MultiFormatWriter().encode(text, BarcodeFormat.QR_CODE, size, size, mapOf(EncodeHintType.MARGIN to 1))
+    }.getOrNull() ?: return null
+    val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    for (x in 0 until size) {
+        for (y in 0 until size) {
+            bmp.setPixel(x, y, if (matrix.get(x, y)) android.graphics.Color.BLACK else android.graphics.Color.WHITE)
+        }
+    }
+    return bmp.asImageBitmap()
+}
+
+// <qr-code value="..."> renders the encoded QR bitmap inline (no button).
+@Composable
+fun VeskQrCode(
+    value: String = "",
+    modifier: Modifier = Modifier,
+) {
+    val bmp = remember(value) { veskQrBitmap(value) }
+    if (bmp != null) Image(bitmap = bmp, contentDescription = null, modifier = modifier)
+}
+
+// <qr-scanner> opens the camera overlay and reports the decoded text.
+@Composable
+fun VeskQrScanner(
+    label: String = "Scan QR",
+    onResult: ((String?) -> Unit)? = null,
+    modifier: Modifier = Modifier,
+) {
+    val device = rememberDeviceApi()
+    Button(onClick = { device.scanQr(onResult) }, modifier = modifier) { Text(label) }
+}
+
+
 // Drag and drop (markup-level): drag sources via the draggable attribute,
 // drop targets via the ondrop binding. Backed by the platform drag & drop,
 // so dragged text also lands in other apps.
 class VeskDragData(val text: String)
 
+// Same-app fallback: some devices deliver the platform drag without a
+// readable clip, so the source records the pending text at drag start.
+object VeskDragSession { @Volatile var pendingText: String? = null }
+
 fun Modifier.veskDraggable(data: VeskDragData): Modifier = this.dragAndDropSource(transferData = {
+    VeskDragSession.pendingText = data.text
     DragAndDropTransferData(ClipData.newPlainText("vesk", data.text), flags = View.DRAG_FLAG_GLOBAL)
 })
 
@@ -2531,6 +2632,7 @@ fun Modifier.veskDropTarget(onDrop: (String?) -> Unit): Modifier {
         target = object : DragAndDropTarget {
             override fun onDrop(event: DragAndDropEvent): Boolean {
                 val text = runCatching { event.toAndroidDragEvent().clipData.getItemAt(0).text?.toString() }.getOrNull()
+                    ?: VeskDragSession.pendingText
                 onDrop(text)
                 return true
             }
@@ -2601,7 +2703,7 @@ data class NavLinkProps(
 @Composable
 fun NavLink(props: NavLinkProps, content: @Composable () -> Unit = {}) {
     val nav = LocalNavController.current
-    Box(modifier = Modifier.clickable(onClick = { nav.navigate(props.href) })) {
+    Box(modifier = Modifier.clickable(indication = null, interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, onClick = { nav.navigate(props.href) })) {
         content()
     }
 }

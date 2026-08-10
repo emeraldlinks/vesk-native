@@ -74,6 +74,7 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 	val cbPhoto = remember { mutableStateOf<String?>(null) }
 		val cbPhotoCell = cbPhoto
 	val cbRecording = remember { mutableStateOf<String?>(null) }
+	val cbVideo = remember { mutableStateOf<String?>(null) }
 	val cbFile = remember { mutableStateOf<String?>(null) }
 	val batteryInfo = remember { mutableStateOf("tap for battery") }
 	val networkInfo = remember { mutableStateOf("tap for network") }
@@ -127,7 +128,6 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				)
 				veskVideo(
 					url = "android.resource://com.vesk.demo3/" + com.vesk.demo3.R.raw.demo_1,
-					autoplay = true,
 					loop = true,
 					muted = true,
 					modifier = Modifier.clip(RoundedCornerShape(16.dp)).fillMaxWidth().height(160.dp),
@@ -275,7 +275,7 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				)
 				VeskCamera(
 					label = "Record video",
-					onDone = { uri -> cbRecording.value = uri },
+					onDone = { uri -> cbVideo.value = uri },
 					video = true,
 				)
 			}
@@ -307,6 +307,11 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				url = cbRecording.value,
 				controls = true,
 				modifier = Modifier.padding(top = 8.dp).clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).padding(horizontal = 12.dp).padding(vertical = 8.dp),
+			)
+			veskVideo(
+				url = cbVideo.value,
+				controls = true,
+				modifier = Modifier.padding(top = 8.dp).clip(RoundedCornerShape(16.dp)).fillMaxWidth().aspectRatio(16f / 9f),
 			)
 		}
 		Column(

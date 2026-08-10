@@ -127,7 +127,7 @@ fun Layout(props: LayoutProps = LayoutProps(), content: @Composable () -> Unit =
 				}
 			}
 			Column(
-				modifier = Modifier.verticalScroll(rememberScrollState()).fillMaxWidth().weight(1f),
+				modifier = Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()),
 			) {
 				Column(
 					modifier = Modifier.fillMaxWidth(),

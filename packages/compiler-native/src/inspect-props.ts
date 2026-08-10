@@ -1,7 +1,7 @@
 import { parse } from '@vesk/compiler';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { testAppAppDir } from '@compiler-native/paths.ts';
+import { testAppAppDir } from '@compiler-native/paths';
 
 const source = readFileSync(resolve(testAppAppDir, 'page.vsk'), 'utf-8');
 const ast = parse(source);

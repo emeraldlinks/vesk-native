@@ -1,6 +1,6 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { compileVsk, getCompileErrors } from '@compiler-native/index.ts';
+import { compileVsk, getCompileErrors } from '@compiler-native/index';
 
 function walk(dir: string): string[] {
   const out: string[] = [];

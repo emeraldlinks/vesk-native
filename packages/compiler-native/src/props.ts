@@ -1,5 +1,5 @@
-import type { JsNode } from '@compiler-native/js2kt.ts';
-import { ktIdent } from '@compiler-native/js2kt.ts';
+import type { JsNode } from '@compiler-native/js2kt';
+import { ktIdent } from '@compiler-native/js2kt';
 
 export interface ComponentDecl {
   name: string;

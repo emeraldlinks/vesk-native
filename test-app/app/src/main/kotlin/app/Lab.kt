@@ -169,7 +169,7 @@ fun Lab(content: @Composable () -> Unit = {}) {
 			overflow = TextOverflow.Ellipsis,
 		)
 		Column(
-			modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f)).height(96.dp).padding(12.dp),
+			modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f)).height(96.dp).verticalScroll(rememberScrollState()).padding(12.dp),
 		) {
 			Column(
 				modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
@@ -326,6 +326,107 @@ fun Lab(content: @Composable () -> Unit = {}) {
 			) {
 				Text(
 					text = "F",
+				)
+			}
+		}
+		Column(
+			modifier = Modifier.fillMaxWidth(),
+		) {
+			Text(
+				text = "Grid",
+				modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
+				style = TextStyle(fontWeight = FontWeight.SemiBold),
+			)
+			Column(
+				modifier = Modifier.fillMaxWidth(),
+				verticalArrangement = Arrangement.spacedBy(8.dp),
+			) {
+				Row(
+					horizontalArrangement = Arrangement.spacedBy(8.dp),
+				) {
+					Column(
+						modifier = Modifier.weight(1f).clip(RoundedCornerShape(4.dp)).background(Color(0xFFDBEAFE)).padding(8.dp),
+					) {
+						Text(
+							text = "g1",
+						)
+					}
+					Column(
+						modifier = Modifier.weight(1f).clip(RoundedCornerShape(4.dp)).background(Color(0xFFDBEAFE)).padding(8.dp),
+					) {
+						Text(
+							text = "g2",
+						)
+					}
+					Column(
+						modifier = Modifier.weight(1f).clip(RoundedCornerShape(4.dp)).background(Color(0xFFDBEAFE)).padding(8.dp),
+					) {
+						Text(
+							text = "g3",
+						)
+					}
+				}
+				Row(
+					horizontalArrangement = Arrangement.spacedBy(8.dp),
+				) {
+					Column(
+						modifier = Modifier.weight(1f).clip(RoundedCornerShape(4.dp)).background(Color(0xFFDBEAFE)).padding(8.dp),
+					) {
+						Text(
+							text = "g4",
+						)
+					}
+					Column(
+						modifier = Modifier.weight(1f).clip(RoundedCornerShape(4.dp)).background(Color(0xFFDBEAFE)).padding(8.dp),
+					) {
+						Text(
+							text = "g5",
+						)
+					}
+					Column(
+						modifier = Modifier.weight(1f).clip(RoundedCornerShape(4.dp)).background(Color(0xFFDBEAFE)).padding(8.dp),
+					) {
+						Text(
+							text = "g6",
+						)
+					}
+				}
+			}
+		}
+		Box(
+			modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Color(0xFFFEF3C7)).padding(32.dp),
+		) {
+			Text(
+				text = "Positioned container",
+				modifier = Modifier.fillMaxWidth(),
+				style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Medium, color = Color(0xFF78350F)),
+			)
+			Column(
+				modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFF59E0B)).padding(horizontal = 8.dp).padding(vertical = 2.dp).align(Alignment.TopEnd).offset(x = -8.dp, y = 8.dp),
+			) {
+				Text(
+					text = "badge",
+				)
+			}
+			Column(
+				modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(Color(0xFFFCD34D)).padding(horizontal = 8.dp).align(Alignment.BottomStart).offset(x = 8.dp, y = -4.dp),
+			) {
+				Text(
+					text = "bottom-left",
+				)
+			}
+		}
+		Box(
+			modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clip(RoundedCornerShape(0.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.11f)).height(160.dp),
+		) {
+			Row(
+				modifier = Modifier.background(Color(0x66000000)).fillMaxHeight().fillMaxWidth(),
+				verticalAlignment = Alignment.CenterVertically,
+				horizontalArrangement = Arrangement.Center,
+			) {
+				Text(
+					text = "overlay",
+					style = TextStyle(color = Color(0xFFFFFFFF), fontWeight = FontWeight.Bold),
 				)
 			}
 		}

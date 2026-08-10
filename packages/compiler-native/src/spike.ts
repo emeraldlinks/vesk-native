@@ -22,7 +22,7 @@ import {
 import { collectTrackedNames, transformTracked } from '@vesk/compiler/src/client-codegen';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { testAppAppDir } from '@compiler-native/paths.ts';
+import { testAppAppDir } from '@compiler-native/paths';
 
 const KIND_OF: Array<[new () => unknown, string]> = [
   [StaticNode, 'StaticNode'],

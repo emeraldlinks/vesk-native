@@ -3,8 +3,8 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@compiler-native/*": ["packages/compiler-native/src/*"],
-      "@cli-native/*": ["packages/cli-native/src/*"],
+      "@compiler-native/*": ["packages/compiler-native/src/*.ts"],
+      "@cli-native/*": ["packages/cli-native/src/*.ts"],
       "@navigation-native/*": ["packages/navigation-native/src/*"],
       "@test-app/*": ["test-app/*"]
     }

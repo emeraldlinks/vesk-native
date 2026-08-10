@@ -447,26 +447,29 @@ export interface ModifierParts {
   padding: string[];
   stacking: string[];
   align: string[];
+  posMod: string[];
   textStyle: string[];
   scale: string[];
   text: TextParams;
   hidden?: boolean;
   flow?: boolean;
+  position?: 'absolute' | 'fixed' | 'relative';
   divide?: { axis: 'x' | 'y'; width: number; color: string; style: 'solid' | 'dashed' | 'dotted' };
 }
 export function emptyParts(): ModifierParts {
   return {
     alpha: [], margin: [], scroll: [], transform: [], shadow: [], clip: [], background: [],
-    border: [], size: [], padding: [], stacking: [], align: [], textStyle: [], scale: [], text: {},
+    border: [], size: [], padding: [], stacking: [], align: [], posMod: [], textStyle: [], scale: [], text: {},
   };
 }
 
 export function mergeParts(target: ModifierParts, src: ModifierParts): void {
-  for (const key of ['alpha', 'margin', 'scroll', 'transform', 'shadow', 'clip', 'background', 'border', 'size', 'padding', 'stacking', 'align', 'textStyle'] as const) {
+  for (const key of ['alpha', 'margin', 'scroll', 'transform', 'shadow', 'clip', 'background', 'border', 'size', 'padding', 'stacking', 'align', 'posMod', 'textStyle'] as const) {
     for (const v of src[key]) target[key].push(v);
   }
   if (src.hidden) target.hidden = true;
   if (src.flow !== undefined) target.flow = src.flow;
+  if (src.position !== undefined) target.position = src.position;
   if (src.text.maxLines !== undefined) target.text.maxLines = src.text.maxLines;
   if (src.text.softWrap !== undefined) target.text.softWrap = src.text.softWrap;
   if (src.text.overflow !== undefined) target.text.overflow = src.text.overflow;
@@ -489,19 +492,29 @@ export interface LayoutArgs {
   verticalAlignment?: string;
   horizontalArrangement?: string;
   verticalArrangement?: string;
+  grid?: { cols: number; gapX: number | null; gapY: number | null };
 }
+
+export type Axis = 'column' | 'row' | 'grid';
 
 // ---------- utility spec table ----------
 
-type Bucket = 'alpha' | 'margin' | 'scroll' | 'transform' | 'shadow' | 'clip' | 'background' | 'border' | 'size' | 'padding' | 'stacking' | 'align' | 'textStyle' | 'scale' | 'text' | 'layout' | 'flow' | 'drop';
+type Bucket = 'alpha' | 'margin' | 'scroll' | 'transform' | 'shadow' | 'clip' | 'background' | 'border' | 'size' | 'padding' | 'stacking' | 'align' | 'posMod' | 'textStyle' | 'scale' | 'text' | 'layout' | 'flow' | 'grid' | 'position' | 'drop';
 
 // Order in which modifier fragments are chained (outermost first).
-const BUCKET_ORDER: Array<'alpha' | 'margin' | 'scroll' | 'transform' | 'shadow' | 'clip' | 'background' | 'border' | 'size' | 'padding' | 'stacking' | 'align'> = ['alpha', 'margin', 'scroll', 'transform', 'shadow', 'clip', 'background', 'border', 'size', 'padding', 'stacking', 'align'];
+const BUCKET_ORDER: Array<'alpha' | 'margin' | 'scroll' | 'transform' | 'shadow' | 'clip' | 'background' | 'border' | 'size' | 'padding' | 'stacking' | 'align' | 'posMod'> = ['alpha', 'margin', 'transform', 'shadow', 'clip', 'background', 'border', 'size', 'scroll', 'padding', 'stacking', 'align', 'posMod'];
+
+interface Insets {
+  top: number | null;
+  end: number | null;
+  bottom: number | null;
+  start: number | null;
+}
 
 interface Ctx {
   parts: ModifierParts;
   layout: LayoutArgs;
-  axis: 'column' | 'row';
+  axis: Axis;
   borderWidth: number | null;
   borderColor: string | null;
   borderColorFromSide: boolean;
@@ -519,7 +532,27 @@ interface Ctx {
   gradVia: string | null;
   gradTo: string | null;
   divide: { axis: 'x' | 'y' | null; width: number; color: string | null; style: 'solid' | 'dashed' | 'dotted' | 'double' | 'none' | null };
+  gridCols: number | null;
+  gapX: number | null;
+  gapY: number | null;
+  position: 'absolute' | 'fixed' | 'relative' | null;
+  insets: Insets;
   neg: boolean;
+}
+
+function makeCtx(parts: ModifierParts, axis: Axis): Ctx {
+  return {
+    parts, layout: {}, axis,
+    borderWidth: null, borderColor: null, borderColorFromSide: false,
+    borderStyle: null, borderSides: { top: null, end: null, bottom: null, start: null },
+    ringWidth: null, ringColor: null, outlineWidth: null, outlineColor: null, outlineStyle: null,
+    shadowElevation: null, shadowColor: null,
+    gradDir: null, gradFrom: null, gradVia: null, gradTo: null,
+    divide: { axis: null, width: 1, color: null, style: null },
+    gridCols: null, gapX: null, gapY: null,
+    position: null, insets: { top: null, end: null, bottom: null, start: null },
+    neg: false,
+  };
 }
 
 interface UtilitySpec {
@@ -625,6 +658,53 @@ function sideBorder(side: 'top' | 'end' | 'bottom' | 'start'): (r: Resolved, ctx
     const c = neutralToken(v, 'border') ?? resolveColor(v);
     if (c) { ctx.borderColor = c; ctx.borderColorFromSide = true; }
   };
+}
+
+// Inset values are Tailwind spacing tokens (spacing * 4dp) or arbitrary dp.
+// auto / unresolvable values resolve to null (drop the pin).
+function insetValue(raw: string): number | null {
+  const v = SPACING[raw];
+  if (v !== undefined) return v;
+  if (raw === 'auto') return null;
+  const dp = resolveDp(raw);
+  return dp === null || Number.isNaN(dp) ? null : dp;
+}
+
+// Absolute/fixed positioning inside a Box parent: anchor from the pinned
+// sides. Both sides on an axis stretch the child (fillMax + padding); one
+// side pins to that edge (align + offset, inward for end/bottom).
+function positionModifier(ins: Insets): string | null {
+  const { top, end, bottom, start } = ins;
+  const hasT = top !== null, hasE = end !== null, hasB = bottom !== null, hasS = start !== null;
+  if (!hasT && !hasB && !hasS && !hasE) return null;
+  const stretchV = hasT && hasB;
+  const stretchH = hasS && hasE;
+  const mods: string[] = [];
+  if (stretchV) {
+    mods.push('fillMaxHeight()');
+    if (top !== 0 || bottom !== 0) mods.push(`padding(top = ${top}.dp, bottom = ${bottom}.dp)`);
+  }
+  if (stretchH) {
+    mods.push('fillMaxWidth()');
+    if (start !== 0 || end !== 0) mods.push(`padding(start = ${start}.dp, end = ${end}.dp)`);
+  }
+  if (!(stretchV && stretchH)) {
+    const vAnchor = hasT ? 'Top' : hasB ? 'Bottom' : 'Top';
+    const hAnchor = hasS ? 'Start' : hasE ? 'End' : 'Start';
+    mods.push(`align(Alignment.${vAnchor}${hAnchor})`);
+  }
+  const ox = !stretchH ? (hasS ? start : hasE ? -end : null) : null;
+  const oy = !stretchV ? (hasT ? top : hasB ? -bottom : null) : null;
+  if ((ox !== null && ox !== 0) || (oy !== null && oy !== 0)) {
+    mods.push(ox !== null && ox !== 0 && oy !== null && oy !== 0
+      ? `offset(x = ${ox}.dp, y = ${oy}.dp)`
+      : ox !== null && ox !== 0 ? `offset(x = ${ox}.dp)` : `offset(y = ${oy}.dp)`);
+  }
+  return mods.length === 0 ? null : mods.join('.');
+}
+
+export function isAbsolute(classes: string[]): boolean {
+  return classes.includes('absolute') || classes.includes('fixed');
 }
 
 const UTILITIES: UtilitySpec[] = [
@@ -968,14 +1048,19 @@ const UTILITIES: UtilitySpec[] = [
   } },
   { name: 'gap', bucket: 'layout', ns: ['spacing'], render: (r, ctx) => {
     if (r.kind !== 'dp') return;
+    if (ctx.axis === 'grid') { ctx.gapX = r.dp; ctx.gapY = r.dp; return; }
     if (ctx.axis === 'column') ctx.layout.verticalArrangement = `Arrangement.spacedBy(${r.dp}.dp)`;
     else ctx.layout.horizontalArrangement = `Arrangement.spacedBy(${r.dp}.dp)`;
   } },
   { name: 'gap-x', bucket: 'layout', ns: ['spacing'], render: (r, ctx) => {
-    if (r.kind === 'dp' && ctx.axis === 'row') ctx.layout.horizontalArrangement = `Arrangement.spacedBy(${r.dp}.dp)`;
+    if (r.kind !== 'dp') return;
+    if (ctx.axis === 'grid') { ctx.gapX = r.dp; return; }
+    if (ctx.axis === 'row') ctx.layout.horizontalArrangement = `Arrangement.spacedBy(${r.dp}.dp)`;
   } },
   { name: 'gap-y', bucket: 'layout', ns: ['spacing'], render: (r, ctx) => {
-    if (r.kind === 'dp' && ctx.axis === 'column') ctx.layout.verticalArrangement = `Arrangement.spacedBy(${r.dp}.dp)`;
+    if (r.kind !== 'dp') return;
+    if (ctx.axis === 'grid') { ctx.gapY = r.dp; return; }
+    if (ctx.axis === 'column') ctx.layout.verticalArrangement = `Arrangement.spacedBy(${r.dp}.dp)`;
   } },
   { name: 'space-x', bucket: 'layout', ns: ['spacing'], render: (r, ctx) => {
     if (r.kind === 'dp' && ctx.axis === 'row') ctx.layout.horizontalArrangement = `Arrangement.spacedBy(${r.dp}.dp)`;
@@ -983,18 +1068,46 @@ const UTILITIES: UtilitySpec[] = [
   { name: 'space-y', bucket: 'layout', ns: ['spacing'], render: (r, ctx) => {
     if (r.kind === 'dp' && ctx.axis === 'column') ctx.layout.verticalArrangement = `Arrangement.spacedBy(${r.dp}.dp)`;
   } },
+  // ---- grid (container mode; cells chunked into weighted rows by codegen) ----
+  { name: 'grid', bucket: 'grid', ns: [], render: (_r, ctx) => { if (ctx.gridCols === null) ctx.gridCols = 1; } },
+  { name: 'inline-grid', bucket: 'grid', ns: [], render: (_r, ctx) => { if (ctx.gridCols === null) ctx.gridCols = 1; } },
+  { name: 'grid-cols', bucket: 'grid', ns: [], render: (r, ctx) => {
+    const raw = r.raw;
+    if (raw === 'none') { ctx.gridCols = 1; return; }
+    if (/^\d+$/.test(raw)) {
+      const n = Number(raw);
+      if (n >= 1 && n <= 48) ctx.gridCols = n;
+    }
+  } },
+  { name: 'grid-rows', bucket: 'grid', ns: [], render: noop },
+  { name: 'grid-flow', bucket: 'grid', ns: [], render: noop },
+  // ---- positioning ----
+  { name: 'absolute', bucket: 'position', ns: [], render: (_r, ctx) => { ctx.position = 'absolute'; } },
+  { name: 'fixed', bucket: 'position', ns: [], render: (_r, ctx) => { ctx.position = 'fixed'; } },
+  { name: 'relative', bucket: 'position', ns: [], render: (_r, ctx) => { ctx.position = 'relative'; } },
+  { name: 'static', bucket: 'position', ns: [], render: (_r, ctx) => { ctx.position = null; } },
+  { name: 'inset', bucket: 'position', ns: [], render: (r, ctx) => {
+    const v = insetValue(r.raw);
+    const n = ctx.neg && v !== null ? -v : v;
+    ctx.insets.top = n; ctx.insets.end = n; ctx.insets.bottom = n; ctx.insets.start = n;
+  } },
+  { name: 'inset-x', bucket: 'position', ns: [], render: (r, ctx) => {
+    const v = insetValue(r.raw);
+    const n = ctx.neg && v !== null ? -v : v;
+    ctx.insets.start = n; ctx.insets.end = n;
+  } },
+  { name: 'inset-y', bucket: 'position', ns: [], render: (r, ctx) => {
+    const v = insetValue(r.raw);
+    const n = ctx.neg && v !== null ? -v : v;
+    ctx.insets.top = n; ctx.insets.bottom = n;
+  } },
+  { name: 'top', bucket: 'position', ns: [], render: (r, ctx) => { const v = insetValue(r.raw); if (v !== null) ctx.insets.top = ctx.neg ? -v : v; } },
+  { name: 'right', bucket: 'position', ns: [], render: (r, ctx) => { const v = insetValue(r.raw); if (v !== null) ctx.insets.end = ctx.neg ? -v : v; } },
+  { name: 'bottom', bucket: 'position', ns: [], render: (r, ctx) => { const v = insetValue(r.raw); if (v !== null) ctx.insets.bottom = ctx.neg ? -v : v; } },
+  { name: 'left', bucket: 'position', ns: [], render: (r, ctx) => { const v = insetValue(r.raw); if (v !== null) ctx.insets.start = ctx.neg ? -v : v; } },
   // ---- recognized but not expressible in Compose -> dropped ----
-  { name: 'inset', bucket: 'drop', ns: [], render: noop },
-  { name: 'top', bucket: 'drop', ns: [], render: noop },
-  { name: 'right', bucket: 'drop', ns: [], render: noop },
-  { name: 'bottom', bucket: 'drop', ns: [], render: noop },
-  { name: 'left', bucket: 'drop', ns: [], render: noop },
   { name: 'order', bucket: 'drop', ns: [], render: noop },
   { name: 'basis', bucket: 'drop', ns: [], render: noop },
-  { name: 'grid', bucket: 'drop', ns: [], render: noop },
-  { name: 'grid-cols', bucket: 'drop', ns: [], render: noop },
-  { name: 'grid-rows', bucket: 'drop', ns: [], render: noop },
-  { name: 'grid-flow', bucket: 'drop', ns: [], render: noop },
   { name: 'col-span', bucket: 'drop', ns: [], render: noop },
   { name: 'row-span', bucket: 'drop', ns: [], render: noop },
   { name: 'col-start', bucket: 'drop', ns: [], render: noop },
@@ -1070,7 +1183,6 @@ const UTILITIES: UtilitySpec[] = [
   { name: 'inline', bucket: 'drop', ns: [], render: noop },
   { name: 'inline-block', bucket: 'drop', ns: [], render: noop },
   { name: 'inline-flex', bucket: 'drop', ns: [], render: noop },
-  { name: 'inline-grid', bucket: 'drop', ns: [], render: noop },
   { name: 'flow-root', bucket: 'drop', ns: [], render: noop },
   { name: 'contents', bucket: 'drop', ns: [], render: noop },
   { name: 'list-item', bucket: 'drop', ns: [], render: noop },
@@ -1090,11 +1202,7 @@ const UTILITIES: UtilitySpec[] = [
   { name: 'table-auto', bucket: 'drop', ns: [], render: noop },
   { name: 'table-fixed', bucket: 'drop', ns: [], render: noop },
   { name: 'caption', bucket: 'drop', ns: [], render: noop },
-  { name: 'static', bucket: 'drop', ns: [], render: noop },
   { name: 'sticky', bucket: 'drop', ns: [], render: noop },
-  { name: 'fixed', bucket: 'drop', ns: [], render: noop },
-  { name: 'absolute', bucket: 'drop', ns: [], render: noop },
-  { name: 'relative', bucket: 'drop', ns: [], render: noop },
   { name: 'isolate', bucket: 'drop', ns: [], render: noop },
   { name: 'box-border', bucket: 'drop', ns: [], render: noop },
   { name: 'box-content', bucket: 'drop', ns: [], render: noop },
@@ -1129,17 +1237,9 @@ function skippedByVariant(variants: string[]): boolean {
 
 // ---------- public API ----------
 
-export function classify(classes: string[], custom?: Map<string, ModifierParts>, axis: 'column' | 'row' = 'column'): ModifierParts {
+export function classify(classes: string[], custom?: Map<string, ModifierParts>, axis: Axis = 'column'): ModifierParts {
   const parts = emptyParts();
-  const ctx: Ctx = {
-    parts, layout: {}, axis, borderWidth: null, borderColor: null, borderColorFromSide: false,
-    borderStyle: null, borderSides: { top: null, end: null, bottom: null, start: null },
-    ringWidth: null, ringColor: null, outlineWidth: null, outlineColor: null, outlineStyle: null,
-    shadowElevation: null, shadowColor: null,
-    gradDir: null, gradFrom: null, gradVia: null, gradTo: null,
-    divide: { axis: null, width: 1, color: null, style: null },
-    neg: false,
-  };
+  const ctx = makeCtx(parts, axis);
   const unhandled: string[] = [];
 
   for (const cls0 of classes) {
@@ -1154,7 +1254,7 @@ export function classify(classes: string[], custom?: Map<string, ModifierParts>,
       continue;
     }
     const { spec, value } = m;
-    if (spec.bucket === 'drop' || spec.bucket === 'layout') continue;
+    if (spec.bucket === 'drop' || spec.bucket === 'layout' || spec.bucket === 'grid') continue;
     const resolved = spec.ns.length > 0 ? resolveNs(spec.ns, value) : ({ kind: 'none', raw: value } satisfies Resolved);
     if (spec.ns.length > 0 && !resolved) continue; // known utility, unresolvable value -> dropped
     ctx.neg = neg;
@@ -1215,6 +1315,21 @@ export function classify(classes: string[], custom?: Map<string, ModifierParts>,
     const style = ctx.divide.style === 'dotted' || ctx.divide.style === 'dashed' ? ctx.divide.style : 'solid';
     parts.divide = { axis: ctx.divide.axis, width: ctx.divide.width, color: ctx.divide.color ?? defaultBorder(), style };
   }
+  // positioning: relative nudges via offset, absolute/fixed pin inside a Box
+  if (ctx.position === 'relative') {
+    parts.position = 'relative';
+    const ox = ctx.insets.start !== null ? ctx.insets.start : ctx.insets.end !== null ? -ctx.insets.end : null;
+    const oy = ctx.insets.top !== null ? ctx.insets.top : ctx.insets.bottom !== null ? -ctx.insets.bottom : null;
+    if ((ox ?? 0) !== 0 || (oy ?? 0) !== 0) {
+      parts.transform.push(ox !== null && oy !== null
+        ? `offset(x = ${ox}.dp, y = ${oy}.dp)`
+        : ox !== null ? `offset(x = ${ox}.dp)` : `offset(y = ${oy}.dp)`);
+    }
+  } else if (ctx.position === 'absolute' || ctx.position === 'fixed') {
+    parts.position = ctx.position;
+    const m = positionModifier(ctx.insets);
+    if (m) parts.posMod.push(m);
+  }
 
   if (custom) {
     for (const cls of unhandled) {
@@ -1254,16 +1369,8 @@ export function resolveTextStyle(classes: string[], custom?: Map<string, Modifie
   return buildTextStyle(classify(classes, custom));
 }
 
-export function layoutArgs(classes: string[], axis: 'column' | 'row'): LayoutArgs {
-  const ctx: Ctx = {
-    parts: emptyParts(), layout: {}, axis, borderWidth: null, borderColor: null, borderColorFromSide: false,
-    borderStyle: null, borderSides: { top: null, end: null, bottom: null, start: null },
-    ringWidth: null, ringColor: null, outlineWidth: null, outlineColor: null, outlineStyle: null,
-    shadowElevation: null, shadowColor: null,
-    gradDir: null, gradFrom: null, gradVia: null, gradTo: null,
-    divide: { axis: null, width: 1, color: null, style: null },
-    neg: false,
-  };
+export function layoutArgs(classes: string[], axis: Axis): LayoutArgs {
+  const ctx = makeCtx(emptyParts(), axis);
   for (const cls of classes) {
     if (cls.startsWith('-')) continue;
     const { variants, base } = splitVariants(cls);
@@ -1271,15 +1378,19 @@ export function layoutArgs(classes: string[], axis: 'column' | 'row'): LayoutArg
     const m = matchSpec(base);
     if (!m) continue;
     const { spec, value } = m;
-    if (spec.bucket !== 'layout') continue;
+    if (spec.bucket !== 'layout' && spec.bucket !== 'grid') continue;
     const resolved = spec.ns.length > 0 ? resolveNs(spec.ns, value) : ({ kind: 'none', raw: value } satisfies Resolved);
     if (spec.ns.length > 0 && !resolved) continue;
     spec.render(resolved!, ctx);
   }
+  if (ctx.gridCols !== null) {
+    ctx.layout.grid = { cols: ctx.gridCols, gapX: ctx.gapX, gapY: ctx.gapY };
+  }
   return ctx.layout;
 }
 
-export function elementAxis(classes: string[]): 'column' | 'row' {
+export function elementAxis(classes: string[]): Axis {
+  if (classes.includes('grid') || classes.includes('inline-grid')) return 'grid';
   if (classes.includes('flex-col') || classes.includes('flex-col-reverse')) return 'column';
   if (classes.includes('flex-row') || classes.includes('flex') || classes.includes('flex-row-reverse')) return 'row';
   return 'column';

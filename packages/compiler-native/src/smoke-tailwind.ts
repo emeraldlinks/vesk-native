@@ -1,4 +1,4 @@
-import { classify, buildModifier, buildTextStyle, layoutArgs, elementAxis } from '@compiler-native/tailwind.ts';
+import { classify, buildModifier, buildTextStyle, layoutArgs, elementAxis } from '@compiler-native/tailwind';
 
 const cases: Array<[string, string[]]> = [
   ['gradient', ['bg-gradient-to-r', 'from-blue-500', 'via-purple-500', 'to-pink-500']],
@@ -70,6 +70,25 @@ const cases: Array<[string, string[]]> = [
   ['text-lowercase', ['lowercase']],
   ['text-capitalize', ['capitalize']],
   ['text-normal-case', ['uppercase', 'normal-case']],
+  // ---- grid ----
+  ['grid-2', ['grid', 'grid-cols-2']],
+  ['grid-3-gap', ['grid', 'grid-cols-3', 'gap-4']],
+  ['grid-gap-xy', ['grid', 'grid-cols-2', 'gap-x-4', 'gap-y-2']],
+  ['grid-inline', ['inline-grid', 'grid-cols-4', 'gap-2']],
+  ['grid-cols-none', ['grid', 'grid-cols-none']],
+  ['grid-rows-only', ['grid', 'grid-rows-3']],
+  // ---- positioning ----
+  ['relative', ['relative']],
+  ['relative-nudge', ['relative', 'top-2']],
+  ['absolute-tl', ['absolute', 'top-0', 'left-0']],
+  ['absolute-tr', ['absolute', 'top-4', 'right-4']],
+  ['absolute-bl', ['absolute', 'bottom-2', 'left-4']],
+  ['absolute-inset-0', ['absolute', 'inset-0']],
+  ['absolute-inset-4', ['absolute', 'inset-4']],
+  ['absolute-inset-y-right', ['absolute', 'inset-y-0', 'right-0']],
+  ['absolute-left-only', ['absolute', 'left-8']],
+  ['fixed-top', ['fixed', 'top-2', 'left-2']],
+  ['static-reset', ['absolute', 'static']],
 ];
 
 for (const [name, classes] of cases) {
@@ -84,12 +103,13 @@ for (const [name, classes] of cases) {
   }
   if (parts.divide) console.log('  divide:', JSON.stringify(parts.divide));
   if (parts.flow !== undefined) console.log('  flow:', parts.flow);
+  if (parts.position) console.log('  position:', parts.position);
   const layout = layoutArgs(classes, elementAxis(classes));
   if (Object.keys(layout).length) console.log('  layout:', JSON.stringify(layout));
 }
 
 // drops
-const drops = ['grid-cols-3', 'hover:bg-red-500', 'md:p-4', 'transition', 'animate-spin', 'z-auto', 'shadow-none', 'truncate-not', 'w-full'];
+const drops = ['grid-cols-3', 'hover:bg-red-500', 'md:p-4', 'transition', 'animate-spin', 'z-auto', 'shadow-none', 'truncate-not', 'w-full', 'order-2', 'col-span-2', 'float-left', 'absolute', 'static'];
 for (const c of drops) {
   const parts = classify([c], undefined, 'column');
   console.log(`--- drop? [${c}] mod=${buildModifier(parts) ?? '(none)'} style=${buildTextStyle(parts) ?? '(none)'}`);

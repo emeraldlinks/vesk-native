@@ -9,6 +9,7 @@ component Media(props) {
     // virtual name (read/write directly) and the raw cell (name.value).
     const &[cbPhoto, cbPhotoCell] = track(null)
     const &[cbRecording] = track(null)
+    const &[cbVideo] = track(null)
     const &[cbFile] = track(null)
     // One cell per system-capability demo below.
     const &[batteryInfo] = track('tap for battery')
@@ -45,7 +46,7 @@ component Media(props) {
             </div>
             <div class="flex-col gap-4">
                 <video src="/media/demo.mp4" controls class="rounded-2xl" />
-                <video src="/media/demo.mp4" autoplay loop muted object-cover class="w-full h-40 rounded-2xl" />
+                <video src="/media/demo.mp4" loop muted object-cover class="w-full h-40 rounded-2xl" />
                 <audio src="/media/last-train.mp3" controls class="bg-gray-100 rounded-full px-3 py-2" />
                 <audio src="/storage/emulated/0/vesk_media/Last Train Home.mp3" controls class="bg-gray-100 rounded-full px-3 py-2" />
             </div>
@@ -87,7 +88,7 @@ component Media(props) {
             <div class="flex gap-2">
                 <photo-picker label="Pick a photo" onPick={(uri) => { cbPhoto = uri }} />
                 <camera label="Take photo" onDone={(uri) => { cbPhoto = uri }} />
-                <camera video label="Record video" onDone={(uri) => { cbRecording = uri }} />
+                <camera video label="Record video" onDone={(uri) => { cbVideo = uri }} />
             </div>
             <div class="flex gap-2 mt-2">
                 <recorder label="Record audio" onDone={(path) => { cbRecording = path }} />
@@ -96,6 +97,7 @@ component Media(props) {
             </div>
             <p class="media-note text-xs mt-3">recording: {cbRecording ?? 'none'} · file: {cbFile || 'none'}</p>
             <audio src={cbRecording} controls class="bg-gray-100 rounded-full px-3 py-2 mt-2" />
+            <video src={cbVideo} controls class="rounded-2xl mt-2" />
         </section>
 
         <section>

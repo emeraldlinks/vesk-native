@@ -277,6 +277,34 @@ fun Home(props: HomeProps = HomeProps(), content: @Composable () -> Unit = {}) {
 					}
 				}
 			}
+		NavLink(props = NavLinkProps(href = "/lab"))
+			{
+				Row(
+					modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color(0xFFEEF2FF)).padding(20.dp),
+					verticalAlignment = Alignment.CenterVertically,
+					horizontalArrangement = Arrangement.SpaceBetween,
+				) {
+					Column {
+						Text(
+							text = ("Tailwind lab").uppercase(),
+							modifier = Modifier.fillMaxWidth(),
+							style = TextStyle(color = Color(0xFF4F46E5), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.8.sp),
+						)
+						Text(
+							text = "Grid, positioning & utility tests",
+							modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+							style = TextStyle(color = Color(0xFF312E81), fontSize = 18.sp, lineHeight = 28.sp, fontWeight = FontWeight.ExtraBold),
+						)
+					}
+					Column(
+						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF4F46E5)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
+					) {
+						Text(
+							text = "Open",
+						)
+					}
+				}
+			}
 		Column(
 			modifier = Modifier.fillMaxWidth(),
 		) {

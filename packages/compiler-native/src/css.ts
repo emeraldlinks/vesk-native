@@ -1,5 +1,5 @@
-import { emptyParts, mergeParts, cssColorToKt } from '@compiler-native/tailwind.ts';
-import type { ModifierParts } from '@compiler-native/tailwind.ts';
+import { emptyParts, mergeParts, cssColorToKt } from '@compiler-native/tailwind';
+import type { ModifierParts } from '@compiler-native/tailwind';
 
 export interface CssParseResult {
   classes: Map<string, ModifierParts>;

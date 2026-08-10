@@ -18,6 +18,9 @@ class MainActivity : FragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (Thread.getDefaultUncaughtExceptionHandler() !is DebugCrashLog) {
+            Thread.setDefaultUncaughtExceptionHandler(DebugCrashLog(Thread.getDefaultUncaughtExceptionHandler()))
+        }
         enableEdgeToEdge()
         if (intent.getBooleanExtra("vesk_notify_tap", false)) VeskDeviceSession.notifyTap?.invoke()
         if (Build.VERSION.SDK_INT >= 33) {

@@ -22,16 +22,16 @@ import {
 import type { IRNode } from '@vesk/compiler/src/ir';
 import { collectTrackedNames, transformTracked } from '@vesk/compiler/src/client-codegen';
 import type { TrackedInfo } from '@vesk/compiler/src/client-codegen';
-import { Js2Kt, KtErrors } from '@compiler-native/js2kt.ts';
-import type { JsNode } from '@compiler-native/js2kt.ts';
-import { ktIdent } from '@compiler-native/js2kt.ts';
-import { findComponentDecls, generatePropsClass, inferPropsFromUsage, generateInferredPropsClass } from '@compiler-native/props.ts';
-import { elementInfo, CONTAINER_TAGS } from '@compiler-native/elements.ts';
-import { layoutArgs, elementAxis } from '@compiler-native/layout-args.ts';
-import { classify, buildModifier, buildTextStyle, isHidden, RADIUS } from '@compiler-native/tailwind.ts';
-import type { ModifierParts } from '@compiler-native/tailwind.ts';
-import { parseCssClasses } from '@compiler-native/css.ts';
-import { walkIR } from '@compiler-native/walk-ir.ts';
+import { Js2Kt, KtErrors } from '@compiler-native/js2kt';
+import type { JsNode } from '@compiler-native/js2kt';
+import { ktIdent } from '@compiler-native/js2kt';
+import { findComponentDecls, generatePropsClass, inferPropsFromUsage, generateInferredPropsClass } from '@compiler-native/props';
+import { elementInfo, CONTAINER_TAGS } from '@compiler-native/elements';
+import { layoutArgs, elementAxis } from '@compiler-native/layout-args';
+import { classify, buildModifier, buildTextStyle, isHidden, isAbsolute, RADIUS } from '@compiler-native/tailwind';
+import type { ModifierParts } from '@compiler-native/tailwind';
+import { parseCssClasses } from '@compiler-native/css';
+import { walkIR } from '@compiler-native/walk-ir';
 
 export interface CompileOptions {
   packageName?: string;
@@ -84,13 +84,14 @@ function isFileImageSrc(src: string): boolean {
 
 // <img src="..."> -> Image(painter = painterResource(R.drawable.x)) for bundled
 // assets, Image(bitmap = veskFileImage(path)) for runtime file paths.
-function imageLines(node: StaticNode, em: Emitter, level: number, parentAxis: 'column' | 'row' | null, extraModifier: string | null): string[] {
+function imageLines(node: StaticNode, em: Emitter, level: number, parentAxis: 'column' | 'row' | null, extraModifier: string | null, boxScope = false): string[] {
   const classes = em.classList(node);
   if (isHidden(classes, em.customClasses)) return [];
   const pad = '\t'.repeat(level);
   const padIn = '\t'.repeat(level + 1);
   const parts = classify(classes, em.customClasses, parentAxis === 'row' ? 'row' : 'column');
   if (parentAxis === null) stripScopeMods(parts);
+  if (!boxScope) parts.posMod = [];
   let modifier = buildModifier(parts);
   modifier = prependModifier(modifier, extraModifier);
 
@@ -160,13 +161,14 @@ export function extractMediaSources(source: string): Array<{ src: string; elemen
 // veskAudio runtime helpers. Project-relative srcs are bundled to res/raw and
 // referenced via android.resource:// URIs; device paths/content URIs stream at
 // runtime. A video without explicit sizing gets a 16:9 default.
-function mediaLines(node: StaticNode, em: Emitter, level: number, parentAxis: 'column' | 'row' | null, extraModifier: string | null): string[] {
+function mediaLines(node: StaticNode, em: Emitter, level: number, parentAxis: 'column' | 'row' | null, extraModifier: string | null, boxScope = false): string[] {
   const classes = em.classList(node);
   if (isHidden(classes, em.customClasses)) return [];
   const pad = '\t'.repeat(level);
   const padIn = '\t'.repeat(level + 1);
   const parts = classify(classes, em.customClasses, parentAxis === 'row' ? 'row' : 'column');
   if (parentAxis === null) stripScopeMods(parts);
+  if (!boxScope) parts.posMod = [];
   let modifier = buildModifier(parts);
   if (node.tag === 'video' && parts.size.length === 0) modifier = `${modifier ? modifier + '.' : ''}fillMaxWidth().aspectRatio(16f / 9f)`;
   modifier = prependModifier(modifier, extraModifier);
@@ -273,13 +275,14 @@ const DEVICE_TAGS: Record<string, string> = {
   speak: 'VeskSpeak',
 };
 
-function deviceApiLines(node: StaticNode, em: Emitter, level: number, extraModifier: string | null): string[] {
+function deviceApiLines(node: StaticNode, em: Emitter, level: number, extraModifier: string | null, boxScope = false): string[] {
   const pad = '\t'.repeat(level);
   const padIn = '\t'.repeat(level + 1);
   const fnName = DEVICE_TAGS[node.tag]!;
   const classes = em.classList(node);
   const parts = classify(classes, em.customClasses, undefined);
   stripScopeMods(parts);
+  if (!boxScope) parts.posMod = [];
   let modifier = buildModifier(parts);
   modifier = prependModifier(modifier, extraModifier);
   const attrs = em.dynamicAttrs(node);
@@ -428,7 +431,7 @@ function deviceApiLines(node: StaticNode, em: Emitter, level: number, extraModif
   return [pad + `${fnName}(`, ...args, pad + ')'];
 }
 
-function emitButton(node: StaticNode, classes: string[], attrs: Map<string, JsNode>, em: Emitter, level: number, parentAxis: 'column' | 'row' | null, extraModifier: string | null): string[] {
+function emitButton(node: StaticNode, classes: string[], attrs: Map<string, JsNode>, em: Emitter, level: number, parentAxis: 'column' | 'row' | null, extraModifier: string | null, boxScope = false): string[] {
   const onClick = attrs.get('onClick');
   const onClickKt = onClick ? em.j2k.expr(onClick).trimStart() : '{}';
   const pad = '\t'.repeat(level);
@@ -441,14 +444,14 @@ function emitButton(node: StaticNode, classes: string[], attrs: Map<string, JsNo
   const btnDefaultColor = 'MaterialTheme.colorScheme.onSurface';
   if (blocker.length === 0) {
     const t = textContent(node.children, em);
-    if (t !== '""') contentLines = splitLines(makeTextCall(t, classes, level, em, false, parentAxis, null, btnDefaultColor));
+    if (t !== '""') contentLines = splitLines(makeTextCall(t, classes, level, em, false, parentAxis, null, btnDefaultColor, false, boxScope));
   } else {
     for (const child of node.children) {
       if (isTexty(child)) {
         const t = child instanceof TextNode ? em.ktString(child.value) : dynamicText(em.exprOf((child as DynamicBinding).expression));
-        if (t !== '""') contentLines.push(...splitLines(makeTextCall(t, classes, level, em, false, parentAxis, null, btnDefaultColor)));
+        if (t !== '""') contentLines.push(...splitLines(makeTextCall(t, classes, level, em, false, parentAxis, null, btnDefaultColor, false, boxScope)));
       } else {
-        contentLines.push(...emitChild(child, em, level, parentAxis, null));
+        contentLines.push(...emitChild(child, em, level, parentAxis, null, false, boxScope));
       }
     }
   }
@@ -457,7 +460,7 @@ function emitButton(node: StaticNode, classes: string[], attrs: Map<string, JsNo
   lines.push(pad + 'Button(');
   lines.push(`${padIn}onClick = ${onClickKt},`);
   const modClasses = classes.filter((c) => !BTN_PAD_RE.test(c));
-  const modifier = modifierFor(modClasses, em, parentAxis, false, extraModifier);
+  const modifier = modifierFor(modClasses, em, parentAxis, false, extraModifier, boxScope);
   if (modifier) lines.push(`${padIn}modifier = ${modifier},`);
   const shape = buttonShape(classes);
   if (shape) lines.push(`${padIn}shape = ${shape},`);
@@ -754,9 +757,10 @@ function stripScopeMods(parts: ModifierParts): void {
   parts.align = parts.align.filter((s) => !s.startsWith('align(') && !s.startsWith('fillMax'));
 }
 
-function modifierFor(classes: string[], em: Emitter, parentAxis: 'column' | 'row' | null, fillWidth: boolean, extraModifier: string | null = null): string | null {
+function modifierFor(classes: string[], em: Emitter, parentAxis: 'column' | 'row' | null, fillWidth: boolean, extraModifier: string | null = null, boxScope = false): string | null {
   const parts = classify(classes, em.customClasses, parentAxis === 'row' ? 'row' : 'column');
   if (parentAxis === null) stripScopeMods(parts);
+  if (!boxScope) parts.posMod = [];
   let modifier = buildModifier(parts);
   if (fillWidth) modifier = prependFill(modifier);
   return prependModifier(modifier, extraModifier);
@@ -786,10 +790,11 @@ function textContent(children: IRNode[], em: Emitter): string {
   return parts.length === 0 ? '""' : parts.join(' + ');
 }
 
-function makeTextCall(text: string, classes: string[], level: number, em: Emitter, fillWidth = false, parentAxis: 'column' | 'row' | null = null, extraModifier: string | null = null, defaultColor: string | null = null, flowParent = false): string {
+function makeTextCall(text: string, classes: string[], level: number, em: Emitter, fillWidth = false, parentAxis: 'column' | 'row' | null = null, extraModifier: string | null = null, defaultColor: string | null = null, flowParent = false, boxScope = false): string {
   const pad = '\t'.repeat(level);
   const parts = classify(classes, em.customClasses, parentAxis === 'row' ? 'row' : 'column');
   if (parentAxis === null || flowParent) stripScopeMods(parts);
+  if (!boxScope) parts.posMod = [];
   let modifier = buildModifier(parts);
   if (fillWidth) modifier = prependFill(modifier);
   modifier = prependModifier(modifier, extraModifier);
@@ -812,7 +817,7 @@ function makeTextCall(text: string, classes: string[], level: number, em: Emitte
   return lines.join('\n');
 }
 
-function componentCallLines(node: ComponentCall, em: Emitter, level: number, parentAxis: 'column' | 'row' | null = null, flowParent = false): string {
+function componentCallLines(node: ComponentCall, em: Emitter, level: number, parentAxis: 'column' | 'row' | null = null, flowParent = false, boxScope = false): string {
   const propArgs = node.props.map((p) => `${ktIdent(p.name)} = ${em.exprOf(p.value)}`);
   for (const sp of node.spreadProps) {
     em.err.warn(null, `spread props are not supported in component calls: ...${sp.raw}`);
@@ -830,7 +835,7 @@ function componentCallLines(node: ComponentCall, em: Emitter, level: number, par
   if (node.children.length > 0) {
     out.push(padIn + '{');
     for (const child of node.children) {
-      out.push(...emitChild(child, em, level + 2, parentAxis, null, flowParent));
+      out.push(...emitChild(child, em, level + 2, parentAxis, null, flowParent, boxScope));
     }
     out.push(padIn + '}');
   }
@@ -864,7 +869,7 @@ function dragModifier(node: StaticNode, em: Emitter): string | null {
   return m.length > 0 ? m : null;
 }
 
-function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: 'column' | 'row' | null, extraModifier: string | null = null, flowParent = false): string[] {
+function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: 'column' | 'row' | null, extraModifier: string | null = null, flowParent = false, boxScope = false): string[] {
   const dropMod = dragModifier(node, em);
   if (dropMod && extraModifier) extraModifier += dropMod;
   else if (dropMod) extraModifier = `Modifier${dropMod}`;
@@ -875,7 +880,7 @@ function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: '
       (c) => !(c instanceof DynamicBinding) && !(c instanceof TextNode)
     );
     if (structural.length > 0) em.err.warn(null, `<${node.tag}> does not take children — label is built in`);
-    return deviceApiLines(node, em, level, extraModifier);
+    return deviceApiLines(node, em, level, extraModifier, boxScope);
   }
   const info = elementInfo(node.tag);
   const classes = em.classList(node);
@@ -883,14 +888,15 @@ function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: '
   const attrs = em.dynamicAttrs(node);
   const pad = '\t'.repeat(level);
   const padIn = '\t'.repeat(level + 1);
-  const fillWidth = fillMaxWidth(classes, node.tag, parentAxis);
+  // absolute/fixed elements are out of flow: shrink-to-fit, never block-fill
+  const fillWidth = fillMaxWidth(classes, node.tag, parentAxis) && !isAbsolute(classes);
 
   if (info.kind === 'image') {
-    return imageLines(node, em, level, parentAxis, extraModifier);
+    return imageLines(node, em, level, parentAxis, extraModifier, boxScope);
   }
 
   if (info.kind === 'video' || info.kind === 'audio') {
-    return mediaLines(node, em, level, parentAxis, extraModifier);
+    return mediaLines(node, em, level, parentAxis, extraModifier, boxScope);
   }
 
   if (info.kind === 'text') {
@@ -899,10 +905,10 @@ function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: '
       (c) => !(c instanceof TextNode) && !(c instanceof DynamicBinding)
     );
     if (nonText.length === 0) {
-      return splitLines(makeTextCall(content, classes, level, em, fillWidth, parentAxis, extraModifier));
+      return splitLines(makeTextCall(content, classes, level, em, fillWidth, parentAxis, extraModifier, null, flowParent, boxScope));
     }
     const lines: string[] = [];
-    const modifier = modifierFor(classes, em, parentAxis, fillWidth, extraModifier);
+    const modifier = modifierFor(classes, em, parentAxis, fillWidth, extraModifier, boxScope);
     if (modifier) {
       lines.push(pad + `Column(modifier = ${modifier}) {`);
     } else {
@@ -910,14 +916,14 @@ function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: '
     }
     if (content !== '""') lines.push(`${padIn}Text(${content})`);
     for (const child of nonText) {
-      lines.push(...emitChild(child, em, level + 1, 'column'));
+      lines.push(...emitChild(child, em, level + 1, 'column', null, false, false));
     }
     lines.push(pad + '}');
     return lines;
   }
 
   if (info.kind === 'button') {
-    return emitButton(node, classes, attrs, em, level, parentAxis, extraModifier);
+    return emitButton(node, classes, attrs, em, level, parentAxis, extraModifier, boxScope);
   }
 
   if (info.kind === 'input') {
@@ -925,7 +931,7 @@ function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: '
     const bindVar = em.bindRefVar(node);
     const valueExpr = attrs.get('value');
     const checkedExpr = attrs.get('checked');
-    const modifier = modifierFor(classes, em, parentAxis, false, extraModifier);
+    const modifier = modifierFor(classes, em, parentAxis, false, extraModifier, boxScope);
     const modLine = modifier ? `${padIn}modifier = ${modifier},` : '';
     const lines: string[] = [];
     if (type === 'checkbox' || type === 'radio') {
@@ -964,49 +970,52 @@ function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: '
   const containerParts = classify(classes, em.customClasses, axis);
   const flow = containerParts.flow === true;
   if (parentAxis === null || flow || flowParent) stripScopeMods(containerParts); // Flow layouts have no align/weight scope
+  if (!boxScope) containerParts.posMod = [];
   let modifier = buildModifier(containerParts);
   if (fillWidth) modifier = prependFill(modifier);
   modifier = prependModifier(modifier, extraModifier);
   if (modifier) argLines.push(`${padIn}modifier = ${modifier},`);
 
-  const composable = flow
-    ? (axis === 'row' ? 'FlowRow' : 'FlowColumn')
-    : (axis === 'row' ? 'Row' : 'Column');
-  // Flow layouts share Row/Column arrangement param names but have no
-// vertical/horizontalAlignment: cross-axis centering maps to Arrangement.Center.
-const alignArgs = flow
-  ? [
-      ...layoutArgsLines.filter((l) => !l.replace(/^\s+/, '').startsWith('verticalAlignment =') && !l.replace(/^\s+/, '').startsWith('horizontalAlignment =')),
-      ...(axis === 'row' && layout.verticalAlignment === 'Alignment.CenterVertically' && !layout.verticalArrangement
-        ? [`${padIn}verticalArrangement = Arrangement.Center,`]
-        : []),
-      ...(axis === 'column' && layout.horizontalAlignment === 'Alignment.CenterHorizontally' && !layout.horizontalArrangement
-        ? [`${padIn}horizontalArrangement = Arrangement.Center,`]
-        : []),
-    ]
-  : layoutArgsLines;
-  argLines.push(...alignArgs);
+  const gridInfo = layout.grid ?? null;
+  const isFlex = classes.includes('flex') || classes.includes('flex-row') || classes.includes('flex-col') || classes.includes('flex-row-reverse') || classes.includes('flex-col-reverse');
+  const boxParent = !gridInfo && !isFlex && (containerParts.position === 'relative' || containerParts.position === 'fixed');
 
   const divide = containerParts.divide;
+
+  if (gridInfo) {
+    return gridLines(node, em, level, pad, padIn, modifier, gridInfo, divide);
+  }
+
+  const composable = boxParent
+    ? 'Box'
+    : flow
+      ? (axis === 'row' ? 'FlowRow' : 'FlowColumn')
+      : (axis === 'row' ? 'Row' : 'Column');
+  // Flow layouts share Row/Column arrangement param names but have no
+  // vertical/horizontalAlignment: cross-axis centering maps to Arrangement.Center.
+  const alignArgs = flow
+    ? [
+        ...layoutArgsLines.filter((l) => !l.replace(/^\s+/, '').startsWith('verticalAlignment =') && !l.replace(/^\s+/, '').startsWith('horizontalAlignment =')),
+        ...(axis === 'row' && layout.verticalAlignment === 'Alignment.CenterVertically' && !layout.verticalArrangement
+          ? [`${padIn}verticalArrangement = Arrangement.Center,`]
+          : []),
+        ...(axis === 'column' && layout.horizontalAlignment === 'Alignment.CenterHorizontally' && !layout.horizontalArrangement
+          ? [`${padIn}horizontalArrangement = Arrangement.Center,`]
+          : []),
+      ]
+    : layoutArgsLines;
+  argLines.push(...alignArgs);
+
   const lines: string[] = [];
   const childrenLines: string[] = [];
+  const childAxis: 'column' | 'row' | null = boxParent ? 'column' : (axis === 'grid' ? 'column' : axis);
+  const childBox = boxParent;
   for (let i = 0; i < node.children.length; i++) {
     const child = node.children[i]!;
     if (divide && i > 0) {
-      let borderMod: string;
-      if (divide.style === 'dashed' || divide.style === 'dotted') {
-        const dashes = divide.style === 'dotted' ? 'floatArrayOf(0.1f, 8f)' : 'floatArrayOf(12f, 12f)';
-        borderMod = divide.axis === 'y'
-          ? `Modifier.veskDivideLine(horizontal = true, width = ${divide.width}.dp, color = ${divide.color}, dashes = ${dashes})`
-          : `Modifier.veskDivideLine(horizontal = false, width = ${divide.width}.dp, color = ${divide.color}, dashes = ${dashes})`;
-      } else {
-        borderMod = divide.axis === 'y'
-          ? `Modifier.veskSideBorder(top = ${divide.width}.dp, end = 0.dp, bottom = 0.dp, start = 0.dp, ${divide.color})`
-          : `Modifier.veskSideBorder(top = 0.dp, end = 0.dp, bottom = 0.dp, start = ${divide.width}.dp, ${divide.color})`;
-      }
-      childrenLines.push(...emitChild(child, em, level + 1, axis, borderMod, flow));
+      childrenLines.push(...emitChild(child, em, level + 1, childAxis, divideBorderMod(divide), flow, childBox));
     } else {
-      childrenLines.push(...emitChild(child, em, level + 1, axis, null, flow));
+      childrenLines.push(...emitChild(child, em, level + 1, childAxis, null, flow, childBox));
     }
   }
 
@@ -1029,26 +1038,86 @@ const alignArgs = flow
   return lines;
 }
 
-function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'column' | 'row' | null, extraModifier: string | null = null, flowParent = false): string[] {
+// Grid containers emit as a Column of weighted rows: each child is
+// Modifier.weight(1f) inside a Row, so columns share width; the Column's
+// verticalArrangement carries gap-y and each Row's horizontalArrangement
+// carries gap-x. Last row may be short, like web auto-flow.
+function gridLines(
+  node: StaticNode,
+  em: Emitter,
+  level: number,
+  pad: string,
+  padIn: string,
+  modifier: string | null,
+  grid: { cols: number; gapX: number | null; gapY: number | null },
+  divide: ModifierParts['divide'],
+): string[] {
+  const lines: string[] = [];
+  const open: string[] = [pad + 'Column('];
+  if (modifier) open.push(`${padIn}modifier = ${modifier},`);
+  if (grid.gapY !== null) open.push(`${padIn}verticalArrangement = Arrangement.spacedBy(${grid.gapY}.dp),`);
+  open.push(pad + ') {');
+  lines.push(...open);
+  const rowPad = '\t'.repeat(level + 1);
+  const cols = Math.max(1, grid.cols);
+  for (let i = 0; i < node.children.length; i += cols) {
+    const rowChildren = node.children.slice(i, i + cols);
+    const rowArgs: string[] = [];
+    if (grid.gapX !== null) rowArgs.push(`${rowPad}\thorizontalArrangement = Arrangement.spacedBy(${grid.gapX}.dp),`);
+    const rowMods: string[] = [];
+    if (i > 0 && divide && divide.axis === 'y') rowMods.push(divideBorderMod(divide));
+    if (rowArgs.length === 0 && rowMods.length === 0) {
+      lines.push(rowPad + 'Row {');
+    } else {
+      lines.push(rowPad + 'Row(');
+      if (rowMods.length) lines.push(`${rowPad}\tmodifier = ${rowMods[0]},`);
+      lines.push(...rowArgs);
+      lines.push(rowPad + ') {');
+    }
+    for (let j = 0; j < rowChildren.length; j++) {
+      const child = rowChildren[j]!;
+      let cellExtra = 'Modifier.weight(1f)';
+      if (divide && j > 0) cellExtra += `.${divideBorderMod(divide).slice('Modifier.'.length)}`;
+      lines.push(...emitChild(child, em, level + 2, 'row', cellExtra, false, false));
+    }
+    lines.push(rowPad + '}');
+  }
+  lines.push(pad + '}');
+  return lines;
+}
+
+function divideBorderMod(divide: NonNullable<ModifierParts['divide']>): string {
+  if (divide.style === 'dashed' || divide.style === 'dotted') {
+    const dashes = divide.style === 'dotted' ? 'floatArrayOf(0.1f, 8f)' : 'floatArrayOf(12f, 12f)';
+    return divide.axis === 'y'
+      ? `Modifier.veskDivideLine(horizontal = true, width = ${divide.width}.dp, color = ${divide.color}, dashes = ${dashes})`
+      : `Modifier.veskDivideLine(horizontal = false, width = ${divide.width}.dp, color = ${divide.color}, dashes = ${dashes})`;
+  }
+  return divide.axis === 'y'
+    ? `Modifier.veskSideBorder(top = ${divide.width}.dp, end = 0.dp, bottom = 0.dp, start = 0.dp, ${divide.color})`
+    : `Modifier.veskSideBorder(top = 0.dp, end = 0.dp, bottom = 0.dp, start = ${divide.width}.dp, ${divide.color})`;
+}
+
+function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'column' | 'row' | null, extraModifier: string | null = null, flowParent = false, boxScope = false): string[] {
   const pad = '\t'.repeat(level);
 
   if (child instanceof StaticNode) {
-    return emitElement(child, em, level, parentAxis, extraModifier, flowParent);
+    return emitElement(child, em, level, parentAxis, extraModifier, flowParent, boxScope);
   }
   if (child instanceof TextNode) {
-    return splitLines(makeTextCall(em.ktString(child.value), [], level, em, false, parentAxis, extraModifier, null, flowParent));
+    return splitLines(makeTextCall(em.ktString(child.value), [], level, em, false, parentAxis, extraModifier, null, flowParent, boxScope));
   }
   if (child instanceof DynamicBinding) {
-    if (child.kind === 'text') return splitLines(makeTextCall(dynamicText(em.exprOf(child.expression)), [], level, em, false, parentAxis, extraModifier, null, flowParent));
+    if (child.kind === 'text') return splitLines(makeTextCall(dynamicText(em.exprOf(child.expression)), [], level, em, false, parentAxis, extraModifier, null, flowParent, boxScope));
     return [];
   }
   if (child instanceof OpaqueDynamicRegion) {
     const cond = em.exprOf(child.condition);
     const out: string[] = [];
     out.push(pad + `if (truthy(${cond})) {`);
-    for (const n of child.consequentNodes) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier));
+    for (const n of child.consequentNodes) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope));
     out.push(pad + `} else {`);
-    for (const n of child.alternateNodes) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier));
+    for (const n of child.alternateNodes) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope));
     out.push(pad + `}`);
     return out;
   }
@@ -1059,13 +1128,13 @@ function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'colum
     const out: string[] = [];
     out.push(pad + `LazyColumn {`);
     out.push(pad + `\titems(${arrExpr}${keyExpr ? `, key = { ${keyExpr} }` : ''}) { ${item} ->`);
-    for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 2, 'column', extraModifier));
+    for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 2, 'column', extraModifier, flowParent, boxScope));
     out.push(pad + `\t}`);
     out.push(pad + `}`);
     return out;
   }
   if (child instanceof ComponentCall) {
-    return splitLines(componentCallLines(child, em, level, parentAxis, flowParent));
+    return splitLines(componentCallLines(child, em, level, parentAxis, flowParent, boxScope));
   }
   if (child instanceof TrackDecl) {
     return splitLines(em.trackDecl(child)).map((l) => pad + l);
@@ -1082,7 +1151,7 @@ function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'colum
     return [pad + `error("server block not supported in vesk-native")`];
   }
   if (child instanceof ClientBlock) {
-    return child.children.length ? emitChild(child.children[0]!, em, level, parentAxis, extraModifier) : [];
+    return child.children.length ? emitChild(child.children[0]!, em, level, parentAxis, extraModifier, flowParent, boxScope) : [];
   }
   if (child instanceof SlotNode) {
     return [pad + `content()`];
@@ -1091,7 +1160,7 @@ function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'colum
     const cond = em.exprOf(child.condition);
     const out: string[] = [];
     out.push(pad + `while (truthy(${cond})) {`);
-    for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier));
+    for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope));
     out.push(pad + `}`);
     return out;
   }
@@ -1102,7 +1171,7 @@ function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'colum
     for (const c of child.cases) {
       const test = c.test ? em.exprOf(c.test) : null;
       out.push(pad + `\t${test === null ? 'else' : test} -> {`);
-      for (const n of c.body) out.push(...emitChild(n, em, level + 2, parentAxis, extraModifier));
+      for (const n of c.body) out.push(...emitChild(n, em, level + 2, parentAxis, extraModifier, flowParent, boxScope));
       out.push(pad + '\t}');
     }
     out.push(pad + `}`);
@@ -1112,9 +1181,9 @@ function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'colum
     const catchParam = child.catchParamName ?? 'e';
     const out: string[] = [];
     out.push(pad + `try {`);
-    for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier));
+    for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope));
     out.push(pad + `} catch (${catchParam}: Exception) {`);
-    for (const n of child.catchBody) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier));
+    for (const n of child.catchBody) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope));
     out.push(pad + `}`);
     return out;
   }
@@ -1124,7 +1193,7 @@ function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'colum
     const update = child.update.replace(/;$/, '');
     const out: string[] = [];
     out.push(pad + `for (${init}; ${cond}; ${update}) {`);
-    for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier));
+    for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope));
     out.push(pad + `}`);
     return out;
   }

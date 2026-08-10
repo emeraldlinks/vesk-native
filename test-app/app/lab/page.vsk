@@ -59,5 +59,26 @@ component Lab() {
             <div class="p-2 flex-1">E</div>
             <div class="p-2 flex-1">F</div>
         </div>
+        <div>
+            <h3 class="font-semibold mb-1">Grid</h3>
+            <div class="grid grid-cols-3 gap-2">
+                <div class="bg-blue-100 rounded p-2 text-sm">g1</div>
+                <div class="bg-blue-100 rounded p-2 text-sm">g2</div>
+                <div class="bg-blue-100 rounded p-2 text-sm">g3</div>
+                <div class="bg-blue-100 rounded p-2 text-sm">g4</div>
+                <div class="bg-blue-100 rounded p-2 text-sm">g5</div>
+                <div class="bg-blue-100 rounded p-2 text-sm">g6</div>
+            </div>
+        </div>
+        <div class="relative bg-amber-100 rounded-xl p-8">
+            <p class="text-sm font-medium text-amber-900">Positioned container</p>
+            <div class="absolute top-2 right-2 bg-amber-500 text-white text-xs font-bold rounded-full px-2 py-0.5">badge</div>
+            <div class="absolute bottom-1 left-2 bg-amber-300 rounded px-2 text-xs">bottom-left</div>
+        </div>
+        <div class="relative h-40 bg-gray-200 rounded-xl overflow-hidden">
+            <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+                <span class="text-white font-bold">overlay</span>
+            </div>
+        </div>
     </div>
 }

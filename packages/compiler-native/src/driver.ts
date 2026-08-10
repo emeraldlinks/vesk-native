@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
-import { compileVsk, getCompileErrors } from '@compiler-native/index.ts';
-import { testAppAppDir } from '@compiler-native/paths.ts';
+import { compileVsk, getCompileErrors } from '@compiler-native/index';
+import { testAppAppDir } from '@compiler-native/paths';
 
 const file = `${testAppAppDir}/page.vsk`;
 const source = readFileSync(file, 'utf8');
