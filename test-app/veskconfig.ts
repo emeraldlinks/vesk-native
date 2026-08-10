@@ -35,6 +35,21 @@ export default defineConfig({
     exitDelayMs: 2000,
     exitRoutes: [],
   },
+  media: {
+    // Playback broadcasts as a system media session + notification; flip to
+    // false to keep audio/video in-app only.
+    broadcast: true,
+  },
+  screens: {
+    // Props are injected into the route's page component (typed props on the
+    // component: component Home(props: { promo: string, cta: string })).
+    '/': {
+      props: {
+        promo: 'Members save 20% today',
+        cta: 'Shop the drop',
+      },
+    },
+  },
   permissions: [],
   device: 'phone',
 })

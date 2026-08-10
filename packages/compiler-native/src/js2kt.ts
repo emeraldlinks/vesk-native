@@ -388,13 +388,10 @@ export class Js2Kt {
       case '!==':
       case '!=': return `${this.operand(left)} != ${this.operand(right)}`;
       case '&&':
-      case '||': {
-        const isString = (n: JsNode) => n.type === 'Literal' && typeof (n.value as unknown) === 'string';
-        if (op === '||' && (isString(left) || isString(right))) {
-          const l = this.expr(left);
-          return `(if (truthy(${l})) ${l} else ${this.operand(right)})`;
-        }
-        return `truthy(${this.operand(left)}) ${op} truthy(${this.operand(right)})`;
+      case '||':
+      case '??': {
+        if (op === '&&') return `truthy(${this.operand(left)}) && truthy(${this.operand(right)})`;
+        return `(${this.operand(left)} ?: ${this.operand(right)})`;
       }
       case '+': return `${this.operand(left)} + ${this.operand(right)}`;
       case '-': return `${this.operand(left)} - ${this.operand(right)}`;
@@ -405,7 +402,6 @@ export class Js2Kt {
       case '>': return `num(${this.operand(left)}) > num(${this.operand(right)})`;
       case '<=': return `num(${this.operand(left)}) <= num(${this.operand(right)})`;
       case '>=': return `num(${this.operand(left)}) >= num(${this.operand(right)})`;
-      case '??': return `${this.operand(left)} ?: ${this.operand(right)}`;
       case '**': {
         this.err.warn(node, '`**` power operator maps to Math.pow in Kotlin');
         return `kotlin.math.pow((${this.operand(left)}).toDouble(), (${this.operand(right)}).toDouble())`;

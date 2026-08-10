@@ -98,7 +98,7 @@ function imageLines(node: StaticNode, em: Emitter, level: number, parentAxis: 'c
   let bitmapArg: string | null = null;
   const staticSrc = node.attributes.find((a) => a.name === 'src')?.value;
   const dynSrc = em.dynamicAttrs(node).get('src');
-  if (staticSrc !== undefined) {
+  if (staticSrc !== undefined && staticSrc.length > 0) {
     if (isFileImageSrc(staticSrc)) {
       bitmapArg = `veskFileImage(${em.ktString(staticSrc)})`;
     } else {
@@ -110,7 +110,7 @@ function imageLines(node: StaticNode, em: Emitter, level: number, parentAxis: 'c
       }
     }
   } else if (dynSrc) {
-    bitmapArg = `veskFileImage(${em.exprOf(dynSrc as unknown as Expression)})`;
+    bitmapArg = `veskFileImage(${em.j2k.expr(dynSrc).trimStart()})`;
   } else {
     em.err.warn(null, `<img> is missing a src attribute`);
   }
@@ -175,7 +175,7 @@ function mediaLines(node: StaticNode, em: Emitter, level: number, parentAxis: 'c
   let urlArg: string | null = null;
   const staticSrc = node.attributes.find((a) => a.name === 'src')?.value;
   const dynSrc = em.dynamicAttrs(node).get('src');
-  if (staticSrc !== undefined) {
+  if (staticSrc !== undefined && staticSrc.length > 0) {
     if (isFileImageSrc(staticSrc)) {
       urlArg = em.ktString(staticSrc);
     } else {
@@ -187,7 +187,7 @@ function mediaLines(node: StaticNode, em: Emitter, level: number, parentAxis: 'c
       }
     }
   } else if (dynSrc) {
-    urlArg = em.exprOf(dynSrc as unknown as Expression);
+    urlArg = em.j2k.expr(dynSrc).trimStart();
   } else {
     em.err.warn(null, `<${node.tag}> is missing a src attribute`);
   }
@@ -215,6 +215,219 @@ function mediaLines(node: StaticNode, em: Emitter, level: number, parentAxis: 'c
 // Button content: plain text children (static and/or dynamic) merge into one
 // Text styled with the button's text-* classes. Conditional regions, spans and
 // other nested elements are emitted as real children inside the Button.
+// Declarative native device elements (option C): <photo-picker>, <camera>,
+// <recorder>, <file-input>, <notification>, plus every system-capability
+// element (<battery-status>, <location>, <contacts>, <biometric-auth>,
+// <qr-code>, <screen-record>, ...). They compile to the same runtime surface
+// as the script device API — the page picks whichever fits.
+const DEVICE_TAGS: Record<string, string> = {
+  'photo-picker': 'VeskPhotoPicker',
+  camera: 'VeskCamera',
+  recorder: 'VeskRecorder',
+  'file-input': 'VeskFileInput',
+  notification: 'VeskNotification',
+  'battery-status': 'VeskBatteryStatus',
+  'network-status': 'VeskNetworkStatus',
+  location: 'VeskLocation',
+  apps: 'VeskApps',
+  contacts: 'VeskContacts',
+  'call-log': 'VeskCallLog',
+  messages: 'VeskMessages',
+  accounts: 'VeskAccounts',
+  clipboard: 'VeskClipboard',
+  'copy-to-clipboard': 'VeskCopyToClipboard',
+  vibrate: 'VeskVibrate',
+  torch: 'VeskTorch',
+  screenshot: 'VeskScreenshot',
+  'share-text': 'VeskShareText',
+  'share-file': 'VeskShareFile',
+  'biometric-auth': 'VeskBiometricAuth',
+  bluetooth: 'VeskBluetooth',
+  'bluetooth-toggle': 'VeskBluetoothToggle',
+  'bluetooth-scan': 'VeskBluetoothScan',
+  'screen-record': 'VeskScreenRecord',
+  'qr-code': 'VeskQrCode',
+  'qr-scanner': 'VeskQrScanner',
+  volume: 'VeskVolume',
+  'set-volume': 'VeskSetVolume',
+  brightness: 'VeskBrightness',
+  'keep-awake': 'VeskKeepAwake',
+  orientation: 'VeskOrientation',
+  'device-info': 'VeskDeviceInfo',
+  'storage-status': 'VeskStorage',
+  sensor: 'VeskSensor',
+  toast: 'VeskToast',
+  sound: 'VeskSound',
+  wallpaper: 'VeskWallpaper',
+  calendar: 'VeskCalendar',
+  nfc: 'VeskNfc',
+  sim: 'VeskSim',
+  dial: 'VeskDial',
+  sms: 'VeskSms',
+  email: 'VeskEmail',
+  'open-link': 'VeskLink',
+  map: 'VeskMap',
+  alarm: 'VeskAlarm',
+  'open-settings': 'VeskOpenSettings',
+  'open-app': 'VeskOpenApp',
+  speak: 'VeskSpeak',
+};
+
+function deviceApiLines(node: StaticNode, em: Emitter, level: number, extraModifier: string | null): string[] {
+  const pad = '\t'.repeat(level);
+  const padIn = '\t'.repeat(level + 1);
+  const fnName = DEVICE_TAGS[node.tag]!;
+  const classes = em.classList(node);
+  const parts = classify(classes, em.customClasses, undefined);
+  stripScopeMods(parts);
+  let modifier = buildModifier(parts);
+  modifier = prependModifier(modifier, extraModifier);
+  const attrs = em.dynamicAttrs(node);
+  const has = (name: string) => node.attributes.some((a) => a.name === name);
+  const args: string[] = [];
+
+  // Static text attributes fall back to bound expressions, then a default.
+  const textAttr = (name: string, fallback: string | null): string | null => {
+    const staticVal = em.staticAttr(node, name);
+    if (staticVal !== null && staticVal.length > 0) return em.ktString(staticVal);
+    const dyn = attrs.get(name);
+    if (dyn) return em.j2k.expr(dyn).trimStart();
+    return fallback;
+  };
+  // Integer attributes (e.g. duration="200") resolve to number literals;
+  // digit-only check (no regex) since these are compiler-level values.
+  const intAttr = (name: string, fallback: string | null): string | null => {
+    const staticVal = em.staticAttr(node, name);
+    if (staticVal !== null && staticVal.length > 0) {
+      let digits = true;
+      for (const ch of staticVal) if (!(ch >= '0' && ch <= '9')) { digits = false; break; }
+      if (digits) return staticVal;
+    }
+    const dyn = attrs.get(name);
+    if (dyn) return em.j2k.expr(dyn).trimStart();
+    return fallback;
+  };
+  const label = em.staticAttr(node, 'label');
+  if (label) args.push(`${padIn}label = ${em.ktString(label)},`);
+
+  switch (fnName) {
+    case 'VeskPhotoPicker': {
+      const onPick = attrs.get('onPick');
+      args.push(`${padIn}onPick = ${onPick ? em.j2k.expr(onPick).trimStart() : '{ _ -> }'},`);
+      break;
+    }
+    case 'VeskCamera': {
+      const onDone = attrs.get('onDone');
+      args.push(`${padIn}onDone = ${onDone ? em.j2k.expr(onDone).trimStart() : '{ _ -> }'},`);
+      if (has('video')) args.push(`${padIn}video = true,`);
+      break;
+    }
+    case 'VeskRecorder': {
+      const onDone = attrs.get('onDone');
+      args.push(`${padIn}onDone = ${onDone ? em.j2k.expr(onDone).trimStart() : '{ _ -> }'},`);
+      break;
+    }
+    case 'VeskFileInput': {
+      const onDone = attrs.get('onDone');
+      args.push(`${padIn}onDone = ${onDone ? em.j2k.expr(onDone).trimStart() : '{ _, _ -> }'},`);
+      const mime = textAttr('mime', null);
+      if (mime) args.push(`${padIn}mime = ${mime},`);
+      break;
+    }
+    case 'VeskNotification': {
+      args.push(`${padIn}title = ${textAttr('title', '""')},`);
+      args.push(`${padIn}text = ${textAttr('text', '""')},`);
+      const onTap = attrs.get('onTap');
+      if (onTap) args.push(`${padIn}onTap = ${em.j2k.expr(onTap).trimStart()},`);
+      break;
+    }
+    case 'VeskCopyToClipboard': {
+      args.push(`${padIn}value = ${textAttr('value', '""')},`);
+      const onDone = attrs.get('onDone');
+      args.push(`${padIn}onDone = ${onDone ? em.j2k.expr(onDone).trimStart() : '{ _ -> }'},`);
+      break;
+    }
+    case 'VeskShareText': {
+      args.push(`${padIn}text = ${textAttr('text', '""')},`);
+      const onDone = attrs.get('onDone');
+      if (onDone) args.push(`${padIn}onDone = ${em.j2k.expr(onDone).trimStart()},`);
+      break;
+    }
+    case 'VeskShareFile': {
+      const path = textAttr('path', null);
+      if (path) args.push(`${padIn}path = ${path},`);
+      const mime = textAttr('mime', null);
+      if (mime) args.push(`${padIn}mime = ${mime},`);
+      const onDone = attrs.get('onDone');
+      if (onDone) args.push(`${padIn}onDone = ${em.j2k.expr(onDone).trimStart()},`);
+      break;
+    }
+    case 'VeskVibrate': {
+      const duration = intAttr('duration', null);
+      if (duration) args.push(`${padIn}duration = ${duration},`);
+      const onDone = attrs.get('onDone');
+      if (onDone) args.push(`${padIn}onDone = ${em.j2k.expr(onDone).trimStart()},`);
+      break;
+    }
+    case 'VeskQrCode': {
+      // <qr-code value="..."> renders the QR bitmap directly (no button).
+      args.push(`${padIn}value = ${textAttr('value', '""')},`);
+      break;
+    }
+    case 'VeskSetVolume':
+    case 'VeskBrightness': {
+      // Numeric actions: <set-volume value="60"> / <brightness value="80">.
+      const value = intAttr('value', null);
+      if (value) args.push(`${padIn}value = ${value},`);
+      const onDone = attrs.get('onDone');
+      if (onDone) args.push(`${padIn}onDone = ${em.j2k.expr(onDone).trimStart()},`);
+      break;
+    }
+    case 'VeskKeepAwake': {
+      // Boolean action: <keep-awake value="true">.
+      const staticVal = em.staticAttr(node, 'value');
+      const value = staticVal !== null ? (staticVal === 'false' ? 'false' : 'true') : 'true';
+      args.push(`${padIn}value = ${value},`);
+      const onDone = attrs.get('onDone');
+      if (onDone) args.push(`${padIn}onDone = ${em.j2k.expr(onDone).trimStart()},`);
+      break;
+    }
+    case 'VeskAlarm': {
+      // <alarm hour="8" minute="30" title="Wake up">.
+      const hour = intAttr('hour', null);
+      if (hour) args.push(`${padIn}hour = ${hour},`);
+      const minute = intAttr('minute', null);
+      if (minute) args.push(`${padIn}minute = ${minute},`);
+      const title = textAttr('title', null);
+      if (title) args.push(`${padIn}title = ${title},`);
+      const onDone = attrs.get('onDone');
+      if (onDone) args.push(`${padIn}onDone = ${em.j2k.expr(onDone).trimStart()},`);
+      break;
+    }
+    default: {
+      // Generic trigger elements (battery-status, location, apps, contacts,
+      // call-log, messages, accounts, clipboard, torch, screenshot, sensor,
+      // dial, sms, email, open-link, map, open-settings, open-app, ...):
+      // every allow-listed scalar attribute passes through as a named arg,
+      // and bound callbacks resolve as lambdas. Missing args fall back to the
+      // composable's Kotlin defaults, so <battery-status/> alone works.
+      const SCALAR_ARGS = ['value', 'text', 'title', 'mime', 'path', 'kind', 'type', 'section', 'mode', 'number', 'url', 'query', 'to', 'subject', 'body', 'app', 'duration'];
+      for (const name of SCALAR_ARGS) {
+        const v = textAttr(name, null);
+        if (v) args.push(`${padIn}${name} = ${v},`);
+      }
+      for (const cbName of ['onDone', 'onPick', 'onTap', 'onResult']) {
+        const cb = attrs.get(cbName);
+        if (cb) args.push(`${padIn}${cbName} = ${em.j2k.expr(cb).trimStart()},`);
+      }
+      break;
+    }
+  }
+
+  if (modifier) args.push(`${padIn}modifier = ${modifier},`);
+  return [pad + `${fnName}(`, ...args, pad + ')'];
+}
+
 function emitButton(node: StaticNode, classes: string[], attrs: Map<string, JsNode>, em: Emitter, level: number, parentAxis: 'column' | 'row' | null, extraModifier: string | null): string[] {
   const onClick = attrs.get('onClick');
   const onClickKt = onClick ? em.j2k.expr(onClick).trimStart() : '{}';
@@ -490,10 +703,11 @@ class Emitter {
 
   trackDecl(node: TrackDecl): string {
     const init = this.parseTrackInit(node.init);
+    const typed = init.trim() === 'null' ? 'mutableStateOf<String?>(null)' : `mutableStateOf(${init})`;
     if (node.rawName) {
-      return `val ${node.name} = remember { mutableStateOf(${init}) }\n\tval ${node.rawName} = ${node.name}`;
+      return `val ${node.name} = remember { ${typed} }\n\tval ${node.rawName} = ${node.name}`;
     }
-    return `val ${node.name} = remember { mutableStateOf(${init}) }`;
+    return `val ${node.name} = remember { ${typed} }`;
   }
 
   emitTopLevel(node: IRNode, level: number, parentAxis: 'column' | 'row' | null = null): string[] {
@@ -623,7 +837,46 @@ function componentCallLines(node: ComponentCall, em: Emitter, level: number, par
   return out.join('\n');
 }
 
+// Drag and drop (markup-level): `draggable` makes an element a drag source
+// (payload = the `dragdata` attribute or the element's text content), and
+// `ondrop` makes it a drop target whose callback receives the dropped text
+// as (String?). The modifiers chain onto the element's computed modifier.
+function dragModifier(node: StaticNode, em: Emitter): string | null {
+  let m = '';
+  const draggable = node.attributes.some((a) => a.name === 'draggable');
+  if (draggable) {
+    const attrs = em.dynamicAttrs(node);
+    const staticData = em.staticAttr(node, 'dragdata');
+    const dynData = attrs.get('dragdata');
+    let data: string;
+    if (staticData !== null && staticData.length > 0) {
+      data = em.ktString(staticData);
+    } else if (dynData) {
+      data = em.j2k.expr(dynData).trimStart();
+    } else {
+      const t = textContent(node.children, em);
+      data = t.length >= 2 && t.startsWith('"') && t.endsWith('"') ? em.ktString(t.slice(1, -1)) : t;
+    }
+    m += `.veskDraggable(VeskDragData(${data}))`;
+  }
+  const ondrop = em.dynamicAttrs(node).get('ondrop');
+  if (ondrop) m += `.veskDropTarget(${em.j2k.expr(ondrop).trimStart()})`;
+  return m.length > 0 ? m : null;
+}
+
 function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: 'column' | 'row' | null, extraModifier: string | null = null, flowParent = false): string[] {
+  const dropMod = dragModifier(node, em);
+  if (dropMod && extraModifier) extraModifier += dropMod;
+  else if (dropMod) extraModifier = `Modifier${dropMod}`;
+  if (DEVICE_TAGS[node.tag]) {
+    // Bound attributes (onPick=..., title=...) arrive as DynamicBinding
+    // children; only real element children (markup) are an error.
+    const structural = node.children.filter(
+      (c) => !(c instanceof DynamicBinding) && !(c instanceof TextNode)
+    );
+    if (structural.length > 0) em.err.warn(null, `<${node.tag}> does not take children — label is built in`);
+    return deviceApiLines(node, em, level, extraModifier);
+  }
   const info = elementInfo(node.tag);
   const classes = em.classList(node);
   if (isHidden(classes, em.customClasses)) return [];

@@ -26,3 +26,21 @@ get real compiler/JVM mappings, never workarounds in the demo app.
   (slow, ~5 min), direct Kotlin diagnostics via
   `/opt/vesk-native-toolchain/gradle-9.7.0/bin/gradle -p test-app/app compileDebugKotlin --rerun-tasks`.
 - `npx tsc --noEmit -p tsconfig.json` after any compiler change.
+- **Tracked state is vesk cells, not React state.** Verification source:
+  `/root/vesk/packages/runtime/src/track.ts` (web runtime), the `&[...]`
+  parse in `/root/vesk/packages/compiler/src/ir-generator.ts:684`, the
+  `set(...)`/`get(...)` rewrites in
+  `/root/vesk/packages/compiler/src/client-codegen.ts:73` (transformTracked),
+  and the native mapping in `kotlin-codegen.ts:545` `trackDecl` +
+  `js2kt.ts:204` `callExpr`. `track(init)` returns a **Cell object**
+  (`get()/peek()/set()/update()`) — never a `[value, setter]` tuple, and
+  there is no `setName` function. `.vsk` sugar: `const &[name] = track(init)`
+  declares a virtual name (reads auto-`get()`); `const &[name, cell] =
+  track(init)` additionally binds the raw cell. Read by using the name
+  directly; write with plain assignment (`name = v`, `name += 1`, `name++`)
+  — the compiler rewrites reads/writes to `get(name)`/`set(name, v)`, which
+  js2kt maps to `.value`/`.value =`. Do not invent React-style tuple APIs in
+  helpers or examples, and verify native compile behavior of any cell member
+  call (only `get(x)`/`set(a, b)` function forms and `.value` are mapped;
+  `cell.set(v)` member calls pass through unchanged and fail on
+  `MutableState`).

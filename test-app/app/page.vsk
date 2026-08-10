@@ -1,4 +1,4 @@
-component Home() {
+component Home(props: { promo: string, cta: string }) {
     const &[joined] = track(false)
 
     <style>
@@ -8,14 +8,14 @@ component Home() {
     <div class="flex-col gap-6 px-4 py-4">
 
         <section class="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 rounded-3xl p-7 min-h-40">
-            <p class="text-white/90 text-xs font-semibold tracking-widest uppercase">Winter collection 2026 · Members save {Math.floor(Math.random() * 10 + 5)}% today</p>
+            <p class="text-white/90 text-xs font-semibold tracking-widest uppercase">Winter collection 2026 · {props.promo}</p>
             <h1 class="text-white mt-1 text-3xl font-extrabold leading-9">Layers for the long cold night</h1>
             <p class="hero-summary mt-2 text-sm leading-6 max-w-xs">
                 Heattech knits, insulated shells and merino base layers. Engineered for warmth, tuned for style.
             </p>
             <div class="mt-6">
                 <NavLink href="/shop">
-                    <div class="bg-white text-indigo-700 px-5 py-2.5 rounded-full text-sm font-bold shadow-md self-start">Shop the drop</div>
+                    <div class="bg-white text-indigo-700 px-5 py-2.5 rounded-full text-sm font-bold shadow-md self-start">{props.cta}</div>
                 </NavLink>
             </div>
         </section>
@@ -59,18 +59,15 @@ component Home() {
             </div>
         </section>
 
-        <section>
-            <div class="flex items-center justify-between mb-3">
-                <h2 class="text-lg font-bold tracking-tight">Motion &amp; sound</h2>
-                <p class="text-xs text-gray-500">bundled + device files</p>
+        <NavLink href="/media">
+            <div class="bg-gray-900 rounded-2xl p-5 flex items-center justify-between mt-2">
+                <div>
+                    <p class="text-white/70 text-xs font-semibold tracking-widest uppercase">Native media lab</p>
+                    <h3 class="text-white text-lg font-extrabold mt-1">Camera, recorder, pickers &amp; media broadcast</h3>
+                </div>
+                <div class="bg-white text-gray-900 text-sm font-semibold px-4 py-2 rounded-full">Open</div>
             </div>
-            <div class="flex-col gap-4">
-                <video src="/media/demo.mp4" controls class="rounded-2xl" />
-                <video src="/media/demo.mp4" autoplay loop muted object-cover class="w-1/2 h-28 rounded-2xl" />
-                <audio src="/media/last-train.mp3" controls class="bg-gray-100 rounded-full px-3 py-2" />
-                <audio src="/storage/emulated/0/vesk_media/Last Train Home.mp3" controls class="bg-gray-100 rounded-full px-3 py-2" />
-            </div>
-        </section>
+        </NavLink>
 
         <section>
             <div class="flex items-center justify-between mb-3">

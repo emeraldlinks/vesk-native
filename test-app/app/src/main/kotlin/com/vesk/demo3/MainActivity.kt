@@ -3,20 +3,23 @@ package com.vesk.demo3
 import android.os.Build
 import androidx.activity.result.contract.ActivityResultContracts
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import android.content.Intent
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import androidx.fragment.app.FragmentActivity
 import app.App
+import app.VeskDeviceSession
 import app.VeskTheme
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
     private val mediaPermLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        if (intent.getBooleanExtra("vesk_notify_tap", false)) VeskDeviceSession.notifyTap?.invoke()
         if (Build.VERSION.SDK_INT >= 33) {
             mediaPermLauncher.launch(arrayOf(
                                 android.Manifest.permission.READ_MEDIA_IMAGES,
@@ -34,5 +37,10 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        if (intent.getBooleanExtra("vesk_notify_tap", false)) VeskDeviceSession.notifyTap?.invoke()
     }
 }

@@ -22,6 +22,21 @@ export interface VeskBack {
   exitRoutes?: string[];
 }
 
+export interface VeskMedia {
+  // Broadcast playback as a system media session + notification (lock screen,
+  // media buttons, headset). On by default; set false to opt out.
+  broadcast?: boolean;
+}
+
+export interface VeskScreen {
+  // Props passed to the route's page component when it renders. Values are
+  // coerced to the component's declared types (`component Page(props: {...})`)
+  // or passed as-is for untyped `component Page(props)` (fields inferred from
+  // usage). Pages can also declare in-file defaults — `export const pageProps
+  // = { ... }` — config values override them, so nothing HAS to live here.
+  props?: Record<string, unknown>;
+}
+
 export interface VeskRoute {
   path: string;
   component: string;
@@ -46,9 +61,14 @@ export interface VeskConfig {
   darkColors: VeskColors;
   typography?: VeskTypography;
   back?: VeskBack;
+  media?: VeskMedia;
+  // Per-screen config: keyed by route path ('/media'), values are passed to
+  // the route's page component as props.
+  screens?: Record<string, VeskScreen>;
   // Extra <uses-permission> entries emitted verbatim into AndroidManifest.xml
-  // (e.g. "android.permission.RECORD_AUDIO"). Storage/media permissions are
-  // still derived automatically from the elements the app actually uses.
+  // (e.g. "android.permission.CAMERA"). Storage/media/recording permissions
+  // are still derived automatically from the elements and device APIs the app
+  // actually uses.
   permissions?: string[];
   // Layout target: 'phone' (default) or 'tablet' (content constrained to a
   // centered 840dp column).

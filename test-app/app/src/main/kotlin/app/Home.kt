@@ -63,8 +63,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 
+data class HomeProps(
+	val promo: String = "",
+	val cta: String = "",
+)
+
 @Composable
-fun Home(content: @Composable () -> Unit = {}) {
+fun Home(props: HomeProps = HomeProps(), content: @Composable () -> Unit = {}) {
 	val joined = remember { mutableStateOf(false) }
 	Column(
 		modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(vertical = 16.dp),
@@ -74,7 +79,7 @@ fun Home(content: @Composable () -> Unit = {}) {
 			modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(Brush.linearGradient(listOf(Color(0xFF4F46E5), Color(0xFF9333EA), Color(0xFFEC4899)), start = Offset(0f, 0f), end = Offset(1f, 1f))).heightIn(min = 160.dp).padding(28.dp),
 		) {
 			Text(
-				text = ("Winter collection 2026 · Members save " + (kotlin.math.floor(((kotlin.random.Random.nextDouble() * 10) + 5).toDouble()).toInt()).toString() + "% today").uppercase(),
+				text = ("Winter collection 2026 · " + (props.promo).toString()).uppercase(),
 				modifier = Modifier.fillMaxWidth(),
 				style = TextStyle(color = Color(0xE5FFFFFF), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.8.sp),
 			)
@@ -97,7 +102,7 @@ fun Home(content: @Composable () -> Unit = {}) {
 							modifier = Modifier.fillMaxWidth().shadow(6.dp).clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.surface).padding(horizontal = 20.dp).padding(vertical = 10.dp).align(Alignment.Start),
 						) {
 							Text(
-								text = "Shop the drop",
+								text = (props.cta).toString(),
 							)
 						}
 					}
@@ -244,51 +249,34 @@ fun Home(content: @Composable () -> Unit = {}) {
 				)
 			}
 		}
-		Column(
-			modifier = Modifier.fillMaxWidth(),
-		) {
-			Row(
-				modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
-				verticalAlignment = Alignment.CenterVertically,
-				horizontalArrangement = Arrangement.SpaceBetween,
-			) {
-				Text(
-					text = "Motion & sound",
-					style = TextStyle(fontSize = 18.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold, letterSpacing = -0.2.sp),
-				)
-				Text(
-					text = "bundled + device files",
-					style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant),
-				)
+		NavLink(props = NavLinkProps(href = "/media"))
+			{
+				Row(
+					modifier = Modifier.fillMaxWidth().padding(top = 8.dp).clip(RoundedCornerShape(16.dp)).background(Color(0xFF111827)).padding(20.dp),
+					verticalAlignment = Alignment.CenterVertically,
+					horizontalArrangement = Arrangement.SpaceBetween,
+				) {
+					Column {
+						Text(
+							text = ("Native media lab").uppercase(),
+							modifier = Modifier.fillMaxWidth(),
+							style = TextStyle(color = Color(0xB3FFFFFF), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.8.sp),
+						)
+						Text(
+							text = "Camera, recorder, pickers & media broadcast",
+							modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+							style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 18.sp, lineHeight = 28.sp, fontWeight = FontWeight.ExtraBold),
+						)
+					}
+					Column(
+						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.surface).padding(horizontal = 16.dp).padding(vertical = 8.dp),
+					) {
+						Text(
+							text = "Open",
+						)
+					}
+				}
 			}
-			Column(
-				modifier = Modifier.fillMaxWidth(),
-				verticalArrangement = Arrangement.spacedBy(16.dp),
-			) {
-				veskVideo(
-					url = "android.resource://com.vesk.demo3/" + com.vesk.demo3.R.raw.demo_1,
-					controls = true,
-					modifier = Modifier.clip(RoundedCornerShape(16.dp)).fillMaxWidth().aspectRatio(16f / 9f),
-				)
-				veskVideo(
-					url = "android.resource://com.vesk.demo3/" + com.vesk.demo3.R.raw.demo_1,
-					autoplay = true,
-					loop = true,
-					muted = true,
-					modifier = Modifier.clip(RoundedCornerShape(16.dp)).fillMaxWidth(0.5f).height(112.dp),
-				)
-				veskAudio(
-					url = "android.resource://com.vesk.demo3/" + com.vesk.demo3.R.raw.last_train,
-					controls = true,
-					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).padding(horizontal = 12.dp).padding(vertical = 8.dp),
-				)
-				veskAudio(
-					url = "/storage/emulated/0/vesk_media/Last Train Home.mp3",
-					controls = true,
-					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).padding(horizontal = 12.dp).padding(vertical = 8.dp),
-				)
-			}
-		}
 		Column(
 			modifier = Modifier.fillMaxWidth(),
 		) {
