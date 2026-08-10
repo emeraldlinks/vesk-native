@@ -1,5 +1,6 @@
-import { parse } from '@vesk/compiler/src/parser';
+import { parse as webParse } from '@vesk/compiler/src/parser';
 import { generateIR } from '@vesk/compiler/src/ir-generator';
+import { parse } from '@compiler-native/parser';
 import {
   StaticNode,
   TextNode,
@@ -138,7 +139,7 @@ export function extractImageSources(source: string): Array<{ src: string; compon
 export function extractMediaSources(source: string): Array<{ src: string; element: 'img' | 'video' | 'audio'; component: string }> {
   const out: Array<{ src: string; element: 'img' | 'video' | 'audio'; component: string }> = [];
   try {
-    const ast = parse(source, { filename: 'component.vsk' });
+    const ast = webParse(source, { filename: 'component.vsk' });
     const ir = generateIR(ast, source);
     for (const comp of ir.components) {
       walkIR(comp.body, (node) => {
@@ -1218,7 +1219,7 @@ export interface CssCollection {
 export function extractStylesheetLinks(source: string): string[] {
   const out: string[] = [];
   try {
-    const ast = parse(source, { filename: 'component.vsk' });
+    const ast = webParse(source, { filename: 'component.vsk' });
     const ir = generateIR(ast, source);
     for (const comp of ir.components) {
       walkIR(comp.body, (node) => {
@@ -1245,7 +1246,7 @@ export function collectCustomCss(sources: Array<{ source: string; filename?: str
   const skipped: string[] = [];
   for (const { source, filename } of sources) {
     try {
-      const ast = parse(source, { filename: filename ?? 'component.vsk' });
+      const ast = webParse(source, { filename: filename ?? 'component.vsk' });
       const ir = generateIR(ast, source);
       for (const comp of ir.components) {
         if (comp.style) {
@@ -1270,7 +1271,7 @@ function runCompile(source: string, filename: string, options: CompileOptions): 
   const err = new KtErrors();
   const pkg = options.packageName ?? 'app';
 
-  const ast = parse(source, { filename });
+  const ast = webParse(source, { filename });
   const ir = generateIR(ast, source);
   const decls = findComponentDecls(ast as unknown as JsNode);
 
