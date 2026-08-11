@@ -338,7 +338,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 				horizontalArrangement = Arrangement.spacedBy(4.dp),
 			) {
 				Button(
-					onClick = { if (truthy(num(qty.value) > num(1))) qty.value = qty.value + -1 },
+					onClick = { run __veskret0@ { if (truthy(num(qty.value) > num(1))) qty.value = qty.value + -1 } },
 					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(36.dp).height(36.dp),
 					shape = RoundedCornerShape(9999.dp),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -370,7 +370,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 				}
 			}
 			Button(
-				onClick = { added.value = !added.value },
+				onClick = { added.value = !truthy(added.value) },
 				modifier = Modifier.shadow(1.dp).clip(RoundedCornerShape(9999.dp)).background(Color(0xFF2563EB)).weight(1f).padding(vertical = 14.dp),
 				shape = RoundedCornerShape(9999.dp),
 				colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),

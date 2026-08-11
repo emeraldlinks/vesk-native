@@ -606,6 +606,23 @@ class Emitter {
     }
   }
 
+  // Translate a raw JS statement snippet (e.g. a C-style for-loop init like
+  // `let i = 0`) through the native parser + js2kt.
+  stmtText(code: string): string {
+    const trimmed = code.endsWith(';') ? code.slice(0, -1) : code;
+    try {
+      const program = parse(`{ ${trimmed} }`) as unknown as {
+        body: Array<{ body: Array<JsNode> }>;
+      };
+      const stmts = program.body[0]?.body;
+      if (!stmts || stmts.length === 0) return '';
+      return stmts.map((s) => this.j2k.stmt(s)).join('\n');
+    } catch (e) {
+      this.err.warn(null, `could not parse statement snippet: ${trimmed}: ${(e as Error).message}`);
+      return trimmed;
+    }
+  }
+
   parseExprInit(init: string): string {
     try {
       const program = parse(`let __vsk_init = ${init};`) as unknown as {
@@ -1189,12 +1206,30 @@ function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'colum
     return out;
   }
   if (child instanceof ForLoop) {
-    const init = child.init.replace(/;$/, '');
     const cond = em.exprOf(child.condition);
-    const update = child.update.replace(/;$/, '');
     const out: string[] = [];
-    out.push(pad + `for (${init}; ${cond}; ${update}) {`);
+    if (child.kind === 'for-in') {
+      const rawLeft = child.init.trim();
+      const name = ['const ', 'let ', 'var '].some((kw) => rawLeft.startsWith(kw))
+        ? rawLeft.slice(rawLeft.indexOf(' ') + 1).trim()
+        : rawLeft;
+      out.push(pad + `for (${name} in ${cond}) {`);
+      for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope));
+      out.push(pad + `}`);
+      return out;
+    }
+    if (child.init) {
+      const init = em.stmtText(child.init);
+      const trimmedInit = init.endsWith(';') ? init.slice(0, -1) : init;
+      if (trimmedInit) out.push(pad + trimmedInit);
+    }
+    out.push(pad + `while (truthy(${cond})) {`);
     for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope));
+    if (child.update) {
+      const update = em.stmtText(child.update);
+      const trimmedUpdate = update.endsWith(';') ? update.slice(0, -1) : update;
+      if (trimmedUpdate) out.push(pad + `\t${trimmedUpdate}`);
+    }
     out.push(pad + `}`);
     return out;
   }

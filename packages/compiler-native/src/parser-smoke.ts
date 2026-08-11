@@ -144,6 +144,12 @@ function kt(src: string): string {
   const expr = initOf(`let __vsk_e = ${src};`);
   return j2k.expr(expr);
 }
+function ktStmt(src: string): string {
+  const err = new KtErrors();
+  const j2k = new Js2Kt(err);
+  const block = program(`{ ${src} }`).body[0];
+  return j2k.stmt(block.body[0]);
+}
 check('js2kt: get() maps to .value', kt('get(count)') === 'count.value');
 check('js2kt: set() maps to assignment', kt('set(count, get(count) + 1)') === 'count.value = count.value + 1');
 check('js2kt: template literal', kt('`hi ${name}`') === '"hi $name"');
@@ -154,6 +160,38 @@ check('js2kt: no unsupported warnings', (() => {
   j2k.expr(initOf('let x = a?.b?.(1) ?? `v${c}`;'));
   return err.errors.length === 0;
 })());
+
+check('js2kt: typeof maps to jsTypeof', kt('typeof x') === 'jsTypeof(x)');
+check('js2kt: && value semantics', kt('a && b') === 'if (truthy(a)) b else a');
+check('js2kt: || value semantics', kt('a || b') === 'if (truthy(a)) a else b');
+check('js2kt: && evaluates left once', kt('f() && g()') === 'run { val __vsk_v0 = f(); if (truthy(__vsk_v0)) g() else __vsk_v0 }');
+check('js2kt: || evaluates left once', kt('f() || g()') === 'run { val __vsk_v0 = f(); if (truthy(__vsk_v0)) __vsk_v0 else g() }');
+check('js2kt: nullish coalesce', kt('a ?? b') === '(a ?: b)');
+check('js2kt: ternary', kt('a ? b : c') === 'if (truthy(a)) b else c');
+check('js2kt: Math.floor', kt('Math.floor(x)') === 'kotlin.math.floor((x).toDouble()).toInt()');
+check('js2kt: Math.max', kt('Math.max(a, b)') === 'kotlin.math.max(a, b)');
+check('js2kt: Number.parseInt', kt('Number.parseInt(s, 10)') === 'jsParseInt(s, 10)');
+check('js2kt: JSON.stringify', kt('JSON.stringify(x)') === 'jsStringify(x)');
+check('js2kt: setTimeout', kt('setTimeout(fn, 100)') === 'VeskTimers.setTimeout(fn, 100)');
+check('js2kt: console.log multi-arg', kt('console.log(`hi`, x)') === 'run { println("hi"); println(x) }');
+check('js2kt: instanceof array', kt('i instanceof Array') === 'i is List<*>');
+check('js2kt: regex test', kt('/ab+c/gi.test(s)') === 'Regex("ab+c", setOf(RegexOption.IGNORE_CASE)).containsMatchIn(s)');
+check('js2kt: regex exec', kt('/a(b)c/.exec(s)') === 'jsRegexExec(Regex("a(b)c"), s)');
+check('js2kt: delete member', kt('delete o.k') === '(o).remove("k")');
+check('js2kt: template expression interpolation', kt('`v${c}`') === '"v$c"');
+check('js2kt: spread array', kt('[...a]') === 'listOf(*(a as List<*>).toTypedArray())');
+check('js2kt: object literal', kt('({ a: 1, b })') === 'mutableMapOf<String, Any?>("a" to 1, "b" to b)');
+check('js2kt: destructure object', ktStmt('const { a, b } = obj') === 'val __vsk_d0 = obj\nval a = (__vsk_d0 as Map<String, Any?>)[\"a\"]\nval b = (__vsk_d0 as Map<String, Any?>)[\"b\"]');
+check('js2kt: destructure array', ktStmt('const [a, b] = arr') === 'val __vsk_d0 = arr\nval a = (__vsk_d0 as List<*>).getOrNull(0)\nval b = (__vsk_d0 as List<*>).getOrNull(1)');
+check('js2kt: destructure rest + default', ktStmt('const { a: x = 1, ...rest } = obj') === 'val __vsk_d0 = obj\nval x = (__vsk_d0 as Map<String, Any?>)[\"a\"] ?: 1\nval rest = (__vsk_d0 as Map<String, Any?>) - \"a\"');
+check('js2kt: nullish assign', ktStmt('a ??= b') === 'a = a ?: b;');
+check('js2kt: or assign', ktStmt('a ||= b') === 'a = if (truthy(a)) a else b;');
+check('js2kt: switch to when', ktStmt('switch (x) { case 1: break; default: y() }') === 'when (x) {\n\t1 -> run __vsksw0@ {\n\t\treturn@__vsksw0;\n\t}\n\telse -> run __vsksw1@ {\n\t\ty();\n\t}\n}');
+check('js2kt: c-style for to while', ktStmt('for (let i = 0; i < 10; i++) { x += i }') === 'var i = 0\nwhile (truthy(num(i) < num(10))) {\n\trun __vskfor0@ {\n\t\t{\n\t\t\tx += i;\n\t\t}\n\t}\n\ti ++\n}');
+check('js2kt: for-of', ktStmt('for (const x of items) { f(x) }') === 'for (x in items) {\n\tf(x);\n}');
+check('js2kt: class with typed ctor/method', ktStmt('class Foo { constructor(a) { this.a = a } getA() { return this.a } }') === 'class Foo {\n\tvar a: Any? = null\n\tconstructor(a: Any?) {\n\t\tthis.a= a;\n\t}\n\tfun getA() = run<Any?> __veskfn0@ {\n\t\treturn@__veskfn0 this.a;\n\t}\n}');
+check('js2kt: function declaration typed params', ktStmt('function add(a, b = 1) { return a + b }') === 'fun add(a: Any?, b: Any? = 1) = run<Any?> __veskfn0@ {\nreturn@__veskfn0 a + b;\n}');
+check('js2kt: labeled getter return', ktStmt('class C { get x() { return this.a } }').includes('get() = run<Any?> __veskget0@ {') && ktStmt('class C { get x() { return this.a } }').includes('return@__veskget0 this.a;'));
 
 console.log(failures === 0 ? '\nALL PASS' : `\n${failures} FAILURES`);
 process.exit(failures === 0 ? 0 : 1);

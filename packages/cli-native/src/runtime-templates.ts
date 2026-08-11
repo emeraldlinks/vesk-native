@@ -168,6 +168,17 @@ export function runtimeImports(deviceApis: Set<string>, used: Set<string>): stri
       'import android.support.v4.media.session.MediaSessionCompat',
     );
   }
+  if (used.has('VeskTimers')) {
+    cond.push(
+      'import kotlinx.coroutines.CoroutineScope',
+      'import kotlinx.coroutines.Dispatchers',
+      'import kotlinx.coroutines.Job',
+      'import kotlinx.coroutines.SupervisorJob',
+      'import kotlinx.coroutines.delay',
+      'import kotlinx.coroutines.isActive',
+      'import kotlinx.coroutines.launch',
+    );
+  }
   return `${RUNTIME_IMPORTS_CORE}${cond.length ? `${cond.join('\n')}\n` : ''}`;
 }
 export const RUNTIME_CORE = `
@@ -2693,9 +2704,196 @@ fun Outlet(content: @Composable () -> Unit = {}) {
     }
 }
 ` },
+  'jsString': { deps: [], src: `
+fun jsString(v: Any?): String = when (v) {
+    null -> "null"
+    is String -> v
+    else -> v.toString()
+}
+` },
+  'jsTypeof': { deps: [], src: `
+fun jsTypeof(v: Any?): String = when (v) {
+    null -> "object"
+    is String -> "string"
+    is Boolean -> "boolean"
+    is Number -> "number"
+    is Function<*> -> "function"
+    else -> "object"
+}
+` },
+  'jsGlobalIsNaN': { deps: [], src: `
+fun jsGlobalIsNaN(v: Any?): Boolean = when (v) {
+    is Double -> v.isNaN()
+    is Float -> v.isNaN()
+    is Number -> false
+    is Boolean -> false
+    null -> false
+    is String -> { val t = v.trim(); t.isNotEmpty() && t.toDoubleOrNull() == null }
+    else -> true
+}
+` },
+  'jsGlobalIsFinite': { deps: [], src: `
+fun jsGlobalIsFinite(v: Any?): Boolean = when (v) {
+    is Double -> v.isFinite()
+    is Float -> v.isFinite()
+    is Number -> true
+    is Boolean -> true
+    null -> true
+    is String -> { val t = v.trim(); t.isEmpty() || t.toDoubleOrNull()?.isFinite() == true }
+    else -> false
+}
+` },
+  'jsStrictIsNaN': { deps: [], src: `
+fun jsStrictIsNaN(v: Any?): Boolean = when (v) {
+    is Double -> v.isNaN()
+    is Float -> v.isNaN()
+    else -> false
+}
+` },
+  'jsStrictIsFinite': { deps: [], src: `
+fun jsStrictIsFinite(v: Any?): Boolean = when (v) {
+    is Double -> v.isFinite()
+    is Float -> v.isFinite()
+    else -> false
+}
+` },
+  'jsIsInteger': { deps: [], src: `
+fun jsIsInteger(v: Any?): Boolean = when (v) {
+    is Double -> !v.isNaN() && !v.isInfinite() && v % 1.0 == 0.0
+    is Float -> !v.isNaN() && !v.isInfinite() && v % 1.0f == 0.0f
+    is Number -> true
+    else -> false
+}
+` },
+  'jsParseInt': { deps: ['jsString'], src: `
+fun jsParseInt(v: Any?, radix: Any? = null): Int {
+    var s = jsString(v).trim()
+    var sign = 1
+    if (s.startsWith("-")) { sign = -1; s = s.substring(1) }
+    else if (s.startsWith("+")) s = s.substring(1)
+    var r = when (radix) { is Number -> radix.toInt(); else -> 10 }
+    if (r == 0) r = 10
+    if (r == 16 && s.startsWith("0x")) s = s.substring(2)
+    else if (r == 16 && s.startsWith("0X")) s = s.substring(2)
+    if (r < 2 || r > 36) return 0
+    var acc = 0L
+    for (ch in s) {
+        val d = when (ch) {
+            in '0'..'9' -> ch - '0'
+            in 'a'..'z' -> ch - 'a' + 10
+            in 'A'..'Z' -> ch - 'A' + 10
+            else -> break
+        }
+        if (d >= r) break
+        acc = acc * r + d
+    }
+    return (acc * sign).toInt()
+}
+` },
+  'jsParseFloat': { deps: ['jsString'], src: `
+fun jsParseFloat(v: Any?): Double = jsString(v).trim().toDoubleOrNull() ?: 0.0
+` },
+  'jsEncodeURIComponent': { deps: ['jsString'], src: `
+fun jsEncodeURIComponent(v: Any?): String = java.net.URLEncoder.encode(jsString(v), "UTF-8").replace("+", "%20")
+` },
+  'jsDecodeURIComponent': { deps: ['jsString'], src: `
+fun jsDecodeURIComponent(v: Any?): String = java.net.URLDecoder.decode(jsString(v), "UTF-8")
+` },
+  'jsEncodeURI': { deps: ['jsString'], src: `
+fun jsEncodeURI(v: Any?): String = java.net.URLEncoder.encode(jsString(v), "UTF-8")
+    .replace("+", "%20")
+    .replace("%2C", ",")
+    .replace("%2F", "/")
+    .replace("%3A", ":")
+    .replace("%3F", "?")
+    .replace("%40", "@")
+    .replace("%26", "&")
+    .replace("%3D", "=")
+    .replace("%2B", "+")
+    .replace("%24", "$")
+    .replace("%23", "#")
+    .replace("%21", "!")
+    .replace("%27", "'")
+    .replace("%28", "(")
+    .replace("%29", ")")
+    .replace("%7E", "~")
+` },
+  'jsDecodeURI': { deps: ['jsString'], src: `
+fun jsDecodeURI(v: Any?): String = java.net.URLDecoder.decode(jsString(v), "UTF-8")
+` },
+  'jsRegexExec': { deps: ['jsString'], src: `
+fun jsAsRegex(v: Any?): Regex = when (v) {
+    is Regex -> v
+    is String -> Regex(v)
+    else -> Regex(jsString(v))
+}
+fun jsRegexExec(re: Any?, s: Any?): List<String?>? = jsAsRegex(re).find(jsString(s))?.let { m ->
+    listOf(m.value) + m.groups.drop(1).map { g -> g?.value }
+}
+` },
+  'jsRegexSearch': { deps: ['jsString'], src: `
+fun jsRegexSearch(re: Any?, s: Any?): Int = jsAsRegex(re).find(jsString(s))?.range?.first ?: -1
+` },
+  'jsStringify': { deps: [], src: `
+fun jsStringify(v: Any?): String = when (v) {
+    null -> "null"
+    is String -> "\"$v\""
+    is Boolean -> v.toString()
+    is Number -> v.toString()
+    is List<*> -> v.joinToString(",", "[", "]") { jsStringify(it) }
+    is Map<*, *> -> v.entries.joinToString(",", "{", "}") { "\"\${it.key}\": \${jsStringify(it.value)}" }
+    else -> "\"\${v.toString()}\""
+}
+` },
+  'jsParseJson': { deps: ['jsString'], src: `
+fun jsParseJson(s: Any?): Any? = jsJsonValue(org.json.JSONTokener(jsString(s)).nextValue())
+private fun jsJsonValue(v: Any?): Any? = when (v) {
+    org.json.JSONObject.NULL -> null
+    is org.json.JSONObject -> {
+        val m = LinkedHashMap<String, Any?>()
+        val it = v.keys()
+        while (it.hasNext()) { val k = it.next(); m[k] = jsJsonValue(v.opt(k)) }
+        m
+    }
+    is org.json.JSONArray -> List(v.length()) { i -> jsJsonValue(v.opt(i)) }
+    else -> v
+}
+` },
+  'jsTagged': { deps: [], src: `
+fun jsTagged(tag: (List<String>, List<Any?>) -> Any?, strings: List<String>, values: List<Any?>): Any? = tag(strings, values)
+` },
+  'JsConsole': { deps: ['jsString'], src: `
+object JsConsole {
+    private val counts = mutableMapOf<String, Int>()
+    private val times = mutableMapOf<String, Long>()
+    fun count(label: Any?) { val k = jsString(label); val c = (counts[k] ?: 0) + 1; counts[k] = c; println("$k: $c") }
+    fun countReset(label: Any?) { counts.remove(jsString(label)) }
+    fun time(label: Any?) { times[jsString(label)] = System.nanoTime() }
+    fun timeEnd(label: Any?) { val k = jsString(label); val s = times.remove(k) ?: 0L; println("\$k: \${(System.nanoTime() - s) / 1_000_000.0} ms") }
+}
+` },
+  'VeskTimers': { deps: [], src: `
+object VeskTimers {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private val jobs = mutableMapOf<Int, Job>()
+    private var nextId = 1
+    fun setTimeout(fn: () -> Unit, ms: Any? = 0): Int {
+        val id = nextId++
+        jobs[id] = scope.launch { delay(ms?.let { num(it) }?.toLong() ?: 0L); jobs.remove(id); fn() }
+        return id
+    }
+    fun setInterval(fn: () -> Unit, ms: Any? = 0): Int {
+        val id = nextId++
+        jobs[id] = scope.launch { while (isActive) { delay(ms?.let { num(it) }?.toLong() ?: 0L); fn() } }
+        return id
+    }
+    fun clearTimeout(id: Int) { jobs.remove(id)?.cancel() }
+    fun clearInterval(id: Int) { jobs.remove(id)?.cancel() }
+}
+` },
 };
 
-export const RUNTIME_ORDER = ['veskVideo', 'veskAudio', 'veskFileImage', 'veskDeviceCore', 'veskDeviceApi', 'veskQr', 'veskDragDrop', 'veskColorFilter', 'veskBrightness', 'veskContrast', 'veskGrayscale', 'veskSaturate', 'veskInvert', 'veskSepia', 'veskHueRotate', 'veskDashedBorder', 'veskSideBorder', 'veskDivideLine', 'veskSkew', 'Link', 'NavLink', 'Outlet'];
+export const RUNTIME_ORDER = ['veskVideo', 'veskAudio', 'veskFileImage', 'veskDeviceCore', 'veskDeviceApi', 'veskQr', 'veskDragDrop', 'veskColorFilter', 'veskBrightness', 'veskContrast', 'veskGrayscale', 'veskSaturate', 'veskInvert', 'veskSepia', 'veskHueRotate', 'veskDashedBorder', 'veskSideBorder', 'veskDivideLine', 'veskSkew', 'Link', 'NavLink', 'Outlet', 'jsString', 'jsTypeof', 'jsGlobalIsNaN', 'jsGlobalIsFinite', 'jsStrictIsNaN', 'jsStrictIsFinite', 'jsIsInteger', 'jsParseInt', 'jsParseFloat', 'jsEncodeURIComponent', 'jsDecodeURIComponent', 'jsEncodeURI', 'jsDecodeURI', 'jsRegexExec', 'jsRegexSearch', 'jsStringify', 'jsParseJson', 'jsTagged', 'JsConsole', 'VeskTimers'];
 
 // Function/composable names that come from a differently-named helper unit.
 export const BIOMETRIC_CHECK_BODY = `val pm = context.packageManager

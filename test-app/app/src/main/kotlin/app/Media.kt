@@ -162,7 +162,7 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				)
 			}
 			Button(
-				onClick = { device.pickImage() },
+				onClick = { run __veskret0@ { device.pickImage() } },
 				modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF2563EB)),
 				shape = RoundedCornerShape(9999.dp),
 				colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -204,7 +204,7 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				Button(
-					onClick = { device.pickImage( { uri -> cbPhotoCell.value = uri }) },
+					onClick = { run __veskret1@ { device.pickImage( { uri -> run __veskret2@ { cbPhotoCell.value = uri } }) } },
 					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF2563EB)),
 					shape = RoundedCornerShape(9999.dp),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -218,7 +218,7 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				)
 				}
 				Button(
-					onClick = { device.notify("Vesk Demo", "Tapped via onTap",  { device.pickAudio( { uri -> cbPhotoCell.value = uri }) }) },
+					onClick = { run __veskret3@ { device.notify("Vesk Demo", "Tapped via onTap",  { run __veskret4@ { device.pickAudio( { uri -> run __veskret5@ { cbPhotoCell.value = uri } }) } }) } },
 					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)),
 					shape = RoundedCornerShape(9999.dp),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -267,15 +267,15 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 			) {
 				VeskPhotoPicker(
 					label = "Pick a photo",
-					onPick = { uri -> cbPhotoCell.value = uri },
+					onPick = { uri -> run __veskret6@ { cbPhotoCell.value = uri } },
 				)
 				VeskCamera(
 					label = "Take photo",
-					onDone = { uri -> cbPhotoCell.value = uri },
+					onDone = { uri -> run __veskret7@ { cbPhotoCell.value = uri } },
 				)
 				VeskCamera(
 					label = "Record video",
-					onDone = { uri -> cbVideo.value = uri },
+					onDone = { uri -> run __veskret8@ { cbVideo.value = uri } },
 					video = true,
 				)
 			}
@@ -285,21 +285,21 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 			) {
 				VeskRecorder(
 					label = "Record audio",
-					onDone = { path -> cbRecording.value = path },
+					onDone = { path -> run __veskret9@ { cbRecording.value = path } },
 				)
 				VeskFileInput(
 					label = "Attach a file",
-					onDone = { uri, name -> cbFile.value = name },
+					onDone = { uri, name -> run __veskret10@ { cbFile.value = name } },
 					mime = "*/*",
 				)
 				VeskNotification(
 					title = "Vesk Demo",
 					text = "Declarative notification",
-					onTap = { cbPhotoCell.value = "notification tapped" },
+					onTap = { run __veskret11@ { cbPhotoCell.value = "notification tapped" } },
 				)
 			}
 			Text(
-				text = "recording: " + ((cbRecording.value ?: "none")).toString() + " · file: " + ((cbFile.value ?: "none")).toString(),
+				text = "recording: " + ((cbRecording.value ?: "none")).toString() + " · file: " + (run { val __vsk_v12 = cbFile.value; if (truthy(__vsk_v12)) __vsk_v12 else "none" }).toString(),
 				modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
 				style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF6B7280)),
 			)
@@ -336,7 +336,7 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				Button(
-					onClick = { device.capturePhoto() },
+					onClick = { run __veskret13@ { device.capturePhoto() } },
 					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)),
 					shape = RoundedCornerShape(9999.dp),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -350,7 +350,7 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				)
 				}
 				Button(
-					onClick = { device.captureVideo() },
+					onClick = { run __veskret14@ { device.captureVideo() } },
 					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)),
 					shape = RoundedCornerShape(9999.dp),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -398,7 +398,7 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				Button(
-					onClick = { if (truthy(device.recording)) device.stopRecording(); else device.startRecording() },
+					onClick = { run __veskret15@ { if (truthy(device.recording)) device.stopRecording(); else device.startRecording() } },
 					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFE11D48)),
 					shape = RoundedCornerShape(9999.dp),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -416,7 +416,7 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				}
 				}
 				Button(
-					onClick = { device.pickAudio() },
+					onClick = { run __veskret16@ { device.pickAudio() } },
 					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)),
 					shape = RoundedCornerShape(9999.dp),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -464,7 +464,7 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				)
 			}
 			Button(
-				onClick = { device.pickFile() },
+				onClick = { run __veskret17@ { device.pickFile() } },
 				modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)),
 				shape = RoundedCornerShape(9999.dp),
 				colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -508,7 +508,7 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				)
 			}
 			Button(
-				onClick = { device.notify("Vesk Demo", "Notification from the media page") },
+				onClick = { run __veskret18@ { device.notify("Vesk Demo", "Notification from the media page") } },
 				modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF4F46E5)),
 				shape = RoundedCornerShape(9999.dp),
 				colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -544,13 +544,13 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				VeskBatteryStatus(
-					onDone = { level, charging -> batteryInfo.value = (("" + level) + "%") + (if (truthy(charging)) " · charging" else "") },
+					onDone = { level, charging -> run __veskret19@ { batteryInfo.value = (("" + level) + "%") + (if (truthy(charging)) " · charging" else "") } },
 				)
 				VeskNetworkStatus(
-					onDone = { type, available -> networkInfo.value = ((type ?: "offline")) + (if (truthy(available)) " · online" else "") },
+					onDone = { type, available -> run __veskret20@ { networkInfo.value = ((type ?: "offline")) + (if (truthy(available)) " · online" else "") } },
 				)
 				VeskLocation(
-					onDone = { lat, lng -> locInfo.value = if (truthy(lat)) (lat + ", ") + lng else "no fix (location off?)" },
+					onDone = { lat, lng -> run __veskret21@ { locInfo.value = if (truthy(lat)) (lat + ", ") + lng else "no fix (location off?)" } },
 				)
 			}
 			Text(
@@ -581,10 +581,10 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				VeskApps(
-					onDone = { list -> firstApp.value = (list[0] ?: "none") },
+					onDone = { list -> run __veskret22@ { firstApp.value = (list[0] ?: "none") } },
 				)
 				Button(
-					onClick = { device.listApps( { list -> firstApp.value = (list[0] ?: "none") }) },
+					onClick = { run __veskret23@ { device.listApps( { list -> run __veskret24@ { firstApp.value = (list[0] ?: "none") } }) } },
 					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)),
 					shape = RoundedCornerShape(9999.dp),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -626,16 +626,16 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				VeskContacts(
-					onDone = { list -> recentContact.value = (list[0] ?: "none") },
+					onDone = { list -> run __veskret25@ { recentContact.value = (list[0] ?: "none") } },
 				)
 				VeskCallLog(
-					onDone = { list -> callRow.value = (list[0] ?: "none") },
+					onDone = { list -> run __veskret26@ { callRow.value = (list[0] ?: "none") } },
 				)
 				VeskMessages(
-					onDone = { list -> msgRow.value = (list[0] ?: "none") },
+					onDone = { list -> run __veskret27@ { msgRow.value = (list[0] ?: "none") } },
 				)
 				VeskAccounts(
-					onDone = { list -> acctRow.value = (list[0] ?: "none") },
+					onDone = { list -> run __veskret28@ { acctRow.value = (list[0] ?: "none") } },
 				)
 			}
 			Text(
@@ -681,11 +681,11 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				VeskClipboard(
-					onDone = { text -> clipTxt.value = (text ?: "clipboard is empty") },
+					onDone = { text -> run __veskret29@ { clipTxt.value = (text ?: "clipboard is empty") } },
 				)
 				VeskCopyToClipboard(
 					value = "copied by vesk",
-					onDone = { clipTxt.value = "copied \"copied by vesk\" — now read it back" },
+					onDone = { run __veskret30@ { clipTxt.value = "copied \"copied by vesk\" — now read it back" } },
 				)
 				VeskVibrate(
 					duration = 200,
@@ -698,14 +698,14 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				VeskScreenshot(
-					onDone = { path -> clipTxt.value = "screenshot: " + ((path ?: "failed")) },
+					onDone = { path -> run __veskret31@ { clipTxt.value = "screenshot: " + ((path ?: "failed")) } },
 				)
 				VeskShareText(
 					text = "Hello from vesk-native!",
 				)
 				VeskShareFile(
 					label = "Share last image",
-					path = (device.lastPhoto ?: device.lastImage),
+					path = run { val __vsk_v32 = device.lastPhoto; if (truthy(__vsk_v32)) __vsk_v32 else device.lastImage },
 				)
 			}
 			Text(
@@ -736,7 +736,7 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				VeskBiometricAuth(
-					onDone = { ok, reason -> bioInfo.value = if (truthy(ok)) "authenticated ✓" else "failed: " + ((reason ?: "?")) },
+					onDone = { ok, reason -> run __veskret33@ { bioInfo.value = if (truthy(ok)) "authenticated ✓" else "failed: " + ((reason ?: "?")) } },
 				)
 			}
 			Text(
@@ -767,12 +767,12 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				VeskBluetooth(
-					onDone = { enabled, list -> btInfo.value = ((if (truthy(enabled)) "on" else "off") + " · ") + ((list[0] ?: "no paired devices")) },
+					onDone = { enabled, list -> run __veskret34@ { btInfo.value = ((if (truthy(enabled)) "on" else "off") + " · ") + ((list[0] ?: "no paired devices")) } },
 				)
 				VeskBluetoothToggle(
 				)
 				VeskBluetoothScan(
-					onDone = { list -> btInfo.value = "scan: " + ((list[0] ?: "nothing found")) },
+					onDone = { list -> run __veskret35@ { btInfo.value = "scan: " + ((list[0] ?: "nothing found")) } },
 				)
 			}
 			Text(
@@ -803,7 +803,7 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				Button(
-					onClick = { device.generateQrCode("vesk-native:" + ((cbPhotoCell.value ?: "qr")),  { path -> qrText.value = (path ?: "") }) },
+					onClick = { run __veskret36@ { device.generateQrCode("vesk-native:" + ((cbPhotoCell.value ?: "qr")),  { path -> run __veskret37@ { qrText.value = (path ?: "") } }) } },
 					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)),
 					shape = RoundedCornerShape(9999.dp),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -817,15 +817,15 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				)
 				}
 				VeskQrScanner(
-					onResult = { text -> qrText.value = "scanned: " + ((text ?: "no code")) },
+					onResult = { text -> run __veskret38@ { qrText.value = "scanned: " + ((text ?: "no code")) } },
 				)
 			}
 			VeskQrCode(
-				value = (qrText.value ?: "https://vesk.dev"),
+				value = run { val __vsk_v39 = qrText.value; if (truthy(__vsk_v39)) __vsk_v39 else "https://vesk.dev" },
 				modifier = Modifier.padding(top = 12.dp).width(160.dp).height(160.dp),
 			)
 			Text(
-				text = ((qrText.value ?: "qr-code element renders whatever value is set")).toString(),
+				text = (run { val __vsk_v40 = qrText.value; if (truthy(__vsk_v40)) __vsk_v40 else "qr-code element renders whatever value is set" }).toString(),
 				modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
 				style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF6B7280)),
 			)
@@ -848,7 +848,7 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				)
 			}
 			VeskScreenRecord(
-				onDone = { path -> screenRecPath.value = (path ?: "cancelled") },
+				onDone = { path -> run __veskret41@ { screenRecPath.value = (path ?: "cancelled") } },
 			)
 			Text(
 				text = "path: " + (screenRecPath.value).toString(),
@@ -878,7 +878,7 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				VeskVolume(
-					onDone = { level, ringer -> sysInfo.value = (("volume " + level) + " · ") + ((ringer ?: "?")) },
+					onDone = { level, ringer -> run __veskret42@ { sysInfo.value = (("volume " + level) + " · ") + ((ringer ?: "?")) } },
 				)
 				VeskSetVolume(
 					label = "Volume 60%",
@@ -931,20 +931,20 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				VeskDeviceInfo(
-					onDone = { info -> sysInfo.value = info },
+					onDone = { info -> run __veskret43@ { sysInfo.value = info } },
 				)
 				VeskStorage(
-					onDone = { free, total -> storageTxt.value = (free + " free of ") + total },
+					onDone = { free, total -> run __veskret44@ { storageTxt.value = (free + " free of ") + total } },
 				)
 				VeskSensor(
 					label = "Light sensor",
 					type = "light",
-					onDone = { v -> sensorVal.value = (v ?: "no sensor") },
+					onDone = { v -> run __veskret45@ { sensorVal.value = (v ?: "no sensor") } },
 				)
 				VeskSensor(
 					label = "Accelerometer",
 					type = "accelerometer",
-					onDone = { v -> sensorVal.value = (v ?: "no sensor") },
+					onDone = { v -> run __veskret46@ { sensorVal.value = (v ?: "no sensor") } },
 				)
 			}
 			Text(
@@ -975,13 +975,13 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				VeskCalendar(
-					onDone = { list -> calTxt.value = (list[0] ?: "no upcoming events") },
+					onDone = { list -> run __veskret47@ { calTxt.value = (list[0] ?: "no upcoming events") } },
 				)
 				VeskNfc(
-					onDone = { available, enabled -> calTxt.value = "nfc " + (if (truthy(available)) if (truthy(enabled)) "on" else "off" else "absent") },
+					onDone = { available, enabled -> run __veskret48@ { calTxt.value = "nfc " + (if (truthy(available)) if (truthy(enabled)) "on" else "off" else "absent") } },
 				)
 				VeskSim(
-					onDone = { carrier, state -> calTxt.value = (((carrier ?: "no sim")) + " · ") + ((state ?: "?")) },
+					onDone = { carrier, state -> run __veskret49@ { calTxt.value = (((carrier ?: "no sim")) + " · ") + ((state ?: "?")) } },
 				)
 			}
 			Text(
@@ -1061,11 +1061,11 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 			) {
 				VeskSpeak(
 					text = "Everything in vesk is built from vsk files.",
-					onDone = { ok -> ttsDone.value = ok },
+					onDone = { ok -> run __veskret50@ { ttsDone.value = ok } },
 				)
 				VeskWallpaper(
 					label = "Set wallpaper from last photo",
-					path = (device.lastPhoto ?: cbPhotoCell.value),
+					path = run { val __vsk_v51 = device.lastPhoto; if (truthy(__vsk_v51)) __vsk_v51 else cbPhotoCell.value },
 				)
 			}
 			Column(modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
@@ -1103,7 +1103,7 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				Button(
-					onClick = { device.writeFile("notes.txt", "hello vesk",  { path -> fileTxt.value = "wrote: " + ((path ?: "failed")) }) },
+					onClick = { run __veskret52@ { device.writeFile("notes.txt", "hello vesk",  { path -> run __veskret53@ { fileTxt.value = "wrote: " + ((path ?: "failed")) } }) } },
 					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)),
 					shape = RoundedCornerShape(9999.dp),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -1117,7 +1117,7 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				)
 				}
 				Button(
-					onClick = { device.readFile("notes.txt",  { text -> fileTxt.value = "read: " + ((text ?: "missing")) }) },
+					onClick = { run __veskret54@ { device.readFile("notes.txt",  { text -> run __veskret55@ { fileTxt.value = "read: " + ((text ?: "missing")) } }) } },
 					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)),
 					shape = RoundedCornerShape(9999.dp),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -1131,7 +1131,7 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				)
 				}
 				Button(
-					onClick = { device.listFiles("",  { list -> fileTxt.value = "files: " + ((list[0] ?: "none")) }) },
+					onClick = { run __veskret56@ { device.listFiles("",  { list -> run __veskret57@ { fileTxt.value = "files: " + ((list[0] ?: "none")) } }) } },
 					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)),
 					shape = RoundedCornerShape(9999.dp),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -1145,7 +1145,7 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				)
 				}
 				Button(
-					onClick = { device.deleteFile("notes.txt",  { ok -> fileTxt.value = "deleted: " + ok }) },
+					onClick = { run __veskret58@ { device.deleteFile("notes.txt",  { ok -> run __veskret59@ { fileTxt.value = "deleted: " + ok } }) } },
 					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)),
 					shape = RoundedCornerShape(9999.dp),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -1198,10 +1198,10 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				)
 			}
 			Column(
-				modifier = Modifier.veskDropTarget({ t -> dropText.value = t }).fillMaxWidth().padding(top = 8.dp).clip(RoundedCornerShape(12.dp)).veskDashedBorder(2.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.22f), floatArrayOf(12f, 12f)).padding(16.dp),
+				modifier = Modifier.veskDropTarget({ t -> run __veskret60@ { dropText.value = t } }).fillMaxWidth().padding(top = 8.dp).clip(RoundedCornerShape(12.dp)).veskDashedBorder(2.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.22f), floatArrayOf(12f, 12f)).padding(16.dp),
 			) {
 				Text(
-					text = "drop here → " + ((dropText.value ?: "nothing dropped yet")).toString(),
+					text = "drop here → " + (run { val __vsk_v61 = dropText.value; if (truthy(__vsk_v61)) __vsk_v61 else "nothing dropped yet" }).toString(),
 					modifier = Modifier.fillMaxWidth(),
 					style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF6B7280)),
 				)

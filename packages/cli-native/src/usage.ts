@@ -63,6 +63,14 @@ const HELPER_FN_NAMES: Record<string, string> = {
   VeskDragData: 'veskDragDrop',
   veskDraggable: 'veskDragDrop',
   veskDropTarget: 'veskDragDrop',
+  setTimeout: 'VeskTimers',
+  setInterval: 'VeskTimers',
+  clearTimeout: 'VeskTimers',
+  clearInterval: 'VeskTimers',
+  count: 'JsConsole',
+  countReset: 'JsConsole',
+  time: 'JsConsole',
+  timeEnd: 'JsConsole',
 };
 
 // Whitespace-tolerant token scan: every identifier immediately followed by

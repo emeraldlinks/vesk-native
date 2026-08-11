@@ -513,7 +513,7 @@ fun Home(props: HomeProps = HomeProps(), content: @Composable () -> Unit = {}) {
 				style = TextStyle(color = Color(0xB3FFFFFF), fontSize = 14.sp, lineHeight = 24.sp),
 			)
 			Button(
-				onClick = { println("Nordi+ membership toggled"); joined.value = !joined.value },
+				onClick = { run __veskret0@ { println("Nordi+ membership toggled"); joined.value = !truthy(joined.value) } },
 				modifier = Modifier.padding(top = 16.dp).clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.surface).padding(vertical = 10.dp),
 				shape = RoundedCornerShape(9999.dp),
 				colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),

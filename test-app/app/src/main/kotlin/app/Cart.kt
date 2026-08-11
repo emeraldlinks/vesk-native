@@ -124,7 +124,7 @@ fun Cart(content: @Composable () -> Unit = {}) {
 							horizontalArrangement = Arrangement.spacedBy(4.dp),
 						) {
 							Button(
-								onClick = { if (truthy(num(qty1.value) > num(1))) qty1.value = qty1.value + -1 },
+								onClick = { run __veskret0@ { if (truthy(num(qty1.value) > num(1))) qty1.value = qty1.value + -1 } },
 								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(28.dp).height(28.dp),
 								shape = RoundedCornerShape(9999.dp),
 								colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -195,7 +195,7 @@ fun Cart(content: @Composable () -> Unit = {}) {
 							horizontalArrangement = Arrangement.spacedBy(4.dp),
 						) {
 							Button(
-								onClick = { if (truthy(num(qty2.value) > num(1))) qty2.value = qty2.value + -1 },
+								onClick = { run __veskret1@ { if (truthy(num(qty2.value) > num(1))) qty2.value = qty2.value + -1 } },
 								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(28.dp).height(28.dp),
 								shape = RoundedCornerShape(9999.dp),
 								colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -266,7 +266,7 @@ fun Cart(content: @Composable () -> Unit = {}) {
 							horizontalArrangement = Arrangement.spacedBy(4.dp),
 						) {
 							Button(
-								onClick = { if (truthy(num(qty3.value) > num(1))) qty3.value = qty3.value + -1 },
+								onClick = { run __veskret2@ { if (truthy(num(qty3.value) > num(1))) qty3.value = qty3.value + -1 } },
 								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(28.dp).height(28.dp),
 								shape = RoundedCornerShape(9999.dp),
 								colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -355,7 +355,7 @@ fun Cart(content: @Composable () -> Unit = {}) {
 			} else {
 			}
 			Button(
-				onClick = { promo.value = !promo.value },
+				onClick = { promo.value = !truthy(promo.value) },
 				modifier = Modifier.padding(top = 4.dp).align(Alignment.Start),
 				colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 				elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
