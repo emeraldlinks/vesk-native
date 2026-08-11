@@ -91,11 +91,13 @@ interface Snapshot {
 
 export class Parser {
   private readonly lex: Lexer;
+  private readonly src: string;
   private ahead: Token[] = [];
   private prev: Token | null = null;
 
   constructor(src: string) {
     this.lex = new Lexer(src);
+    this.src = src;
   }
 
   // ---------- token stream ----------
@@ -256,6 +258,12 @@ export class Parser {
       const start = this.peek().start;
       try {
         const params = this.tryParseParenthesizedParams();
+        let returnType: string | null = null;
+        if (params && this.isPunct(':')) {
+          this.next();
+          const ts = this.peek().start;
+          returnType = this.src.slice(ts, this.skipType());
+        }
         if (params && this.isPunct('=>')) {
           this.next();
           const body = this.parseArrowBody(noIn);
@@ -264,11 +272,42 @@ export class Parser {
             params,
             body,
             async: false,
+            returnType,
             expression: body.type !== 'BlockStatement',
           });
         }
       } catch {
         // not a parameter list — a parenthesized expression; fall through
+      }
+      this.restoreState(mark);
+    }
+    // <T>(params) => body — generic arrow (ambiguous with `<`, so speculative).
+    if (this.isPunct('<')) {
+      const mark = this.saveState();
+      const start = this.peek().start;
+      try {
+        this.skipBalanced('<');
+        const params = this.tryParseParenthesizedParams();
+        let returnType: string | null = null;
+        if (params && this.isPunct(':')) {
+          this.next();
+          const ts = this.peek().start;
+          returnType = this.src.slice(ts, this.skipType());
+        }
+        if (params && this.eatPunct('=>')) {
+          const body = this.parseArrowBody(noIn);
+          return this.node('ArrowFunctionExpression', start, body.end, {
+            id: null,
+            params,
+            body,
+            async: false,
+            returnType,
+            expression: body.type !== 'BlockStatement',
+          });
+        }
+      } catch (e) {
+        // not a generic arrow — a relational <; fall through
+        if (process.env.VESK_PARSE_DEBUG) console.error('generic arrow probe threw:', (e as Error).message);
       }
       this.restoreState(mark);
     }
@@ -278,6 +317,12 @@ export class Parser {
   private tryParseArrowTail(start: number, async: boolean, noIn: boolean): JsNode | null {
     if (this.isPunct('(')) {
       const params = this.tryParseParenthesizedParams();
+      let returnType: string | null = null;
+      if (params && this.isPunct(':')) {
+        this.next();
+        const ts = this.peek().start;
+        returnType = this.src.slice(ts, this.skipType());
+      }
       if (params && this.isPunct('=>')) {
         this.next();
         const body = this.parseArrowBody(noIn);
@@ -286,6 +331,7 @@ export class Parser {
           params,
           body,
           async,
+          returnType,
           expression: body.type !== 'BlockStatement',
         });
       }
@@ -307,10 +353,15 @@ export class Parser {
     if (this.isPunct('<')) {
       const mark = this.saveState();
       try {
-        this.next(); // <
-        this.skipType();
-        if (this.eatPunct('>') && this.isPunct('(')) {
+        this.skipBalanced('<');
+        if (this.isPunct('(')) {
           const params = this.tryParseParenthesizedParams();
+          let returnType: string | null = null;
+          if (params && this.isPunct(':')) {
+            this.next();
+            const ts = this.peek().start;
+            returnType = this.src.slice(ts, this.skipType());
+          }
           if (params && this.eatPunct('=>')) {
             const body = this.parseArrowBody(noIn);
             return this.node('ArrowFunctionExpression', start, body.end, {
@@ -318,6 +369,7 @@ export class Parser {
               params,
               body,
               async,
+              returnType,
               expression: body.type !== 'BlockStatement',
             });
           }
@@ -844,9 +896,11 @@ export class Parser {
     if (this.isIdent()) id = this.identNode(this.next());
     if (this.isPunct('<')) this.skipBalanced('<');
     const params = this.parseParamsStrict();
+    let returnType: string | null = null;
     if (this.isPunct(':')) {
       this.next();
-      this.skipType();
+      const ts = this.peek().start;
+      returnType = this.src.slice(ts, this.skipType());
     }
     const body = this.parseBlock();
     return this.node(decl ? 'FunctionDeclaration' : 'FunctionExpression', start, body.end, {
@@ -856,6 +910,7 @@ export class Parser {
       async,
       generator,
       expression: false,
+      returnType,
     });
   }
 
@@ -894,9 +949,11 @@ export class Parser {
   /** Parses the `(params) { body }` tail of a method/arrow-shaped function. */
   private parseFunctionFromParen(start: number): JsNode {
     const params = this.parseParamsStrict();
+    let returnType: string | null = null;
     if (this.isPunct(':')) {
       this.next();
-      this.skipType();
+      const ts = this.peek().start;
+      returnType = this.src.slice(ts, this.skipType());
     }
     const body = this.parseBlock();
     return this.node('FunctionExpression', start, body.end, {
@@ -906,6 +963,7 @@ export class Parser {
       async: false,
       generator: false,
       expression: false,
+      returnType,
     });
   }
 
@@ -940,10 +998,12 @@ export class Parser {
     } else {
       this.fail(`unexpected token '${t.value}' in binding pattern`, t);
     }
+    if (this.isPunct('?')) this.next(); // TS optional binding: a?: T
     if (this.isPunct(':')) {
       // type annotation on the binding
       this.next();
-      this.skipType();
+      const ts = this.peek().start;
+      (pat as { typeAnnotation?: string | null }).typeAnnotation = this.src.slice(ts, this.skipType());
     }
     return pat;
   }
@@ -1054,45 +1114,130 @@ export class Parser {
     }
   }
 
-  private skipType(): void {
-    for (;;) {
-      const t = this.peek();
-      if (t.type === Tok.EOF) return;
-      if (t.type === Tok.Punct) {
-        switch (t.value) {
-          case '{':
-          case '(':
-          case '[':
-            this.skipBalanced(t.value);
-            continue;
-          case '<':
-            this.skipBalanced('<');
-            continue;
-          case '|':
-          case '&':
-          case '...':
-            this.next();
-            continue;
-          case '=>':
-            // function type: (a: T) => U
-            this.next();
-            continue;
-          default:
-            return;
-        }
-      }
-      if (t.type === Tok.Keyword) {
-        if (t.value === 'keyof' || t.value === 'typeof' || t.value === 'infer' || t.value === 'readonly' || t.value === 'unique' || t.value === 'new' || t.value === 'abstract' || t.value === 'asserts' || t.value === 'is') {
-          this.next();
-          continue;
-        }
-        return;
-      }
-      // Ident, Str, Num, BigInt, template — a type atom; consume suffixes.
-      this.next();
-      if (this.isPunct('<')) this.skipBalanced('<');
-      if (this.isPunct('[')) this.skipBalanced('[');
+  // Keywords that open a type-level operator.
+  private isTypePrefixToken(t: Token): boolean {
+    if (t.type === Tok.Keyword) return t.value === 'typeof' || t.value === 'new' || t.value === 'abstract';
+    if (t.type === Tok.Ident) {
+      return t.value === 'keyof' || t.value === 'readonly' || t.value === 'infer' ||
+        t.value === 'unique' || t.value === 'asserts' || t.value === 'is';
     }
+    return false;
+  }
+
+  // Consume a template-literal type through its tail (nested templates nest).
+  private skipTemplateType(): void {
+    const first = this.next();
+    if (first.type === Tok.NoSubTemplate) return;
+    let depth = 1;
+    for (;;) {
+      const t = this.next();
+      if (t.type === Tok.TemplateTail) {
+        depth--;
+        if (depth === 0) return;
+      } else if (t.type === Tok.TemplateHead) {
+        depth++;
+      }
+    }
+  }
+
+  // Structural parse of a TS type annotation. Consumes exactly the type's
+  // tokens and returns the byte offset just past the type, so callers can
+  // record the annotation text. Covers the erasable TS surface: unions,
+  // intersections, generics, object/tuple/function types, conditional types,
+  // indexed access, keyof/typeof/infer/readonly, literals. Anything after a
+  // complete type that cannot continue a type (a body `{`, `=>`, `)`, ...)
+  // is left for the caller — that is what lets `: string {` parse a body.
+  private skipType(): number {
+    for (;;) {
+      const end = this.skipTypeOperand();
+      const t = this.peek();
+      if (t.type === Tok.Punct && (t.value === '|' || t.value === '&')) {
+        this.next();
+        continue;
+      }
+      if (t.type === Tok.Keyword && t.value === 'extends') {
+        // conditional type: T extends U ? X : Y
+        this.next();
+        this.skipType();
+        if (this.isPunct('?')) {
+          this.next();
+          this.skipType();
+          if (this.isPunct(':')) {
+            this.next();
+            this.skipType();
+          }
+        }
+        return end;
+      }
+      return end;
+    }
+  }
+
+  private skipTypeOperand(): number {
+    const t = this.peek();
+    if (t.type === Tok.Ident || t.type === Tok.Keyword) {
+      if (this.isTypePrefixToken(t)) {
+        this.next();
+        return this.skipTypeOperand();
+      }
+      this.next();
+    } else if (t.type === Tok.Str || t.type === Tok.Num || t.type === Tok.BigInt) {
+      this.next();
+    } else if (t.type === Tok.Punct) {
+      if (t.value === '-') {
+        // negative literal type
+        this.next();
+        this.skipTypeOperand();
+        return this.prev!.end;
+      }
+      if (t.value === '(') {
+        // function type or parenthesized type
+        this.skipBalanced('(');
+        if (this.isPunct('=>')) {
+          this.next();
+          this.skipType();
+        }
+        return this.prev!.end;
+      }
+      if (t.value === '{') {
+        this.skipBalanced('{');
+        return this.prev!.end;
+      }
+      if (t.value === '[') {
+        this.skipBalanced('[');
+        return this.prev!.end;
+      }
+      if (t.value === '<') {
+        this.skipBalanced('<');
+        return this.skipTypeOperand();
+      }
+      this.fail(`expected a type, found '${t.value}'`, t);
+    } else if (t.type === Tok.TemplateHead || t.type === Tok.NoSubTemplate) {
+      this.skipTemplateType();
+      return this.prev!.end;
+    } else {
+      this.fail(`expected a type, found '${t.value}'`, t);
+    }
+    // Postfix suffixes: qualified names, generics, arrays, indexed access.
+    for (;;) {
+      const p = this.peek();
+      if (p.type === Tok.Punct && p.value === '[') {
+        this.skipBalanced('[');
+        continue;
+      }
+      if (p.type === Tok.Punct && p.value === '.') {
+        this.next();
+        if (!this.isIdent()) this.fail('expected a type name after .', p);
+        this.next();
+        continue;
+      }
+      if (p.type === Tok.Punct && p.value === '<') {
+        this.skipBalanced('<');
+        continue;
+      }
+      break;
+    }
+    return this.prev!.end;
   }
 
   // ---------- statements ----------
@@ -1196,33 +1341,35 @@ export class Parser {
     // parsing. Mirrors the web stripTsTypes pass — nothing is emitted.
     const start = this.peek().start;
     let depth = 0;
+    let inBody = false;
     for (;;) {
       const t = this.peek();
       if (t.type === Tok.EOF) break;
       if (t.type === Tok.Punct) {
-        if (depth === 0 && t.value === ';') {
-          this.next();
-          break;
-        }
-        if (t.value === '{' || t.value === '(' || t.value === '[' || t.value === '<') {
+        if (t.value === '{') {
+          inBody = true;
           depth++;
           this.next();
           continue;
         }
-        if (t.value === '}' || t.value === ')' || t.value === ']' || t.value === '>') {
-          if (depth === 0) {
-            if (t.value === '}') {
-              this.next();
-              if (this.eatPunct(';')) {
-                // trailing semicolon after the body
-              }
-              break;
-            }
-            break;
+        if (t.value === '}') {
+          if (!inBody) {
+            this.next();
+            continue;
           }
           depth--;
           this.next();
+          if (depth === 0) {
+            if (this.eatPunct(';')) {
+              // trailing semicolon after the body
+            }
+            break;
+          }
           continue;
+        }
+        if (depth === 0 && !inBody && t.value === ';') {
+          this.next();
+          break;
         }
         this.next();
         continue;

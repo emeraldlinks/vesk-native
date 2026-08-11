@@ -63,6 +63,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 
+
 @Composable
 fun Blog(content: @Composable () -> Unit = {}) {
 	Text(

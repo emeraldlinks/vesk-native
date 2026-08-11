@@ -7,13 +7,18 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import app.navigation.*
 
 @Composable
 fun App() {
     val nav = rememberNavController()
     LaunchedEffect(Unit) { nav.navigate("/") }
+    // Register the current activity for browser-API dialogs (alert).
+    val veskContext = LocalContext.current
+    SideEffect { veskAppSetup(veskContext) }
     CompositionLocalProvider(LocalNavController provides nav) {
                 // System bars are drawn edge-to-edge; push the app content below the
                 // status bar and above the navigation bar.
@@ -26,6 +31,7 @@ fun App() {
         Route("/blog/vesk-native") { VeskNativePost() },
         Route("/cart") { Cart() },
         Route("/checkout") { CheckoutPage() },
+        Route("/lab/badge") { Badge() },
         Route("/lab") { Lab() },
         Route("/media") { Media(props = MediaProps(heading = "Native media lab", blurb = "camera, recorder, pickers & media broadcast")) },
         Route("/") { Home(props = HomeProps(promo = "Members save 20% today", cta = "Shop the drop")) },

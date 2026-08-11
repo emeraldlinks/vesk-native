@@ -1,4 +1,4 @@
-import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join, relative, resolve, dirname, basename, extname } from 'node:path';
 import { compileVskResult, collectCustomCss, extractStylesheetLinks, extractMediaSources, parseCssClasses } from '@compiler-native/index';
 import { setAdaptiveDark } from '@compiler-native/tailwind';
@@ -6,6 +6,10 @@ import type { ModifierParts } from '@compiler-native/tailwind';
 import { parse } from '@vesk/compiler';
 import { findComponentDecls, propsDataType, inferPropsFromUsage } from '@compiler-native/props';
 import type { ComponentDecl } from '@compiler-native/props';
+import { buildModuleRegistry, slugFor, toPosix } from '@compiler-native/modules';
+import type { ModuleExport } from '@compiler-native/modules';
+import { compileProjectModule } from '@compiler-native/kotlin-codegen';
+import { KtErrors } from '@compiler-native/js2kt';
 import type { JsNode } from '@compiler-native/js2kt';
 import type { VeskConfig } from 'vesk-native';
 import { AAPT2_OVERRIDE, DEFAULT_SDK, TEMPLATE_DIR, collectVskFiles, colorLiteral, log, slugify } from '@cli-native/constants';
@@ -548,6 +552,53 @@ function isFileImageSrc(src: string): boolean {
   return src.startsWith('/storage/') || src.startsWith('/data/') || src.startsWith('content://') || src.startsWith('file://');
 }
 
+// Project JS/TS source extensions compiled to Kotlin. CommonJS forms (.cjs,
+// .cts) are rejected by the resolver with a hard error, never silently
+// compiled with wrong semantics.
+const JS_TS_EXTS = new Set(['.ts', '.js', '.mjs', '.tsx', '.jsx']);
+
+// Recursively collect project JS/TS modules under the app directory. The
+// generated `src/` tree and gradle `build/` output are not source.
+function collectProjectModules(dir: string): string[] {
+  const out: string[] = [];
+  const walk = (d: string): void => {
+    for (const entry of readdirSync(d).sort()) {
+      const full = join(d, entry);
+      if (statSync(full).isDirectory()) {
+        if (entry === 'build' || entry === 'src' || entry === 'node_modules') continue;
+        walk(full);
+      } else {
+        const dot = entry.lastIndexOf('.');
+        const ext = dot > 0 ? entry.slice(dot) : '';
+        if (JS_TS_EXTS.has(ext)) out.push(full);
+      }
+    }
+  };
+  walk(dir);
+  return out.sort();
+}
+
+// Compile every project JS/TS module into Kotlin (Modules.kt) and its export
+// registry (rel path -> export name -> { pkg, name }). Errors are collected —
+// a module that fails to compile is a hard build failure, never a runtime
+// fallback.
+function compileProjectModules(appDir: string): { registry: Map<string, Map<string, ModuleExport>>; kt: string; errors: string[] } {
+  const files = collectProjectModules(appDir);
+  const registry = new Map<string, Map<string, ModuleExport>>();
+  const blocks: string[] = [];
+  const errors: string[] = [];
+  for (const file of files) {
+    const rel = toPosix(relative(appDir, file));
+    const err = new KtErrors();
+    const compiled = compileProjectModule(readFileSync(file, 'utf8'), rel, err);
+    for (const e of err.errors) errors.push(`${rel}: ${e}`);
+    if (compiled.kt.trim()) blocks.push(compiled.kt);
+    if (compiled.registryEntry.size > 0) registry.set(rel, compiled.registryEntry);
+    log('module', `${rel} -> ${compiled.registryEntry.size} export(s)`);
+  }
+  return { registry, kt: blocks.join('\n\n'), errors };
+}
+
 export function compileVskFiles(appDir: string, config: VeskConfig): void {
   const outDir = join(appDir, 'src', 'main', 'kotlin', 'app');
   mkdirSync(outDir, { recursive: true });
@@ -564,13 +615,37 @@ export function compileVskFiles(appDir: string, config: VeskConfig): void {
   }
 
   const componentsWithoutProps = new Set<string>();
+  const componentNames = new Map<string, string[]>();
   for (const file of vskFiles) {
+    const rel = toPosix(relative(appDir, file));
     const ast = parse(readFileSync(file, 'utf8')) as unknown as JsNode;
+    const names: string[] = [];
     for (const d of findComponentDecls(ast)) {
+      names.push(d.name);
       const p = d.params[0];
       if (!p || (p.type === 'Identifier' && p.name === 'content')) componentsWithoutProps.add(d.name);
     }
+    if (names.length) componentNames.set(rel, names);
   }
+
+  const { registry: moduleRegistry, slugs: moduleSlugs } = buildModuleRegistry(appDir, vskFiles, componentNames);
+
+  // Project JS/TS modules (imported from .vsk headers with relative paths)
+  // compile to Kotlin declarations in Modules.kt; the registry maps each
+  // module's rel path to its compiled exports so headers can import them.
+  const projectModules = compileProjectModules(appDir);
+  for (const e of projectModules.errors) console.error(`  [compile] error in project module: ${e}`);
+  if (projectModules.errors.length > 0) process.exit(1);
+  const projectModuleRegistry = projectModules.registry;
+  if (projectModules.kt.trim()) {
+    writeFileSync(join(outDir, 'Modules.kt'), `package app\n\n${projectModules.kt.trimEnd()}\n`);
+    log('module', `project JS/TS modules -> app/Modules.kt`);
+  }
+
+  // npm specifier -> exported name -> { pkg, name }. Populated by the npm
+  // module compiler (packages/cli-native/src/npm.ts) once a bare import is
+  // seen; empty for apps that only import .vsk files.
+  const npmRegistry = new Map<string, Map<string, { pkg: string; name: string }>>();
 
   const { scoped: scopedClasses, skipped: cssSkipped } = collectCustomCss(
     vskFiles.map((f) => ({ source: readFileSync(f, 'utf8'), filename: relative(appDir, f) })),
@@ -645,7 +720,7 @@ export function compileVskFiles(appDir: string, config: VeskConfig): void {
   const seen = new Map<string, number>();
   for (const file of vskFiles) {
     const source = readFileSync(file, 'utf8');
-    const result = compileVskResult(source, file, { componentsWithoutProps, customClasses, scopedCustomClasses: scopedClasses, imageResources, mediaResources, rClass: `${config.appId}.R`, rootName: config.root ?? '' });
+    const result = compileVskResult(source, file, { componentsWithoutProps, customClasses, scopedCustomClasses: scopedClasses, imageResources, mediaResources, rClass: `${config.appId}.R`, rootName: config.root ?? '', fileRel: relative(appDir, file), appDir, moduleRegistry, moduleSlugs, projectModuleRegistry, npmRegistry });
     if (result.errors.length > 0) {
       console.error(`  [compile] errors in ${relative(appDir, file)}:`);
       for (const e of result.errors) console.error(`    ! ${e}`);
@@ -654,7 +729,7 @@ export function compileVskFiles(appDir: string, config: VeskConfig): void {
     for (const n of result.notes) console.error(`  [compile] warning: ${n} (in ${relative(appDir, file)})`);
     const kt = result.kt;
     const decls = findComponentDecls(parse(source) as unknown as JsNode);
-    const name = decls[0]?.name ?? 'Component';
+    const name = decls[0]?.name ?? `s_${slugFor(toPosix(relative(appDir, file)))}`;
     const count = seen.get(name) ?? 0;
     seen.set(name, count + 1);
     const outName = count === 0 ? name : `${name}_${count}`;
@@ -903,13 +978,18 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 ${tabletImports}import app.navigation.*
 
 @Composable
 fun App() {
     val nav = rememberNavController()
     LaunchedEffect(Unit) { nav.navigate("/") }
+    // Register the current activity for browser-API dialogs (alert).
+    val veskContext = LocalContext.current
+    SideEffect { veskAppSetup(veskContext) }
     CompositionLocalProvider(LocalNavController provides nav) {
         ${contentBox.replace('\n', '\n        ')}
     }

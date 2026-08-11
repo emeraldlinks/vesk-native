@@ -67,6 +67,7 @@ const HELPER_FN_NAMES: Record<string, string> = {
   setInterval: 'VeskTimers',
   clearTimeout: 'VeskTimers',
   clearInterval: 'VeskTimers',
+  veskAppSetup: 'VeskAppContext',
   count: 'JsConsole',
   countReset: 'JsConsole',
   time: 'JsConsole',

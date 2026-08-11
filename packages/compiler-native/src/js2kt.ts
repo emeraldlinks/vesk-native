@@ -36,7 +36,186 @@ function ident(name: string): string {
   return KOTLIN_KEYWORDS.has(name) ? `\`${name}\`` : name;
 }
 
+// Does a numeric token's source text carry a decimal/exponent marker (`.`,
+// `e`, `E`)? Character scan — no regex.
+function rawHasFloatMarker(raw: string): boolean {
+  for (let i = 0; i < raw.length; i++) {
+    const c = raw.charCodeAt(i);
+    if (c === 46 || c === 101 || c === 69) return true; // . e E
+  }
+  return false;
+}
+
 export { ident as ktIdent };
+
+// ---- TS type annotations -> Kotlin types (char-level, regex-free) ----
+
+function splitTopLevel(text: string, separators: Set<string>): string[] {
+  const parts: string[] = [];
+  let depth = 0;
+  let current = '';
+  let i = 0;
+  const n = text.length;
+  while (i < n) {
+    const ch = text[i]!;
+    if (ch === "'" || ch === '"' || ch === '`') {
+      const quote = ch;
+      current += ch;
+      i++;
+      while (i < n && text[i] !== quote) {
+        if (text[i] === '\\') {
+          current += text[i];
+          i++;
+          if (i < n) {
+            current += text[i];
+            i++;
+          }
+          continue;
+        }
+        current += text[i];
+        i++;
+      }
+      if (i < n) {
+        current += text[i];
+        i++;
+      }
+      continue;
+    }
+    if (ch === '<' || ch === '(' || ch === '[' || ch === '{') {
+      depth++;
+      current += ch;
+      i++;
+      continue;
+    }
+    if (ch === '>' || ch === ')' || ch === ']' || ch === '}') {
+      if (depth > 0) depth--;
+      current += ch;
+      i++;
+      continue;
+    }
+    if (depth === 0 && separators.has(ch)) {
+      parts.push(current);
+      current = '';
+      i++;
+      continue;
+    }
+    current += ch;
+    i++;
+  }
+  parts.push(current);
+  return parts;
+}
+
+function findMatchingParen(text: string, start: number): number {
+  let depth = 0;
+  for (let i = start; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === '(') depth++;
+    else if (ch === ')') {
+      depth--;
+      if (depth === 0) return i;
+    }
+  }
+  return -1;
+}
+
+function makeNullable(t: string): string {
+  if (t === 'Any?' || t === 'Unit') return 'Any?';
+  return t.endsWith('?') ? t : `${t}?`;
+}
+
+function mapSingleType(text: string): string {
+  const t = text.trim();
+  if (t === 'string') return 'String';
+  if (t === 'number') return 'Double';
+  if (t === 'boolean') return 'Boolean';
+  if (t === 'void') return 'Unit';
+  if (t === 'Date') return 'java.util.Date';
+  if (t === 'RegExp') return 'Regex';
+  if (t === 'any' || t === 'unknown' || t === 'object' || t === 'Object' || t === 'never' ||
+      t === 'undefined' || t === 'null' || t === '{}' || t === 'bigint' || t === 'symbol' || t === 'this') {
+    return 'Any?';
+  }
+  if (t.endsWith('[]')) return `List<${tsTypeToKotlin(t.slice(0, -2))}>`;
+  if (t.startsWith('Array<') && t.endsWith('>')) return `List<${tsTypeToKotlin(t.slice(6, -1))}>`;
+  if (t.startsWith('Record<') && t.endsWith('>')) return 'Map<String, Any?>';
+  if (t.startsWith('{') && t.endsWith('}')) return 'Map<String, Any?>';
+  if (t.startsWith('(')) {
+    const close = findMatchingParen(t, 0);
+    if (close !== -1) {
+      const paramsText = t.slice(1, close);
+      const rest = t.slice(close + 1).trim();
+      if (rest.startsWith('=>')) {
+        const ret = tsTypeToKotlin(rest.slice(2));
+        const retKt = ret === 'Unit' ? 'Unit' : ret;
+        const trimmed = paramsText.trim();
+        const argCount = trimmed === '' ? 0 : splitTopLevel(paramsText, new Set([','])).length;
+        const args = argCount === 0 ? '' : Array.from({ length: argCount }, () => 'Any?').join(', ');
+        return `(${args}) -> ${retKt}`;
+      }
+    }
+    return 'Any?';
+  }
+  const lt = t.indexOf('<');
+  if (lt !== -1 && t.endsWith('>')) return mapSingleType(t.slice(0, lt).trim());
+  return 'Any?';
+}
+
+/** Map a recorded TS annotation string to a Kotlin type (Any? when unmappable). */
+function tsTypeToKotlin(ann: string): string {
+  let text = ann.trim();
+  let nullable = false;
+  if (text.endsWith('?')) {
+    nullable = true;
+    text = text.slice(0, -1).trim();
+  }
+  const parts = splitTopLevel(text, new Set(['|', '&']));
+  if (parts.length > 1) {
+    const nonNull = parts.map((p) => p.trim()).filter((p) => p !== 'null' && p !== 'undefined');
+    if (nonNull.length === 0) return 'Any?';
+    if (nonNull.length === 1) return makeNullable(tsTypeToKotlin(nonNull[0]!));
+    return 'Any?';
+  }
+  const core = mapSingleType(text);
+  return nullable ? makeNullable(core) : core;
+}
+
+// Statics the compiler translates to native calls; their members are methods,
+// not function-valued properties, so `?.()` on them cannot be expressed and is
+// a hard build error instead of a silent miscompile.
+const BUILTIN_OBJS = new Set([
+  'Math', 'console', 'Object', 'JSON', 'Array', 'Number', 'String', 'Boolean',
+  'BigInt', 'Symbol', 'Function', 'Date', 'RegExp', 'Error', 'TypeError',
+  'RangeError', 'ReferenceError', 'SyntaxError', 'EvalError', 'URIError',
+  'AggregateError', 'Map', 'Set', 'WeakMap', 'WeakSet', 'WeakRef',
+  'FinalizationRegistry', 'Promise', 'Proxy', 'Reflect', 'Intl', 'ArrayBuffer',
+  'SharedArrayBuffer', 'DataView', 'Atomics', 'Int8Array', 'Uint8Array',
+  'Uint8ClampedArray', 'Int16Array', 'Uint16Array', 'Int32Array', 'Uint32Array',
+  'Float32Array', 'Float64Array', 'BigInt64Array', 'BigUint64Array', 'URL',
+  'URLSearchParams', 'AbortController', 'AbortSignal', 'TextEncoder',
+  'TextDecoder', 'Blob', 'File', 'FormData', 'Headers', 'Request', 'Response',
+  'fetch', 'setTimeout', 'setInterval', 'clearTimeout', 'clearInterval',
+  'queueMicrotask', 'structuredClone', 'crypto', 'performance', 'navigator',
+  'window', 'document', 'location', 'localStorage', 'sessionStorage', 'history',
+  'atob', 'btoa', 'globalThis', 'eval', 'parseInt', 'parseFloat', 'isNaN',
+  'isFinite', 'encodeURI', 'encodeURIComponent', 'decodeURI',
+  'decodeURIComponent', 'escape', 'unescape',
+]);
+
+// Browser globals whose member surface has no native Kotlin mapping yet.
+// Member access or calls on these are hard build errors with a clear
+// diagnostic (instead of a cryptic Kotlin unresolved-reference failure).
+// window is listed here for its property surface; its call surface is handled
+// separately (alert -> jsAlert, setTimeout/setInterval -> VeskTimers).
+const UNSUPPORTED_BROWSER_OBJS = new Set([
+  'document', 'localStorage', 'sessionStorage', 'navigator', 'location',
+  'history', 'crypto', 'performance', 'globalThis', 'window',
+]);
+
+// Browser free functions with no native mapping yet: hard build errors.
+const UNSUPPORTED_BROWSER_FNS = new Set([
+  'fetch', 'atob', 'btoa', 'queueMicrotask', 'structuredClone', 'eval',
+]);
 
 export class KtErrors {
   errors: string[] = [];
@@ -56,6 +235,14 @@ export class Js2Kt {
   private retLabels: (string | undefined)[] = [];
   private brkLabels: (string | undefined)[] = [];
   private contLabels: (string | undefined)[] = [];
+  /** Function name -> declared Kotlin param types (from TS annotations). */
+  private paramTypes = new Map<string, string[]>();
+  /** While non-null, identifier reads of the given JS names emit the mapped name. */
+  private paramAliases: Map<string, string> | null = null;
+  /** Identifiers initialized from `new Map(...)`; iterating them yields [k, v] pairs. */
+  private mapVars = new Set<string>();
+  /** Identifiers initialized from an object literal; member access goes through jsMapGet. */
+  private objVars = new Set<string>();
 
   constructor(err: KtErrors) {
     this.err = err;
@@ -67,6 +254,31 @@ export class Js2Kt {
 
   private uid(prefix: string): string {
     return `${prefix}${this.anonCount++}`;
+  }
+
+  // JS numeric literals map to Kotlin by their written form: `5` stays an Int
+  // while `5.0`, `1e3` etc. become Doubles. This keeps calls like
+  // `clamp(5.0, 1.0, 3.0)` (Double params) and Int arithmetic (tracked
+  // counters) both compiling with JS-faithful values. The raw token text is
+  // scanned character-by-character — no regex.
+  private numberLiteral(node: JsNode, value: number): string {
+    const raw = (node as { raw?: string }).raw ?? '';
+    if (Number.isInteger(value) && rawHasFloatMarker(raw)) return `${String(value)}.0`;
+    return String(value);
+  }
+
+  // Temporarily remap JS identifiers to Kotlin names while `fn` runs (e.g. a
+  // markup `catch (e)` block whose `e` refers to the emitted guard variable).
+  // Aliases layer over any existing aliases and are restored on exit.
+  withParamAliases<T>(aliases: Map<string, string>, fn: () => T): T {
+    const saved = this.paramAliases;
+    this.paramAliases = new Map(saved ?? []);
+    for (const [k, v] of aliases) this.paramAliases.set(k, v);
+    try {
+      return fn();
+    } finally {
+      this.paramAliases = saved;
+    }
   }
 
   ktString(value: string): string {
@@ -155,10 +367,80 @@ export class Js2Kt {
     return options.length ? `Regex(${this.ktString(pattern)}, setOf(${options.join(', ')}))` : `Regex(${this.ktString(pattern)})`;
   }
 
+  private newMap(args: JsNode[]): string {
+    const seed = args[0];
+    if (!seed) return 'linkedMapOf<Any?, Any?>()';
+    if (seed.type === 'ArrayExpression') {
+      const pairs = (seed.elements as (JsNode | null)[]) ?? [];
+      const parts: string[] = [];
+      let literalPairs = true;
+      for (const el of pairs) {
+        if (!el || el.type !== 'ArrayExpression') {
+          literalPairs = false;
+          break;
+        }
+        const kv = (el.elements as (JsNode | null)[]) ?? [];
+        if (kv.length !== 2 || !kv[0] || !kv[1]) {
+          literalPairs = false;
+          break;
+        }
+        parts.push(`${this.expr(kv[0])} to ${this.expr(kv[1])}`);
+      }
+      if (literalPairs) {
+        return parts.length ? `linkedMapOf<Any?, Any?>(${parts.join(', ')})` : 'linkedMapOf<Any?, Any?>()';
+      }
+    }
+    return `jsMapOf(${this.expr(seed)})`;
+  }
+
+  private newSet(args: JsNode[]): string {
+    const seed = args[0];
+    if (!seed) return 'linkedSetOf<Any?>()';
+    if (seed.type === 'ArrayExpression') {
+      const elements = (seed.elements as (JsNode | null)[]) ?? [];
+      const parts: string[] = [];
+      let literalElements = true;
+      for (const el of elements) {
+        if (!el) {
+          literalElements = false;
+          break;
+        }
+        parts.push(this.expr(el));
+      }
+      if (literalElements) {
+        return parts.length ? `linkedSetOf<Any?>(${parts.join(', ')})` : 'linkedSetOf<Any?>()';
+      }
+    }
+    return `jsSetOf(${this.expr(seed)})`;
+  }
+
+  private newDate(args: JsNode[]): string {
+    if (args.length === 0) return 'java.util.Date()';
+    const first = args[0] as JsNode | undefined;
+    if (args.length === 1) {
+      if (first && first.type === 'Literal' && typeof (first as { value?: unknown }).value === 'number') {
+        return `java.util.Date(${(first as unknown as { value: number }).value}.toLong())`;
+      }
+      return `java.util.Date(jsDateValue(${this.expr(first!)}))`;
+    }
+    // JS Date(y, m, d, h, mi, s, ms): year, 0-based month, day, time. The Java
+    // Date(int year, int month, int date, ...) constructor is deprecated but
+    // present on Android and matches JS month/day semantics once the year is
+    // rebased from 1900. Literal years keep the arithmetic exact; anything
+    // else goes through the JS ToNumber helper.
+    const year = (first && first.type === 'Literal' && typeof (first as { value?: unknown }).value === 'number')
+      ? `${(first as unknown as { value: number }).value} - 1900`
+      : `num(${this.expr(first!)}) - 1900`;
+    return `java.util.Date(${[year, ...args.slice(1).map((a) => this.expr(a))].join(', ')})`;
+  }
+
   expr(node: JsNode): string {
     switch (node.type) {
       case 'Identifier': {
         const name = node.name as string;
+        if (this.paramAliases && this.paramAliases.has(name)) {
+          return this.id(this.paramAliases.get(name)!);
+        }
         return this.id(name);
       }
       case 'Literal': {
@@ -168,7 +450,7 @@ export class Js2Kt {
         if (value === null) return 'null';
         if (typeof value === 'string') return this.ktString(value);
         if (typeof value === 'boolean') return value ? 'true' : 'false';
-        if (typeof value === 'number') return String(value);
+        if (typeof value === 'number') return this.numberLiteral(node, value);
         return this.unknown(node);
       }
       case 'ThisExpression':
@@ -204,6 +486,11 @@ export class Js2Kt {
           const name = this.uid('__VeskAnon');
           const cls = this.classDecl({ ...callee, id: { type: 'Identifier', name } });
           return `run { ${cls}; ${name}(${args.map((a) => this.expr(a)).join(', ')}) }`;
+        }
+        if (callee.type === 'Identifier') {
+          if (callee.name === 'Map') return this.newMap(args);
+          if (callee.name === 'Set') return this.newSet(args);
+          if (callee.name === 'Date') return this.newDate(args);
         }
         return this.callExpr({ ...node, type: 'CallExpression' });
       }
@@ -243,7 +530,8 @@ export class Js2Kt {
       case 'ParenthesizedExpression':
         return this.expr(node.expression as JsNode);
       case 'AwaitExpression':
-        return `${this.operand(node.argument as JsNode)}.await()`;
+        this.err.warn(node, 'await requires async/promise support that is not implemented in vesk-native yet');
+        return `error("vesk: await is not supported yet")`;
       case 'YieldExpression': {
         const arg = node.argument as JsNode | null;
         if (node.delegate) {
@@ -286,11 +574,40 @@ export class Js2Kt {
       const c = MATH_CONSTS[(prop as { name?: string }).name ?? ''];
       if (c) return c;
     }
+    if (object.type === 'Identifier' && UNSUPPORTED_BROWSER_OBJS.has(object.name as string)) {
+      const pname = prop.type === 'Identifier' ? (prop.name as string) : this.expr(prop);
+      this.err.warn(node, `${object.name}.${pname} has no native Kotlin mapping yet`);
+      return `error("vesk: ${object.name}.${pname} is not supported yet")`;
+    }
     const obj = this.expr(object);
     if (computed) {
       return optional ? `${obj}?.get(${this.expr(prop)})` : `${obj}[${this.expr(prop)}]`;
     }
+    if (prop.type === 'Identifier' && prop.name === 'size') return `jsSize(${obj})`;
+    if (prop.type === 'Identifier' && prop.name === 'length') return `jsLength(${obj})`;
+    // Object literals compile to Kotlin Maps, so a plain member read goes
+    // through the runtime's jsMapGet cast instead of `.key` (which would not
+    // compile on a Map receiver).
+    if (object.type === 'Identifier' && this.objVars.has(object.name as string) && prop.type === 'Identifier') {
+      return `jsMapGet(${obj}, ${this.ktString(prop.name as string)})`;
+    }
+    // JS objects are dynamic Maps here, so an optional member read on a value
+    // of unknown Kotlin type compiles through the runtime's null-safe cast
+    // (`jsMapGet`) instead of a `?.member` that would not resolve. Plain
+    // (non-optional) member access keeps raw `?.`/`.` so Kotlin-typed values
+    // (Exception.message, List.map, ...) compile as before.
+    if (optional && prop.type === 'Identifier') {
+      return `jsMapGet(${obj}, ${this.ktString(prop.name as string)})`;
+    }
     return `${obj}${optional ? '?.' : '.'}${this.id(prop.type === 'Identifier' ? (prop.name as string) : this.expr(prop))}`;
+  }
+
+  private argList(args: JsNode[]): string {
+    return args.map((a) => {
+      const jsNode = a as JsNode & { type?: string; argument?: JsNode };
+      if (jsNode.type === 'SpreadElement') return `*${this.expr(jsNode.argument as JsNode)}`;
+      return this.expr(jsNode);
+    }).join(', ');
   }
 
   private callExpr(node: JsNode): string {
@@ -298,6 +615,7 @@ export class Js2Kt {
     const args = (node.arguments as JsNode[]) ?? [];
     const a0 = args[0];
     const a1 = args[1];
+    const callOptional = (node as { optional?: boolean }).optional === true;
 
     if (callee.type === 'Identifier') {
       const name = callee.name as string;
@@ -327,13 +645,41 @@ export class Js2Kt {
       if (name === 'clearTimeout' || name === 'clearInterval') {
         return `VeskTimers.clearTimeout(${this.expr(a0 ?? ({ type: 'Literal', value: 0 } as JsNode))})`;
       }
+      if (name === 'alert') return `jsAlert(${a0 ? this.expr(a0) : 'null'})`;
+      if (name === 'confirm' || name === 'prompt') {
+        this.err.warn(callee, `${name}() needs a blocking dialog; Android cannot block the main thread`);
+        return `error("vesk: ${name}() is not supported on Android (blocking dialogs would deadlock the main thread)")`;
+      }
+      const declared = this.paramTypes.get(name);
+      if (declared) {
+        return `${this.id(name)}(${this.callArgs(node, declared)})`;
+      }
+      if (UNSUPPORTED_BROWSER_FNS.has(name)) {
+        this.err.warn(callee, `${name}() has no native Kotlin mapping yet`);
+        return `error("vesk: ${name}() is not supported yet")`;
+      }
     }
 
     if (callee.type === 'MemberExpression') {
       const member = callee as unknown as { object: JsNode; property: JsNode; computed: boolean; optional: boolean };
       const method = member.property.type === 'Identifier' ? (member.property.name as string) : null;
       const receiver = this.expr(member.object);
-      const safe = member.optional ? '?.' : '.';
+      // Kotlin forbids calling through a safe-call (`a?.b(x)`): an optional
+      // member behind a plain call (`a?.b(x)` == `(a?.b)(x)`, throws when `a`
+      // is nullish) becomes `!!.`; an optional call on any member is emitted
+      // through the null-safe `?.invoke` path below.
+      const safe = member.optional ? (callOptional ? '?.' : '!!.') : '.';
+
+      if (callOptional) {
+        const obj = member.object as JsNode;
+        const isBuiltin = obj.type === 'Identifier' && BUILTIN_OBJS.has(obj.name as string);
+        const isRegex = obj.type === 'Literal' && (obj as { regex?: unknown }).regex !== undefined;
+        if (isBuiltin || isRegex) {
+          this.err.warn(callee, `optional call on a built-in ${method ?? '?'}() is not supported`);
+          return `error("vesk: optional call on a built-in is not supported")`;
+        }
+        return `(${this.expr(callee)})?.invoke(${this.argList(args)})`;
+      }
 
       if (member.object.type === 'Identifier') {
         const objName = member.object.name as string;
@@ -385,7 +731,47 @@ export class Js2Kt {
           if (method === 'parseInt') return `jsParseInt(${this.expr(a0!)}${a1 ? `, ${this.expr(a1)}` : ''})`;
           if (method === 'parseFloat' && a0) return `jsParseFloat(${this.expr(a0)})`;
         }
+        if (objName === 'Date') {
+          if (method === 'now' && args.length === 0) return 'System.currentTimeMillis()';
+          if (method === 'parse' && a0) return `jsDateValue(${this.expr(a0)})`;
+        }
+        if (objName === 'window') {
+          if (method === 'alert') return `jsAlert(${a0 ? this.expr(a0) : 'null'})`;
+          if (method === 'confirm' || method === 'prompt') {
+            this.err.warn(callee, `window.${method}() needs a blocking dialog; Android cannot block the main thread`);
+            return `error("vesk: window.${method}() is not supported on Android (blocking dialogs would deadlock the main thread)")`;
+          }
+          if (method === 'setTimeout' || method === 'setInterval') {
+            const fn = a0 ?? ({ type: 'ArrowFunctionExpression', params: [], body: { type: 'BlockStatement', body: [] } } as JsNode);
+            return `VeskTimers.${method}(${this.expr(fn)}, ${a1 ? this.expr(a1) : '0'})`;
+          }
+          if (method === 'clearTimeout' || method === 'clearInterval') {
+            return `VeskTimers.clearTimeout(${this.expr(a0 ?? ({ type: 'Literal', value: 0 } as JsNode))})`;
+          }
+          this.err.warn(callee, `window.${method ?? '?'}() has no native Kotlin mapping yet`);
+          return `error("vesk: window.${method ?? '?'}() is not supported yet")`;
+        }
+        if (UNSUPPORTED_BROWSER_OBJS.has(objName)) {
+          this.err.warn(callee, `${objName}.${method ?? '?'}() has no native Kotlin mapping yet`);
+          return `error("vesk: ${objName}.${method ?? '?'}() is not supported yet")`;
+        }
       }
+
+      // Map / Set / Date instance methods. The receiver is usually a strongly
+      // typed Kotlin collection, but it may arrive as Any? (e.g. from a
+      // function parameter), so these go through casts in runtime helpers.
+      if (method === 'get' && a0) return `jsMapGet(${receiver}, ${this.expr(a0)})`;
+      if (method === 'set' && a0 && a1) return `jsMapSet(${receiver}, ${this.expr(a0)}, ${this.expr(a1)})`;
+      if (method === 'has' && a0) return `jsHas(${receiver}, ${this.expr(a0)})`;
+      if (method === 'delete' && a0) return `jsDelete(${receiver}, ${this.expr(a0)})`;
+      if (method === 'clear' && args.length === 0) return `jsClear(${receiver})`;
+      if (method === 'keys' && args.length === 0) return `jsMapKeys(${receiver})`;
+      if (method === 'values' && args.length === 0) return `jsMapValues(${receiver})`;
+      if (method === 'entries' && args.length === 0) return `jsMapEntries(${receiver})`;
+      if (method === 'forEach' && a0) return this.forEachCall(receiver, a0);
+      if (method === 'getTime' && args.length === 0) return `(${receiver} as java.util.Date).time`;
+      if (method === 'toISOString' && args.length === 0) return `((${receiver} as java.util.Date).toInstant().toString())`;
+
 
       const isRegexLit = (n: JsNode | undefined): n is JsNode & { regex: { pattern: string; flags: string } } =>
         !!n && n.type === 'Literal' && !!(n as { regex?: unknown }).regex;
@@ -402,7 +788,7 @@ export class Js2Kt {
       }
 
       const LAMBDA_METHODS: Record<string, string> = {
-        map: 'map', forEach: 'forEach', filter: 'filter', flatMap: 'flatMap',
+        map: 'map', filter: 'filter', flatMap: 'flatMap',
         find: 'find', findIndex: 'indexOfFirst', some: 'any', every: 'all',
         sortedBy: 'sortedBy', distinctBy: 'distinctBy',
       };
@@ -517,25 +903,128 @@ export class Js2Kt {
     }
 
     const calleeStr = this.expr(callee);
-    const argsStr = args.map((a) => {
-      const jsNode = a as JsNode & { type?: string; argument?: JsNode };
-      if (jsNode.type === 'SpreadElement') return `*${this.expr(jsNode.argument as JsNode)}`;
-      return this.expr(jsNode);
-    }).join(', ');
+    const argsStr = this.argList(args);
+    if (callOptional) {
+      return `(${calleeStr})?.invoke(${argsStr})`;
+    }
+    if (callee.type === 'MemberExpression' && (callee as { optional?: boolean }).optional) {
+      // `a?.b(x)` == `(a?.b)(x)`: a short-circuited undefined still gets
+      // called, so the member must be forced non-null before invoking.
+      return `(${calleeStr})!!.invoke(${argsStr})`;
+    }
     return `${calleeStr}(${argsStr})`;
   }
 
   private arrowLambda(node: JsNode): string {
+    if ((node as { async?: boolean }).async) {
+      this.err.warn(node, 'async functions are not supported yet (no coroutine/promise support)');
+      return `error("vesk: async functions are not supported yet")`;
+    }
     const params = (node.params as JsNode[]) ?? [];
     const body = node.body as JsNode;
-    const paramsStr = params.length === 0 ? '' : `${params.map((p) => this.pattern(p)).join(', ')} -> `;
+    const paramsStr = params.length === 0 ? '' : `${params.map((p) => {
+      const ann = (p as { typeAnnotation?: string | null }).typeAnnotation;
+      const optional = (p as { optional?: boolean }).optional === true;
+      if (ann) {
+        const ty = optional ? makeNullable(tsTypeToKotlin(ann)) : tsTypeToKotlin(ann);
+        return `${this.pattern(p)}: ${ty}`;
+      }
+      return this.pattern(p);
+    }).join(', ')} -> `;
     if (body.type === 'BlockStatement') {
       const lbl = this.uid('__veskret');
       const lines = this.withLabels(lbl, undefined, undefined, () => this.blockLines(body, 0));
       const stripped = lines.map((l) => (l.endsWith(';') ? l.slice(0, -1) : l));
-      return ` { ${paramsStr}run ${lbl}@ { ${stripped.join('; ')} } }`;
+      // Statements are joined with '; ' for compactness, but a structural
+      // continuation (a closing brace followed by catch/else/finally, or any
+      // line right after an opening brace) must stay on its own line or the
+      // resulting Kotlin is malformed (`try { ... }; catch ...`).
+      let sep = '; ';
+      const out: string[] = [];
+      for (let i = 0; i < stripped.length; i++) {
+        const prev = i > 0 ? stripped[i - 1]! : '';
+        const next = stripped[i]!;
+        if (prev.endsWith('{') || prev.endsWith('}') ||
+            next.startsWith('catch ') || next.startsWith('else') || next.startsWith('finally') ||
+            next.startsWith('while') || next.startsWith('do ') || next.startsWith('case')) {
+          sep = '\n';
+        } else {
+          sep = '; ';
+        }
+        if (i > 0) out.push(sep);
+        out.push(next);
+      }
+      return ` { ${paramsStr}run ${lbl}@ { ${out.join('')} } }`;
     }
     return ` { ${paramsStr}${this.expr(body)} }`;
+  }
+
+  // True when iterating the given JS expression yields [k, v] pairs (a Map),
+  // which Kotlin's Map iteration would instead yield as Map.Entry.
+  private isMapIterable(node: JsNode): boolean {
+    if (node.type === 'Identifier') return this.mapVars.has(node.name as string);
+    if (node.type === 'NewExpression') {
+      const ctor = node.callee as JsNode;
+      return ctor.type === 'Identifier' && ctor.name === 'Map';
+    }
+    return false;
+  }
+
+  // True when the expression is backed by a Kotlin Map: object literals and
+  // new Map(...) compile to Maps, and tracked identifiers are remembered.
+  // for-in over these yields keys (via jsMapKeys), never Map.Entry values.
+  private isMapLike(node: JsNode): boolean {
+    if (node.type === 'Identifier') return this.objVars.has(node.name as string) || this.mapVars.has(node.name as string);
+    if (node.type === 'NewExpression') {
+      const ctor = node.callee as JsNode;
+      return ctor.type === 'Identifier' && ctor.name === 'Map';
+    }
+    return node.type === 'ObjectExpression';
+  }
+
+  // JS `coll.forEach(cb)` calls cb with (value, key/index, coll). Kotlin's
+  // native forEach gives different signatures per collection type, so this
+  // re-emits the callback body with its JS params bound to the fixed
+  // {value, key, coll} names of the jsForEach runtime helper. Handles arrays,
+  // sets, and maps uniformly with JS argument order and arity.
+  private forEachCall(receiver: string, cb: JsNode): string {
+    const pv = this.uid('__vsk_v');
+    const pk = this.uid('__vsk_k');
+    const pc = this.uid('__vsk_c');
+    let inner: string;
+    if (cb.type === 'Identifier') {
+      inner = `${this.id(cb.name as string)}(${pv}, ${pk}, ${pc})`;
+    } else if (cb.type === 'ArrowFunctionExpression' || cb.type === 'FunctionExpression') {
+      const params = (cb.params as JsNode[]) ?? [];
+      const saved = this.paramAliases;
+      this.paramAliases = new Map(saved ?? []);
+      const names = ['', '', ''];
+      params.forEach((p, i) => {
+        if (i >= 3) return;
+        const nm = (p as { name?: string }).name;
+        if (nm) names[i] = nm;
+      });
+      if (names[0]) this.paramAliases.set(names[0], pv);
+      if (names[1]) this.paramAliases.set(names[1], pk);
+      if (names[2]) this.paramAliases.set(names[2], pc);
+      try {
+        const body = cb.body as JsNode;
+        if (body.type === 'BlockStatement') {
+          const lbl = this.uid('__veskret');
+          const lines = this.withLabels(lbl, undefined, undefined, () => this.blockLines(body, 0));
+          const stripped = lines.map((l) => (l.endsWith(';') ? l.slice(0, -1) : l));
+          inner = `run ${lbl}@ { ${stripped.join('; ')} }`;
+        } else {
+          inner = this.expr(body);
+        }
+      } finally {
+        this.paramAliases = saved;
+      }
+    } else {
+      this.err.warn(cb, 'forEach callback must be an arrow function or function reference');
+      return `error("vesk: unsupported forEach callback")`;
+    }
+    return `jsForEach(${receiver}, { ${pv}, ${pk}, ${pc} -> ${inner} })`;
   }
 
   // JS `*`/`+`/`if`-expression precedence differs from Kotlin; parenthesize
@@ -716,6 +1205,21 @@ export class Js2Kt {
       const bind = (name: string, value: string): string => `${this.id(name)} = ${value}`;
       return `run { ${this.destruct(left, this.expr(right), bind).join('; ')} }`;
     }
+    // Object literals compile to Kotlin Maps: `obj.key = v` and the compound
+    // forms must go through jsMapSet so the assignment compiles and behaves
+    // exactly like a JS property write.
+    if (left.type === 'MemberExpression' && !left.computed) {
+      const member = left as unknown as { object: JsNode; property: JsNode; computed: boolean };
+      if (member.object.type === 'Identifier' && this.objVars.has(member.object.name as string) && member.property.type === 'Identifier') {
+        const key = this.ktString(member.property.name as string);
+        const receiver = this.expr(member.object);
+        if (op !== '=') {
+          const binary = this.binaryExpr({ type: 'BinaryExpression', operator: op.slice(0, -1) as string, left, right } as JsNode);
+          return `jsMapSet(${receiver}, ${key}, ${binary})`;
+        }
+        return `jsMapSet(${receiver}, ${key}, ${this.expr(right)})`;
+      }
+    }
     if (op === '??=') return this.evalOnce(left, (l) => `${this.expr(left)} = ${l} ?: ${this.expr(right)}`);
     if (op === '||=') return this.evalOnce(left, (l) => `${this.expr(left)} = if (truthy(${l})) ${l} else ${this.expr(right)}`);
     if (op === '&&=') return this.evalOnce(left, (l) => `${this.expr(left)} = if (truthy(${l})) ${this.expr(right)} else ${l}`);
@@ -747,7 +1251,7 @@ export class Js2Kt {
         const e = expressions[i];
         if (!e) break;
         if (e.type === 'Identifier') {
-          out += `$${e.name}`;
+          out += KOTLIN_KEYWORDS.has(e.name as string) ? `\${${this.id(e.name as string)}}` : `$${e.name}`;
         } else {
           out += '$' + '{' + this.expr(e) + '}';
         }
@@ -790,7 +1294,10 @@ export class Js2Kt {
         return `${this.ktString(keyStr)} to ${valueStr}`;
       }
       if (p.type === 'SpreadElement') {
-        return `*(${this.expr(p.argument as JsNode)} as Map<String, Any?>).toList().toTypedArray()`;
+        // `{ ...x }` copies a JS object. Spreading null/undefined is a no-op
+        // in JS, and only string keys exist on JS objects, so the copy is
+        // null-safe and filters out any non-string keys.
+        return `*(((${this.expr(p.argument as JsNode)}) as? Map<String, Any?>)?.toList() ?: emptyList<Pair<String, Any?>>()).toTypedArray()`;
       }
       this.err.warn(p, `unsupported object property: ${p.type}`);
       return `error("vesk: unsupported object property ${p.type}")`;
@@ -834,10 +1341,56 @@ export class Js2Kt {
   // Function/constructor parameters must carry an explicit Kotlin type;
   // lambda parameters (arrowLambda) stay untyped so inference applies.
   private typedParam(p: JsNode): string {
+    const annOf = (n: JsNode | undefined): string | null =>
+      (n && (n as { typeAnnotation?: string | null }).typeAnnotation) || null;
+    const isOptional = (n: JsNode): boolean => (n as { optional?: boolean }).optional === true;
     if (p.type === 'AssignmentPattern') {
-      return `${this.pattern(p.left as JsNode)}: Any? = ${this.expr(p.right as JsNode)}`;
+      const left = p.left as JsNode;
+      const ann = annOf(left);
+      const ty = ann ? tsTypeToKotlin(ann) : 'Any?';
+      return `${this.pattern(left)}: ${ty}${isOptional(left) ? ' = null' : ` = ${this.expr(p.right as JsNode)}`}`;
+    }
+    const ann = annOf(p);
+    if (ann) {
+      const ty = isOptional(p) ? makeNullable(tsTypeToKotlin(ann)) : tsTypeToKotlin(ann);
+      return `${this.pattern(p)}: ${ty}${isOptional(p) ? ' = null' : ''}`;
     }
     return `${this.pattern(p)}: Any?`;
+  }
+
+  /** Record declared param Kotlin types so call sites can coerce arguments. */
+  private registerParamTypes(name: string, params: JsNode[]): void {
+    const types: string[] = [];
+    for (const p of params) {
+      if (p.type === 'AssignmentPattern') {
+        const left = p.left as JsNode;
+        const ann = (left as { typeAnnotation?: string | null }).typeAnnotation;
+        const optional = (left as { optional?: boolean }).optional === true;
+        const ty = ann ? tsTypeToKotlin(ann) : 'Any?';
+        types.push(optional ? makeNullable(ty) : ty);
+      } else {
+        const ann = (p as { typeAnnotation?: string | null }).typeAnnotation;
+        const optional = (p as { optional?: boolean }).optional === true;
+        const ty = ann ? tsTypeToKotlin(ann) : 'Any?';
+        types.push(optional ? makeNullable(ty) : ty);
+      }
+    }
+    this.paramTypes.set(name, types);
+  }
+
+  /** Coerce a call argument to a declared param type (JS ToNumber/ToString/ToBoolean). */
+  private coerceArg(paramType: string, arg: JsNode): string {
+    const value = this.expr(arg);
+    if (paramType === 'Double' || paramType === 'Double?') return `num(${value})`;
+    if (paramType === 'String' || paramType === 'String?') return `jsString(${value})`;
+    if (paramType === 'Boolean' || paramType === 'Boolean?') return `truthy(${value})`;
+    return value;
+  }
+
+  private callArgs(node: JsNode, paramTypes: string[] | undefined): string {
+    const args = (node.arguments as JsNode[]) ?? [];
+    if (!paramTypes) return args.map((a) => this.expr(a)).join(', ');
+    return args.map((a, i) => this.coerceArg(paramTypes[i] ?? 'Any?', a)).join(', ');
   }
 
   private blockLines(node: JsNode, indentLevel: number): string[] {
@@ -966,6 +1519,10 @@ export class Js2Kt {
         continue;
       }
       const lbl = this.uid('__veskfn');
+      if ((value as { async?: boolean }).async) {
+        this.err.warn(m, 'async methods are not supported yet (no coroutine/promise support)');
+        continue;
+      }
       methods.push({ name: this.id(fname), params, body: this.withLabels(lbl, undefined, undefined, () => this.blockLines(value.body as JsNode, 0)).join('\n'), lbl, isStatic });
     }
 
@@ -1057,7 +1614,26 @@ export class Js2Kt {
         const out: string[] = [];
         for (const d of decls) {
           const id = d.id as JsNode;
-          const init = d.init ? ` = ${this.expr(d.init as JsNode)}` : '';
+          const ann = id.type === 'Identifier' ? (id as { typeAnnotation?: string | null }).typeAnnotation : null;
+          let init = d.init ? ` = ${this.expr(d.init as JsNode)}` : '';
+          if (ann && d.init) {
+            const ty = tsTypeToKotlin(ann);
+            const coerced = this.coerceArg(ty, d.init as JsNode);
+            init = `: ${ty} = ${coerced}`;
+          } else if (d.init) {
+            init = ` = ${this.expr(d.init as JsNode)}`;
+          }
+          const initNode = d.init as { type?: string; params?: JsNode[]; callee?: JsNode } | null;
+          if (id.type === 'Identifier' && initNode && (initNode.type === 'ArrowFunctionExpression' || initNode.type === 'FunctionExpression')) {
+            this.registerParamTypes(id.name as string, (initNode.params ?? []) as JsNode[]);
+          }
+          if (id.type === 'Identifier' && initNode && initNode.type === 'NewExpression') {
+            const ctor = initNode.callee;
+            if (ctor && ctor.type === 'Identifier' && ctor.name === 'Map') this.mapVars.add(id.name as string);
+          }
+          if (id.type === 'Identifier' && initNode && initNode.type === 'ObjectExpression') {
+            this.objVars.add(id.name as string);
+          }
           if (!(id as unknown as { lazy?: boolean }).lazy && (id.type === 'ObjectPattern' || id.type === 'ArrayPattern')) {
             const bind = (name: string, value: string): string => `${ktKind} ${this.id(name)} = ${value}`;
             out.push(...this.destruct(id, (d.init ? this.expr(d.init as JsNode) : 'null'), bind));
@@ -1126,16 +1702,34 @@ export class Js2Kt {
         const left = node.left as JsNode;
         const right = node.right as JsNode;
         const body = this.loopBody(node.body as JsNode);
+        if (node.type === 'ForInStatement') {
+          // JS for-in yields the object's keys; Kotlin iterating a Map yields
+          // entries, so go through the runtime keys view for exact semantics.
+          if (this.isMapLike(right)) {
+            return `for (${this.loopVar(left)} in jsMapKeys(${this.expr(right)})) ${body}`;
+          }
+          return `for (${this.loopVar(left)} in ${this.expr(right)}) ${body}`;
+        }
+        if (this.isMapIterable(right)) {
+          return `for (${this.loopVar(left)} in jsMapIterable(${this.expr(right)})) ${body}`;
+        }
         return `for (${this.loopVar(left)} in ${this.expr(right)}) ${body}`;
       }
       case 'FunctionDeclaration': {
+        if ((node as { async?: boolean }).async || (node as { generator?: boolean }).generator) {
+          const kind = (node as { async?: boolean }).async ? 'async' : 'generator';
+          this.err.warn(node, `${kind} functions are not supported yet (no coroutine/iterator support)`);
+          return `error("vesk: ${kind} functions are not supported yet")`;
+        }
         const id = node.id as JsNode | null;
         const name = id ? this.id(id.name as string) : 'anon';
         const params = ((node.params as JsNode[]) ?? []).map((p) => this.typedParam(p)).join(', ');
+        if (id && (id.name as string) !== 'anon') this.registerParamTypes(id.name as string, (node.params as JsNode[]) ?? []);
         const body = node.body as JsNode;
         const lbl = this.uid('__veskfn');
         const lines = this.withLabels(lbl, undefined, undefined, () => this.blockLines(body, 0));
-        return `fun ${name}(${params}) = run<Any?> ${lbl}@ {\n${lines.join('\n')}\n}`;
+        const rt = (node as { returnType?: string | null }).returnType ? tsTypeToKotlin((node as { returnType?: string }).returnType!) : 'Any?';
+        return `fun ${name}(${params}): ${rt} = run<${rt}> ${lbl}@ {\n${lines.join('\n')}\n}`;
       }
       case 'ClassDeclaration':
         return this.classDecl(node);

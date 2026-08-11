@@ -2837,12 +2837,12 @@ fun jsRegexSearch(re: Any?, s: Any?): Int = jsAsRegex(re).find(jsString(s))?.ran
   'jsStringify': { deps: [], src: `
 fun jsStringify(v: Any?): String = when (v) {
     null -> "null"
-    is String -> "\"$v\""
+    is String -> "\\"$v\\""
     is Boolean -> v.toString()
     is Number -> v.toString()
     is List<*> -> v.joinToString(",", "[", "]") { jsStringify(it) }
-    is Map<*, *> -> v.entries.joinToString(",", "{", "}") { "\"\${it.key}\": \${jsStringify(it.value)}" }
-    else -> "\"\${v.toString()}\""
+    is Map<*, *> -> v.entries.joinToString(",", "{", "}") { "\\"\${it.key}\\": \${jsStringify(it.value)}" }
+    else -> "\\"\${v.toString()}\\""
 }
 ` },
   'jsParseJson': { deps: ['jsString'], src: `
@@ -2857,6 +2857,95 @@ private fun jsJsonValue(v: Any?): Any? = when (v) {
     }
     is org.json.JSONArray -> List(v.length()) { i -> jsJsonValue(v.opt(i)) }
     else -> v
+}
+` },
+  'jsMapOf': { deps: [], src: `
+fun jsMapOf(from: Any?): LinkedHashMap<Any?, Any?> {
+    val out = linkedMapOf<Any?, Any?>()
+    (from as List<Any?>).forEach { p -> out[(p as List<Any?>)[0]] = p[1] }
+    return out
+}
+` },
+  'jsSetOf': { deps: [], src: `
+fun jsSetOf(from: Any?): LinkedHashSet<Any?> {
+    val out = linkedSetOf<Any?>()
+    (from as List<Any?>).forEach { out.add(it) }
+    return out
+}
+` },
+  'jsMapIterable': { deps: [], src: `
+fun jsMapIterable(map: Any?): List<List<Any?>> = (map as Map<Any?, Any?>).map { (k, v) -> listOf(k, v) }
+` },
+  'jsMapGet': { deps: [], src: `
+fun jsMapGet(map: Any?, key: Any?): Any? = (map as? Map<Any?, Any?>)?.get(key)
+` },
+  'jsMapSet': { deps: [], src: `
+fun jsMapSet(map: Any?, key: Any?, value: Any?): Any? { (map as MutableMap<Any?, Any?>)[key] = value; return map }
+` },
+  'jsHas': { deps: [], src: `
+fun jsHas(coll: Any?, key: Any?): Boolean = when (coll) {
+    is Map<*, *> -> coll.containsKey(key)
+    is Set<*> -> coll.contains(key)
+    else -> false
+}
+` },
+  'jsDelete': { deps: [], src: `
+fun jsDelete(coll: Any?, key: Any?): Boolean = when (coll) {
+    is MutableMap<*, *> -> if (coll.containsKey(key)) { coll.remove(key); true } else false
+    is MutableSet<*> -> coll.remove(key)
+    else -> false
+}
+` },
+  'jsClear': { deps: [], src: `
+fun jsClear(coll: Any?) { when (coll) {
+    is MutableMap<*, *> -> coll.clear()
+    is MutableSet<*> -> coll.clear()
+    else -> {}
+} }
+` },
+  'jsMapKeys': { deps: [], src: `
+fun jsMapKeys(map: Any?): Set<Any?> = (map as Map<Any?, Any?>).keys
+` },
+  'jsMapValues': { deps: [], src: `
+fun jsMapValues(map: Any?): Collection<Any?> = (map as Map<Any?, Any?>).values
+` },
+  'jsMapEntries': { deps: [], src: `
+fun jsMapEntries(map: Any?): List<List<Any?>> = (map as Map<Any?, Any?>).map { (k, v) -> listOf(k, v) }
+` },
+  'jsSize': { deps: [], src: `
+fun jsSize(coll: Any?): Int = when (coll) {
+    is List<*> -> coll.size
+    is Set<*> -> coll.size
+    is Map<*, *> -> coll.size
+    is String -> coll.length
+    else -> 0
+}
+` },
+  'jsLength': { deps: [], src: `
+fun jsLength(coll: Any?): Int = when (coll) {
+    is String -> coll.length
+    is CharSequence -> coll.length
+    is List<*> -> coll.size
+    is Set<*> -> coll.size
+    is Map<*, *> -> coll.size
+    is Array<*> -> coll.size
+    else -> 0
+}
+` },
+  'jsForEach': { deps: [], src: `
+fun jsForEach(coll: Any?, cb: (Any?, Any?, Any?) -> Any?) { when (coll) {
+    is Map<*, *> -> coll.forEach { (k, v) -> cb(v, k, coll) }
+    is Set<*> -> coll.forEach { x -> cb(x, x, coll) }
+    is List<*> -> coll.forEachIndexed { i, x -> cb(x, i, coll) }
+    is Array<*> -> coll.forEachIndexed { i, x -> cb(x, i, coll) }
+    else -> throw Exception("jsForEach: not iterable")
+} }
+` },
+  'jsDateValue': { deps: ['jsString'], src: `
+fun jsDateValue(v: Any?): Long = when (v) {
+    is Number -> v.toLong()
+    is String -> try { java.time.Instant.parse(jsString(v)).toEpochMilli() } catch (_: Exception) { java.time.Instant.parse(jsString(v).replace(' ', 'T') + "Z").toEpochMilli() }
+    else -> 0L
 }
 ` },
   'jsTagged': { deps: [], src: `
@@ -2887,13 +2976,42 @@ object VeskTimers {
         jobs[id] = scope.launch { while (isActive) { delay(ms?.let { num(it) }?.toLong() ?: 0L); fn() } }
         return id
     }
-    fun clearTimeout(id: Int) { jobs.remove(id)?.cancel() }
-    fun clearInterval(id: Int) { jobs.remove(id)?.cancel() }
+    fun clearTimeout(id: Any?) { jobs.remove(num(id).toInt())?.cancel() }
+    fun clearInterval(id: Any?) { jobs.remove(num(id).toInt())?.cancel() }
+}
+` },
+  'VeskAppContext': { deps: [], src: `
+// Activity anchor for browser-API dialogs. The generated App() composable
+// registers the current activity (main thread, once per composition).
+object VeskAppContext {
+    @Volatile var activity: Activity? = null
+    fun setup(context: Context) {
+        fun resolve(c: Context): Activity? = when (c) {
+            is Activity -> c
+            is ContextWrapper -> resolve(c.baseContext)
+            else -> null
+        }
+        activity = resolve(context)
+    }
+}
+// Top-level entry point the generated App() composable calls at startup.
+fun veskAppSetup(context: Context) = VeskAppContext.setup(context)
+` },
+  'jsAlert': { deps: ['VeskAppContext'], src: `
+// window.alert: non-blocking native AlertDialog. A blocking dialog cannot run
+// on Android's main thread without ANRing, so alert returns immediately with
+// Unit (JS undefined) and shows the dialog asynchronously.
+fun jsAlert(message: Any?) {
+    val ctx = VeskAppContext.activity ?: return
+    android.app.AlertDialog.Builder(ctx)
+        .setMessage(if (message == null) "" else message.toString())
+        .setPositiveButton("OK", null)
+        .show()
 }
 ` },
 };
 
-export const RUNTIME_ORDER = ['veskVideo', 'veskAudio', 'veskFileImage', 'veskDeviceCore', 'veskDeviceApi', 'veskQr', 'veskDragDrop', 'veskColorFilter', 'veskBrightness', 'veskContrast', 'veskGrayscale', 'veskSaturate', 'veskInvert', 'veskSepia', 'veskHueRotate', 'veskDashedBorder', 'veskSideBorder', 'veskDivideLine', 'veskSkew', 'Link', 'NavLink', 'Outlet', 'jsString', 'jsTypeof', 'jsGlobalIsNaN', 'jsGlobalIsFinite', 'jsStrictIsNaN', 'jsStrictIsFinite', 'jsIsInteger', 'jsParseInt', 'jsParseFloat', 'jsEncodeURIComponent', 'jsDecodeURIComponent', 'jsEncodeURI', 'jsDecodeURI', 'jsRegexExec', 'jsRegexSearch', 'jsStringify', 'jsParseJson', 'jsTagged', 'JsConsole', 'VeskTimers'];
+export const RUNTIME_ORDER = ['veskVideo', 'veskAudio', 'veskFileImage', 'veskDeviceCore', 'veskDeviceApi', 'veskQr', 'veskDragDrop', 'veskColorFilter', 'veskBrightness', 'veskContrast', 'veskGrayscale', 'veskSaturate', 'veskInvert', 'veskSepia', 'veskHueRotate', 'veskDashedBorder', 'veskSideBorder', 'veskDivideLine', 'veskSkew', 'Link', 'NavLink', 'Outlet', 'jsString', 'jsTypeof', 'jsGlobalIsNaN', 'jsGlobalIsFinite', 'jsStrictIsNaN', 'jsStrictIsFinite', 'jsIsInteger', 'jsParseInt', 'jsParseFloat', 'jsEncodeURIComponent', 'jsDecodeURIComponent', 'jsEncodeURI', 'jsDecodeURI', 'jsRegexExec', 'jsRegexSearch', 'jsStringify', 'jsParseJson', 'jsMapOf', 'jsSetOf', 'jsMapIterable', 'jsMapGet', 'jsMapSet', 'jsHas', 'jsDelete', 'jsClear', 'jsMapKeys', 'jsMapValues', 'jsMapEntries', 'jsSize', 'jsLength', 'jsForEach', 'jsDateValue', 'jsTagged', 'JsConsole', 'VeskTimers', 'VeskAppContext', 'jsAlert'];
 
 // Function/composable names that come from a differently-named helper unit.
 export const BIOMETRIC_CHECK_BODY = `val pm = context.packageManager

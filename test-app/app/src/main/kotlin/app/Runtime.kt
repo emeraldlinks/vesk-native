@@ -143,6 +143,13 @@ import com.google.zxing.MultiFormatWriter
 import androidx.media.app.NotificationCompat.MediaStyle
 import androidx.media.session.MediaButtonReceiver
 import android.support.v4.media.session.MediaSessionCompat
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 // Native counterparts of @vesk/runtime exports referenced by copied .vsk files.
 
@@ -2674,27 +2681,6 @@ fun Modifier.veskSideBorder(top: Dp, end: Dp, bottom: Dp, start: Dp, color: Colo
 }
 
 
-// Single dashed/dotted divider line (divide-dashed / divide-dotted).
-fun Modifier.veskDivideLine(horizontal: Boolean, width: Dp, color: Color, dashes: FloatArray): Modifier = drawBehind {
-    val w = width.toPx()
-    if (horizontal) {
-        drawLine(color, Offset(0f, w / 2f), Offset(size.width, w / 2f), strokeWidth = w, pathEffect = PathEffect.dashPathEffect(dashes))
-    } else {
-        drawLine(color, Offset(w / 2f, 0f), Offset(w / 2f, size.height), strokeWidth = w, pathEffect = PathEffect.dashPathEffect(dashes))
-    }
-}
-
-
-// Skew transform (skew-x / skew-y) via canvas transform.
-fun Modifier.veskSkew(sx: Float, sy: Float): Modifier = drawWithContent {
-    val canvas = drawContext.canvas
-    canvas.save()
-    canvas.skew(sx, sy)
-    drawContent()
-    canvas.restore()
-}
-
-
 data class NavLinkProps(
     val href: String = "",
     val `class`: String = "",
@@ -2706,4 +2692,85 @@ fun NavLink(props: NavLinkProps, content: @Composable () -> Unit = {}) {
     Box(modifier = Modifier.clickable(indication = null, interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, onClick = { nav.navigate(props.href) })) {
         content()
     }
+}
+
+
+fun jsStringify(v: Any?): String = when (v) {
+    null -> "null"
+    is String -> "\"$v\""
+    is Boolean -> v.toString()
+    is Number -> v.toString()
+    is List<*> -> v.joinToString(",", "[", "]") { jsStringify(it) }
+    is Map<*, *> -> v.entries.joinToString(",", "{", "}") { "\"${it.key}\": ${jsStringify(it.value)}" }
+    else -> "\"${v.toString()}\""
+}
+
+
+fun jsMapGet(map: Any?, key: Any?): Any? = (map as? Map<Any?, Any?>)?.get(key)
+
+
+fun jsHas(coll: Any?, key: Any?): Boolean = when (coll) {
+    is Map<*, *> -> coll.containsKey(key)
+    is Set<*> -> coll.contains(key)
+    else -> false
+}
+
+
+fun jsMapKeys(map: Any?): Set<Any?> = (map as Map<Any?, Any?>).keys
+
+
+fun jsSize(coll: Any?): Int = when (coll) {
+    is List<*> -> coll.size
+    is Set<*> -> coll.size
+    is Map<*, *> -> coll.size
+    is String -> coll.length
+    else -> 0
+}
+
+
+object VeskTimers {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private val jobs = mutableMapOf<Int, Job>()
+    private var nextId = 1
+    fun setTimeout(fn: () -> Unit, ms: Any? = 0): Int {
+        val id = nextId++
+        jobs[id] = scope.launch { delay(ms?.let { num(it) }?.toLong() ?: 0L); jobs.remove(id); fn() }
+        return id
+    }
+    fun setInterval(fn: () -> Unit, ms: Any? = 0): Int {
+        val id = nextId++
+        jobs[id] = scope.launch { while (isActive) { delay(ms?.let { num(it) }?.toLong() ?: 0L); fn() } }
+        return id
+    }
+    fun clearTimeout(id: Any?) { jobs.remove(num(id).toInt())?.cancel() }
+    fun clearInterval(id: Any?) { jobs.remove(num(id).toInt())?.cancel() }
+}
+
+
+// Activity anchor for browser-API dialogs. The generated App() composable
+// registers the current activity (main thread, once per composition).
+object VeskAppContext {
+    @Volatile var activity: Activity? = null
+    fun setup(context: Context) {
+        fun resolve(c: Context): Activity? = when (c) {
+            is Activity -> c
+            is ContextWrapper -> resolve(c.baseContext)
+            else -> null
+        }
+        activity = resolve(context)
+    }
+}
+// Top-level entry point the generated App() composable calls at startup.
+fun veskAppSetup(context: Context) = VeskAppContext.setup(context)
+
+
+// window.alert: non-blocking native AlertDialog. A blocking dialog cannot run
+// on Android's main thread without ANRing, so alert returns immediately with
+// Unit (JS undefined) and shows the dialog asynchronously.
+fun jsAlert(message: Any?) {
+    val ctx = VeskAppContext.activity ?: return
+    android.app.AlertDialog.Builder(ctx)
+        .setMessage(if (message == null) "" else message.toString())
+        .setPositiveButton("OK", null)
+        .show()
 }

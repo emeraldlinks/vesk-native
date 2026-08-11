@@ -154,11 +154,15 @@ check('js2kt: get() maps to .value', kt('get(count)') === 'count.value');
 check('js2kt: set() maps to assignment', kt('set(count, get(count) + 1)') === 'count.value = count.value + 1');
 check('js2kt: template literal', kt('`hi ${name}`') === '"hi $name"');
 check('js2kt: filter/map chain', kt('items.filter(i => i.ok).map(i => i.name)') === 'items.filter { i -> i.ok }.map { i -> i.name }');
-check('js2kt: no unsupported warnings', (() => {
+check('js2kt: optional call on function value', kt('a?.b?.(1)') === '(jsMapGet(a, "b"))?.invoke(1)');
+check('js2kt: optional call plain callee', kt('a?.(1)') === '(a)?.invoke(1)');
+check('js2kt: optional call on plain member', kt('a.b?.(1)') === '(a.b)?.invoke(1)');
+check('js2kt: plain call through optional member', kt('a?.b(1)') === '(jsMapGet(a, "b"))!!.invoke(1)');
+check('js2kt: optional call on built-in is hard error', (() => {
   const err = new KtErrors();
   const j2k = new Js2Kt(err);
-  j2k.expr(initOf('let x = a?.b?.(1) ?? `v${c}`;'));
-  return err.errors.length === 0;
+  const out = j2k.expr(initOf('let x = Math.floor?.(y);'));
+  return err.errors.length > 0 && out.startsWith('error("vesk: optional call on a built-in');
 })());
 
 check('js2kt: typeof maps to jsTypeof', kt('typeof x') === 'jsTypeof(x)');
@@ -181,6 +185,10 @@ check('js2kt: delete member', kt('delete o.k') === '(o).remove("k")');
 check('js2kt: template expression interpolation', kt('`v${c}`') === '"v$c"');
 check('js2kt: spread array', kt('[...a]') === 'listOf(*(a as List<*>).toTypedArray())');
 check('js2kt: object literal', kt('({ a: 1, b })') === 'mutableMapOf<String, Any?>("a" to 1, "b" to b)');
+check('js2kt: object spread', kt('({ ...obj })') === 'mutableMapOf<String, Any?>(*(((obj) as? Map<String, Any?>)?.toList() ?: emptyList<Pair<String, Any?>>()).toTypedArray())');
+check('js2kt: object spread override order', kt('({ ...a, x: 1 })') === 'mutableMapOf<String, Any?>(*(((a) as? Map<String, Any?>)?.toList() ?: emptyList<Pair<String, Any?>>()).toTypedArray(), "x" to 1)');
+check('js2kt: template with reserved-word id', kt('`x ${out}`') === '"x ${`out`}"');
+check('js2kt: template with keyword id', kt('`${is} value`') === '"${`is`} value"');
 check('js2kt: destructure object', ktStmt('const { a, b } = obj') === 'val __vsk_d0 = obj\nval a = (__vsk_d0 as Map<String, Any?>)[\"a\"]\nval b = (__vsk_d0 as Map<String, Any?>)[\"b\"]');
 check('js2kt: destructure array', ktStmt('const [a, b] = arr') === 'val __vsk_d0 = arr\nval a = (__vsk_d0 as List<*>).getOrNull(0)\nval b = (__vsk_d0 as List<*>).getOrNull(1)');
 check('js2kt: destructure rest + default', ktStmt('const { a: x = 1, ...rest } = obj') === 'val __vsk_d0 = obj\nval x = (__vsk_d0 as Map<String, Any?>)[\"a\"] ?: 1\nval rest = (__vsk_d0 as Map<String, Any?>) - \"a\"');
@@ -190,8 +198,168 @@ check('js2kt: switch to when', ktStmt('switch (x) { case 1: break; default: y() 
 check('js2kt: c-style for to while', ktStmt('for (let i = 0; i < 10; i++) { x += i }') === 'var i = 0\nwhile (truthy(num(i) < num(10))) {\n\trun __vskfor0@ {\n\t\t{\n\t\t\tx += i;\n\t\t}\n\t}\n\ti ++\n}');
 check('js2kt: for-of', ktStmt('for (const x of items) { f(x) }') === 'for (x in items) {\n\tf(x);\n}');
 check('js2kt: class with typed ctor/method', ktStmt('class Foo { constructor(a) { this.a = a } getA() { return this.a } }') === 'class Foo {\n\tvar a: Any? = null\n\tconstructor(a: Any?) {\n\t\tthis.a= a;\n\t}\n\tfun getA() = run<Any?> __veskfn0@ {\n\t\treturn@__veskfn0 this.a;\n\t}\n}');
-check('js2kt: function declaration typed params', ktStmt('function add(a, b = 1) { return a + b }') === 'fun add(a: Any?, b: Any? = 1) = run<Any?> __veskfn0@ {\nreturn@__veskfn0 a + b;\n}');
+check('js2kt: function declaration typed params', ktStmt('function add(a, b = 1) { return a + b }') === 'fun add(a: Any?, b: Any? = 1): Any? = run<Any?> __veskfn0@ {\nreturn@__veskfn0 a + b;\n}');
 check('js2kt: labeled getter return', ktStmt('class C { get x() { return this.a } }').includes('get() = run<Any?> __veskget0@ {') && ktStmt('class C { get x() { return this.a } }').includes('return@__veskget0 this.a;'));
+
+check('js2kt: new Map()', kt('new Map()') === 'linkedMapOf<Any?, Any?>()');
+check('js2kt: new Map([[k, v]])', kt('new Map([[1, "a"], [2, "b"]])') === 'linkedMapOf<Any?, Any?>(1 to "a", 2 to "b")');
+check('js2kt: new Set()', kt('new Set()') === 'linkedSetOf<Any?>()');
+check('js2kt: new Set([1, 2])', kt('new Set([1, 2, 3])') === 'linkedSetOf<Any?>(1, 2, 3)');
+check('js2kt: new Date()', kt('new Date()') === 'java.util.Date()');
+check('js2kt: new Date(ms)', kt('new Date(0)') === 'java.util.Date(0.toLong())');
+check('js2kt: Date.now()', kt('Date.now()') === 'System.currentTimeMillis()');
+check('js2kt: Date.parse()', kt('Date.parse("2020-01-01T00:00:00Z")') === 'jsDateValue("2020-01-01T00:00:00Z")');
+check('js2kt: map.get()', kt('m.get(k)') === 'jsMapGet(m, k)');
+check('js2kt: map.set()', kt('m.set(k, v)') === 'jsMapSet(m, k, v)');
+check('js2kt: map.has()', kt('m.has(k)') === 'jsHas(m, k)');
+check('js2kt: map.delete()', kt('m.delete(k)') === 'jsDelete(m, k)');
+check('js2kt: map.clear()', kt('m.clear()') === 'jsClear(m)');
+check('js2kt: map.keys()', kt('m.keys()') === 'jsMapKeys(m)');
+check('js2kt: map.values()', kt('m.values()') === 'jsMapValues(m)');
+check('js2kt: map.entries()', kt('m.entries()') === 'jsMapEntries(m)');
+check('js2kt: map.size property', kt('m.size') === 'jsSize(m)');
+check('js2kt: array.length property', kt('arr.length') === 'jsLength(arr)');
+check('js2kt: string.length property', kt('s.length') === 'jsLength(s)');
+check('js2kt: date getTime', kt('d.getTime()') === '(d as java.util.Date).time');
+check('js2kt: date toISOString', kt('d.toISOString()') === '((d as java.util.Date).toInstant().toString())');
+check('js2kt: map forEach 2-arg arrow', ktStmt('m.forEach((v, k) => total += v)') === 'jsForEach(m, { __vsk_v0, __vsk_k1, __vsk_c2 -> total += __vsk_v0 });');
+check('js2kt: map forEach block body', ktStmt('m.forEach(x => { y(x) })') === 'jsForEach(m, { __vsk_v0, __vsk_k1, __vsk_c2 -> run __veskret3@ { y(__vsk_v0) } });');
+check('js2kt: array forEach keeps index order', ktStmt('arr.forEach((v, i) => out += i)') === 'jsForEach(arr, { __vsk_v0, __vsk_k1, __vsk_c2 -> `out` += __vsk_k1 });');
+check('js2kt: for-of over map var yields pairs', (() => {
+  const err = new KtErrors();
+  const j2k = new Js2Kt(err);
+  const block = program('{ const m = new Map(); for (const [k, v] of m) { f(k, v) } }').body[0];
+  const out = j2k.stmt(block.body[0]) + '\n' + j2k.stmt(block.body[1]);
+  return out === 'val m = linkedMapOf<Any?, Any?>();\nfor ((k, v) in jsMapIterable(m)) {\n\tf(k, v);\n}';
+})());
+check('js2kt: for-of over new Map() yields pairs', (() => {
+  const err = new KtErrors();
+  const j2k = new Js2Kt(err);
+  const block = program('{ for (const x of new Map([[1, 2]])) { f(x) } }').body[0];
+  return j2k.stmt(block.body[0]) === 'for (x in jsMapIterable(linkedMapOf<Any?, Any?>(1 to 2))) {\n\tf(x);\n}';
+})());
+check('js2kt: for-of over set stays direct', ktStmt('for (const x of s) { f(x) }') === 'for (x in s) {\n\tf(x);\n}');
+check('js2kt: object literal member read via jsMapGet', (() => {
+  const err = new KtErrors();
+  const j2k = new Js2Kt(err);
+  const block = program('{ const obj = { a: 1 }; obj.a }').body[0];
+  return j2k.stmt(block.body[0]) + '\n' + j2k.stmt(block.body[1]) === 'val obj = mutableMapOf<String, Any?>("a" to 1);\njsMapGet(obj, "a");';
+})());
+check('js2kt: object literal member write via jsMapSet', (() => {
+  const err = new KtErrors();
+  const j2k = new Js2Kt(err);
+  const block = program('{ const obj = { a: 1 }; obj.a = 5 }').body[0];
+  return j2k.stmt(block.body[0]) + '\n' + j2k.stmt(block.body[1]) === 'val obj = mutableMapOf<String, Any?>("a" to 1);\njsMapSet(obj, "a", 5);';
+})());
+check('js2kt: for-in over object literal var yields keys', (() => {
+  const err = new KtErrors();
+  const j2k = new Js2Kt(err);
+  const block = program('{ const obj = { a: 1, b: 2 }; for (const k in obj) { f(k) } }').body[0];
+  return j2k.stmt(block.body[0]) + '\n' + j2k.stmt(block.body[1]) === 'val obj = mutableMapOf<String, Any?>("a" to 1, "b" to 2);\nfor (k in jsMapKeys(obj)) {\n\tf(k);\n}';
+})());
+check('js2kt: for-in over inline object literal yields keys', (() => {
+  const err = new KtErrors();
+  const j2k = new Js2Kt(err);
+  const block = program('{ for (const k in { a: 1, b: 2 }) { f(k) } }').body[0];
+  return j2k.stmt(block.body[0]) === 'for (k in jsMapKeys(mutableMapOf<String, Any?>("a" to 1, "b" to 2))) {\n\tf(k);\n}';
+})());
+check('js2kt: new Date multi-arg', kt('new Date(2026, 7, 11)') === 'java.util.Date(2026 - 1900, 7, 11)');
+check('js2kt: new Date multi-arg computed year', kt('new Date(y, 0, 1)') === 'java.util.Date(num(y) - 1900, 0, 1)');
+check('js2kt: clearTimeout variable maps to VeskTimers', kt('clearTimeout(id)') === 'VeskTimers.clearTimeout(id)');
+check('js2kt: clearInterval variable maps to VeskTimers', kt('clearInterval(id)') === 'VeskTimers.clearTimeout(id)');
+check('js2kt: optional call on new built-in set is hard error', (() => {
+  const err = new KtErrors();
+  const j2k = new Js2Kt(err);
+  const out = j2k.expr(initOf('let x = Intl.NumberFormat?.(y);'));
+  return err.errors.length > 0 && out.startsWith('error("vesk: optional call on a built-in');
+})());
+
+check('js2kt: alert maps to jsAlert', kt('alert("hi")') === 'jsAlert("hi")');
+check('js2kt: window.alert maps to jsAlert', kt('window.alert("hi")') === 'jsAlert("hi")');
+check('js2kt: window.setTimeout maps to VeskTimers', kt('window.setTimeout(fn, 50)') === 'VeskTimers.setTimeout(fn, 50)');
+check('js2kt: window.clearTimeout maps to VeskTimers', kt('window.clearTimeout(id)') === 'VeskTimers.clearTimeout(id)');
+check('js2kt: confirm free fn is hard error', (() => {
+  const err = new KtErrors();
+  const j2k = new Js2Kt(err);
+  const out = j2k.expr(initOf('let x = confirm("ok?");'));
+  return err.errors.length > 0 && out.startsWith('error("vesk: confirm() is not supported on Android');
+})());
+check('js2kt: prompt free fn is hard error', (() => {
+  const err = new KtErrors();
+  const j2k = new Js2Kt(err);
+  const out = j2k.expr(initOf('let x = prompt("name");'));
+  return err.errors.length > 0 && out.startsWith('error("vesk: prompt() is not supported on Android');
+})());
+check('js2kt: window.confirm is hard error', (() => {
+  const err = new KtErrors();
+  const j2k = new Js2Kt(err);
+  const out = j2k.expr(initOf('let x = window.confirm("ok?");'));
+  return err.errors.length > 0 && out.startsWith('error("vesk: window.confirm() is not supported on Android');
+})());
+check('js2kt: window.location member is hard error', (() => {
+  const err = new KtErrors();
+  const j2k = new Js2Kt(err);
+  const out = j2k.expr(initOf('let u = window.location.href;'));
+  return err.errors.length > 0 && out.startsWith('error("vesk: window.location is not supported');
+})());
+check('js2kt: document.createElement is hard error', (() => {
+  const err = new KtErrors();
+  const j2k = new Js2Kt(err);
+  const out = j2k.expr(initOf('let d = document.createElement("div");'));
+  return err.errors.length > 0 && out.startsWith('error("vesk: document.createElement() is not supported');
+})());
+check('js2kt: document member read is hard error', (() => {
+  const err = new KtErrors();
+  const j2k = new Js2Kt(err);
+  const out = j2k.expr(initOf('let t = document.title;'));
+  return err.errors.length > 0 && out.startsWith('error("vesk: document.title is not supported');
+})());
+check('js2kt: localStorage member call is hard error', (() => {
+  const err = new KtErrors();
+  const j2k = new Js2Kt(err);
+  const out = j2k.expr(initOf('let v = localStorage.getItem("k");'));
+  return err.errors.length > 0 && out.startsWith('error("vesk: localStorage.getItem() is not supported');
+})());
+check('js2kt: navigator member read is hard error', (() => {
+  const err = new KtErrors();
+  const j2k = new Js2Kt(err);
+  const out = j2k.expr(initOf('let ua = navigator.userAgent;'));
+  return err.errors.length > 0 && out.startsWith('error("vesk: navigator.userAgent is not supported');
+})());
+check('js2kt: fetch free fn is hard error', (() => {
+  const err = new KtErrors();
+  const j2k = new Js2Kt(err);
+  const out = j2k.expr(initOf('let r = fetch("/api");'));
+  return err.errors.length > 0 && out.startsWith('error("vesk: fetch() is not supported');
+})());
+check('js2kt: atob free fn is hard error', (() => {
+  const err = new KtErrors();
+  const j2k = new Js2Kt(err);
+  const out = j2k.expr(initOf('let b = atob("aGk=");'));
+  return err.errors.length > 0 && out.startsWith('error("vesk: atob() is not supported');
+})());
+check('js2kt: async arrow is hard error', (() => {
+  const err = new KtErrors();
+  const j2k = new Js2Kt(err);
+  const out = j2k.expr(initOf('let f = async (x) => await g(x);'));
+  return err.errors.length > 0 && out.startsWith('error("vesk: async functions are not supported');
+})());
+check('js2kt: async function declaration is hard error', (() => {
+  const err = new KtErrors();
+  const j2k = new Js2Kt(err);
+  const out = j2k.stmt(stmt0('async function f() { await g() }'));
+  return err.errors.length > 0 && out.startsWith('error("vesk: async functions are not supported');
+})());
+check('js2kt: await is hard error', (() => {
+  const err = new KtErrors();
+  const j2k = new Js2Kt(err);
+  const out = j2k.expr(initOf('let x = await g();'));
+  return err.errors.length > 0 && out.startsWith('error("vesk: await is not supported');
+})());
+check('js2kt: try/catch/finally emission', (() => {
+  const out = ktStmt('try { throw "boom" } catch (e) { x = e.message } finally { y = 1 }');
+  return out.includes('catch (e: Exception) {') && out.includes('finally {');
+})());
 
 console.log(failures === 0 ? '\nALL PASS' : `\n${failures} FAILURES`);
 process.exit(failures === 0 ? 0 : 1);

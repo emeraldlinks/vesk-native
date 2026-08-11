@@ -33,6 +33,9 @@ import { classify, buildModifier, buildTextStyle, isHidden, isAbsolute, RADIUS }
 import type { ModifierParts } from '@compiler-native/tailwind';
 import { parseCssClasses } from '@compiler-native/css';
 import { walkIR } from '@compiler-native/walk-ir';
+import { relative } from 'node:path';
+import { collectHeaderSymbols, importSource, npmImportLines, pkgImportLines, resolveJsTsTarget, resolveVskTarget, slugFor, splitVskHeader, toPosix, vskImportLines } from '@compiler-native/modules';
+import type { ModuleExport, ModuleRegistry } from '@compiler-native/modules';
 
 export interface CompileOptions {
   packageName?: string;
@@ -43,6 +46,18 @@ export interface CompileOptions {
   mediaResources?: Map<string, string>;
   rClass?: string;
   rootName?: string;
+  /** Project-relative path of this .vsk file (enables header import/export support). */
+  fileRel?: string;
+  /** App directory, for resolving relative .vsk imports. */
+  appDir?: string;
+  /** Project-wide export registry built from every .vsk header. */
+  moduleRegistry?: ModuleRegistry;
+  /** Per-file unique slug map (from buildModuleRegistry); falls back to slugFor. */
+  moduleSlugs?: Map<string, string>;
+  /** Project JS/TS module rel path -> compiled exports (from the CLI's module compiler). */
+  projectModuleRegistry?: Map<string, Map<string, ModuleExport>>;
+  /** npm specifier -> exported name -> { pkg, name } for compiled npm modules. */
+  npmRegistry?: Map<string, Map<string, ModuleExport>>;
 }
 
 const CLASS_ATTRS = new Set(['class', 'className']);
@@ -557,6 +572,15 @@ class Emitter {
     this.imageResources = imageResources;
     this.mediaResources = mediaResources;
     this.rClass = rClass;
+  }
+
+  private guardCount = 0;
+  nextGuardName(): string {
+    return `__veskErr${++this.guardCount}`;
+  }
+
+  withParamAliases<T>(aliases: Map<string, string>, fn: () => T): T {
+    return this.j2k.withParamAliases(aliases, fn);
   }
 
   ktString(value: string): string {
@@ -1116,6 +1140,18 @@ function divideBorderMod(divide: NonNullable<ModifierParts['divide']>): string {
     : `Modifier.veskSideBorder(top = 0.dp, end = 0.dp, bottom = 0.dp, start = ${divide.width}.dp, ${divide.color})`;
 }
 
+// Can an IR node run as plain Kotlin inside a try/catch guard? Only runtime
+// statements and statement-only conditionals are allowed — anything that
+// emits a composable invocation (markup, track decls, loops, calls) renders
+// outside the guard.
+function isGuardSafe(n: IRNode): boolean {
+  if (n instanceof RuntimeStatement) return true;
+  if (n instanceof OpaqueDynamicRegion) {
+    return (n.consequentNodes as IRNode[]).every(isGuardSafe) && (n.alternateNodes as IRNode[]).every(isGuardSafe);
+  }
+  return false;
+}
+
 function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'column' | 'row' | null, extraModifier: string | null = null, flowParent = false, boxScope = false): string[] {
   const pad = '\t'.repeat(level);
 
@@ -1177,9 +1213,15 @@ function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'colum
   if (child instanceof WhileLoop) {
     const cond = em.exprOf(child.condition);
     const out: string[] = [];
-    out.push(pad + `while (truthy(${cond})) {`);
-    for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope));
-    out.push(pad + `}`);
+    if ((child as { isDoWhile?: boolean }).isDoWhile) {
+      out.push(pad + `do {`);
+      for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope));
+      out.push(pad + `} while (truthy(${cond}));`);
+    } else {
+      out.push(pad + `while (truthy(${cond})) {`);
+      for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope));
+      out.push(pad + `}`);
+    }
     return out;
   }
   if (child instanceof SwitchBlock) {
@@ -1189,7 +1231,13 @@ function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'colum
     for (const c of child.cases) {
       const test = c.test ? em.exprOf(c.test) : null;
       out.push(pad + `\t${test === null ? 'else' : test} -> {`);
-      for (const n of c.body) out.push(...emitChild(n, em, level + 2, parentAxis, extraModifier, flowParent, boxScope));
+      // Kotlin `when` branches are exclusive (no fallthrough), so the `break`
+      // statements the web markup inserts after each case body are a no-op
+      // here — emitting them would not compile.
+      const bodyNodes = (c.body as IRNode[]).filter(
+        (n) => !(n instanceof RuntimeStatement) || (n.ast as { type?: string } | null)?.type !== 'BreakStatement',
+      );
+      for (const n of bodyNodes) out.push(...emitChild(n, em, level + 2, parentAxis, extraModifier, flowParent, boxScope));
       out.push(pad + '\t}');
     }
     out.push(pad + `}`);
@@ -1197,11 +1245,32 @@ function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'colum
   }
   if (child instanceof TryCatch) {
     const catchParam = child.catchParamName ?? 'e';
+    const guard = em.nextGuardName();
     const out: string[] = [];
+    // Compose forbids try/catch around composable invocations, so the try
+    // body's plain statements run in a guarded block first; markup renders
+    // only when the guard stayed healthy, and the catch body renders (with
+    // the catch parameter aliased to the guard) otherwise.
+    const bodyGuard = child.bodyTemplate.filter(isGuardSafe);
+    const bodyRender = child.bodyTemplate.filter((n) => !isGuardSafe(n));
+    const catchGuard = child.catchBody.filter(isGuardSafe);
+    const catchRender = child.catchBody.filter((n) => !isGuardSafe(n));
+    out.push(pad + `var ${guard}: Throwable? = null`);
     out.push(pad + `try {`);
-    for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope));
-    out.push(pad + `} catch (${catchParam}: Exception) {`);
-    for (const n of child.catchBody) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope));
+    for (const n of bodyGuard) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope));
+    out.push(pad + `} catch (${guard}_caught: Throwable) {`);
+    out.push(pad + `\t${guard} = ${guard}_caught`);
+    for (const n of catchGuard) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope));
+    out.push(pad + `}`);
+    out.push(pad + `if (${guard} == null) {`);
+    for (const n of bodyRender) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope));
+    out.push(pad + `} else {`);
+    for (const n of catchRender) {
+      const lines = em.withParamAliases(new Map([[catchParam, guard]]), () =>
+        emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope),
+      );
+      out.push(...lines);
+    }
     out.push(pad + `}`);
     return out;
   }
@@ -1213,7 +1282,9 @@ function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'colum
       const name = ['const ', 'let ', 'var '].some((kw) => rawLeft.startsWith(kw))
         ? rawLeft.slice(rawLeft.indexOf(' ') + 1).trim()
         : rawLeft;
-      out.push(pad + `for (${name} in ${cond}) {`);
+      // JS for-in iterates keys; Kotlin iterating a Map yields entries, so go
+      // through the runtime keys view for exact object/map semantics.
+      out.push(pad + `for (${name} in jsMapKeys(${cond})) {`);
       for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope));
       out.push(pad + `}`);
       return out;
@@ -1302,6 +1373,139 @@ export function collectCustomCss(sources: Array<{ source: string; filename?: str
   return { classes, scoped, skipped };
 }
 
+// A header export/declaration is emitted at file top with its registry-mangled
+// Kotlin name; a same-file alias import keeps the plain name working in the
+// component's own script and markup.
+function renameDeclared(node: JsNode, kotlinName: string): JsNode {
+  const id = { type: 'Identifier', name: kotlinName } as JsNode;
+  if (node.type === 'VariableDeclaration') {
+    const decls = (node.declarations as JsNode[]) ?? [];
+    const first = decls[0] ?? ({} as JsNode);
+    return { ...node, declarations: [{ ...first, id }] } as JsNode;
+  }
+  return { ...node, id } as JsNode;
+}
+
+function emitVskHeader(
+  source: string,
+  fileRel: string,
+  appDir: string,
+  registry: ModuleRegistry | undefined,
+  npmRegistry: Map<string, Map<string, { pkg: string; name: string }>> | undefined,
+  slugs: Map<string, string> | undefined,
+  projectRegistry: Map<string, Map<string, { pkg: string; name: string }>> | undefined,
+  err: KtErrors,
+): { imports: string[]; decls: string[] } {
+  const imports: string[] = [];
+  const decls: string[] = [];
+  const aliases: string[] = [];
+  const { header } = splitVskHeader(source);
+  if (!header.trim()) return { imports, decls };
+
+  const { symbols, error } = collectHeaderSymbols(header);
+  if (error) {
+    err.warn(null, error);
+    return { imports, decls };
+  }
+  const slug = slugs?.get(fileRel) ?? slugFor(fileRel);
+  const j2k = new Js2Kt(err);
+  const localKt = (name: string): string => `${slug}_${name}`;
+
+  for (const imp of symbols.imports) {
+    const spec = importSource(imp);
+    let lines: string[] = [];
+    let errors: string[] = [];
+    if (resolveVskTarget(spec, fileRel, appDir)) {
+      const r = vskImportLines(imp, fileRel, appDir, registry ?? new Map());
+      lines = r.lines;
+      errors = r.errors;
+    } else {
+      const jsTsTarget = resolveJsTsTarget(spec, fileRel, appDir);
+      if (jsTsTarget && projectRegistry?.has(jsTsTarget)) {
+        const r = pkgImportLines(imp, spec, projectRegistry.get(jsTsTarget) ?? new Map());
+        lines = r.lines;
+        errors = r.errors;
+      } else if (jsTsTarget) {
+        errors.push(`import '${spec}': target ${jsTsTarget} was not compiled (no module registry)`);
+      } else if (npmRegistry && npmRegistry.size > 0) {
+        const r = npmImportLines(imp, npmRegistry);
+        lines = r.lines;
+        errors = r.errors;
+      } else {
+        errors.push(`import '${spec}': could not resolve module (no registry)`);
+      }
+    }
+    for (const l of lines) imports.push(l);
+    for (const e of errors) err.warn(null, e);
+  }
+
+  const emitDecl = (name: string, node: JsNode, kotlinName: string, isDefaultExpr: boolean): void => {
+    let kt: string;
+    if (isDefaultExpr && node.type !== 'FunctionDeclaration' && node.type !== 'ClassDeclaration') {
+      kt = `val ${kotlinName} = ${j2k.expr(node)};`;
+    } else {
+      kt = j2k.stmt(renameDeclared(node, kotlinName));
+    }
+    decls.push(kt);
+    if (name !== 'default' && name !== kotlinName) aliases.push(`import app.${kotlinName} as ${name}`);
+  };
+
+  for (const e of symbols.exportDecls) {
+    const name = e.name;
+    const kotlinName = (registry?.get(fileRel)?.get(name) || localKt(name)) as string;
+    emitDecl(name, e.node, kotlinName, name === 'default');
+  }
+  for (const d of symbols.decls) {
+    emitDecl(d.name, d.node, localKt(d.name), false);
+  }
+
+  imports.push(...aliases);
+  return { imports, decls };
+}
+
+export interface ProjectModuleCompile {
+  /** export name -> compiled Kotlin reference, for the header import registry. */
+  registryEntry: Map<string, ModuleExport>;
+  /** Kotlin declarations for the whole module (exports and private decls). */
+  kt: string;
+}
+
+// Compile a standalone project JS/TS module (pure scripts — no components) to
+// Kotlin plus its export registry. Top-level imports are a hard error for now
+// (no intra-module graph yet); imports/exports/declarations only, mirroring
+// the `.vsk` header contract.
+export function compileProjectModule(source: string, fileRel: string, err: KtErrors): ProjectModuleCompile {
+  const { symbols, error } = collectHeaderSymbols(source);
+  if (error) {
+    err.warn(null, error);
+    return { registryEntry: new Map(), kt: '' };
+  }
+  for (const imp of symbols.imports) err.warn(null, `imports inside project modules are not supported yet: '${importSource(imp)}'`);
+  const slug = slugFor(fileRel);
+  const j2k = new Js2Kt(err);
+  const registryEntry = new Map<string, ModuleExport>();
+  const decls: string[] = [];
+  const emitDecl = (node: JsNode, kotlinName: string, isDefaultExpr: boolean): void => {
+    let kt: string;
+    if (isDefaultExpr && node.type !== 'FunctionDeclaration' && node.type !== 'ClassDeclaration') {
+      kt = `val ${kotlinName} = ${j2k.expr(node)};`;
+    } else {
+      kt = j2k.stmt(renameDeclared(node, kotlinName));
+    }
+    decls.push(kt);
+  };
+  for (const e of symbols.exportDecls) {
+    const kotlinName = `${slug}_${e.name === 'default' ? 'default' : e.name}`;
+    emitDecl(e.node, kotlinName, e.name === 'default');
+    const exportName = e.name === 'default' ? 'default' : e.name;
+    registryEntry.set(exportName, { pkg: 'app', name: kotlinName });
+  }
+  for (const d of symbols.decls) {
+    emitDecl(d.node, `${slug}_${d.name}`, false);
+  }
+  return { registryEntry, kt: decls.join('\n') };
+}
+
 function runCompile(source: string, filename: string, options: CompileOptions): CompileResult {
   const err = new KtErrors();
   const pkg = options.packageName ?? 'app';
@@ -1321,6 +1525,17 @@ function runCompile(source: string, filename: string, options: CompileOptions): 
 
   const out: string[] = [];
   out.push(`package ${pkg}`, '', IMPORTS, '');
+
+  if (options.fileRel && options.appDir) {
+    const appDir = options.appDir;
+    const importerRel = toPosix(options.fileRel).startsWith('/')
+      ? toPosix(relative(appDir, options.fileRel))
+      : toPosix(options.fileRel);
+    const headerOut = emitVskHeader(source, importerRel, appDir, options.moduleRegistry, options.npmRegistry, options.moduleSlugs, options.projectModuleRegistry, err);
+    for (const l of headerOut.imports) out.push(l);
+    if (headerOut.decls.length) out.push('', ...headerOut.decls);
+  }
+  out.push('');
 
   for (const comp of ir.components) {
     const decl = decls.find((d) => d.name === comp.name);
