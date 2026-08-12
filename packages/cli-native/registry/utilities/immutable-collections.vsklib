@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "library": {
+    "id": "immutable-collections",
+    "name": "kotlinx.collections.immutable",
+    "description": "Persistent immutable collections (persistentListOf, persistentMapOf).",
+    "group": "org.jetbrains.kotlinx",
+    "artifact": "kotlinx-collections-immutable",
+    "version": "0.3.7",
+    "gradle": [
+      "org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.7"
+    ],
+    "permissions": [],
+    "exports": [
+      "ImmutableCollectionAdapter"
+    ],
+    "signatures": {
+      "ImmutableCollectionAdapter": {
+        "name": "ImmutableCollectionAdapter",
+        "target": "ImmutableCollectionAdapter",
+        "qualified": "kotlinx.collections.immutable.adapters.ImmutableCollectionAdapter",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "impl",
+            "shape": "array",
+            "elem": {
+              "name": "",
+              "shape": "other"
+            }
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      }
+    },
+    "tags": {},
+    "curated": true,
+    "essential": false
+  }
+}

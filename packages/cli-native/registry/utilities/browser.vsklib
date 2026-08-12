@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "library": {
+    "id": "browser",
+    "name": "AndroidX Browser",
+    "description": "Custom Tabs for in-app web links.",
+    "group": "androidx.browser",
+    "artifact": "browser",
+    "version": "1.8.0",
+    "gradle": [
+      "androidx.browser:browser:1.8.0"
+    ],
+    "minSdk": 19,
+    "permissions": [],
+    "exports": [],
+    "signatures": {},
+    "tags": {},
+    "curated": true,
+    "essential": false
+  }
+}

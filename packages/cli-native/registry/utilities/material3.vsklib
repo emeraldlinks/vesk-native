@@ -1,0 +1,4080 @@
+{
+  "version": 1,
+  "library": {
+    "id": "material3",
+    "name": "Material 3",
+    "description": "Material Design 3 components (Button, Card, Surface, Scaffold, TopAppBar).",
+    "group": "androidx.compose.material3",
+    "artifact": "material3",
+    "version": "1.2.1",
+    "gradle": [
+      "androidx.compose.material3:material3:1.2.1"
+    ],
+    "minSdk": 21,
+    "permissions": [],
+    "exports": [
+      "BottomSheetScaffoldState",
+      "ButtonColors",
+      "ButtonElevation",
+      "CardColors",
+      "CardElevation",
+      "CaretProperties",
+      "CheckboxColors",
+      "ChipBorder",
+      "ChipColors",
+      "ChipElevation",
+      "ColorScheme",
+      "DatePickerColors",
+      "DismissDirection",
+      "DismissValue",
+      "DisplayMode",
+      "DrawerState",
+      "DrawerValue",
+      "FabPosition",
+      "FloatingActionButtonElevation",
+      "IconButtonColors",
+      "IconToggleButtonColors",
+      "ListItemColors",
+      "MenuItemColors",
+      "ModalBottomSheetProperties",
+      "NavigationBarItemColors",
+      "NavigationRailItemColors",
+      "RadioButtonColors",
+      "RangeSliderState",
+      "RichTooltipColors",
+      "SearchBarColors",
+      "SegmentedButtonColors",
+      "SelectableChipColors",
+      "SelectableChipElevation",
+      "Shapes",
+      "SheetState",
+      "SheetValue",
+      "SliderColors",
+      "SliderPositions",
+      "SliderState",
+      "SnackbarDuration",
+      "SnackbarHostState",
+      "SnackbarResult",
+      "SwipeToDismissBoxState",
+      "SwipeToDismissBoxValue",
+      "SwitchColors",
+      "TabPosition",
+      "TextFieldColors",
+      "TimePickerColors",
+      "TimePickerLayoutType",
+      "TimePickerState",
+      "TopAppBarColors",
+      "TopAppBarState",
+      "Typography"
+    ],
+    "signatures": {
+      "BottomSheetScaffoldState": {
+        "name": "BottomSheetScaffoldState",
+        "target": "BottomSheetScaffoldState",
+        "qualified": "androidx.compose.material3.BottomSheetScaffoldState",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "bottomSheetState",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.SheetState"
+          },
+          {
+            "name": "snackbarHostState",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.SnackbarHostState"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "ButtonColors": {
+        "name": "ButtonColors",
+        "target": "ButtonColors",
+        "qualified": "androidx.compose.material3.ButtonColors",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "containerColor",
+            "shape": "other"
+          },
+          {
+            "name": "contentColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledContainerColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledContentColor",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "ButtonElevation": {
+        "name": "ButtonElevation",
+        "target": "ButtonElevation",
+        "qualified": "androidx.compose.material3.ButtonElevation",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "defaultElevation",
+            "shape": "other"
+          },
+          {
+            "name": "pressedElevation",
+            "shape": "other"
+          },
+          {
+            "name": "focusedElevation",
+            "shape": "other"
+          },
+          {
+            "name": "hoveredElevation",
+            "shape": "other"
+          },
+          {
+            "name": "disabledElevation",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "CardColors": {
+        "name": "CardColors",
+        "target": "CardColors",
+        "qualified": "androidx.compose.material3.CardColors",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "containerColor",
+            "shape": "other"
+          },
+          {
+            "name": "contentColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledContainerColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledContentColor",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "CardElevation": {
+        "name": "CardElevation",
+        "target": "CardElevation",
+        "qualified": "androidx.compose.material3.CardElevation",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "defaultElevation",
+            "shape": "other"
+          },
+          {
+            "name": "pressedElevation",
+            "shape": "other"
+          },
+          {
+            "name": "focusedElevation",
+            "shape": "other"
+          },
+          {
+            "name": "hoveredElevation",
+            "shape": "other"
+          },
+          {
+            "name": "draggedElevation",
+            "shape": "other"
+          },
+          {
+            "name": "disabledElevation",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "CaretProperties": {
+        "name": "CaretProperties",
+        "target": "CaretProperties",
+        "qualified": "androidx.compose.material3.CaretProperties",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "caretHeight",
+            "shape": "other"
+          },
+          {
+            "name": "caretWidth",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "CheckboxColors": {
+        "name": "CheckboxColors",
+        "target": "CheckboxColors",
+        "qualified": "androidx.compose.material3.CheckboxColors",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "checkedCheckmarkColor",
+            "shape": "other"
+          },
+          {
+            "name": "uncheckedCheckmarkColor",
+            "shape": "other"
+          },
+          {
+            "name": "checkedBoxColor",
+            "shape": "other"
+          },
+          {
+            "name": "uncheckedBoxColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledCheckedBoxColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledUncheckedBoxColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledIndeterminateBoxColor",
+            "shape": "other"
+          },
+          {
+            "name": "checkedBorderColor",
+            "shape": "other"
+          },
+          {
+            "name": "uncheckedBorderColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledBorderColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledUncheckedBorderColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledIndeterminateBorderColor",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "ChipBorder": {
+        "name": "ChipBorder",
+        "target": "ChipBorder",
+        "qualified": "androidx.compose.material3.ChipBorder",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "borderColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledBorderColor",
+            "shape": "other"
+          },
+          {
+            "name": "borderWidth",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "ChipColors": {
+        "name": "ChipColors",
+        "target": "ChipColors",
+        "qualified": "androidx.compose.material3.ChipColors",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "containerColor",
+            "shape": "other"
+          },
+          {
+            "name": "labelColor",
+            "shape": "other"
+          },
+          {
+            "name": "leadingIconContentColor",
+            "shape": "other"
+          },
+          {
+            "name": "trailingIconContentColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledContainerColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledLabelColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledLeadingIconContentColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledTrailingIconContentColor",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "ChipElevation": {
+        "name": "ChipElevation",
+        "target": "ChipElevation",
+        "qualified": "androidx.compose.material3.ChipElevation",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "elevation",
+            "shape": "other"
+          },
+          {
+            "name": "pressedElevation",
+            "shape": "other"
+          },
+          {
+            "name": "focusedElevation",
+            "shape": "other"
+          },
+          {
+            "name": "hoveredElevation",
+            "shape": "other"
+          },
+          {
+            "name": "draggedElevation",
+            "shape": "other"
+          },
+          {
+            "name": "disabledElevation",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "ColorScheme": {
+        "name": "ColorScheme",
+        "target": "ColorScheme",
+        "qualified": "androidx.compose.material3.ColorScheme",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "primary",
+            "shape": "other"
+          },
+          {
+            "name": "onPrimary",
+            "shape": "other"
+          },
+          {
+            "name": "primaryContainer",
+            "shape": "other"
+          },
+          {
+            "name": "onPrimaryContainer",
+            "shape": "other"
+          },
+          {
+            "name": "inversePrimary",
+            "shape": "other"
+          },
+          {
+            "name": "secondary",
+            "shape": "other"
+          },
+          {
+            "name": "onSecondary",
+            "shape": "other"
+          },
+          {
+            "name": "secondaryContainer",
+            "shape": "other"
+          },
+          {
+            "name": "onSecondaryContainer",
+            "shape": "other"
+          },
+          {
+            "name": "tertiary",
+            "shape": "other"
+          },
+          {
+            "name": "onTertiary",
+            "shape": "other"
+          },
+          {
+            "name": "tertiaryContainer",
+            "shape": "other"
+          },
+          {
+            "name": "onTertiaryContainer",
+            "shape": "other"
+          },
+          {
+            "name": "background",
+            "shape": "other"
+          },
+          {
+            "name": "onBackground",
+            "shape": "other"
+          },
+          {
+            "name": "surface",
+            "shape": "other"
+          },
+          {
+            "name": "onSurface",
+            "shape": "other"
+          },
+          {
+            "name": "surfaceVariant",
+            "shape": "other"
+          },
+          {
+            "name": "onSurfaceVariant",
+            "shape": "other"
+          },
+          {
+            "name": "surfaceTint",
+            "shape": "other"
+          },
+          {
+            "name": "inverseSurface",
+            "shape": "other"
+          },
+          {
+            "name": "inverseOnSurface",
+            "shape": "other"
+          },
+          {
+            "name": "error",
+            "shape": "other"
+          },
+          {
+            "name": "onError",
+            "shape": "other"
+          },
+          {
+            "name": "errorContainer",
+            "shape": "other"
+          },
+          {
+            "name": "onErrorContainer",
+            "shape": "other"
+          },
+          {
+            "name": "outline",
+            "shape": "other"
+          },
+          {
+            "name": "outlineVariant",
+            "shape": "other"
+          },
+          {
+            "name": "scrim",
+            "shape": "other"
+          },
+          {
+            "name": "surfaceBright",
+            "shape": "other"
+          },
+          {
+            "name": "surfaceDim",
+            "shape": "other"
+          },
+          {
+            "name": "surfaceContainer",
+            "shape": "other"
+          },
+          {
+            "name": "surfaceContainerHigh",
+            "shape": "other"
+          },
+          {
+            "name": "surfaceContainerHighest",
+            "shape": "other"
+          },
+          {
+            "name": "surfaceContainerLow",
+            "shape": "other"
+          },
+          {
+            "name": "surfaceContainerLowest",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "DatePickerColors": {
+        "name": "DatePickerColors",
+        "target": "DatePickerColors",
+        "qualified": "androidx.compose.material3.DatePickerColors",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "containerColor",
+            "shape": "other"
+          },
+          {
+            "name": "titleContentColor",
+            "shape": "other"
+          },
+          {
+            "name": "headlineContentColor",
+            "shape": "other"
+          },
+          {
+            "name": "weekdayContentColor",
+            "shape": "other"
+          },
+          {
+            "name": "subheadContentColor",
+            "shape": "other"
+          },
+          {
+            "name": "navigationContentColor",
+            "shape": "other"
+          },
+          {
+            "name": "yearContentColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledYearContentColor",
+            "shape": "other"
+          },
+          {
+            "name": "currentYearContentColor",
+            "shape": "other"
+          },
+          {
+            "name": "selectedYearContentColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledSelectedYearContentColor",
+            "shape": "other"
+          },
+          {
+            "name": "selectedYearContainerColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledSelectedYearContainerColor",
+            "shape": "other"
+          },
+          {
+            "name": "dayContentColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledDayContentColor",
+            "shape": "other"
+          },
+          {
+            "name": "selectedDayContentColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledSelectedDayContentColor",
+            "shape": "other"
+          },
+          {
+            "name": "selectedDayContainerColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledSelectedDayContainerColor",
+            "shape": "other"
+          },
+          {
+            "name": "todayContentColor",
+            "shape": "other"
+          },
+          {
+            "name": "todayDateBorderColor",
+            "shape": "other"
+          },
+          {
+            "name": "dayInSelectionRangeContainerColor",
+            "shape": "other"
+          },
+          {
+            "name": "dayInSelectionRangeContentColor",
+            "shape": "other"
+          },
+          {
+            "name": "dividerColor",
+            "shape": "other"
+          },
+          {
+            "name": "dateTextFieldColors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.TextFieldColors"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "DismissDirection": {
+        "name": "DismissDirection",
+        "target": "DismissDirection",
+        "qualified": "androidx.compose.material3.DismissDirection",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "StartToEnd",
+          "EndToStart"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      },
+      "DismissValue": {
+        "name": "DismissValue",
+        "target": "DismissValue",
+        "qualified": "androidx.compose.material3.DismissValue",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "Default",
+          "DismissedToEnd",
+          "DismissedToStart"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      },
+      "DisplayMode": {
+        "name": "DisplayMode",
+        "target": "DisplayMode",
+        "qualified": "androidx.compose.material3.DisplayMode",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "value",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "DrawerState": {
+        "name": "DrawerState",
+        "target": "DrawerState",
+        "qualified": "androidx.compose.material3.DrawerState",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "initialValue",
+            "shape": "enum",
+            "typeName": "androidx.compose.material3.DrawerValue",
+            "enumValues": [
+              "Closed",
+              "Open"
+            ]
+          },
+          {
+            "name": "confirmStateChange",
+            "shape": "function"
+          }
+        ],
+        "defaultParams": [
+          "confirmStateChange"
+        ],
+        "returnShape": "object"
+      },
+      "DrawerValue": {
+        "name": "DrawerValue",
+        "target": "DrawerValue",
+        "qualified": "androidx.compose.material3.DrawerValue",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "Closed",
+          "Open"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      },
+      "FabPosition": {
+        "name": "FabPosition",
+        "target": "FabPosition",
+        "qualified": "androidx.compose.material3.FabPosition",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "value",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "FloatingActionButtonElevation": {
+        "name": "FloatingActionButtonElevation",
+        "target": "FloatingActionButtonElevation",
+        "qualified": "androidx.compose.material3.FloatingActionButtonElevation",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "defaultElevation",
+            "shape": "other"
+          },
+          {
+            "name": "pressedElevation",
+            "shape": "other"
+          },
+          {
+            "name": "focusedElevation",
+            "shape": "other"
+          },
+          {
+            "name": "hoveredElevation",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "IconButtonColors": {
+        "name": "IconButtonColors",
+        "target": "IconButtonColors",
+        "qualified": "androidx.compose.material3.IconButtonColors",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "containerColor",
+            "shape": "other"
+          },
+          {
+            "name": "contentColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledContainerColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledContentColor",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "IconToggleButtonColors": {
+        "name": "IconToggleButtonColors",
+        "target": "IconToggleButtonColors",
+        "qualified": "androidx.compose.material3.IconToggleButtonColors",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "containerColor",
+            "shape": "other"
+          },
+          {
+            "name": "contentColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledContainerColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledContentColor",
+            "shape": "other"
+          },
+          {
+            "name": "checkedContainerColor",
+            "shape": "other"
+          },
+          {
+            "name": "checkedContentColor",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "ListItemColors": {
+        "name": "ListItemColors",
+        "target": "ListItemColors",
+        "qualified": "androidx.compose.material3.ListItemColors",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "containerColor",
+            "shape": "other"
+          },
+          {
+            "name": "headlineColor",
+            "shape": "other"
+          },
+          {
+            "name": "leadingIconColor",
+            "shape": "other"
+          },
+          {
+            "name": "overlineColor",
+            "shape": "other"
+          },
+          {
+            "name": "supportingTextColor",
+            "shape": "other"
+          },
+          {
+            "name": "trailingIconColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledHeadlineColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledLeadingIconColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledTrailingIconColor",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "MenuItemColors": {
+        "name": "MenuItemColors",
+        "target": "MenuItemColors",
+        "qualified": "androidx.compose.material3.MenuItemColors",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "textColor",
+            "shape": "other"
+          },
+          {
+            "name": "leadingIconColor",
+            "shape": "other"
+          },
+          {
+            "name": "trailingIconColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledTextColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledLeadingIconColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledTrailingIconColor",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "ModalBottomSheetProperties": {
+        "name": "ModalBottomSheetProperties",
+        "target": "ModalBottomSheetProperties",
+        "qualified": "androidx.compose.material3.ModalBottomSheetProperties",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "securePolicy",
+            "shape": "other"
+          },
+          {
+            "name": "isFocusable",
+            "shape": "boolean"
+          },
+          {
+            "name": "shouldDismissOnBackPress",
+            "shape": "boolean"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "NavigationBarItemColors": {
+        "name": "NavigationBarItemColors",
+        "target": "NavigationBarItemColors",
+        "qualified": "androidx.compose.material3.NavigationBarItemColors",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "selectedIconColor",
+            "shape": "other"
+          },
+          {
+            "name": "selectedTextColor",
+            "shape": "other"
+          },
+          {
+            "name": "selectedIndicatorColor",
+            "shape": "other"
+          },
+          {
+            "name": "unselectedIconColor",
+            "shape": "other"
+          },
+          {
+            "name": "unselectedTextColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledIconColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledTextColor",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "NavigationRailItemColors": {
+        "name": "NavigationRailItemColors",
+        "target": "NavigationRailItemColors",
+        "qualified": "androidx.compose.material3.NavigationRailItemColors",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "selectedIconColor",
+            "shape": "other"
+          },
+          {
+            "name": "selectedTextColor",
+            "shape": "other"
+          },
+          {
+            "name": "selectedIndicatorColor",
+            "shape": "other"
+          },
+          {
+            "name": "unselectedIconColor",
+            "shape": "other"
+          },
+          {
+            "name": "unselectedTextColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledIconColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledTextColor",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "RadioButtonColors": {
+        "name": "RadioButtonColors",
+        "target": "RadioButtonColors",
+        "qualified": "androidx.compose.material3.RadioButtonColors",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "selectedColor",
+            "shape": "other"
+          },
+          {
+            "name": "unselectedColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledSelectedColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledUnselectedColor",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "RangeSliderState": {
+        "name": "RangeSliderState",
+        "target": "RangeSliderState",
+        "qualified": "androidx.compose.material3.RangeSliderState",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "activeRangeStart",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "activeRangeEnd",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "steps",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          {
+            "name": "onValueChangeFinished",
+            "shape": "function"
+          },
+          {
+            "name": "valueRange",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [
+          "activeRangeStart",
+          "activeRangeEnd",
+          "steps",
+          "onValueChangeFinished",
+          "valueRange"
+        ],
+        "returnShape": "object"
+      },
+      "RichTooltipColors": {
+        "name": "RichTooltipColors",
+        "target": "RichTooltipColors",
+        "qualified": "androidx.compose.material3.RichTooltipColors",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "containerColor",
+            "shape": "other"
+          },
+          {
+            "name": "contentColor",
+            "shape": "other"
+          },
+          {
+            "name": "titleContentColor",
+            "shape": "other"
+          },
+          {
+            "name": "actionContentColor",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "SearchBarColors": {
+        "name": "SearchBarColors",
+        "target": "SearchBarColors",
+        "qualified": "androidx.compose.material3.SearchBarColors",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "containerColor",
+            "shape": "other"
+          },
+          {
+            "name": "dividerColor",
+            "shape": "other"
+          },
+          {
+            "name": "inputFieldColors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.TextFieldColors"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "SegmentedButtonColors": {
+        "name": "SegmentedButtonColors",
+        "target": "SegmentedButtonColors",
+        "qualified": "androidx.compose.material3.SegmentedButtonColors",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "activeContainerColor",
+            "shape": "other"
+          },
+          {
+            "name": "activeContentColor",
+            "shape": "other"
+          },
+          {
+            "name": "activeBorderColor",
+            "shape": "other"
+          },
+          {
+            "name": "inactiveContainerColor",
+            "shape": "other"
+          },
+          {
+            "name": "inactiveContentColor",
+            "shape": "other"
+          },
+          {
+            "name": "inactiveBorderColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledActiveContainerColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledActiveContentColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledActiveBorderColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledInactiveContainerColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledInactiveContentColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledInactiveBorderColor",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "SelectableChipColors": {
+        "name": "SelectableChipColors",
+        "target": "SelectableChipColors",
+        "qualified": "androidx.compose.material3.SelectableChipColors",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "containerColor",
+            "shape": "other"
+          },
+          {
+            "name": "labelColor",
+            "shape": "other"
+          },
+          {
+            "name": "leadingIconColor",
+            "shape": "other"
+          },
+          {
+            "name": "trailingIconColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledContainerColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledLabelColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledLeadingIconColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledTrailingIconColor",
+            "shape": "other"
+          },
+          {
+            "name": "selectedContainerColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledSelectedContainerColor",
+            "shape": "other"
+          },
+          {
+            "name": "selectedLabelColor",
+            "shape": "other"
+          },
+          {
+            "name": "selectedLeadingIconColor",
+            "shape": "other"
+          },
+          {
+            "name": "selectedTrailingIconColor",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "SelectableChipElevation": {
+        "name": "SelectableChipElevation",
+        "target": "SelectableChipElevation",
+        "qualified": "androidx.compose.material3.SelectableChipElevation",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "elevation",
+            "shape": "other"
+          },
+          {
+            "name": "pressedElevation",
+            "shape": "other"
+          },
+          {
+            "name": "focusedElevation",
+            "shape": "other"
+          },
+          {
+            "name": "hoveredElevation",
+            "shape": "other"
+          },
+          {
+            "name": "draggedElevation",
+            "shape": "other"
+          },
+          {
+            "name": "disabledElevation",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "Shapes": {
+        "name": "Shapes",
+        "target": "Shapes",
+        "qualified": "androidx.compose.material3.Shapes",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "extraSmall",
+            "shape": "other"
+          },
+          {
+            "name": "small",
+            "shape": "other"
+          },
+          {
+            "name": "medium",
+            "shape": "other"
+          },
+          {
+            "name": "large",
+            "shape": "other"
+          },
+          {
+            "name": "extraLarge",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [
+          "extraSmall",
+          "small",
+          "medium",
+          "large",
+          "extraLarge"
+        ],
+        "returnShape": "object"
+      },
+      "SheetState": {
+        "name": "SheetState",
+        "target": "SheetState",
+        "qualified": "androidx.compose.material3.SheetState",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "skipPartiallyExpanded",
+            "shape": "boolean"
+          },
+          {
+            "name": "initialValue",
+            "shape": "enum",
+            "typeName": "androidx.compose.material3.SheetValue",
+            "enumValues": [
+              "Hidden",
+              "Expanded",
+              "PartiallyExpanded"
+            ]
+          },
+          {
+            "name": "confirmValueChange",
+            "shape": "function"
+          },
+          {
+            "name": "skipHiddenState",
+            "shape": "boolean"
+          }
+        ],
+        "defaultParams": [
+          "initialValue",
+          "confirmValueChange",
+          "skipHiddenState"
+        ],
+        "returnShape": "object"
+      },
+      "SheetValue": {
+        "name": "SheetValue",
+        "target": "SheetValue",
+        "qualified": "androidx.compose.material3.SheetValue",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "Hidden",
+          "Expanded",
+          "PartiallyExpanded"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      },
+      "SliderColors": {
+        "name": "SliderColors",
+        "target": "SliderColors",
+        "qualified": "androidx.compose.material3.SliderColors",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "thumbColor",
+            "shape": "other"
+          },
+          {
+            "name": "activeTrackColor",
+            "shape": "other"
+          },
+          {
+            "name": "activeTickColor",
+            "shape": "other"
+          },
+          {
+            "name": "inactiveTrackColor",
+            "shape": "other"
+          },
+          {
+            "name": "inactiveTickColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledThumbColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledActiveTrackColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledActiveTickColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledInactiveTrackColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledInactiveTickColor",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "SliderPositions": {
+        "name": "SliderPositions",
+        "target": "SliderPositions",
+        "qualified": "androidx.compose.material3.SliderPositions",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "initialActiveRange",
+            "shape": "other"
+          },
+          {
+            "name": "initialTickFractions",
+            "shape": "array",
+            "elem": {
+              "name": "",
+              "shape": "any"
+            }
+          }
+        ],
+        "defaultParams": [
+          "initialActiveRange",
+          "initialTickFractions"
+        ],
+        "returnShape": "object"
+      },
+      "SliderState": {
+        "name": "SliderState",
+        "target": "SliderState",
+        "qualified": "androidx.compose.material3.SliderState",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "value",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "steps",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          {
+            "name": "onValueChangeFinished",
+            "shape": "function"
+          },
+          {
+            "name": "valueRange",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [
+          "value",
+          "steps",
+          "onValueChangeFinished",
+          "valueRange"
+        ],
+        "returnShape": "object"
+      },
+      "SnackbarDuration": {
+        "name": "SnackbarDuration",
+        "target": "SnackbarDuration",
+        "qualified": "androidx.compose.material3.SnackbarDuration",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "Short",
+          "Long",
+          "Indefinite"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      },
+      "SnackbarHostState": {
+        "name": "SnackbarHostState",
+        "target": "SnackbarHostState",
+        "qualified": "androidx.compose.material3.SnackbarHostState",
+        "isConstructor": true,
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "SnackbarResult": {
+        "name": "SnackbarResult",
+        "target": "SnackbarResult",
+        "qualified": "androidx.compose.material3.SnackbarResult",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "Dismissed",
+          "ActionPerformed"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      },
+      "SwipeToDismissBoxState": {
+        "name": "SwipeToDismissBoxState",
+        "target": "SwipeToDismissBoxState",
+        "qualified": "androidx.compose.material3.SwipeToDismissBoxState",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "initialValue",
+            "shape": "enum",
+            "typeName": "androidx.compose.material3.SwipeToDismissBoxValue",
+            "enumValues": [
+              "StartToEnd",
+              "EndToStart",
+              "Settled"
+            ]
+          },
+          {
+            "name": "density",
+            "shape": "other"
+          },
+          {
+            "name": "confirmValueChange",
+            "shape": "function"
+          },
+          {
+            "name": "positionalThreshold",
+            "shape": "function"
+          }
+        ],
+        "defaultParams": [
+          "confirmValueChange",
+          "positionalThreshold"
+        ],
+        "returnShape": "object"
+      },
+      "SwipeToDismissBoxValue": {
+        "name": "SwipeToDismissBoxValue",
+        "target": "SwipeToDismissBoxValue",
+        "qualified": "androidx.compose.material3.SwipeToDismissBoxValue",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "StartToEnd",
+          "EndToStart",
+          "Settled"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      },
+      "SwitchColors": {
+        "name": "SwitchColors",
+        "target": "SwitchColors",
+        "qualified": "androidx.compose.material3.SwitchColors",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "checkedThumbColor",
+            "shape": "other"
+          },
+          {
+            "name": "checkedTrackColor",
+            "shape": "other"
+          },
+          {
+            "name": "checkedBorderColor",
+            "shape": "other"
+          },
+          {
+            "name": "checkedIconColor",
+            "shape": "other"
+          },
+          {
+            "name": "uncheckedThumbColor",
+            "shape": "other"
+          },
+          {
+            "name": "uncheckedTrackColor",
+            "shape": "other"
+          },
+          {
+            "name": "uncheckedBorderColor",
+            "shape": "other"
+          },
+          {
+            "name": "uncheckedIconColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledCheckedThumbColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledCheckedTrackColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledCheckedBorderColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledCheckedIconColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledUncheckedThumbColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledUncheckedTrackColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledUncheckedBorderColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledUncheckedIconColor",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "TabPosition": {
+        "name": "TabPosition",
+        "target": "TabPosition",
+        "qualified": "androidx.compose.material3.TabPosition",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "left",
+            "shape": "other"
+          },
+          {
+            "name": "width",
+            "shape": "other"
+          },
+          {
+            "name": "contentWidth",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "TextFieldColors": {
+        "name": "TextFieldColors",
+        "target": "TextFieldColors",
+        "qualified": "androidx.compose.material3.TextFieldColors",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "focusedTextColor",
+            "shape": "other"
+          },
+          {
+            "name": "unfocusedTextColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledTextColor",
+            "shape": "other"
+          },
+          {
+            "name": "errorTextColor",
+            "shape": "other"
+          },
+          {
+            "name": "focusedContainerColor",
+            "shape": "other"
+          },
+          {
+            "name": "unfocusedContainerColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledContainerColor",
+            "shape": "other"
+          },
+          {
+            "name": "errorContainerColor",
+            "shape": "other"
+          },
+          {
+            "name": "cursorColor",
+            "shape": "other"
+          },
+          {
+            "name": "errorCursorColor",
+            "shape": "other"
+          },
+          {
+            "name": "textSelectionColors",
+            "shape": "other"
+          },
+          {
+            "name": "focusedIndicatorColor",
+            "shape": "other"
+          },
+          {
+            "name": "unfocusedIndicatorColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledIndicatorColor",
+            "shape": "other"
+          },
+          {
+            "name": "errorIndicatorColor",
+            "shape": "other"
+          },
+          {
+            "name": "focusedLeadingIconColor",
+            "shape": "other"
+          },
+          {
+            "name": "unfocusedLeadingIconColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledLeadingIconColor",
+            "shape": "other"
+          },
+          {
+            "name": "errorLeadingIconColor",
+            "shape": "other"
+          },
+          {
+            "name": "focusedTrailingIconColor",
+            "shape": "other"
+          },
+          {
+            "name": "unfocusedTrailingIconColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledTrailingIconColor",
+            "shape": "other"
+          },
+          {
+            "name": "errorTrailingIconColor",
+            "shape": "other"
+          },
+          {
+            "name": "focusedLabelColor",
+            "shape": "other"
+          },
+          {
+            "name": "unfocusedLabelColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledLabelColor",
+            "shape": "other"
+          },
+          {
+            "name": "errorLabelColor",
+            "shape": "other"
+          },
+          {
+            "name": "focusedPlaceholderColor",
+            "shape": "other"
+          },
+          {
+            "name": "unfocusedPlaceholderColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledPlaceholderColor",
+            "shape": "other"
+          },
+          {
+            "name": "errorPlaceholderColor",
+            "shape": "other"
+          },
+          {
+            "name": "focusedSupportingTextColor",
+            "shape": "other"
+          },
+          {
+            "name": "unfocusedSupportingTextColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledSupportingTextColor",
+            "shape": "other"
+          },
+          {
+            "name": "errorSupportingTextColor",
+            "shape": "other"
+          },
+          {
+            "name": "focusedPrefixColor",
+            "shape": "other"
+          },
+          {
+            "name": "unfocusedPrefixColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledPrefixColor",
+            "shape": "other"
+          },
+          {
+            "name": "errorPrefixColor",
+            "shape": "other"
+          },
+          {
+            "name": "focusedSuffixColor",
+            "shape": "other"
+          },
+          {
+            "name": "unfocusedSuffixColor",
+            "shape": "other"
+          },
+          {
+            "name": "disabledSuffixColor",
+            "shape": "other"
+          },
+          {
+            "name": "errorSuffixColor",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "TimePickerColors": {
+        "name": "TimePickerColors",
+        "target": "TimePickerColors",
+        "qualified": "androidx.compose.material3.TimePickerColors",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "clockDialColor",
+            "shape": "other"
+          },
+          {
+            "name": "selectorColor",
+            "shape": "other"
+          },
+          {
+            "name": "containerColor",
+            "shape": "other"
+          },
+          {
+            "name": "periodSelectorBorderColor",
+            "shape": "other"
+          },
+          {
+            "name": "clockDialSelectedContentColor",
+            "shape": "other"
+          },
+          {
+            "name": "clockDialUnselectedContentColor",
+            "shape": "other"
+          },
+          {
+            "name": "periodSelectorSelectedContainerColor",
+            "shape": "other"
+          },
+          {
+            "name": "periodSelectorUnselectedContainerColor",
+            "shape": "other"
+          },
+          {
+            "name": "periodSelectorSelectedContentColor",
+            "shape": "other"
+          },
+          {
+            "name": "periodSelectorUnselectedContentColor",
+            "shape": "other"
+          },
+          {
+            "name": "timeSelectorSelectedContainerColor",
+            "shape": "other"
+          },
+          {
+            "name": "timeSelectorUnselectedContainerColor",
+            "shape": "other"
+          },
+          {
+            "name": "timeSelectorSelectedContentColor",
+            "shape": "other"
+          },
+          {
+            "name": "timeSelectorUnselectedContentColor",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "TimePickerLayoutType": {
+        "name": "TimePickerLayoutType",
+        "target": "TimePickerLayoutType",
+        "qualified": "androidx.compose.material3.TimePickerLayoutType",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "value",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "TimePickerState": {
+        "name": "TimePickerState",
+        "target": "TimePickerState",
+        "qualified": "androidx.compose.material3.TimePickerState",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "initialHour",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          {
+            "name": "initialMinute",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          {
+            "name": "is24Hour",
+            "shape": "boolean"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "TopAppBarColors": {
+        "name": "TopAppBarColors",
+        "target": "TopAppBarColors",
+        "qualified": "androidx.compose.material3.TopAppBarColors",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "containerColor",
+            "shape": "other"
+          },
+          {
+            "name": "scrolledContainerColor",
+            "shape": "other"
+          },
+          {
+            "name": "navigationIconContentColor",
+            "shape": "other"
+          },
+          {
+            "name": "titleContentColor",
+            "shape": "other"
+          },
+          {
+            "name": "actionIconContentColor",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "TopAppBarState": {
+        "name": "TopAppBarState",
+        "target": "TopAppBarState",
+        "qualified": "androidx.compose.material3.TopAppBarState",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "initialHeightOffsetLimit",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "initialHeightOffset",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "initialContentOffset",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "Typography": {
+        "name": "Typography",
+        "target": "Typography",
+        "qualified": "androidx.compose.material3.Typography",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "displayLarge",
+            "shape": "other"
+          },
+          {
+            "name": "displayMedium",
+            "shape": "other"
+          },
+          {
+            "name": "displaySmall",
+            "shape": "other"
+          },
+          {
+            "name": "headlineLarge",
+            "shape": "other"
+          },
+          {
+            "name": "headlineMedium",
+            "shape": "other"
+          },
+          {
+            "name": "headlineSmall",
+            "shape": "other"
+          },
+          {
+            "name": "titleLarge",
+            "shape": "other"
+          },
+          {
+            "name": "titleMedium",
+            "shape": "other"
+          },
+          {
+            "name": "titleSmall",
+            "shape": "other"
+          },
+          {
+            "name": "bodyLarge",
+            "shape": "other"
+          },
+          {
+            "name": "bodyMedium",
+            "shape": "other"
+          },
+          {
+            "name": "bodySmall",
+            "shape": "other"
+          },
+          {
+            "name": "labelLarge",
+            "shape": "other"
+          },
+          {
+            "name": "labelMedium",
+            "shape": "other"
+          },
+          {
+            "name": "labelSmall",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [
+          "displayLarge",
+          "displayMedium",
+          "displaySmall",
+          "headlineLarge",
+          "headlineMedium",
+          "headlineSmall",
+          "titleLarge",
+          "titleMedium",
+          "titleSmall",
+          "bodyLarge",
+          "bodyMedium",
+          "bodySmall",
+          "labelLarge",
+          "labelMedium",
+          "labelSmall"
+        ],
+        "returnShape": "object"
+      }
+    },
+    "tags": {
+      "AlertDialog": {
+        "composable": "AlertDialog",
+        "imports": [
+          "androidx.compose.material3.AlertDialog"
+        ],
+        "attrs": {},
+        "optIn": [
+          "androidx.compose.material3.ExperimentalMaterial3Api"
+        ]
+      },
+      "BasicAlertDialog": {
+        "composable": "BasicAlertDialog",
+        "imports": [
+          "androidx.compose.material3.BasicAlertDialog"
+        ],
+        "attrs": {},
+        "optIn": [
+          "androidx.compose.material3.ExperimentalMaterial3Api"
+        ]
+      },
+      "DropdownMenu": {
+        "composable": "DropdownMenu",
+        "imports": [
+          "androidx.compose.material3.DropdownMenu"
+        ],
+        "attrs": {
+          "expanded": "expanded"
+        },
+        "attrShapes": {
+          "expanded": {
+            "name": "expanded",
+            "shape": "boolean"
+          }
+        }
+      },
+      "DropdownMenuItem": {
+        "composable": "DropdownMenuItem",
+        "imports": [
+          "androidx.compose.material3.DropdownMenuItem"
+        ],
+        "attrs": {
+          "enabled": "enabled",
+          "colors": "colors"
+        },
+        "attrShapes": {
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.MenuItemColors"
+          }
+        }
+      },
+      "BottomAppBar": {
+        "composable": "BottomAppBar",
+        "imports": [
+          "androidx.compose.material3.BottomAppBar"
+        ],
+        "attrs": {},
+        "optIn": [
+          "androidx.compose.material3.ExperimentalMaterial3Api"
+        ]
+      },
+      "CenterAlignedTopAppBar": {
+        "composable": "CenterAlignedTopAppBar",
+        "imports": [
+          "androidx.compose.material3.CenterAlignedTopAppBar"
+        ],
+        "attrs": {
+          "colors": "colors"
+        },
+        "attrShapes": {
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.TopAppBarColors"
+          }
+        },
+        "optIn": [
+          "androidx.compose.material3.ExperimentalMaterial3Api"
+        ]
+      },
+      "LargeTopAppBar": {
+        "composable": "LargeTopAppBar",
+        "imports": [
+          "androidx.compose.material3.LargeTopAppBar"
+        ],
+        "attrs": {
+          "colors": "colors"
+        },
+        "attrShapes": {
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.TopAppBarColors"
+          }
+        },
+        "optIn": [
+          "androidx.compose.material3.ExperimentalMaterial3Api"
+        ]
+      },
+      "MediumTopAppBar": {
+        "composable": "MediumTopAppBar",
+        "imports": [
+          "androidx.compose.material3.MediumTopAppBar"
+        ],
+        "attrs": {
+          "colors": "colors"
+        },
+        "attrShapes": {
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.TopAppBarColors"
+          }
+        },
+        "optIn": [
+          "androidx.compose.material3.ExperimentalMaterial3Api"
+        ]
+      },
+      "SmallTopAppBar": {
+        "composable": "SmallTopAppBar",
+        "imports": [
+          "androidx.compose.material3.SmallTopAppBar"
+        ],
+        "attrs": {
+          "colors": "colors"
+        },
+        "attrShapes": {
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.TopAppBarColors"
+          }
+        },
+        "optIn": [
+          "androidx.compose.material3.ExperimentalMaterial3Api"
+        ]
+      },
+      "TopAppBar": {
+        "composable": "TopAppBar",
+        "imports": [
+          "androidx.compose.material3.TopAppBar"
+        ],
+        "attrs": {
+          "colors": "colors"
+        },
+        "attrShapes": {
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.TopAppBarColors"
+          }
+        },
+        "optIn": [
+          "androidx.compose.material3.ExperimentalMaterial3Api"
+        ]
+      },
+      "Badge": {
+        "composable": "Badge",
+        "imports": [
+          "androidx.compose.material3.Badge"
+        ],
+        "attrs": {}
+      },
+      "BadgedBox": {
+        "composable": "BadgedBox",
+        "imports": [
+          "androidx.compose.material3.BadgedBox"
+        ],
+        "attrs": {}
+      },
+      "BottomSheetScaffold": {
+        "composable": "BottomSheetScaffold",
+        "imports": [
+          "androidx.compose.material3.BottomSheetScaffold"
+        ],
+        "attrs": {
+          "scaffoldState": "scaffoldState",
+          "sheetSwipeEnabled": "sheetSwipeEnabled"
+        },
+        "attrShapes": {
+          "scaffoldState": {
+            "name": "scaffoldState",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.BottomSheetScaffoldState"
+          },
+          "sheetSwipeEnabled": {
+            "name": "sheetSwipeEnabled",
+            "shape": "boolean"
+          }
+        },
+        "optIn": [
+          "androidx.compose.material3.ExperimentalMaterial3Api"
+        ]
+      },
+      "Button": {
+        "composable": "Button",
+        "imports": [
+          "androidx.compose.material3.Button"
+        ],
+        "attrs": {
+          "enabled": "enabled",
+          "colors": "colors",
+          "elevation": "elevation"
+        },
+        "attrShapes": {
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.ButtonColors"
+          },
+          "elevation": {
+            "name": "elevation",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.ButtonElevation"
+          }
+        }
+      },
+      "ElevatedButton": {
+        "composable": "ElevatedButton",
+        "imports": [
+          "androidx.compose.material3.ElevatedButton"
+        ],
+        "attrs": {
+          "enabled": "enabled",
+          "colors": "colors",
+          "elevation": "elevation"
+        },
+        "attrShapes": {
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.ButtonColors"
+          },
+          "elevation": {
+            "name": "elevation",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.ButtonElevation"
+          }
+        }
+      },
+      "FilledTonalButton": {
+        "composable": "FilledTonalButton",
+        "imports": [
+          "androidx.compose.material3.FilledTonalButton"
+        ],
+        "attrs": {
+          "enabled": "enabled",
+          "colors": "colors",
+          "elevation": "elevation"
+        },
+        "attrShapes": {
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.ButtonColors"
+          },
+          "elevation": {
+            "name": "elevation",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.ButtonElevation"
+          }
+        }
+      },
+      "OutlinedButton": {
+        "composable": "OutlinedButton",
+        "imports": [
+          "androidx.compose.material3.OutlinedButton"
+        ],
+        "attrs": {
+          "enabled": "enabled",
+          "colors": "colors",
+          "elevation": "elevation"
+        },
+        "attrShapes": {
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.ButtonColors"
+          },
+          "elevation": {
+            "name": "elevation",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.ButtonElevation"
+          }
+        }
+      },
+      "TextButton": {
+        "composable": "TextButton",
+        "imports": [
+          "androidx.compose.material3.TextButton"
+        ],
+        "attrs": {
+          "enabled": "enabled",
+          "colors": "colors",
+          "elevation": "elevation"
+        },
+        "attrShapes": {
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.ButtonColors"
+          },
+          "elevation": {
+            "name": "elevation",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.ButtonElevation"
+          }
+        }
+      },
+      "Card": {
+        "composable": "Card",
+        "imports": [
+          "androidx.compose.material3.Card"
+        ],
+        "attrs": {
+          "enabled": "enabled",
+          "colors": "colors",
+          "elevation": "elevation"
+        },
+        "attrShapes": {
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.CardColors"
+          },
+          "elevation": {
+            "name": "elevation",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.CardElevation"
+          }
+        }
+      },
+      "ElevatedCard": {
+        "composable": "ElevatedCard",
+        "imports": [
+          "androidx.compose.material3.ElevatedCard"
+        ],
+        "attrs": {
+          "enabled": "enabled",
+          "colors": "colors",
+          "elevation": "elevation"
+        },
+        "attrShapes": {
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.CardColors"
+          },
+          "elevation": {
+            "name": "elevation",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.CardElevation"
+          }
+        }
+      },
+      "OutlinedCard": {
+        "composable": "OutlinedCard",
+        "imports": [
+          "androidx.compose.material3.OutlinedCard"
+        ],
+        "attrs": {
+          "enabled": "enabled",
+          "colors": "colors",
+          "elevation": "elevation"
+        },
+        "attrShapes": {
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.CardColors"
+          },
+          "elevation": {
+            "name": "elevation",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.CardElevation"
+          }
+        }
+      },
+      "Checkbox": {
+        "composable": "Checkbox",
+        "imports": [
+          "androidx.compose.material3.Checkbox"
+        ],
+        "attrs": {
+          "checked": "checked",
+          "enabled": "enabled",
+          "colors": "colors"
+        },
+        "attrShapes": {
+          "checked": {
+            "name": "checked",
+            "shape": "boolean"
+          },
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.CheckboxColors"
+          }
+        }
+      },
+      "TriStateCheckbox": {
+        "composable": "TriStateCheckbox",
+        "imports": [
+          "androidx.compose.material3.TriStateCheckbox"
+        ],
+        "attrs": {
+          "enabled": "enabled",
+          "colors": "colors"
+        },
+        "attrShapes": {
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.CheckboxColors"
+          }
+        }
+      },
+      "AssistChip": {
+        "composable": "AssistChip",
+        "imports": [
+          "androidx.compose.material3.AssistChip"
+        ],
+        "attrs": {
+          "enabled": "enabled",
+          "colors": "colors",
+          "elevation": "elevation"
+        },
+        "attrShapes": {
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.ChipColors"
+          },
+          "elevation": {
+            "name": "elevation",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.ChipElevation"
+          }
+        }
+      },
+      "ElevatedAssistChip": {
+        "composable": "ElevatedAssistChip",
+        "imports": [
+          "androidx.compose.material3.ElevatedAssistChip"
+        ],
+        "attrs": {
+          "enabled": "enabled",
+          "colors": "colors",
+          "elevation": "elevation"
+        },
+        "attrShapes": {
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.ChipColors"
+          },
+          "elevation": {
+            "name": "elevation",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.ChipElevation"
+          }
+        }
+      },
+      "ElevatedFilterChip": {
+        "composable": "ElevatedFilterChip",
+        "imports": [
+          "androidx.compose.material3.ElevatedFilterChip"
+        ],
+        "attrs": {
+          "selected": "selected",
+          "enabled": "enabled",
+          "colors": "colors",
+          "elevation": "elevation"
+        },
+        "attrShapes": {
+          "selected": {
+            "name": "selected",
+            "shape": "boolean"
+          },
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.SelectableChipColors"
+          },
+          "elevation": {
+            "name": "elevation",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.SelectableChipElevation"
+          }
+        }
+      },
+      "ElevatedSuggestionChip": {
+        "composable": "ElevatedSuggestionChip",
+        "imports": [
+          "androidx.compose.material3.ElevatedSuggestionChip"
+        ],
+        "attrs": {
+          "enabled": "enabled",
+          "colors": "colors",
+          "elevation": "elevation"
+        },
+        "attrShapes": {
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.ChipColors"
+          },
+          "elevation": {
+            "name": "elevation",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.ChipElevation"
+          }
+        }
+      },
+      "FilterChip": {
+        "composable": "FilterChip",
+        "imports": [
+          "androidx.compose.material3.FilterChip"
+        ],
+        "attrs": {
+          "selected": "selected",
+          "enabled": "enabled",
+          "colors": "colors",
+          "elevation": "elevation"
+        },
+        "attrShapes": {
+          "selected": {
+            "name": "selected",
+            "shape": "boolean"
+          },
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.SelectableChipColors"
+          },
+          "elevation": {
+            "name": "elevation",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.SelectableChipElevation"
+          }
+        }
+      },
+      "InputChip": {
+        "composable": "InputChip",
+        "imports": [
+          "androidx.compose.material3.InputChip"
+        ],
+        "attrs": {
+          "selected": "selected",
+          "enabled": "enabled",
+          "colors": "colors",
+          "elevation": "elevation"
+        },
+        "attrShapes": {
+          "selected": {
+            "name": "selected",
+            "shape": "boolean"
+          },
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.SelectableChipColors"
+          },
+          "elevation": {
+            "name": "elevation",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.SelectableChipElevation"
+          }
+        }
+      },
+      "SuggestionChip": {
+        "composable": "SuggestionChip",
+        "imports": [
+          "androidx.compose.material3.SuggestionChip"
+        ],
+        "attrs": {
+          "enabled": "enabled",
+          "colors": "colors",
+          "elevation": "elevation"
+        },
+        "attrShapes": {
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.ChipColors"
+          },
+          "elevation": {
+            "name": "elevation",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.ChipElevation"
+          }
+        }
+      },
+      "DatePickerDialog": {
+        "composable": "DatePickerDialog",
+        "imports": [
+          "androidx.compose.material3.DatePickerDialog"
+        ],
+        "attrs": {
+          "colors": "colors"
+        },
+        "attrShapes": {
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.DatePickerColors"
+          }
+        },
+        "optIn": [
+          "androidx.compose.material3.ExperimentalMaterial3Api"
+        ]
+      },
+      "DatePicker": {
+        "composable": "DatePicker",
+        "imports": [
+          "androidx.compose.material3.DatePicker"
+        ],
+        "attrs": {
+          "showModeToggle": "showModeToggle",
+          "colors": "colors"
+        },
+        "attrShapes": {
+          "showModeToggle": {
+            "name": "showModeToggle",
+            "shape": "boolean"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.DatePickerColors"
+          }
+        },
+        "optIn": [
+          "androidx.compose.material3.ExperimentalMaterial3Api"
+        ]
+      },
+      "DateRangePicker": {
+        "composable": "DateRangePicker",
+        "imports": [
+          "androidx.compose.material3.DateRangePicker"
+        ],
+        "attrs": {
+          "showModeToggle": "showModeToggle",
+          "colors": "colors"
+        },
+        "attrShapes": {
+          "showModeToggle": {
+            "name": "showModeToggle",
+            "shape": "boolean"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.DatePickerColors"
+          }
+        },
+        "optIn": [
+          "androidx.compose.material3.ExperimentalMaterial3Api"
+        ]
+      },
+      "Divider": {
+        "composable": "Divider",
+        "imports": [
+          "androidx.compose.material3.Divider"
+        ],
+        "attrs": {}
+      },
+      "HorizontalDivider": {
+        "composable": "HorizontalDivider",
+        "imports": [
+          "androidx.compose.material3.HorizontalDivider"
+        ],
+        "attrs": {}
+      },
+      "VerticalDivider": {
+        "composable": "VerticalDivider",
+        "imports": [
+          "androidx.compose.material3.VerticalDivider"
+        ],
+        "attrs": {}
+      },
+      "ExposedDropdownMenuBox": {
+        "composable": "ExposedDropdownMenuBox",
+        "imports": [
+          "androidx.compose.material3.ExposedDropdownMenuBox"
+        ],
+        "attrs": {
+          "expanded": "expanded"
+        },
+        "attrShapes": {
+          "expanded": {
+            "name": "expanded",
+            "shape": "boolean"
+          }
+        },
+        "optIn": [
+          "androidx.compose.material3.ExperimentalMaterial3Api"
+        ]
+      },
+      "ExtendedFloatingActionButton": {
+        "composable": "ExtendedFloatingActionButton",
+        "imports": [
+          "androidx.compose.material3.ExtendedFloatingActionButton"
+        ],
+        "attrs": {
+          "elevation": "elevation"
+        },
+        "attrShapes": {
+          "elevation": {
+            "name": "elevation",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.FloatingActionButtonElevation"
+          }
+        }
+      },
+      "FloatingActionButton": {
+        "composable": "FloatingActionButton",
+        "imports": [
+          "androidx.compose.material3.FloatingActionButton"
+        ],
+        "attrs": {
+          "elevation": "elevation"
+        },
+        "attrShapes": {
+          "elevation": {
+            "name": "elevation",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.FloatingActionButtonElevation"
+          }
+        }
+      },
+      "LargeFloatingActionButton": {
+        "composable": "LargeFloatingActionButton",
+        "imports": [
+          "androidx.compose.material3.LargeFloatingActionButton"
+        ],
+        "attrs": {
+          "elevation": "elevation"
+        },
+        "attrShapes": {
+          "elevation": {
+            "name": "elevation",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.FloatingActionButtonElevation"
+          }
+        }
+      },
+      "SmallFloatingActionButton": {
+        "composable": "SmallFloatingActionButton",
+        "imports": [
+          "androidx.compose.material3.SmallFloatingActionButton"
+        ],
+        "attrs": {
+          "elevation": "elevation"
+        },
+        "attrShapes": {
+          "elevation": {
+            "name": "elevation",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.FloatingActionButtonElevation"
+          }
+        }
+      },
+      "FilledIconButton": {
+        "composable": "FilledIconButton",
+        "imports": [
+          "androidx.compose.material3.FilledIconButton"
+        ],
+        "attrs": {
+          "enabled": "enabled",
+          "colors": "colors"
+        },
+        "attrShapes": {
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.IconButtonColors"
+          }
+        }
+      },
+      "FilledIconToggleButton": {
+        "composable": "FilledIconToggleButton",
+        "imports": [
+          "androidx.compose.material3.FilledIconToggleButton"
+        ],
+        "attrs": {
+          "checked": "checked",
+          "enabled": "enabled",
+          "colors": "colors"
+        },
+        "attrShapes": {
+          "checked": {
+            "name": "checked",
+            "shape": "boolean"
+          },
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.IconToggleButtonColors"
+          }
+        }
+      },
+      "FilledTonalIconButton": {
+        "composable": "FilledTonalIconButton",
+        "imports": [
+          "androidx.compose.material3.FilledTonalIconButton"
+        ],
+        "attrs": {
+          "enabled": "enabled",
+          "colors": "colors"
+        },
+        "attrShapes": {
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.IconButtonColors"
+          }
+        }
+      },
+      "FilledTonalIconToggleButton": {
+        "composable": "FilledTonalIconToggleButton",
+        "imports": [
+          "androidx.compose.material3.FilledTonalIconToggleButton"
+        ],
+        "attrs": {
+          "checked": "checked",
+          "enabled": "enabled",
+          "colors": "colors"
+        },
+        "attrShapes": {
+          "checked": {
+            "name": "checked",
+            "shape": "boolean"
+          },
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.IconToggleButtonColors"
+          }
+        }
+      },
+      "IconButton": {
+        "composable": "IconButton",
+        "imports": [
+          "androidx.compose.material3.IconButton"
+        ],
+        "attrs": {
+          "enabled": "enabled",
+          "colors": "colors"
+        },
+        "attrShapes": {
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.IconButtonColors"
+          }
+        }
+      },
+      "IconToggleButton": {
+        "composable": "IconToggleButton",
+        "imports": [
+          "androidx.compose.material3.IconToggleButton"
+        ],
+        "attrs": {
+          "checked": "checked",
+          "enabled": "enabled",
+          "colors": "colors"
+        },
+        "attrShapes": {
+          "checked": {
+            "name": "checked",
+            "shape": "boolean"
+          },
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.IconToggleButtonColors"
+          }
+        }
+      },
+      "OutlinedIconButton": {
+        "composable": "OutlinedIconButton",
+        "imports": [
+          "androidx.compose.material3.OutlinedIconButton"
+        ],
+        "attrs": {
+          "enabled": "enabled",
+          "colors": "colors"
+        },
+        "attrShapes": {
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.IconButtonColors"
+          }
+        }
+      },
+      "OutlinedIconToggleButton": {
+        "composable": "OutlinedIconToggleButton",
+        "imports": [
+          "androidx.compose.material3.OutlinedIconToggleButton"
+        ],
+        "attrs": {
+          "checked": "checked",
+          "enabled": "enabled",
+          "colors": "colors"
+        },
+        "attrShapes": {
+          "checked": {
+            "name": "checked",
+            "shape": "boolean"
+          },
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.IconToggleButtonColors"
+          }
+        }
+      },
+      "Icon": {
+        "composable": "Icon",
+        "imports": [
+          "androidx.compose.material3.Icon"
+        ],
+        "attrs": {
+          "contentDescription": "contentDescription"
+        },
+        "attrShapes": {
+          "contentDescription": {
+            "name": "contentDescription",
+            "shape": "string"
+          }
+        }
+      },
+      "Label": {
+        "composable": "Label",
+        "imports": [
+          "androidx.compose.material3.Label"
+        ],
+        "attrs": {
+          "isPersistent": "isPersistent"
+        },
+        "attrShapes": {
+          "isPersistent": {
+            "name": "isPersistent",
+            "shape": "boolean"
+          }
+        },
+        "optIn": [
+          "androidx.compose.material3.ExperimentalMaterial3Api"
+        ]
+      },
+      "ListItem": {
+        "composable": "ListItem",
+        "imports": [
+          "androidx.compose.material3.ListItem"
+        ],
+        "attrs": {
+          "colors": "colors"
+        },
+        "attrShapes": {
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.ListItemColors"
+          }
+        }
+      },
+      "MaterialTheme": {
+        "composable": "MaterialTheme",
+        "imports": [
+          "androidx.compose.material3.MaterialTheme"
+        ],
+        "attrs": {
+          "colorScheme": "colorScheme",
+          "shapes": "shapes",
+          "typography": "typography"
+        },
+        "attrShapes": {
+          "colorScheme": {
+            "name": "colorScheme",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.ColorScheme"
+          },
+          "shapes": {
+            "name": "shapes",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.Shapes"
+          },
+          "typography": {
+            "name": "typography",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.Typography"
+          }
+        }
+      },
+      "ModalBottomSheet": {
+        "composable": "ModalBottomSheet",
+        "imports": [
+          "androidx.compose.material3.ModalBottomSheet"
+        ],
+        "attrs": {
+          "sheetState": "sheetState",
+          "properties": "properties"
+        },
+        "attrShapes": {
+          "sheetState": {
+            "name": "sheetState",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.SheetState"
+          },
+          "properties": {
+            "name": "properties",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.ModalBottomSheetProperties"
+          }
+        },
+        "optIn": [
+          "androidx.compose.material3.ExperimentalMaterial3Api"
+        ]
+      },
+      "NavigationBar": {
+        "composable": "NavigationBar",
+        "imports": [
+          "androidx.compose.material3.NavigationBar"
+        ],
+        "attrs": {}
+      },
+      "DismissibleDrawerSheet": {
+        "composable": "DismissibleDrawerSheet",
+        "imports": [
+          "androidx.compose.material3.DismissibleDrawerSheet"
+        ],
+        "attrs": {}
+      },
+      "DismissibleNavigationDrawer": {
+        "composable": "DismissibleNavigationDrawer",
+        "imports": [
+          "androidx.compose.material3.DismissibleNavigationDrawer"
+        ],
+        "attrs": {
+          "drawerState": "drawerState",
+          "gesturesEnabled": "gesturesEnabled"
+        },
+        "attrShapes": {
+          "drawerState": {
+            "name": "drawerState",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.DrawerState"
+          },
+          "gesturesEnabled": {
+            "name": "gesturesEnabled",
+            "shape": "boolean"
+          }
+        }
+      },
+      "ModalDrawerSheet": {
+        "composable": "ModalDrawerSheet",
+        "imports": [
+          "androidx.compose.material3.ModalDrawerSheet"
+        ],
+        "attrs": {}
+      },
+      "ModalNavigationDrawer": {
+        "composable": "ModalNavigationDrawer",
+        "imports": [
+          "androidx.compose.material3.ModalNavigationDrawer"
+        ],
+        "attrs": {
+          "drawerState": "drawerState",
+          "gesturesEnabled": "gesturesEnabled"
+        },
+        "attrShapes": {
+          "drawerState": {
+            "name": "drawerState",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.DrawerState"
+          },
+          "gesturesEnabled": {
+            "name": "gesturesEnabled",
+            "shape": "boolean"
+          }
+        }
+      },
+      "NavigationDrawerItem": {
+        "composable": "NavigationDrawerItem",
+        "imports": [
+          "androidx.compose.material3.NavigationDrawerItem"
+        ],
+        "attrs": {
+          "selected": "selected"
+        },
+        "attrShapes": {
+          "selected": {
+            "name": "selected",
+            "shape": "boolean"
+          }
+        }
+      },
+      "PermanentDrawerSheet": {
+        "composable": "PermanentDrawerSheet",
+        "imports": [
+          "androidx.compose.material3.PermanentDrawerSheet"
+        ],
+        "attrs": {}
+      },
+      "PermanentNavigationDrawer": {
+        "composable": "PermanentNavigationDrawer",
+        "imports": [
+          "androidx.compose.material3.PermanentNavigationDrawer"
+        ],
+        "attrs": {}
+      },
+      "NavigationRail": {
+        "composable": "NavigationRail",
+        "imports": [
+          "androidx.compose.material3.NavigationRail"
+        ],
+        "attrs": {}
+      },
+      "NavigationRailItem": {
+        "composable": "NavigationRailItem",
+        "imports": [
+          "androidx.compose.material3.NavigationRailItem"
+        ],
+        "attrs": {
+          "selected": "selected",
+          "enabled": "enabled",
+          "alwaysShowLabel": "alwaysShowLabel",
+          "colors": "colors"
+        },
+        "attrShapes": {
+          "selected": {
+            "name": "selected",
+            "shape": "boolean"
+          },
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "alwaysShowLabel": {
+            "name": "alwaysShowLabel",
+            "shape": "boolean"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.NavigationRailItemColors"
+          }
+        }
+      },
+      "OutlinedTextField": {
+        "composable": "OutlinedTextField",
+        "imports": [
+          "androidx.compose.material3.OutlinedTextField"
+        ],
+        "attrs": {
+          "enabled": "enabled",
+          "readOnly": "readOnly",
+          "isError": "isError",
+          "singleLine": "singleLine",
+          "maxLines": "maxLines",
+          "minLines": "minLines",
+          "colors": "colors"
+        },
+        "attrShapes": {
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "readOnly": {
+            "name": "readOnly",
+            "shape": "boolean"
+          },
+          "isError": {
+            "name": "isError",
+            "shape": "boolean"
+          },
+          "singleLine": {
+            "name": "singleLine",
+            "shape": "boolean"
+          },
+          "maxLines": {
+            "name": "maxLines",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          "minLines": {
+            "name": "minLines",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.TextFieldColors"
+          }
+        }
+      },
+      "CircularProgressIndicator": {
+        "composable": "CircularProgressIndicator",
+        "imports": [
+          "androidx.compose.material3.CircularProgressIndicator"
+        ],
+        "attrs": {}
+      },
+      "LinearProgressIndicator": {
+        "composable": "LinearProgressIndicator",
+        "imports": [
+          "androidx.compose.material3.LinearProgressIndicator"
+        ],
+        "attrs": {}
+      },
+      "RadioButton": {
+        "composable": "RadioButton",
+        "imports": [
+          "androidx.compose.material3.RadioButton"
+        ],
+        "attrs": {
+          "selected": "selected",
+          "enabled": "enabled",
+          "colors": "colors"
+        },
+        "attrShapes": {
+          "selected": {
+            "name": "selected",
+            "shape": "boolean"
+          },
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.RadioButtonColors"
+          }
+        }
+      },
+      "Scaffold": {
+        "composable": "Scaffold",
+        "imports": [
+          "androidx.compose.material3.Scaffold"
+        ],
+        "attrs": {
+          "floatingActionButtonPosition": "floatingActionButtonPosition"
+        },
+        "attrShapes": {
+          "floatingActionButtonPosition": {
+            "name": "floatingActionButtonPosition",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.FabPosition"
+          }
+        }
+      },
+      "DockedSearchBar": {
+        "composable": "DockedSearchBar",
+        "imports": [
+          "androidx.compose.material3.DockedSearchBar"
+        ],
+        "attrs": {
+          "query": "query",
+          "active": "active",
+          "enabled": "enabled",
+          "colors": "colors"
+        },
+        "attrShapes": {
+          "query": {
+            "name": "query",
+            "shape": "string"
+          },
+          "active": {
+            "name": "active",
+            "shape": "boolean"
+          },
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.SearchBarColors"
+          }
+        },
+        "optIn": [
+          "androidx.compose.material3.ExperimentalMaterial3Api"
+        ]
+      },
+      "SearchBar": {
+        "composable": "SearchBar",
+        "imports": [
+          "androidx.compose.material3.SearchBar"
+        ],
+        "attrs": {
+          "query": "query",
+          "active": "active",
+          "enabled": "enabled",
+          "colors": "colors"
+        },
+        "attrShapes": {
+          "query": {
+            "name": "query",
+            "shape": "string"
+          },
+          "active": {
+            "name": "active",
+            "shape": "boolean"
+          },
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.SearchBarColors"
+          }
+        },
+        "optIn": [
+          "androidx.compose.material3.ExperimentalMaterial3Api"
+        ]
+      },
+      "MultiChoiceSegmentedButtonRow": {
+        "composable": "MultiChoiceSegmentedButtonRow",
+        "imports": [
+          "androidx.compose.material3.MultiChoiceSegmentedButtonRow"
+        ],
+        "attrs": {},
+        "optIn": [
+          "androidx.compose.material3.ExperimentalMaterial3Api"
+        ]
+      },
+      "SingleChoiceSegmentedButtonRow": {
+        "composable": "SingleChoiceSegmentedButtonRow",
+        "imports": [
+          "androidx.compose.material3.SingleChoiceSegmentedButtonRow"
+        ],
+        "attrs": {},
+        "optIn": [
+          "androidx.compose.material3.ExperimentalMaterial3Api"
+        ]
+      },
+      "RangeSlider": {
+        "composable": "RangeSlider",
+        "imports": [
+          "androidx.compose.material3.RangeSlider"
+        ],
+        "attrs": {
+          "state": "state",
+          "enabled": "enabled",
+          "colors": "colors"
+        },
+        "attrShapes": {
+          "state": {
+            "name": "state",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.RangeSliderState"
+          },
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.SliderColors"
+          }
+        }
+      },
+      "Slider": {
+        "composable": "Slider",
+        "imports": [
+          "androidx.compose.material3.Slider"
+        ],
+        "attrs": {
+          "state": "state",
+          "enabled": "enabled",
+          "colors": "colors"
+        },
+        "attrShapes": {
+          "state": {
+            "name": "state",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.SliderState"
+          },
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.SliderColors"
+          }
+        }
+      },
+      "SnackbarHost": {
+        "composable": "SnackbarHost",
+        "imports": [
+          "androidx.compose.material3.SnackbarHost"
+        ],
+        "attrs": {
+          "hostState": "hostState"
+        },
+        "attrShapes": {
+          "hostState": {
+            "name": "hostState",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.SnackbarHostState"
+          }
+        }
+      },
+      "Snackbar": {
+        "composable": "Snackbar",
+        "imports": [
+          "androidx.compose.material3.Snackbar"
+        ],
+        "attrs": {
+          "actionOnNewLine": "actionOnNewLine"
+        },
+        "attrShapes": {
+          "actionOnNewLine": {
+            "name": "actionOnNewLine",
+            "shape": "boolean"
+          }
+        }
+      },
+      "Surface": {
+        "composable": "Surface",
+        "imports": [
+          "androidx.compose.material3.Surface"
+        ],
+        "attrs": {
+          "enabled": "enabled"
+        },
+        "attrShapes": {
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          }
+        }
+      },
+      "SwipeToDismiss": {
+        "composable": "SwipeToDismiss",
+        "imports": [
+          "androidx.compose.material3.SwipeToDismiss"
+        ],
+        "attrs": {
+          "state": "state",
+          "directions": "directions"
+        },
+        "attrShapes": {
+          "state": {
+            "name": "state",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.SwipeToDismissBoxState"
+          },
+          "directions": {
+            "name": "directions",
+            "shape": "array",
+            "elem": {
+              "name": "",
+              "shape": "enum",
+              "typeName": "androidx.compose.material3.SwipeToDismissBoxValue",
+              "enumValues": [
+                "StartToEnd",
+                "EndToStart",
+                "Settled"
+              ]
+            }
+          }
+        },
+        "optIn": [
+          "androidx.compose.material3.ExperimentalMaterial3Api"
+        ]
+      },
+      "SwipeToDismissBox": {
+        "composable": "SwipeToDismissBox",
+        "imports": [
+          "androidx.compose.material3.SwipeToDismissBox"
+        ],
+        "attrs": {
+          "state": "state",
+          "enableDismissFromStartToEnd": "enableDismissFromStartToEnd",
+          "enableDismissFromEndToStart": "enableDismissFromEndToStart"
+        },
+        "attrShapes": {
+          "state": {
+            "name": "state",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.SwipeToDismissBoxState"
+          },
+          "enableDismissFromStartToEnd": {
+            "name": "enableDismissFromStartToEnd",
+            "shape": "boolean"
+          },
+          "enableDismissFromEndToStart": {
+            "name": "enableDismissFromEndToStart",
+            "shape": "boolean"
+          }
+        },
+        "optIn": [
+          "androidx.compose.material3.ExperimentalMaterial3Api"
+        ]
+      },
+      "Switch": {
+        "composable": "Switch",
+        "imports": [
+          "androidx.compose.material3.Switch"
+        ],
+        "attrs": {
+          "checked": "checked",
+          "enabled": "enabled",
+          "colors": "colors"
+        },
+        "attrShapes": {
+          "checked": {
+            "name": "checked",
+            "shape": "boolean"
+          },
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.SwitchColors"
+          }
+        }
+      },
+      "LeadingIconTab": {
+        "composable": "LeadingIconTab",
+        "imports": [
+          "androidx.compose.material3.LeadingIconTab"
+        ],
+        "attrs": {
+          "selected": "selected",
+          "enabled": "enabled"
+        },
+        "attrShapes": {
+          "selected": {
+            "name": "selected",
+            "shape": "boolean"
+          },
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          }
+        }
+      },
+      "Tab": {
+        "composable": "Tab",
+        "imports": [
+          "androidx.compose.material3.Tab"
+        ],
+        "attrs": {
+          "selected": "selected",
+          "enabled": "enabled"
+        },
+        "attrShapes": {
+          "selected": {
+            "name": "selected",
+            "shape": "boolean"
+          },
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          }
+        }
+      },
+      "PrimaryScrollableTabRow": {
+        "composable": "PrimaryScrollableTabRow",
+        "imports": [
+          "androidx.compose.material3.PrimaryScrollableTabRow"
+        ],
+        "attrs": {
+          "selectedTabIndex": "selectedTabIndex"
+        },
+        "attrShapes": {
+          "selectedTabIndex": {
+            "name": "selectedTabIndex",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        },
+        "optIn": [
+          "androidx.compose.material3.ExperimentalMaterial3Api"
+        ]
+      },
+      "PrimaryTabRow": {
+        "composable": "PrimaryTabRow",
+        "imports": [
+          "androidx.compose.material3.PrimaryTabRow"
+        ],
+        "attrs": {
+          "selectedTabIndex": "selectedTabIndex"
+        },
+        "attrShapes": {
+          "selectedTabIndex": {
+            "name": "selectedTabIndex",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        },
+        "optIn": [
+          "androidx.compose.material3.ExperimentalMaterial3Api"
+        ]
+      },
+      "ScrollableTabRow": {
+        "composable": "ScrollableTabRow",
+        "imports": [
+          "androidx.compose.material3.ScrollableTabRow"
+        ],
+        "attrs": {
+          "selectedTabIndex": "selectedTabIndex"
+        },
+        "attrShapes": {
+          "selectedTabIndex": {
+            "name": "selectedTabIndex",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        }
+      },
+      "SecondaryScrollableTabRow": {
+        "composable": "SecondaryScrollableTabRow",
+        "imports": [
+          "androidx.compose.material3.SecondaryScrollableTabRow"
+        ],
+        "attrs": {
+          "selectedTabIndex": "selectedTabIndex"
+        },
+        "attrShapes": {
+          "selectedTabIndex": {
+            "name": "selectedTabIndex",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        },
+        "optIn": [
+          "androidx.compose.material3.ExperimentalMaterial3Api"
+        ]
+      },
+      "SecondaryTabRow": {
+        "composable": "SecondaryTabRow",
+        "imports": [
+          "androidx.compose.material3.SecondaryTabRow"
+        ],
+        "attrs": {
+          "selectedTabIndex": "selectedTabIndex"
+        },
+        "attrShapes": {
+          "selectedTabIndex": {
+            "name": "selectedTabIndex",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        },
+        "optIn": [
+          "androidx.compose.material3.ExperimentalMaterial3Api"
+        ]
+      },
+      "TabRow": {
+        "composable": "TabRow",
+        "imports": [
+          "androidx.compose.material3.TabRow"
+        ],
+        "attrs": {
+          "selectedTabIndex": "selectedTabIndex"
+        },
+        "attrShapes": {
+          "selectedTabIndex": {
+            "name": "selectedTabIndex",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        }
+      },
+      "TextField": {
+        "composable": "TextField",
+        "imports": [
+          "androidx.compose.material3.TextField"
+        ],
+        "attrs": {
+          "enabled": "enabled",
+          "readOnly": "readOnly",
+          "isError": "isError",
+          "singleLine": "singleLine",
+          "maxLines": "maxLines",
+          "minLines": "minLines",
+          "colors": "colors"
+        },
+        "attrShapes": {
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "readOnly": {
+            "name": "readOnly",
+            "shape": "boolean"
+          },
+          "isError": {
+            "name": "isError",
+            "shape": "boolean"
+          },
+          "singleLine": {
+            "name": "singleLine",
+            "shape": "boolean"
+          },
+          "maxLines": {
+            "name": "maxLines",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          "minLines": {
+            "name": "minLines",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.TextFieldColors"
+          }
+        }
+      },
+      "ProvideTextStyle": {
+        "composable": "ProvideTextStyle",
+        "imports": [
+          "androidx.compose.material3.ProvideTextStyle"
+        ],
+        "attrs": {}
+      },
+      "Text": {
+        "composable": "Text",
+        "imports": [
+          "androidx.compose.material3.Text"
+        ],
+        "attrs": {
+          "softWrap": "softWrap",
+          "maxLines": "maxLines",
+          "minLines": "minLines",
+          "inlineContent": "inlineContent"
+        },
+        "attrShapes": {
+          "softWrap": {
+            "name": "softWrap",
+            "shape": "boolean"
+          },
+          "maxLines": {
+            "name": "maxLines",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          "minLines": {
+            "name": "minLines",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          "inlineContent": {
+            "name": "inlineContent",
+            "shape": "object",
+            "typeName": "kotlin.collections.Map",
+            "pairElements": [
+              {
+                "name": "",
+                "shape": "string"
+              },
+              {
+                "name": "",
+                "shape": "other"
+              }
+            ]
+          }
+        }
+      },
+      "TimeInput": {
+        "composable": "TimeInput",
+        "imports": [
+          "androidx.compose.material3.TimeInput"
+        ],
+        "attrs": {
+          "state": "state",
+          "colors": "colors"
+        },
+        "attrShapes": {
+          "state": {
+            "name": "state",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.TimePickerState"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.TimePickerColors"
+          }
+        },
+        "optIn": [
+          "androidx.compose.material3.ExperimentalMaterial3Api"
+        ]
+      },
+      "TimePicker": {
+        "composable": "TimePicker",
+        "imports": [
+          "androidx.compose.material3.TimePicker"
+        ],
+        "attrs": {
+          "state": "state",
+          "colors": "colors",
+          "layoutType": "layoutType"
+        },
+        "attrShapes": {
+          "state": {
+            "name": "state",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.TimePickerState"
+          },
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.TimePickerColors"
+          },
+          "layoutType": {
+            "name": "layoutType",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.TimePickerLayoutType"
+          }
+        },
+        "optIn": [
+          "androidx.compose.material3.ExperimentalMaterial3Api"
+        ]
+      },
+      "RichTooltip": {
+        "composable": "RichTooltip",
+        "imports": [
+          "androidx.compose.material3.RichTooltip"
+        ],
+        "attrs": {
+          "colors": "colors"
+        },
+        "attrShapes": {
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material3.RichTooltipColors"
+          }
+        },
+        "optIn": [
+          "androidx.compose.material3.ExperimentalMaterial3Api"
+        ]
+      },
+      "TooltipBox": {
+        "composable": "TooltipBox",
+        "imports": [
+          "androidx.compose.material3.TooltipBox"
+        ],
+        "attrs": {
+          "focusable": "focusable",
+          "enableUserInput": "enableUserInput"
+        },
+        "attrShapes": {
+          "focusable": {
+            "name": "focusable",
+            "shape": "boolean"
+          },
+          "enableUserInput": {
+            "name": "enableUserInput",
+            "shape": "boolean"
+          }
+        },
+        "optIn": [
+          "androidx.compose.material3.ExperimentalMaterial3Api"
+        ]
+      },
+      "PullToRefreshContainer": {
+        "composable": "PullToRefreshContainer",
+        "imports": [
+          "androidx.compose.material3.pulltorefresh.PullToRefreshContainer"
+        ],
+        "attrs": {},
+        "optIn": [
+          "androidx.compose.material3.ExperimentalMaterial3Api"
+        ]
+      }
+    },
+    "curated": true,
+    "essential": false
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "library": {
+    "id": "firebase-messaging",
+    "name": "Firebase Cloud Messaging",
+    "description": "Push notifications (FCM) tokens + messaging.",
+    "group": "com.google.firebase",
+    "artifact": "firebase-messaging",
+    "version": "23.4.1",
+    "gradle": [
+      "com.google.firebase:firebase-messaging:23.4.1"
+    ],
+    "minSdk": 19,
+    "permissions": [
+      "android.permission.ACCESS_NETWORK_STATE",
+      "android.permission.POST_NOTIFICATIONS",
+      "android.permission.WAKE_LOCK",
+      "com.google.android.c2dm.permission.RECEIVE"
+    ],
+    "exports": [
+      "FirebaseMessagingKtxRegistrar"
+    ],
+    "signatures": {
+      "FirebaseMessagingKtxRegistrar": {
+        "name": "FirebaseMessagingKtxRegistrar",
+        "target": "FirebaseMessagingKtxRegistrar",
+        "qualified": "com.google.firebase.messaging.ktx.FirebaseMessagingKtxRegistrar",
+        "isConstructor": true,
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "object"
+      }
+    },
+    "tags": {},
+    "curated": true,
+    "essential": false
+  }
+}

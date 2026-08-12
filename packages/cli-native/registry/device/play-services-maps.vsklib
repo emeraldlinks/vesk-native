@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "library": {
+    "id": "play-services-maps",
+    "name": "Play Services Maps",
+    "description": "Google Maps SDK for Android.",
+    "group": "com.google.android.gms",
+    "artifact": "play-services-maps",
+    "version": "18.2.0",
+    "gradle": [
+      "com.google.android.gms:play-services-maps:18.2.0"
+    ],
+    "minSdk": 19,
+    "permissions": [
+      "android.permission.ACCESS_NETWORK_STATE",
+      "android.permission.INTERNET"
+    ],
+    "exports": [],
+    "signatures": {},
+    "tags": {},
+    "curated": true,
+    "essential": false
+  }
+}

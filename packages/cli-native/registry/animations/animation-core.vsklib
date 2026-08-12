@@ -1,0 +1,900 @@
+{
+  "version": 1,
+  "library": {
+    "id": "animation-core",
+    "name": "Compose Animation Core",
+    "description": "Animatable, animate*AsState, Easing, InfiniteTransition.",
+    "group": "androidx.compose.animation",
+    "artifact": "animation-core",
+    "version": "1.6.8",
+    "gradle": [
+      "androidx.compose.animation:animation-core:1.6.8"
+    ],
+    "minSdk": 21,
+    "permissions": [],
+    "exports": [
+      "Animatable",
+      "AnimationEndReason",
+      "AnimationResult",
+      "AnimationScope",
+      "AnimationState",
+      "AnimationVector1D",
+      "AnimationVector2D",
+      "AnimationVector3D",
+      "AnimationVector4D",
+      "CubicBezierEasing",
+      "DecayAnimation",
+      "FloatExponentialDecaySpec",
+      "FloatSpringSpec",
+      "FloatTweenSpec",
+      "InfiniteRepeatableSpec",
+      "InfiniteTransition",
+      "KeyframesSpec",
+      "KeyframesWithSplineSpec",
+      "MutableTransitionState",
+      "PathEasing",
+      "RepeatMode",
+      "RepeatableSpec",
+      "SeekableTransitionState",
+      "SnapSpec",
+      "SpringSpec",
+      "TargetBasedAnimation",
+      "Transition",
+      "TweenSpec",
+      "VectorizedFloatAnimationSpec",
+      "VectorizedInfiniteRepeatableSpec",
+      "VectorizedKeyframesSpec",
+      "VectorizedRepeatableSpec",
+      "VectorizedSnapSpec",
+      "VectorizedTweenSpec"
+    ],
+    "signatures": {
+      "Animatable": {
+        "name": "Animatable",
+        "target": "Animatable",
+        "qualified": "androidx.compose.animation.core.Animatable",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "initialValue",
+            "shape": "other"
+          },
+          {
+            "name": "typeConverter",
+            "shape": "other"
+          },
+          {
+            "name": "visibilityThreshold",
+            "shape": "other"
+          },
+          {
+            "name": "label",
+            "shape": "string"
+          }
+        ],
+        "defaultParams": [
+          "visibilityThreshold",
+          "label"
+        ],
+        "returnShape": "object"
+      },
+      "AnimationEndReason": {
+        "name": "AnimationEndReason",
+        "target": "AnimationEndReason",
+        "qualified": "androidx.compose.animation.core.AnimationEndReason",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "BoundReached",
+          "Finished"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      },
+      "AnimationResult": {
+        "name": "AnimationResult",
+        "target": "AnimationResult",
+        "qualified": "androidx.compose.animation.core.AnimationResult",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "endState",
+            "shape": "object",
+            "typeName": "androidx.compose.animation.core.AnimationState"
+          },
+          {
+            "name": "endReason",
+            "shape": "enum",
+            "typeName": "androidx.compose.animation.core.AnimationEndReason",
+            "enumValues": [
+              "BoundReached",
+              "Finished"
+            ]
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "AnimationScope": {
+        "name": "AnimationScope",
+        "target": "AnimationScope",
+        "qualified": "androidx.compose.animation.core.AnimationScope",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "initialValue",
+            "shape": "other"
+          },
+          {
+            "name": "typeConverter",
+            "shape": "other"
+          },
+          {
+            "name": "initialVelocityVector",
+            "shape": "other"
+          },
+          {
+            "name": "lastFrameTimeNanos",
+            "shape": "number",
+            "typeName": "kotlin.Long"
+          },
+          {
+            "name": "targetValue",
+            "shape": "other"
+          },
+          {
+            "name": "startTimeNanos",
+            "shape": "number",
+            "typeName": "kotlin.Long"
+          },
+          {
+            "name": "isRunning",
+            "shape": "boolean"
+          },
+          {
+            "name": "onCancel",
+            "shape": "function"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "AnimationState": {
+        "name": "AnimationState",
+        "target": "AnimationState",
+        "qualified": "androidx.compose.animation.core.AnimationState",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "typeConverter",
+            "shape": "other"
+          },
+          {
+            "name": "initialValue",
+            "shape": "other"
+          },
+          {
+            "name": "initialVelocityVector",
+            "shape": "other"
+          },
+          {
+            "name": "lastFrameTimeNanos",
+            "shape": "number",
+            "typeName": "kotlin.Long"
+          },
+          {
+            "name": "finishedTimeNanos",
+            "shape": "number",
+            "typeName": "kotlin.Long"
+          },
+          {
+            "name": "isRunning",
+            "shape": "boolean"
+          }
+        ],
+        "defaultParams": [
+          "initialVelocityVector",
+          "lastFrameTimeNanos",
+          "finishedTimeNanos",
+          "isRunning"
+        ],
+        "returnShape": "object"
+      },
+      "AnimationVector1D": {
+        "name": "AnimationVector1D",
+        "target": "AnimationVector1D",
+        "qualified": "androidx.compose.animation.core.AnimationVector1D",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "initVal",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "AnimationVector2D": {
+        "name": "AnimationVector2D",
+        "target": "AnimationVector2D",
+        "qualified": "androidx.compose.animation.core.AnimationVector2D",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "v1",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "v2",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "AnimationVector3D": {
+        "name": "AnimationVector3D",
+        "target": "AnimationVector3D",
+        "qualified": "androidx.compose.animation.core.AnimationVector3D",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "v1",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "v2",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "v3",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "AnimationVector4D": {
+        "name": "AnimationVector4D",
+        "target": "AnimationVector4D",
+        "qualified": "androidx.compose.animation.core.AnimationVector4D",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "v1",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "v2",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "v3",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "v4",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "CubicBezierEasing": {
+        "name": "CubicBezierEasing",
+        "target": "CubicBezierEasing",
+        "qualified": "androidx.compose.animation.core.CubicBezierEasing",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "a",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "b",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "c",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "d",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "DecayAnimation": {
+        "name": "DecayAnimation",
+        "target": "DecayAnimation",
+        "qualified": "androidx.compose.animation.core.DecayAnimation",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "animationSpec",
+            "shape": "other"
+          },
+          {
+            "name": "typeConverter",
+            "shape": "other"
+          },
+          {
+            "name": "initialValue",
+            "shape": "other"
+          },
+          {
+            "name": "initialVelocityVector",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "FloatExponentialDecaySpec": {
+        "name": "FloatExponentialDecaySpec",
+        "target": "FloatExponentialDecaySpec",
+        "qualified": "androidx.compose.animation.core.FloatExponentialDecaySpec",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "frictionMultiplier",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "absVelocityThreshold",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          }
+        ],
+        "defaultParams": [
+          "frictionMultiplier",
+          "absVelocityThreshold"
+        ],
+        "returnShape": "object"
+      },
+      "FloatSpringSpec": {
+        "name": "FloatSpringSpec",
+        "target": "FloatSpringSpec",
+        "qualified": "androidx.compose.animation.core.FloatSpringSpec",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "dampingRatio",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "stiffness",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "visibilityThreshold",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          }
+        ],
+        "defaultParams": [
+          "dampingRatio",
+          "stiffness",
+          "visibilityThreshold"
+        ],
+        "returnShape": "object"
+      },
+      "FloatTweenSpec": {
+        "name": "FloatTweenSpec",
+        "target": "FloatTweenSpec",
+        "qualified": "androidx.compose.animation.core.FloatTweenSpec",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "duration",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          {
+            "name": "delay",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          {
+            "name": "easing",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [
+          "duration",
+          "delay",
+          "easing"
+        ],
+        "returnShape": "object"
+      },
+      "InfiniteRepeatableSpec": {
+        "name": "InfiniteRepeatableSpec",
+        "target": "InfiniteRepeatableSpec",
+        "qualified": "androidx.compose.animation.core.InfiniteRepeatableSpec",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "animation",
+            "shape": "other"
+          },
+          {
+            "name": "repeatMode",
+            "shape": "enum",
+            "typeName": "androidx.compose.animation.core.RepeatMode",
+            "enumValues": [
+              "Restart",
+              "Reverse"
+            ]
+          },
+          {
+            "name": "initialStartOffset",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [
+          "repeatMode",
+          "initialStartOffset"
+        ],
+        "returnShape": "object"
+      },
+      "InfiniteTransition": {
+        "name": "InfiniteTransition",
+        "target": "InfiniteTransition",
+        "qualified": "androidx.compose.animation.core.InfiniteTransition",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "label",
+            "shape": "string"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "KeyframesSpec": {
+        "name": "KeyframesSpec",
+        "target": "KeyframesSpec",
+        "qualified": "androidx.compose.animation.core.KeyframesSpec",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "config",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "KeyframesWithSplineSpec": {
+        "name": "KeyframesWithSplineSpec",
+        "target": "KeyframesWithSplineSpec",
+        "qualified": "androidx.compose.animation.core.KeyframesWithSplineSpec",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "config",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "MutableTransitionState": {
+        "name": "MutableTransitionState",
+        "target": "MutableTransitionState",
+        "qualified": "androidx.compose.animation.core.MutableTransitionState",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "initialState",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "PathEasing": {
+        "name": "PathEasing",
+        "target": "PathEasing",
+        "qualified": "androidx.compose.animation.core.PathEasing",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "path",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "RepeatMode": {
+        "name": "RepeatMode",
+        "target": "RepeatMode",
+        "qualified": "androidx.compose.animation.core.RepeatMode",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "Restart",
+          "Reverse"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      },
+      "RepeatableSpec": {
+        "name": "RepeatableSpec",
+        "target": "RepeatableSpec",
+        "qualified": "androidx.compose.animation.core.RepeatableSpec",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "iterations",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          {
+            "name": "animation",
+            "shape": "other"
+          },
+          {
+            "name": "repeatMode",
+            "shape": "enum",
+            "typeName": "androidx.compose.animation.core.RepeatMode",
+            "enumValues": [
+              "Restart",
+              "Reverse"
+            ]
+          },
+          {
+            "name": "initialStartOffset",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [
+          "repeatMode",
+          "initialStartOffset"
+        ],
+        "returnShape": "object"
+      },
+      "SeekableTransitionState": {
+        "name": "SeekableTransitionState",
+        "target": "SeekableTransitionState",
+        "qualified": "androidx.compose.animation.core.SeekableTransitionState",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "initialState",
+            "shape": "other"
+          },
+          {
+            "name": "targetState",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "SnapSpec": {
+        "name": "SnapSpec",
+        "target": "SnapSpec",
+        "qualified": "androidx.compose.animation.core.SnapSpec",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "delay",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        ],
+        "defaultParams": [
+          "delay"
+        ],
+        "returnShape": "object"
+      },
+      "SpringSpec": {
+        "name": "SpringSpec",
+        "target": "SpringSpec",
+        "qualified": "androidx.compose.animation.core.SpringSpec",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "dampingRatio",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "stiffness",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "visibilityThreshold",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [
+          "dampingRatio",
+          "stiffness",
+          "visibilityThreshold"
+        ],
+        "returnShape": "object"
+      },
+      "TargetBasedAnimation": {
+        "name": "TargetBasedAnimation",
+        "target": "TargetBasedAnimation",
+        "qualified": "androidx.compose.animation.core.TargetBasedAnimation",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "animationSpec",
+            "shape": "other"
+          },
+          {
+            "name": "typeConverter",
+            "shape": "other"
+          },
+          {
+            "name": "initialValue",
+            "shape": "other"
+          },
+          {
+            "name": "targetValue",
+            "shape": "other"
+          },
+          {
+            "name": "initialVelocityVector",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [
+          "initialVelocityVector"
+        ],
+        "returnShape": "object"
+      },
+      "Transition": {
+        "name": "Transition",
+        "target": "Transition",
+        "qualified": "androidx.compose.animation.core.Transition",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "transitionState",
+            "shape": "other"
+          },
+          {
+            "name": "label",
+            "shape": "string"
+          }
+        ],
+        "defaultParams": [
+          "label"
+        ],
+        "returnShape": "object"
+      },
+      "TweenSpec": {
+        "name": "TweenSpec",
+        "target": "TweenSpec",
+        "qualified": "androidx.compose.animation.core.TweenSpec",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "durationMillis",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          {
+            "name": "delay",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          {
+            "name": "easing",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [
+          "durationMillis",
+          "delay",
+          "easing"
+        ],
+        "returnShape": "object"
+      },
+      "VectorizedFloatAnimationSpec": {
+        "name": "VectorizedFloatAnimationSpec",
+        "target": "VectorizedFloatAnimationSpec",
+        "qualified": "androidx.compose.animation.core.VectorizedFloatAnimationSpec",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "anims",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "VectorizedInfiniteRepeatableSpec": {
+        "name": "VectorizedInfiniteRepeatableSpec",
+        "target": "VectorizedInfiniteRepeatableSpec",
+        "qualified": "androidx.compose.animation.core.VectorizedInfiniteRepeatableSpec",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "animation",
+            "shape": "other"
+          },
+          {
+            "name": "repeatMode",
+            "shape": "enum",
+            "typeName": "androidx.compose.animation.core.RepeatMode",
+            "enumValues": [
+              "Restart",
+              "Reverse"
+            ]
+          },
+          {
+            "name": "initialStartOffset",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [
+          "repeatMode",
+          "initialStartOffset"
+        ],
+        "returnShape": "object"
+      },
+      "VectorizedKeyframesSpec": {
+        "name": "VectorizedKeyframesSpec",
+        "target": "VectorizedKeyframesSpec",
+        "qualified": "androidx.compose.animation.core.VectorizedKeyframesSpec",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "keyframes",
+            "shape": "object",
+            "typeName": "kotlin.collections.Map",
+            "pairElements": [
+              {
+                "name": "",
+                "shape": "number",
+                "typeName": "kotlin.Int"
+              },
+              {
+                "name": "",
+                "shape": "object",
+                "typeName": "kotlin.Pair",
+                "pairElements": [
+                  {
+                    "name": "",
+                    "shape": "other"
+                  },
+                  {
+                    "name": "",
+                    "shape": "other"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "durationMillis",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          {
+            "name": "delayMillis",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        ],
+        "defaultParams": [
+          "delayMillis"
+        ],
+        "returnShape": "object"
+      },
+      "VectorizedRepeatableSpec": {
+        "name": "VectorizedRepeatableSpec",
+        "target": "VectorizedRepeatableSpec",
+        "qualified": "androidx.compose.animation.core.VectorizedRepeatableSpec",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "iterations",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          {
+            "name": "animation",
+            "shape": "other"
+          },
+          {
+            "name": "repeatMode",
+            "shape": "enum",
+            "typeName": "androidx.compose.animation.core.RepeatMode",
+            "enumValues": [
+              "Restart",
+              "Reverse"
+            ]
+          },
+          {
+            "name": "initialStartOffset",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [
+          "repeatMode",
+          "initialStartOffset"
+        ],
+        "returnShape": "object"
+      },
+      "VectorizedSnapSpec": {
+        "name": "VectorizedSnapSpec",
+        "target": "VectorizedSnapSpec",
+        "qualified": "androidx.compose.animation.core.VectorizedSnapSpec",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "delayMillis",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        ],
+        "defaultParams": [
+          "delayMillis"
+        ],
+        "returnShape": "object"
+      },
+      "VectorizedTweenSpec": {
+        "name": "VectorizedTweenSpec",
+        "target": "VectorizedTweenSpec",
+        "qualified": "androidx.compose.animation.core.VectorizedTweenSpec",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "durationMillis",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          {
+            "name": "delayMillis",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          {
+            "name": "easing",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [
+          "durationMillis",
+          "delayMillis",
+          "easing"
+        ],
+        "returnShape": "object"
+      }
+    },
+    "tags": {},
+    "curated": true,
+    "essential": false
+  }
+}

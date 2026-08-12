@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "library": {
+    "id": "biometric",
+    "name": "AndroidX Biometric",
+    "description": "BiometricPrompt (fingerprint/face) authentication.",
+    "group": "androidx.biometric",
+    "artifact": "biometric",
+    "version": "1.1.0",
+    "gradle": [
+      "androidx.biometric:biometric:1.1.0"
+    ],
+    "minSdk": 14,
+    "permissions": [
+      "android.permission.USE_BIOMETRIC",
+      "android.permission.USE_FINGERPRINT"
+    ],
+    "exports": [],
+    "signatures": {},
+    "tags": {},
+    "curated": true,
+    "essential": false
+  }
+}

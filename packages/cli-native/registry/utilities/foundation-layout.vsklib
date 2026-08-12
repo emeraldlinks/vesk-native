@@ -1,0 +1,137 @@
+{
+  "version": 1,
+  "library": {
+    "id": "foundation-layout",
+    "name": "Compose Foundation Layout",
+    "description": "LazyColumn/Row, BoxWithConstraints, Spacer, lazy grids.",
+    "group": "androidx.compose.foundation",
+    "artifact": "foundation-layout",
+    "version": "1.6.8",
+    "gradle": [
+      "androidx.compose.foundation:foundation-layout:1.6.8"
+    ],
+    "minSdk": 21,
+    "permissions": [],
+    "exports": [
+      "IntrinsicSize",
+      "MutableWindowInsets"
+    ],
+    "signatures": {
+      "IntrinsicSize": {
+        "name": "IntrinsicSize",
+        "target": "IntrinsicSize",
+        "qualified": "androidx.compose.foundation.layout.IntrinsicSize",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "Min",
+          "Max"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      },
+      "MutableWindowInsets": {
+        "name": "MutableWindowInsets",
+        "target": "MutableWindowInsets",
+        "qualified": "androidx.compose.foundation.layout.MutableWindowInsets",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "initialInsets",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [
+          "initialInsets"
+        ],
+        "returnShape": "object"
+      }
+    },
+    "tags": {
+      "Box": {
+        "composable": "Box",
+        "imports": [
+          "androidx.compose.foundation.layout.Box"
+        ],
+        "attrs": {}
+      },
+      "BoxWithConstraints": {
+        "composable": "BoxWithConstraints",
+        "imports": [
+          "androidx.compose.foundation.layout.BoxWithConstraints"
+        ],
+        "attrs": {
+          "propagateMinConstraints": "propagateMinConstraints"
+        },
+        "attrShapes": {
+          "propagateMinConstraints": {
+            "name": "propagateMinConstraints",
+            "shape": "boolean"
+          }
+        }
+      },
+      "Column": {
+        "composable": "Column",
+        "imports": [
+          "androidx.compose.foundation.layout.Column"
+        ],
+        "attrs": {}
+      },
+      "FlowColumn": {
+        "composable": "FlowColumn",
+        "imports": [
+          "androidx.compose.foundation.layout.FlowColumn"
+        ],
+        "attrs": {
+          "maxItemsInEachColumn": "maxItemsInEachColumn"
+        },
+        "attrShapes": {
+          "maxItemsInEachColumn": {
+            "name": "maxItemsInEachColumn",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        },
+        "optIn": [
+          "androidx.compose.foundation.layout.ExperimentalLayoutApi"
+        ]
+      },
+      "FlowRow": {
+        "composable": "FlowRow",
+        "imports": [
+          "androidx.compose.foundation.layout.FlowRow"
+        ],
+        "attrs": {
+          "maxItemsInEachRow": "maxItemsInEachRow"
+        },
+        "attrShapes": {
+          "maxItemsInEachRow": {
+            "name": "maxItemsInEachRow",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        },
+        "optIn": [
+          "androidx.compose.foundation.layout.ExperimentalLayoutApi"
+        ]
+      },
+      "Row": {
+        "composable": "Row",
+        "imports": [
+          "androidx.compose.foundation.layout.Row"
+        ],
+        "attrs": {}
+      },
+      "Spacer": {
+        "composable": "Spacer",
+        "imports": [
+          "androidx.compose.foundation.layout.Spacer"
+        ],
+        "attrs": {}
+      }
+    },
+    "curated": true,
+    "essential": false
+  }
+}

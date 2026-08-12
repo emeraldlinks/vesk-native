@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "library": {
+    "id": "camera-camera2",
+    "name": "CameraX Camera2",
+    "description": "Camera2 bindings for CameraX pipelines.",
+    "group": "androidx.camera",
+    "artifact": "camera-camera2",
+    "version": "1.3.4",
+    "gradle": [
+      "androidx.camera:camera-camera2:1.3.4"
+    ],
+    "minSdk": 14,
+    "permissions": [],
+    "exports": [],
+    "signatures": {},
+    "tags": {},
+    "curated": true,
+    "essential": false
+  }
+}

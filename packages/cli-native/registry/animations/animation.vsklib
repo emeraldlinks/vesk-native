@@ -1,0 +1,101 @@
+{
+  "version": 1,
+  "library": {
+    "id": "animation",
+    "name": "Compose Animation",
+    "description": "AnimatedVisibility, AnimatedContent, Crossfade, Transition.",
+    "group": "androidx.compose.animation",
+    "artifact": "animation",
+    "version": "1.6.8",
+    "gradle": [
+      "androidx.compose.animation:animation:1.6.8"
+    ],
+    "minSdk": 21,
+    "permissions": [],
+    "exports": [
+      "ContentTransform",
+      "EnterExitState",
+      "SplineBasedFloatDecayAnimationSpec"
+    ],
+    "signatures": {
+      "ContentTransform": {
+        "name": "ContentTransform",
+        "target": "ContentTransform",
+        "qualified": "androidx.compose.animation.ContentTransform",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "targetContentEnter",
+            "shape": "other"
+          },
+          {
+            "name": "initialContentExit",
+            "shape": "other"
+          },
+          {
+            "name": "targetContentZIndex",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "sizeTransform",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [
+          "targetContentZIndex",
+          "sizeTransform"
+        ],
+        "returnShape": "object"
+      },
+      "EnterExitState": {
+        "name": "EnterExitState",
+        "target": "EnterExitState",
+        "qualified": "androidx.compose.animation.EnterExitState",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "PreEnter",
+          "Visible",
+          "PostExit"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      },
+      "SplineBasedFloatDecayAnimationSpec": {
+        "name": "SplineBasedFloatDecayAnimationSpec",
+        "target": "SplineBasedFloatDecayAnimationSpec",
+        "qualified": "androidx.compose.animation.SplineBasedFloatDecayAnimationSpec",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "density",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      }
+    },
+    "tags": {
+      "AnimatedVisibility": {
+        "composable": "AnimatedVisibility",
+        "imports": [
+          "androidx.compose.animation.AnimatedVisibility"
+        ],
+        "attrs": {
+          "label": "label"
+        },
+        "attrShapes": {
+          "label": {
+            "name": "label",
+            "shape": "string"
+          }
+        }
+      }
+    },
+    "curated": true,
+    "essential": false
+  }
+}

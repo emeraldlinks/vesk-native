@@ -1,0 +1,887 @@
+{
+  "version": 1,
+  "library": {
+    "id": "constraintlayout-compose",
+    "name": "ConstraintLayout Compose",
+    "description": "Declarative ConstraintLayout for Compose.",
+    "group": "androidx.constraintlayout",
+    "artifact": "constraintlayout-compose",
+    "version": "1.1.0",
+    "gradle": [
+      "androidx.constraintlayout:constraintlayout-compose:1.1.0"
+    ],
+    "minSdk": 21,
+    "permissions": [],
+    "exports": [
+      "Arc",
+      "ChainStyle",
+      "ConstrainScope",
+      "ConstrainedLayoutReference",
+      "ConstraintLayoutScope",
+      "ConstraintSetRef",
+      "ConstraintSetScope",
+      "CurveFit",
+      "DebugFlags",
+      "Easing",
+      "FlowStyle",
+      "HorizontalAlign",
+      "HorizontalChainReference",
+      "HorizontalChainScope",
+      "InvalidationStrategy",
+      "InvalidationStrategySpecification",
+      "KeyAttributeScope",
+      "KeyAttributesScope",
+      "KeyCycleScope",
+      "KeyCyclesScope",
+      "KeyPositionScope",
+      "KeyPositionsScope",
+      "LayoutInfoFlags",
+      "MotionLayoutDebugFlags",
+      "MotionLayoutFlag",
+      "MotionLayoutScope",
+      "MotionSceneScope",
+      "OnSwipe",
+      "RelativePosition",
+      "Span",
+      "SpringBoundary",
+      "State",
+      "SwipeDirection",
+      "SwipeMode",
+      "SwipeSide",
+      "SwipeTouchUp",
+      "TransitionScope",
+      "VerticalAlign",
+      "VerticalChainReference",
+      "VerticalChainScope",
+      "Visibility",
+      "Wrap"
+    ],
+    "signatures": {
+      "Arc": {
+        "name": "Arc",
+        "target": "Arc",
+        "qualified": "androidx.constraintlayout.compose.Arc",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "name",
+            "shape": "string"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "ChainStyle": {
+        "name": "ChainStyle",
+        "target": "ChainStyle",
+        "qualified": "androidx.constraintlayout.compose.ChainStyle",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "name",
+            "shape": "string"
+          },
+          {
+            "name": "bias",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          }
+        ],
+        "defaultParams": [
+          "bias"
+        ],
+        "returnShape": "object"
+      },
+      "ConstrainScope": {
+        "name": "ConstrainScope",
+        "target": "ConstrainScope",
+        "qualified": "androidx.constraintlayout.compose.ConstrainScope",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "id",
+            "shape": "any"
+          },
+          {
+            "name": "containerObject",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "ConstrainedLayoutReference": {
+        "name": "ConstrainedLayoutReference",
+        "target": "ConstrainedLayoutReference",
+        "qualified": "androidx.constraintlayout.compose.ConstrainedLayoutReference",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "id",
+            "shape": "any"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "ConstraintLayoutScope": {
+        "name": "ConstraintLayoutScope",
+        "target": "ConstraintLayoutScope",
+        "qualified": "androidx.constraintlayout.compose.ConstraintLayoutScope",
+        "isConstructor": true,
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "ConstraintSetRef": {
+        "name": "ConstraintSetRef",
+        "target": "ConstraintSetRef",
+        "qualified": "androidx.constraintlayout.compose.ConstraintSetRef",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "name",
+            "shape": "string"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "ConstraintSetScope": {
+        "name": "ConstraintSetScope",
+        "target": "ConstraintSetScope",
+        "qualified": "androidx.constraintlayout.compose.ConstraintSetScope",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "extendFrom",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "CurveFit": {
+        "name": "CurveFit",
+        "target": "CurveFit",
+        "qualified": "androidx.constraintlayout.compose.CurveFit",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "name",
+            "shape": "string"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "DebugFlags": {
+        "name": "DebugFlags",
+        "target": "DebugFlags",
+        "qualified": "androidx.constraintlayout.compose.DebugFlags",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "flags",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "Easing": {
+        "name": "Easing",
+        "target": "Easing",
+        "qualified": "androidx.constraintlayout.compose.Easing",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "name",
+            "shape": "string"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "FlowStyle": {
+        "name": "FlowStyle",
+        "target": "FlowStyle",
+        "qualified": "androidx.constraintlayout.compose.FlowStyle",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "name",
+            "shape": "string"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "HorizontalAlign": {
+        "name": "HorizontalAlign",
+        "target": "HorizontalAlign",
+        "qualified": "androidx.constraintlayout.compose.HorizontalAlign",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "name",
+            "shape": "string"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "HorizontalChainReference": {
+        "name": "HorizontalChainReference",
+        "target": "HorizontalChainReference",
+        "qualified": "androidx.constraintlayout.compose.HorizontalChainReference",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "id",
+            "shape": "any"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "HorizontalChainScope": {
+        "name": "HorizontalChainScope",
+        "target": "HorizontalChainScope",
+        "qualified": "androidx.constraintlayout.compose.HorizontalChainScope",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "id",
+            "shape": "any"
+          },
+          {
+            "name": "containerObject",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "InvalidationStrategy": {
+        "name": "InvalidationStrategy",
+        "target": "InvalidationStrategy",
+        "qualified": "androidx.constraintlayout.compose.InvalidationStrategy",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "onIncomingConstraints",
+            "shape": "function"
+          },
+          {
+            "name": "onObservedStateChange",
+            "shape": "function"
+          }
+        ],
+        "defaultParams": [
+          "onIncomingConstraints",
+          "onObservedStateChange"
+        ],
+        "returnShape": "object"
+      },
+      "InvalidationStrategySpecification": {
+        "name": "InvalidationStrategySpecification",
+        "target": "InvalidationStrategySpecification",
+        "qualified": "androidx.constraintlayout.compose.InvalidationStrategySpecification",
+        "isConstructor": true,
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "KeyAttributeScope": {
+        "name": "KeyAttributeScope",
+        "target": "KeyAttributeScope",
+        "qualified": "androidx.constraintlayout.compose.KeyAttributeScope",
+        "isConstructor": true,
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "KeyAttributesScope": {
+        "name": "KeyAttributesScope",
+        "target": "KeyAttributesScope",
+        "qualified": "androidx.constraintlayout.compose.KeyAttributesScope",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "targets",
+            "shape": "array",
+            "elem": {
+              "name": "",
+              "shape": "object",
+              "typeName": "androidx.constraintlayout.compose.ConstrainedLayoutReference"
+            }
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "KeyCycleScope": {
+        "name": "KeyCycleScope",
+        "target": "KeyCycleScope",
+        "qualified": "androidx.constraintlayout.compose.KeyCycleScope",
+        "isConstructor": true,
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "KeyCyclesScope": {
+        "name": "KeyCyclesScope",
+        "target": "KeyCyclesScope",
+        "qualified": "androidx.constraintlayout.compose.KeyCyclesScope",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "targets",
+            "shape": "array",
+            "elem": {
+              "name": "",
+              "shape": "object",
+              "typeName": "androidx.constraintlayout.compose.ConstrainedLayoutReference"
+            }
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "KeyPositionScope": {
+        "name": "KeyPositionScope",
+        "target": "KeyPositionScope",
+        "qualified": "androidx.constraintlayout.compose.KeyPositionScope",
+        "isConstructor": true,
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "KeyPositionsScope": {
+        "name": "KeyPositionsScope",
+        "target": "KeyPositionsScope",
+        "qualified": "androidx.constraintlayout.compose.KeyPositionsScope",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "targets",
+            "shape": "array",
+            "elem": {
+              "name": "",
+              "shape": "object",
+              "typeName": "androidx.constraintlayout.compose.ConstrainedLayoutReference"
+            }
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "LayoutInfoFlags": {
+        "name": "LayoutInfoFlags",
+        "target": "LayoutInfoFlags",
+        "qualified": "androidx.constraintlayout.compose.LayoutInfoFlags",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "NONE",
+          "BOUNDS"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      },
+      "MotionLayoutDebugFlags": {
+        "name": "MotionLayoutDebugFlags",
+        "target": "MotionLayoutDebugFlags",
+        "qualified": "androidx.constraintlayout.compose.MotionLayoutDebugFlags",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "NONE",
+          "SHOW_ALL",
+          "UNKNOWN"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      },
+      "MotionLayoutFlag": {
+        "name": "MotionLayoutFlag",
+        "target": "MotionLayoutFlag",
+        "qualified": "androidx.constraintlayout.compose.MotionLayoutFlag",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "Default",
+          "FullMeasure"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      },
+      "MotionLayoutScope": {
+        "name": "MotionLayoutScope",
+        "target": "MotionLayoutScope",
+        "qualified": "androidx.constraintlayout.compose.MotionLayoutScope",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "measurer",
+            "shape": "other"
+          },
+          {
+            "name": "motionProgress",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "MotionSceneScope": {
+        "name": "MotionSceneScope",
+        "target": "MotionSceneScope",
+        "qualified": "androidx.constraintlayout.compose.MotionSceneScope",
+        "isConstructor": true,
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "OnSwipe": {
+        "name": "OnSwipe",
+        "target": "OnSwipe",
+        "qualified": "androidx.constraintlayout.compose.OnSwipe",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "anchor",
+            "shape": "object",
+            "typeName": "androidx.constraintlayout.compose.ConstrainedLayoutReference"
+          },
+          {
+            "name": "side",
+            "shape": "object",
+            "typeName": "androidx.constraintlayout.compose.SwipeSide"
+          },
+          {
+            "name": "direction",
+            "shape": "object",
+            "typeName": "androidx.constraintlayout.compose.SwipeDirection"
+          },
+          {
+            "name": "dragScale",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "dragThreshold",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "dragAround",
+            "shape": "object",
+            "typeName": "androidx.constraintlayout.compose.ConstrainedLayoutReference"
+          },
+          {
+            "name": "limitBoundsTo",
+            "shape": "object",
+            "typeName": "androidx.constraintlayout.compose.ConstrainedLayoutReference"
+          },
+          {
+            "name": "onTouchUp",
+            "shape": "object",
+            "typeName": "androidx.constraintlayout.compose.SwipeTouchUp"
+          },
+          {
+            "name": "mode",
+            "shape": "object",
+            "typeName": "androidx.constraintlayout.compose.SwipeMode"
+          }
+        ],
+        "defaultParams": [
+          "dragScale",
+          "dragThreshold",
+          "dragAround",
+          "limitBoundsTo",
+          "onTouchUp",
+          "mode"
+        ],
+        "returnShape": "object"
+      },
+      "RelativePosition": {
+        "name": "RelativePosition",
+        "target": "RelativePosition",
+        "qualified": "androidx.constraintlayout.compose.RelativePosition",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "name",
+            "shape": "string"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "Span": {
+        "name": "Span",
+        "target": "Span",
+        "qualified": "androidx.constraintlayout.compose.Span",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "description",
+            "shape": "string"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "SpringBoundary": {
+        "name": "SpringBoundary",
+        "target": "SpringBoundary",
+        "qualified": "androidx.constraintlayout.compose.SpringBoundary",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "name",
+            "shape": "string"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "State": {
+        "name": "State",
+        "target": "State",
+        "qualified": "androidx.constraintlayout.compose.State",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "density",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "SwipeDirection": {
+        "name": "SwipeDirection",
+        "target": "SwipeDirection",
+        "qualified": "androidx.constraintlayout.compose.SwipeDirection",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "name",
+            "shape": "string"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "SwipeMode": {
+        "name": "SwipeMode",
+        "target": "SwipeMode",
+        "qualified": "androidx.constraintlayout.compose.SwipeMode",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "name",
+            "shape": "string"
+          },
+          {
+            "name": "springMass",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "springStiffness",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "springDamping",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "springThreshold",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "springBoundary",
+            "shape": "object",
+            "typeName": "androidx.constraintlayout.compose.SpringBoundary"
+          },
+          {
+            "name": "maxVelocity",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "maxAcceleration",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          }
+        ],
+        "defaultParams": [
+          "springMass",
+          "springStiffness",
+          "springDamping",
+          "springThreshold",
+          "springBoundary",
+          "maxVelocity",
+          "maxAcceleration"
+        ],
+        "returnShape": "object"
+      },
+      "SwipeSide": {
+        "name": "SwipeSide",
+        "target": "SwipeSide",
+        "qualified": "androidx.constraintlayout.compose.SwipeSide",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "name",
+            "shape": "string"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "SwipeTouchUp": {
+        "name": "SwipeTouchUp",
+        "target": "SwipeTouchUp",
+        "qualified": "androidx.constraintlayout.compose.SwipeTouchUp",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "name",
+            "shape": "string"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "TransitionScope": {
+        "name": "TransitionScope",
+        "target": "TransitionScope",
+        "qualified": "androidx.constraintlayout.compose.TransitionScope",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "from",
+            "shape": "string"
+          },
+          {
+            "name": "to",
+            "shape": "string"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "VerticalAlign": {
+        "name": "VerticalAlign",
+        "target": "VerticalAlign",
+        "qualified": "androidx.constraintlayout.compose.VerticalAlign",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "name",
+            "shape": "string"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "VerticalChainReference": {
+        "name": "VerticalChainReference",
+        "target": "VerticalChainReference",
+        "qualified": "androidx.constraintlayout.compose.VerticalChainReference",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "id",
+            "shape": "any"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "VerticalChainScope": {
+        "name": "VerticalChainScope",
+        "target": "VerticalChainScope",
+        "qualified": "androidx.constraintlayout.compose.VerticalChainScope",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "id",
+            "shape": "any"
+          },
+          {
+            "name": "containerObject",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "Visibility": {
+        "name": "Visibility",
+        "target": "Visibility",
+        "qualified": "androidx.constraintlayout.compose.Visibility",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "name",
+            "shape": "string"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "Wrap": {
+        "name": "Wrap",
+        "target": "Wrap",
+        "qualified": "androidx.constraintlayout.compose.Wrap",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "name",
+            "shape": "string"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      }
+    },
+    "tags": {
+      "ConstraintLayout": {
+        "composable": "ConstraintLayout",
+        "imports": [
+          "androidx.constraintlayout.compose.ConstraintLayout"
+        ],
+        "attrs": {
+          "optimizationLevel": "optimizationLevel"
+        },
+        "attrShapes": {
+          "optimizationLevel": {
+            "name": "optimizationLevel",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        }
+      },
+      "ItemHolder": {
+        "composable": "ItemHolder",
+        "imports": [
+          "androidx.constraintlayout.compose.ItemHolder"
+        ],
+        "attrs": {
+          "i": "i",
+          "slotPrefix": "slotPrefix",
+          "showSlot": "showSlot"
+        },
+        "attrShapes": {
+          "i": {
+            "name": "i",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          "slotPrefix": {
+            "name": "slotPrefix",
+            "shape": "string"
+          },
+          "showSlot": {
+            "name": "showSlot",
+            "shape": "boolean"
+          }
+        }
+      },
+      "MotionCarousel": {
+        "composable": "MotionCarousel",
+        "imports": [
+          "androidx.constraintlayout.compose.MotionCarousel"
+        ],
+        "attrs": {
+          "initialSlotIndex": "initialSlotIndex",
+          "numSlots": "numSlots",
+          "backwardTransition": "backwardTransition",
+          "forwardTransition": "forwardTransition",
+          "slotPrefix": "slotPrefix",
+          "showSlots": "showSlots"
+        },
+        "attrShapes": {
+          "initialSlotIndex": {
+            "name": "initialSlotIndex",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          "numSlots": {
+            "name": "numSlots",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          "backwardTransition": {
+            "name": "backwardTransition",
+            "shape": "string"
+          },
+          "forwardTransition": {
+            "name": "forwardTransition",
+            "shape": "string"
+          },
+          "slotPrefix": {
+            "name": "slotPrefix",
+            "shape": "string"
+          },
+          "showSlots": {
+            "name": "showSlots",
+            "shape": "boolean"
+          }
+        }
+      },
+      "MotionLayout": {
+        "composable": "MotionLayout",
+        "imports": [
+          "androidx.constraintlayout.compose.MotionLayout"
+        ],
+        "attrs": {
+          "progress": "progress",
+          "debugFlags": "debugFlags",
+          "optimizationLevel": "optimizationLevel",
+          "invalidationStrategy": "invalidationStrategy"
+        },
+        "attrShapes": {
+          "progress": {
+            "name": "progress",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          "debugFlags": {
+            "name": "debugFlags",
+            "shape": "object",
+            "typeName": "androidx.constraintlayout.compose.DebugFlags"
+          },
+          "optimizationLevel": {
+            "name": "optimizationLevel",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          "invalidationStrategy": {
+            "name": "invalidationStrategy",
+            "shape": "object",
+            "typeName": "androidx.constraintlayout.compose.InvalidationStrategy"
+          }
+        },
+        "optIn": [
+          "androidx.constraintlayout.compose.ExperimentalMotionApi"
+        ]
+      }
+    },
+    "curated": true,
+    "essential": false
+  }
+}

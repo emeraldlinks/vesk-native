@@ -1,0 +1,1695 @@
+{
+  "version": 1,
+  "library": {
+    "id": "material",
+    "name": "Material (M2)",
+    "description": "Material Design 2 components (Button, Card, Text, Scaffold).",
+    "group": "androidx.compose.material",
+    "artifact": "material",
+    "version": "1.6.8",
+    "gradle": [
+      "androidx.compose.material:material:1.6.8"
+    ],
+    "minSdk": 21,
+    "permissions": [],
+    "exports": [
+      "BackdropScaffoldState",
+      "BackdropValue",
+      "BottomDrawerState",
+      "BottomDrawerValue",
+      "BottomSheetScaffoldState",
+      "BottomSheetState",
+      "BottomSheetValue",
+      "Colors",
+      "DismissDirection",
+      "DismissState",
+      "DismissValue",
+      "DrawerState",
+      "DrawerValue",
+      "FabPosition",
+      "FixedThreshold",
+      "FractionalThreshold",
+      "ModalBottomSheetState",
+      "ModalBottomSheetValue",
+      "PullRefreshState",
+      "ResistanceConfig",
+      "ScaffoldState",
+      "Shapes",
+      "SnackbarDuration",
+      "SnackbarHostState",
+      "SnackbarResult",
+      "SwipeProgress",
+      "SwipeableState",
+      "TabPosition",
+      "Typography"
+    ],
+    "signatures": {
+      "BackdropScaffoldState": {
+        "name": "BackdropScaffoldState",
+        "target": "BackdropScaffoldState",
+        "qualified": "androidx.compose.material.BackdropScaffoldState",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "initialValue",
+            "shape": "enum",
+            "typeName": "androidx.compose.material.BackdropValue",
+            "enumValues": [
+              "Concealed",
+              "Revealed"
+            ]
+          },
+          {
+            "name": "animationSpec",
+            "shape": "other"
+          },
+          {
+            "name": "confirmStateChange",
+            "shape": "function"
+          },
+          {
+            "name": "snackbarHostState",
+            "shape": "object",
+            "typeName": "androidx.compose.material.SnackbarHostState"
+          }
+        ],
+        "defaultParams": [
+          "animationSpec",
+          "confirmStateChange",
+          "snackbarHostState"
+        ],
+        "returnShape": "object"
+      },
+      "BackdropValue": {
+        "name": "BackdropValue",
+        "target": "BackdropValue",
+        "qualified": "androidx.compose.material.BackdropValue",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "Concealed",
+          "Revealed"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      },
+      "BottomDrawerState": {
+        "name": "BottomDrawerState",
+        "target": "BottomDrawerState",
+        "qualified": "androidx.compose.material.BottomDrawerState",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "initialValue",
+            "shape": "enum",
+            "typeName": "androidx.compose.material.BottomDrawerValue",
+            "enumValues": [
+              "Closed",
+              "Open",
+              "Expanded"
+            ]
+          },
+          {
+            "name": "confirmStateChange",
+            "shape": "function"
+          }
+        ],
+        "defaultParams": [
+          "confirmStateChange"
+        ],
+        "returnShape": "object"
+      },
+      "BottomDrawerValue": {
+        "name": "BottomDrawerValue",
+        "target": "BottomDrawerValue",
+        "qualified": "androidx.compose.material.BottomDrawerValue",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "Closed",
+          "Open",
+          "Expanded"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      },
+      "BottomSheetScaffoldState": {
+        "name": "BottomSheetScaffoldState",
+        "target": "BottomSheetScaffoldState",
+        "qualified": "androidx.compose.material.BottomSheetScaffoldState",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "bottomSheetState",
+            "shape": "object",
+            "typeName": "androidx.compose.material.BottomSheetState"
+          },
+          {
+            "name": "snackbarHostState",
+            "shape": "object",
+            "typeName": "androidx.compose.material.SnackbarHostState"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "BottomSheetState": {
+        "name": "BottomSheetState",
+        "target": "BottomSheetState",
+        "qualified": "androidx.compose.material.BottomSheetState",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "initialValue",
+            "shape": "enum",
+            "typeName": "androidx.compose.material.BottomSheetValue",
+            "enumValues": [
+              "Collapsed",
+              "Expanded"
+            ]
+          },
+          {
+            "name": "animationSpec",
+            "shape": "other"
+          },
+          {
+            "name": "confirmValueChange",
+            "shape": "function"
+          }
+        ],
+        "defaultParams": [
+          "animationSpec",
+          "confirmValueChange"
+        ],
+        "returnShape": "object"
+      },
+      "BottomSheetValue": {
+        "name": "BottomSheetValue",
+        "target": "BottomSheetValue",
+        "qualified": "androidx.compose.material.BottomSheetValue",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "Collapsed",
+          "Expanded"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      },
+      "Colors": {
+        "name": "Colors",
+        "target": "Colors",
+        "qualified": "androidx.compose.material.Colors",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "primary",
+            "shape": "other"
+          },
+          {
+            "name": "primaryVariant",
+            "shape": "other"
+          },
+          {
+            "name": "secondary",
+            "shape": "other"
+          },
+          {
+            "name": "secondaryVariant",
+            "shape": "other"
+          },
+          {
+            "name": "background",
+            "shape": "other"
+          },
+          {
+            "name": "surface",
+            "shape": "other"
+          },
+          {
+            "name": "error",
+            "shape": "other"
+          },
+          {
+            "name": "onPrimary",
+            "shape": "other"
+          },
+          {
+            "name": "onSecondary",
+            "shape": "other"
+          },
+          {
+            "name": "onBackground",
+            "shape": "other"
+          },
+          {
+            "name": "onSurface",
+            "shape": "other"
+          },
+          {
+            "name": "onError",
+            "shape": "other"
+          },
+          {
+            "name": "isLight",
+            "shape": "boolean"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "DismissDirection": {
+        "name": "DismissDirection",
+        "target": "DismissDirection",
+        "qualified": "androidx.compose.material.DismissDirection",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "StartToEnd",
+          "EndToStart"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      },
+      "DismissState": {
+        "name": "DismissState",
+        "target": "DismissState",
+        "qualified": "androidx.compose.material.DismissState",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "initialValue",
+            "shape": "enum",
+            "typeName": "androidx.compose.material.DismissValue",
+            "enumValues": [
+              "Default",
+              "DismissedToEnd",
+              "DismissedToStart"
+            ]
+          },
+          {
+            "name": "confirmStateChange",
+            "shape": "function"
+          }
+        ],
+        "defaultParams": [
+          "confirmStateChange"
+        ],
+        "returnShape": "object"
+      },
+      "DismissValue": {
+        "name": "DismissValue",
+        "target": "DismissValue",
+        "qualified": "androidx.compose.material.DismissValue",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "Default",
+          "DismissedToEnd",
+          "DismissedToStart"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      },
+      "DrawerState": {
+        "name": "DrawerState",
+        "target": "DrawerState",
+        "qualified": "androidx.compose.material.DrawerState",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "initialValue",
+            "shape": "enum",
+            "typeName": "androidx.compose.material.DrawerValue",
+            "enumValues": [
+              "Closed",
+              "Open"
+            ]
+          },
+          {
+            "name": "confirmStateChange",
+            "shape": "function"
+          }
+        ],
+        "defaultParams": [
+          "confirmStateChange"
+        ],
+        "returnShape": "object"
+      },
+      "DrawerValue": {
+        "name": "DrawerValue",
+        "target": "DrawerValue",
+        "qualified": "androidx.compose.material.DrawerValue",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "Closed",
+          "Open"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      },
+      "FabPosition": {
+        "name": "FabPosition",
+        "target": "FabPosition",
+        "qualified": "androidx.compose.material.FabPosition",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "value",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "FixedThreshold": {
+        "name": "FixedThreshold",
+        "target": "FixedThreshold",
+        "qualified": "androidx.compose.material.FixedThreshold",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "offset",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "FractionalThreshold": {
+        "name": "FractionalThreshold",
+        "target": "FractionalThreshold",
+        "qualified": "androidx.compose.material.FractionalThreshold",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "fraction",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "ModalBottomSheetState": {
+        "name": "ModalBottomSheetState",
+        "target": "ModalBottomSheetState",
+        "qualified": "androidx.compose.material.ModalBottomSheetState",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "initialValue",
+            "shape": "enum",
+            "typeName": "androidx.compose.material.ModalBottomSheetValue",
+            "enumValues": [
+              "Hidden",
+              "Expanded",
+              "HalfExpanded"
+            ]
+          },
+          {
+            "name": "animationSpec",
+            "shape": "other"
+          },
+          {
+            "name": "isSkipHalfExpanded",
+            "shape": "boolean"
+          },
+          {
+            "name": "confirmStateChange",
+            "shape": "function"
+          }
+        ],
+        "defaultParams": [
+          "animationSpec",
+          "isSkipHalfExpanded",
+          "confirmStateChange"
+        ],
+        "returnShape": "object"
+      },
+      "ModalBottomSheetValue": {
+        "name": "ModalBottomSheetValue",
+        "target": "ModalBottomSheetValue",
+        "qualified": "androidx.compose.material.ModalBottomSheetValue",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "Hidden",
+          "Expanded",
+          "HalfExpanded"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      },
+      "ResistanceConfig": {
+        "name": "ResistanceConfig",
+        "target": "ResistanceConfig",
+        "qualified": "androidx.compose.material.ResistanceConfig",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "basis",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "factorAtMin",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "factorAtMax",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          }
+        ],
+        "defaultParams": [
+          "factorAtMin",
+          "factorAtMax"
+        ],
+        "returnShape": "object"
+      },
+      "ScaffoldState": {
+        "name": "ScaffoldState",
+        "target": "ScaffoldState",
+        "qualified": "androidx.compose.material.ScaffoldState",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "drawerState",
+            "shape": "object",
+            "typeName": "androidx.compose.material.DrawerState"
+          },
+          {
+            "name": "snackbarHostState",
+            "shape": "object",
+            "typeName": "androidx.compose.material.SnackbarHostState"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "Shapes": {
+        "name": "Shapes",
+        "target": "Shapes",
+        "qualified": "androidx.compose.material.Shapes",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "small",
+            "shape": "other"
+          },
+          {
+            "name": "medium",
+            "shape": "other"
+          },
+          {
+            "name": "large",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [
+          "small",
+          "medium",
+          "large"
+        ],
+        "returnShape": "object"
+      },
+      "SnackbarDuration": {
+        "name": "SnackbarDuration",
+        "target": "SnackbarDuration",
+        "qualified": "androidx.compose.material.SnackbarDuration",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "Short",
+          "Long",
+          "Indefinite"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      },
+      "SnackbarHostState": {
+        "name": "SnackbarHostState",
+        "target": "SnackbarHostState",
+        "qualified": "androidx.compose.material.SnackbarHostState",
+        "isConstructor": true,
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "SnackbarResult": {
+        "name": "SnackbarResult",
+        "target": "SnackbarResult",
+        "qualified": "androidx.compose.material.SnackbarResult",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "Dismissed",
+          "ActionPerformed"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      },
+      "SwipeProgress": {
+        "name": "SwipeProgress",
+        "target": "SwipeProgress",
+        "qualified": "androidx.compose.material.SwipeProgress",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "from",
+            "shape": "other"
+          },
+          {
+            "name": "to",
+            "shape": "other"
+          },
+          {
+            "name": "fraction",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "SwipeableState": {
+        "name": "SwipeableState",
+        "target": "SwipeableState",
+        "qualified": "androidx.compose.material.SwipeableState",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "initialValue",
+            "shape": "other"
+          },
+          {
+            "name": "animationSpec",
+            "shape": "other"
+          },
+          {
+            "name": "confirmStateChange",
+            "shape": "function"
+          }
+        ],
+        "defaultParams": [
+          "animationSpec",
+          "confirmStateChange"
+        ],
+        "returnShape": "object"
+      },
+      "TabPosition": {
+        "name": "TabPosition",
+        "target": "TabPosition",
+        "qualified": "androidx.compose.material.TabPosition",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "left",
+            "shape": "other"
+          },
+          {
+            "name": "width",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "Typography": {
+        "name": "Typography",
+        "target": "Typography",
+        "qualified": "androidx.compose.material.Typography",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "h1",
+            "shape": "other"
+          },
+          {
+            "name": "h2",
+            "shape": "other"
+          },
+          {
+            "name": "h3",
+            "shape": "other"
+          },
+          {
+            "name": "h4",
+            "shape": "other"
+          },
+          {
+            "name": "h5",
+            "shape": "other"
+          },
+          {
+            "name": "h6",
+            "shape": "other"
+          },
+          {
+            "name": "subtitle1",
+            "shape": "other"
+          },
+          {
+            "name": "subtitle2",
+            "shape": "other"
+          },
+          {
+            "name": "body1",
+            "shape": "other"
+          },
+          {
+            "name": "body2",
+            "shape": "other"
+          },
+          {
+            "name": "button",
+            "shape": "other"
+          },
+          {
+            "name": "caption",
+            "shape": "other"
+          },
+          {
+            "name": "overline",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "PullRefreshState": {
+        "name": "PullRefreshState",
+        "target": "PullRefreshState",
+        "qualified": "androidx.compose.material.pullrefresh.PullRefreshState",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "animationScope",
+            "shape": "other"
+          },
+          {
+            "name": "onRefreshState",
+            "shape": "other"
+          },
+          {
+            "name": "refreshingOffset",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "threshold",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      }
+    },
+    "tags": {
+      "AlertDialog": {
+        "composable": "AlertDialog",
+        "imports": [
+          "androidx.compose.material.AlertDialog"
+        ],
+        "attrs": {}
+      },
+      "DropdownMenu": {
+        "composable": "DropdownMenu",
+        "imports": [
+          "androidx.compose.material.DropdownMenu"
+        ],
+        "attrs": {
+          "expanded": "expanded"
+        },
+        "attrShapes": {
+          "expanded": {
+            "name": "expanded",
+            "shape": "boolean"
+          }
+        }
+      },
+      "DropdownMenuItem": {
+        "composable": "DropdownMenuItem",
+        "imports": [
+          "androidx.compose.material.DropdownMenuItem"
+        ],
+        "attrs": {
+          "enabled": "enabled"
+        },
+        "attrShapes": {
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          }
+        }
+      },
+      "BottomAppBar": {
+        "composable": "BottomAppBar",
+        "imports": [
+          "androidx.compose.material.BottomAppBar"
+        ],
+        "attrs": {}
+      },
+      "TopAppBar": {
+        "composable": "TopAppBar",
+        "imports": [
+          "androidx.compose.material.TopAppBar"
+        ],
+        "attrs": {}
+      },
+      "BackdropScaffold": {
+        "composable": "BackdropScaffold",
+        "imports": [
+          "androidx.compose.material.BackdropScaffold"
+        ],
+        "attrs": {
+          "scaffoldState": "scaffoldState",
+          "gesturesEnabled": "gesturesEnabled",
+          "persistentAppBar": "persistentAppBar",
+          "stickyFrontLayer": "stickyFrontLayer"
+        },
+        "attrShapes": {
+          "scaffoldState": {
+            "name": "scaffoldState",
+            "shape": "object",
+            "typeName": "androidx.compose.material.BackdropScaffoldState"
+          },
+          "gesturesEnabled": {
+            "name": "gesturesEnabled",
+            "shape": "boolean"
+          },
+          "persistentAppBar": {
+            "name": "persistentAppBar",
+            "shape": "boolean"
+          },
+          "stickyFrontLayer": {
+            "name": "stickyFrontLayer",
+            "shape": "boolean"
+          }
+        },
+        "optIn": [
+          "androidx.compose.material.ExperimentalMaterialApi"
+        ]
+      },
+      "Badge": {
+        "composable": "Badge",
+        "imports": [
+          "androidx.compose.material.Badge"
+        ],
+        "attrs": {}
+      },
+      "BadgedBox": {
+        "composable": "BadgedBox",
+        "imports": [
+          "androidx.compose.material.BadgedBox"
+        ],
+        "attrs": {}
+      },
+      "BottomNavigation": {
+        "composable": "BottomNavigation",
+        "imports": [
+          "androidx.compose.material.BottomNavigation"
+        ],
+        "attrs": {}
+      },
+      "BottomSheetScaffold": {
+        "composable": "BottomSheetScaffold",
+        "imports": [
+          "androidx.compose.material.BottomSheetScaffold"
+        ],
+        "attrs": {
+          "scaffoldState": "scaffoldState",
+          "floatingActionButtonPosition": "floatingActionButtonPosition",
+          "sheetGesturesEnabled": "sheetGesturesEnabled",
+          "drawerGesturesEnabled": "drawerGesturesEnabled"
+        },
+        "attrShapes": {
+          "scaffoldState": {
+            "name": "scaffoldState",
+            "shape": "object",
+            "typeName": "androidx.compose.material.BottomSheetScaffoldState"
+          },
+          "floatingActionButtonPosition": {
+            "name": "floatingActionButtonPosition",
+            "shape": "object",
+            "typeName": "androidx.compose.material.FabPosition"
+          },
+          "sheetGesturesEnabled": {
+            "name": "sheetGesturesEnabled",
+            "shape": "boolean"
+          },
+          "drawerGesturesEnabled": {
+            "name": "drawerGesturesEnabled",
+            "shape": "boolean"
+          }
+        },
+        "optIn": [
+          "androidx.compose.material.ExperimentalMaterialApi"
+        ]
+      },
+      "Button": {
+        "composable": "Button",
+        "imports": [
+          "androidx.compose.material.Button"
+        ],
+        "attrs": {
+          "enabled": "enabled"
+        },
+        "attrShapes": {
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          }
+        }
+      },
+      "OutlinedButton": {
+        "composable": "OutlinedButton",
+        "imports": [
+          "androidx.compose.material.OutlinedButton"
+        ],
+        "attrs": {
+          "enabled": "enabled"
+        },
+        "attrShapes": {
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          }
+        }
+      },
+      "TextButton": {
+        "composable": "TextButton",
+        "imports": [
+          "androidx.compose.material.TextButton"
+        ],
+        "attrs": {
+          "enabled": "enabled"
+        },
+        "attrShapes": {
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          }
+        }
+      },
+      "Card": {
+        "composable": "Card",
+        "imports": [
+          "androidx.compose.material.Card"
+        ],
+        "attrs": {
+          "enabled": "enabled",
+          "onClickLabel": "onClickLabel"
+        },
+        "attrShapes": {
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "onClickLabel": {
+            "name": "onClickLabel",
+            "shape": "string"
+          }
+        },
+        "optIn": [
+          "androidx.compose.material.ExperimentalMaterialApi"
+        ]
+      },
+      "Checkbox": {
+        "composable": "Checkbox",
+        "imports": [
+          "androidx.compose.material.Checkbox"
+        ],
+        "attrs": {
+          "checked": "checked",
+          "enabled": "enabled"
+        },
+        "attrShapes": {
+          "checked": {
+            "name": "checked",
+            "shape": "boolean"
+          },
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          }
+        }
+      },
+      "TriStateCheckbox": {
+        "composable": "TriStateCheckbox",
+        "imports": [
+          "androidx.compose.material.TriStateCheckbox"
+        ],
+        "attrs": {
+          "enabled": "enabled"
+        },
+        "attrShapes": {
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          }
+        }
+      },
+      "Chip": {
+        "composable": "Chip",
+        "imports": [
+          "androidx.compose.material.Chip"
+        ],
+        "attrs": {
+          "enabled": "enabled"
+        },
+        "attrShapes": {
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          }
+        },
+        "optIn": [
+          "androidx.compose.material.ExperimentalMaterialApi"
+        ]
+      },
+      "FilterChip": {
+        "composable": "FilterChip",
+        "imports": [
+          "androidx.compose.material.FilterChip"
+        ],
+        "attrs": {
+          "selected": "selected",
+          "enabled": "enabled"
+        },
+        "attrShapes": {
+          "selected": {
+            "name": "selected",
+            "shape": "boolean"
+          },
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          }
+        },
+        "optIn": [
+          "androidx.compose.material.ExperimentalMaterialApi"
+        ]
+      },
+      "Divider": {
+        "composable": "Divider",
+        "imports": [
+          "androidx.compose.material.Divider"
+        ],
+        "attrs": {}
+      },
+      "BottomDrawer": {
+        "composable": "BottomDrawer",
+        "imports": [
+          "androidx.compose.material.BottomDrawer"
+        ],
+        "attrs": {
+          "drawerState": "drawerState",
+          "gesturesEnabled": "gesturesEnabled"
+        },
+        "attrShapes": {
+          "drawerState": {
+            "name": "drawerState",
+            "shape": "object",
+            "typeName": "androidx.compose.material.BottomDrawerState"
+          },
+          "gesturesEnabled": {
+            "name": "gesturesEnabled",
+            "shape": "boolean"
+          }
+        },
+        "optIn": [
+          "androidx.compose.material.ExperimentalMaterialApi"
+        ]
+      },
+      "ModalDrawer": {
+        "composable": "ModalDrawer",
+        "imports": [
+          "androidx.compose.material.ModalDrawer"
+        ],
+        "attrs": {
+          "drawerState": "drawerState",
+          "gesturesEnabled": "gesturesEnabled"
+        },
+        "attrShapes": {
+          "drawerState": {
+            "name": "drawerState",
+            "shape": "object",
+            "typeName": "androidx.compose.material.DrawerState"
+          },
+          "gesturesEnabled": {
+            "name": "gesturesEnabled",
+            "shape": "boolean"
+          }
+        }
+      },
+      "ExposedDropdownMenuBox": {
+        "composable": "ExposedDropdownMenuBox",
+        "imports": [
+          "androidx.compose.material.ExposedDropdownMenuBox"
+        ],
+        "attrs": {
+          "expanded": "expanded"
+        },
+        "attrShapes": {
+          "expanded": {
+            "name": "expanded",
+            "shape": "boolean"
+          }
+        },
+        "optIn": [
+          "androidx.compose.material.ExperimentalMaterialApi"
+        ]
+      },
+      "ExtendedFloatingActionButton": {
+        "composable": "ExtendedFloatingActionButton",
+        "imports": [
+          "androidx.compose.material.ExtendedFloatingActionButton"
+        ],
+        "attrs": {}
+      },
+      "FloatingActionButton": {
+        "composable": "FloatingActionButton",
+        "imports": [
+          "androidx.compose.material.FloatingActionButton"
+        ],
+        "attrs": {}
+      },
+      "IconButton": {
+        "composable": "IconButton",
+        "imports": [
+          "androidx.compose.material.IconButton"
+        ],
+        "attrs": {
+          "enabled": "enabled"
+        },
+        "attrShapes": {
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          }
+        }
+      },
+      "IconToggleButton": {
+        "composable": "IconToggleButton",
+        "imports": [
+          "androidx.compose.material.IconToggleButton"
+        ],
+        "attrs": {
+          "checked": "checked",
+          "enabled": "enabled"
+        },
+        "attrShapes": {
+          "checked": {
+            "name": "checked",
+            "shape": "boolean"
+          },
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          }
+        }
+      },
+      "Icon": {
+        "composable": "Icon",
+        "imports": [
+          "androidx.compose.material.Icon"
+        ],
+        "attrs": {
+          "contentDescription": "contentDescription"
+        },
+        "attrShapes": {
+          "contentDescription": {
+            "name": "contentDescription",
+            "shape": "string"
+          }
+        }
+      },
+      "ListItem": {
+        "composable": "ListItem",
+        "imports": [
+          "androidx.compose.material.ListItem"
+        ],
+        "attrs": {
+          "singleLineSecondaryText": "singleLineSecondaryText"
+        },
+        "attrShapes": {
+          "singleLineSecondaryText": {
+            "name": "singleLineSecondaryText",
+            "shape": "boolean"
+          }
+        },
+        "optIn": [
+          "androidx.compose.material.ExperimentalMaterialApi"
+        ]
+      },
+      "MaterialTheme": {
+        "composable": "MaterialTheme",
+        "imports": [
+          "androidx.compose.material.MaterialTheme"
+        ],
+        "attrs": {
+          "colors": "colors",
+          "typography": "typography",
+          "shapes": "shapes"
+        },
+        "attrShapes": {
+          "colors": {
+            "name": "colors",
+            "shape": "object",
+            "typeName": "androidx.compose.material.Colors"
+          },
+          "typography": {
+            "name": "typography",
+            "shape": "object",
+            "typeName": "androidx.compose.material.Typography"
+          },
+          "shapes": {
+            "name": "shapes",
+            "shape": "object",
+            "typeName": "androidx.compose.material.Shapes"
+          }
+        }
+      },
+      "ModalBottomSheetLayout": {
+        "composable": "ModalBottomSheetLayout",
+        "imports": [
+          "androidx.compose.material.ModalBottomSheetLayout"
+        ],
+        "attrs": {
+          "sheetState": "sheetState",
+          "sheetGesturesEnabled": "sheetGesturesEnabled"
+        },
+        "attrShapes": {
+          "sheetState": {
+            "name": "sheetState",
+            "shape": "object",
+            "typeName": "androidx.compose.material.ModalBottomSheetState"
+          },
+          "sheetGesturesEnabled": {
+            "name": "sheetGesturesEnabled",
+            "shape": "boolean"
+          }
+        },
+        "optIn": [
+          "androidx.compose.material.ExperimentalMaterialApi"
+        ]
+      },
+      "NavigationRail": {
+        "composable": "NavigationRail",
+        "imports": [
+          "androidx.compose.material.NavigationRail"
+        ],
+        "attrs": {}
+      },
+      "NavigationRailItem": {
+        "composable": "NavigationRailItem",
+        "imports": [
+          "androidx.compose.material.NavigationRailItem"
+        ],
+        "attrs": {
+          "selected": "selected",
+          "enabled": "enabled",
+          "alwaysShowLabel": "alwaysShowLabel"
+        },
+        "attrShapes": {
+          "selected": {
+            "name": "selected",
+            "shape": "boolean"
+          },
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "alwaysShowLabel": {
+            "name": "alwaysShowLabel",
+            "shape": "boolean"
+          }
+        }
+      },
+      "OutlinedTextField": {
+        "composable": "OutlinedTextField",
+        "imports": [
+          "androidx.compose.material.OutlinedTextField"
+        ],
+        "attrs": {
+          "enabled": "enabled",
+          "readOnly": "readOnly",
+          "isError": "isError",
+          "singleLine": "singleLine",
+          "maxLines": "maxLines"
+        },
+        "attrShapes": {
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "readOnly": {
+            "name": "readOnly",
+            "shape": "boolean"
+          },
+          "isError": {
+            "name": "isError",
+            "shape": "boolean"
+          },
+          "singleLine": {
+            "name": "singleLine",
+            "shape": "boolean"
+          },
+          "maxLines": {
+            "name": "maxLines",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        }
+      },
+      "CircularProgressIndicator": {
+        "composable": "CircularProgressIndicator",
+        "imports": [
+          "androidx.compose.material.CircularProgressIndicator"
+        ],
+        "attrs": {}
+      },
+      "LinearProgressIndicator": {
+        "composable": "LinearProgressIndicator",
+        "imports": [
+          "androidx.compose.material.LinearProgressIndicator"
+        ],
+        "attrs": {}
+      },
+      "RadioButton": {
+        "composable": "RadioButton",
+        "imports": [
+          "androidx.compose.material.RadioButton"
+        ],
+        "attrs": {
+          "selected": "selected",
+          "enabled": "enabled"
+        },
+        "attrShapes": {
+          "selected": {
+            "name": "selected",
+            "shape": "boolean"
+          },
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          }
+        }
+      },
+      "Scaffold": {
+        "composable": "Scaffold",
+        "imports": [
+          "androidx.compose.material.Scaffold"
+        ],
+        "attrs": {
+          "scaffoldState": "scaffoldState",
+          "floatingActionButtonPosition": "floatingActionButtonPosition",
+          "isFloatingActionButtonDocked": "isFloatingActionButtonDocked",
+          "drawerGesturesEnabled": "drawerGesturesEnabled"
+        },
+        "attrShapes": {
+          "scaffoldState": {
+            "name": "scaffoldState",
+            "shape": "object",
+            "typeName": "androidx.compose.material.ScaffoldState"
+          },
+          "floatingActionButtonPosition": {
+            "name": "floatingActionButtonPosition",
+            "shape": "object",
+            "typeName": "androidx.compose.material.FabPosition"
+          },
+          "isFloatingActionButtonDocked": {
+            "name": "isFloatingActionButtonDocked",
+            "shape": "boolean"
+          },
+          "drawerGesturesEnabled": {
+            "name": "drawerGesturesEnabled",
+            "shape": "boolean"
+          }
+        }
+      },
+      "RangeSlider": {
+        "composable": "RangeSlider",
+        "imports": [
+          "androidx.compose.material.RangeSlider"
+        ],
+        "attrs": {
+          "enabled": "enabled",
+          "steps": "steps"
+        },
+        "attrShapes": {
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "steps": {
+            "name": "steps",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        },
+        "optIn": [
+          "androidx.compose.material.ExperimentalMaterialApi"
+        ]
+      },
+      "Slider": {
+        "composable": "Slider",
+        "imports": [
+          "androidx.compose.material.Slider"
+        ],
+        "attrs": {
+          "value": "value",
+          "enabled": "enabled",
+          "steps": "steps"
+        },
+        "attrShapes": {
+          "value": {
+            "name": "value",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "steps": {
+            "name": "steps",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        }
+      },
+      "SnackbarHost": {
+        "composable": "SnackbarHost",
+        "imports": [
+          "androidx.compose.material.SnackbarHost"
+        ],
+        "attrs": {
+          "hostState": "hostState"
+        },
+        "attrShapes": {
+          "hostState": {
+            "name": "hostState",
+            "shape": "object",
+            "typeName": "androidx.compose.material.SnackbarHostState"
+          }
+        }
+      },
+      "Snackbar": {
+        "composable": "Snackbar",
+        "imports": [
+          "androidx.compose.material.Snackbar"
+        ],
+        "attrs": {
+          "actionOnNewLine": "actionOnNewLine"
+        },
+        "attrShapes": {
+          "actionOnNewLine": {
+            "name": "actionOnNewLine",
+            "shape": "boolean"
+          }
+        }
+      },
+      "Surface": {
+        "composable": "Surface",
+        "imports": [
+          "androidx.compose.material.Surface"
+        ],
+        "attrs": {
+          "enabled": "enabled",
+          "onClickLabel": "onClickLabel"
+        },
+        "attrShapes": {
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "onClickLabel": {
+            "name": "onClickLabel",
+            "shape": "string"
+          }
+        },
+        "optIn": [
+          "androidx.compose.material.ExperimentalMaterialApi"
+        ]
+      },
+      "SwipeToDismiss": {
+        "composable": "SwipeToDismiss",
+        "imports": [
+          "androidx.compose.material.SwipeToDismiss"
+        ],
+        "attrs": {
+          "state": "state",
+          "directions": "directions"
+        },
+        "attrShapes": {
+          "state": {
+            "name": "state",
+            "shape": "object",
+            "typeName": "androidx.compose.material.DismissState"
+          },
+          "directions": {
+            "name": "directions",
+            "shape": "array",
+            "elem": {
+              "name": "",
+              "shape": "enum",
+              "typeName": "androidx.compose.material.DismissDirection",
+              "enumValues": [
+                "StartToEnd",
+                "EndToStart"
+              ]
+            }
+          }
+        },
+        "optIn": [
+          "androidx.compose.material.ExperimentalMaterialApi"
+        ]
+      },
+      "Switch": {
+        "composable": "Switch",
+        "imports": [
+          "androidx.compose.material.Switch"
+        ],
+        "attrs": {
+          "checked": "checked",
+          "enabled": "enabled"
+        },
+        "attrShapes": {
+          "checked": {
+            "name": "checked",
+            "shape": "boolean"
+          },
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          }
+        }
+      },
+      "LeadingIconTab": {
+        "composable": "LeadingIconTab",
+        "imports": [
+          "androidx.compose.material.LeadingIconTab"
+        ],
+        "attrs": {
+          "selected": "selected",
+          "enabled": "enabled"
+        },
+        "attrShapes": {
+          "selected": {
+            "name": "selected",
+            "shape": "boolean"
+          },
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          }
+        }
+      },
+      "Tab": {
+        "composable": "Tab",
+        "imports": [
+          "androidx.compose.material.Tab"
+        ],
+        "attrs": {
+          "selected": "selected",
+          "enabled": "enabled"
+        },
+        "attrShapes": {
+          "selected": {
+            "name": "selected",
+            "shape": "boolean"
+          },
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          }
+        }
+      },
+      "ScrollableTabRow": {
+        "composable": "ScrollableTabRow",
+        "imports": [
+          "androidx.compose.material.ScrollableTabRow"
+        ],
+        "attrs": {
+          "selectedTabIndex": "selectedTabIndex"
+        },
+        "attrShapes": {
+          "selectedTabIndex": {
+            "name": "selectedTabIndex",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        }
+      },
+      "TabRow": {
+        "composable": "TabRow",
+        "imports": [
+          "androidx.compose.material.TabRow"
+        ],
+        "attrs": {
+          "selectedTabIndex": "selectedTabIndex"
+        },
+        "attrShapes": {
+          "selectedTabIndex": {
+            "name": "selectedTabIndex",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        }
+      },
+      "TextField": {
+        "composable": "TextField",
+        "imports": [
+          "androidx.compose.material.TextField"
+        ],
+        "attrs": {
+          "enabled": "enabled",
+          "readOnly": "readOnly",
+          "isError": "isError",
+          "singleLine": "singleLine",
+          "maxLines": "maxLines"
+        },
+        "attrShapes": {
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "readOnly": {
+            "name": "readOnly",
+            "shape": "boolean"
+          },
+          "isError": {
+            "name": "isError",
+            "shape": "boolean"
+          },
+          "singleLine": {
+            "name": "singleLine",
+            "shape": "boolean"
+          },
+          "maxLines": {
+            "name": "maxLines",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        }
+      },
+      "ProvideTextStyle": {
+        "composable": "ProvideTextStyle",
+        "imports": [
+          "androidx.compose.material.ProvideTextStyle"
+        ],
+        "attrs": {}
+      },
+      "Text": {
+        "composable": "Text",
+        "imports": [
+          "androidx.compose.material.Text"
+        ],
+        "attrs": {
+          "softWrap": "softWrap",
+          "maxLines": "maxLines",
+          "minLines": "minLines",
+          "inlineContent": "inlineContent"
+        },
+        "attrShapes": {
+          "softWrap": {
+            "name": "softWrap",
+            "shape": "boolean"
+          },
+          "maxLines": {
+            "name": "maxLines",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          "minLines": {
+            "name": "minLines",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          "inlineContent": {
+            "name": "inlineContent",
+            "shape": "object",
+            "typeName": "kotlin.collections.Map",
+            "pairElements": [
+              {
+                "name": "",
+                "shape": "string"
+              },
+              {
+                "name": "",
+                "shape": "other"
+              }
+            ]
+          }
+        }
+      },
+      "PullRefreshIndicator": {
+        "composable": "PullRefreshIndicator",
+        "imports": [
+          "androidx.compose.material.pullrefresh.PullRefreshIndicator"
+        ],
+        "attrs": {
+          "refreshing": "refreshing",
+          "state": "state",
+          "scale": "scale"
+        },
+        "attrShapes": {
+          "refreshing": {
+            "name": "refreshing",
+            "shape": "boolean"
+          },
+          "state": {
+            "name": "state",
+            "shape": "object",
+            "typeName": "androidx.compose.material.pullrefresh.PullRefreshState"
+          },
+          "scale": {
+            "name": "scale",
+            "shape": "boolean"
+          }
+        },
+        "optIn": [
+          "androidx.compose.material.ExperimentalMaterialApi"
+        ]
+      }
+    },
+    "curated": true,
+    "essential": false
+  }
+}

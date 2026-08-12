@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "library": {
+    "id": "material-ripple",
+    "name": "Compose Material Ripple",
+    "description": "rememberRipple, ripple indication.",
+    "group": "androidx.compose.material",
+    "artifact": "material-ripple",
+    "version": "1.6.8",
+    "gradle": [
+      "androidx.compose.material:material-ripple:1.6.8"
+    ],
+    "minSdk": 21,
+    "permissions": [],
+    "exports": [
+      "RippleAlpha"
+    ],
+    "signatures": {
+      "RippleAlpha": {
+        "name": "RippleAlpha",
+        "target": "RippleAlpha",
+        "qualified": "androidx.compose.material.ripple.RippleAlpha",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "draggedAlpha",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "focusedAlpha",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "hoveredAlpha",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "pressedAlpha",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      }
+    },
+    "tags": {},
+    "curated": true,
+    "essential": false
+  }
+}

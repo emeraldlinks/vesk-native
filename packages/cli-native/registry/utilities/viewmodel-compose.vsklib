@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "library": {
+    "id": "viewmodel-compose",
+    "name": "AndroidX Lifecycle ViewModel Compose",
+    "description": "viewModel() composable + Flow collection in Compose.",
+    "group": "androidx.lifecycle",
+    "artifact": "lifecycle-viewmodel-compose",
+    "version": "2.8.2",
+    "gradle": [
+      "androidx.lifecycle:lifecycle-viewmodel-compose:2.8.2"
+    ],
+    "minSdk": 21,
+    "permissions": [],
+    "exports": [],
+    "signatures": {},
+    "tags": {},
+    "curated": true,
+    "essential": false
+  }
+}

@@ -1,0 +1,1217 @@
+{
+  "version": 1,
+  "library": {
+    "id": "foundation",
+    "name": "Compose Foundation",
+    "description": "Scroll, clickable, layout, gestures, lazy lists base.",
+    "group": "androidx.compose.foundation",
+    "artifact": "foundation",
+    "version": "1.6.8",
+    "gradle": [
+      "androidx.compose.foundation:foundation:1.6.8"
+    ],
+    "minSdk": 21,
+    "permissions": [],
+    "exports": [
+      "AbsoluteCutCornerShape",
+      "AbsoluteRoundedCornerShape",
+      "AnchoredDraggableState",
+      "BorderStroke",
+      "CutCornerShape",
+      "DraggableAnchorsConfig",
+      "GenericShape",
+      "GestureCancellationException",
+      "GridItemSpan",
+      "InlineTextContent",
+      "KeyboardActions",
+      "KeyboardOptions",
+      "LazyGridState",
+      "LazyLayoutPrefetchState",
+      "LazyListState",
+      "MutableIntervalList",
+      "MutatePriority",
+      "MutatorMutex",
+      "Orientation",
+      "OverscrollConfiguration",
+      "RoundedCornerShape",
+      "ScrollState",
+      "SnapFlingBehavior",
+      "TextDelegate",
+      "TextFieldBuffer",
+      "TextFieldState",
+      "TextObfuscationMode",
+      "TextSelectionColors",
+      "UndoState",
+      "getDefaultLazyLayoutKey"
+    ],
+    "signatures": {
+      "BorderStroke": {
+        "name": "BorderStroke",
+        "target": "BorderStroke",
+        "qualified": "androidx.compose.foundation.BorderStroke",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "width",
+            "shape": "other"
+          },
+          {
+            "name": "brush",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "MutatePriority": {
+        "name": "MutatePriority",
+        "target": "MutatePriority",
+        "qualified": "androidx.compose.foundation.MutatePriority",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "Default",
+          "UserInput",
+          "PreventUserInput"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      },
+      "MutatorMutex": {
+        "name": "MutatorMutex",
+        "target": "MutatorMutex",
+        "qualified": "androidx.compose.foundation.MutatorMutex",
+        "isConstructor": true,
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "OverscrollConfiguration": {
+        "name": "OverscrollConfiguration",
+        "target": "OverscrollConfiguration",
+        "qualified": "androidx.compose.foundation.OverscrollConfiguration",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "glowColor",
+            "shape": "other"
+          },
+          {
+            "name": "drawPadding",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [
+          "glowColor",
+          "drawPadding"
+        ],
+        "returnShape": "object"
+      },
+      "ScrollState": {
+        "name": "ScrollState",
+        "target": "ScrollState",
+        "qualified": "androidx.compose.foundation.ScrollState",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "initial",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "AnchoredDraggableState": {
+        "name": "AnchoredDraggableState",
+        "target": "AnchoredDraggableState",
+        "qualified": "androidx.compose.foundation.gestures.AnchoredDraggableState",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "initialValue",
+            "shape": "other"
+          },
+          {
+            "name": "positionalThreshold",
+            "shape": "function"
+          },
+          {
+            "name": "velocityThreshold",
+            "shape": "function"
+          },
+          {
+            "name": "animationSpec",
+            "shape": "other"
+          },
+          {
+            "name": "confirmValueChange",
+            "shape": "function"
+          }
+        ],
+        "defaultParams": [
+          "confirmValueChange"
+        ],
+        "returnShape": "object"
+      },
+      "DraggableAnchorsConfig": {
+        "name": "DraggableAnchorsConfig",
+        "target": "DraggableAnchorsConfig",
+        "qualified": "androidx.compose.foundation.gestures.DraggableAnchorsConfig",
+        "isConstructor": true,
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "GestureCancellationException": {
+        "name": "GestureCancellationException",
+        "target": "GestureCancellationException",
+        "qualified": "androidx.compose.foundation.gestures.GestureCancellationException",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "message",
+            "shape": "string"
+          }
+        ],
+        "defaultParams": [
+          "message"
+        ],
+        "returnShape": "object"
+      },
+      "Orientation": {
+        "name": "Orientation",
+        "target": "Orientation",
+        "qualified": "androidx.compose.foundation.gestures.Orientation",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "Vertical",
+          "Horizontal"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      },
+      "SnapFlingBehavior": {
+        "name": "SnapFlingBehavior",
+        "target": "SnapFlingBehavior",
+        "qualified": "androidx.compose.foundation.gestures.snapping.SnapFlingBehavior",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "snapLayoutInfoProvider",
+            "shape": "other"
+          },
+          {
+            "name": "lowVelocityAnimationSpec",
+            "shape": "other"
+          },
+          {
+            "name": "highVelocityAnimationSpec",
+            "shape": "other"
+          },
+          {
+            "name": "snapAnimationSpec",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "LazyListState": {
+        "name": "LazyListState",
+        "target": "LazyListState",
+        "qualified": "androidx.compose.foundation.lazy.LazyListState",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "firstVisibleItemIndex",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          {
+            "name": "firstVisibleItemScrollOffset",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        ],
+        "defaultParams": [
+          "firstVisibleItemIndex",
+          "firstVisibleItemScrollOffset"
+        ],
+        "returnShape": "object"
+      },
+      "GridItemSpan": {
+        "name": "GridItemSpan",
+        "target": "GridItemSpan",
+        "qualified": "androidx.compose.foundation.lazy.grid.GridItemSpan",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "packedValue",
+            "shape": "number",
+            "typeName": "kotlin.Long"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "LazyGridState": {
+        "name": "LazyGridState",
+        "target": "LazyGridState",
+        "qualified": "androidx.compose.foundation.lazy.grid.LazyGridState",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "firstVisibleItemIndex",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          {
+            "name": "firstVisibleItemScrollOffset",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        ],
+        "defaultParams": [
+          "firstVisibleItemIndex",
+          "firstVisibleItemScrollOffset"
+        ],
+        "returnShape": "object"
+      },
+      "LazyLayoutPrefetchState": {
+        "name": "LazyLayoutPrefetchState",
+        "target": "LazyLayoutPrefetchState",
+        "qualified": "androidx.compose.foundation.lazy.layout.LazyLayoutPrefetchState",
+        "isConstructor": true,
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "MutableIntervalList": {
+        "name": "MutableIntervalList",
+        "target": "MutableIntervalList",
+        "qualified": "androidx.compose.foundation.lazy.layout.MutableIntervalList",
+        "isConstructor": true,
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "AbsoluteCutCornerShape": {
+        "name": "AbsoluteCutCornerShape",
+        "target": "AbsoluteCutCornerShape",
+        "qualified": "androidx.compose.foundation.shape.AbsoluteCutCornerShape",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "topLeft",
+            "shape": "other"
+          },
+          {
+            "name": "topRight",
+            "shape": "other"
+          },
+          {
+            "name": "bottomRight",
+            "shape": "other"
+          },
+          {
+            "name": "bottomLeft",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "AbsoluteRoundedCornerShape": {
+        "name": "AbsoluteRoundedCornerShape",
+        "target": "AbsoluteRoundedCornerShape",
+        "qualified": "androidx.compose.foundation.shape.AbsoluteRoundedCornerShape",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "topLeft",
+            "shape": "other"
+          },
+          {
+            "name": "topRight",
+            "shape": "other"
+          },
+          {
+            "name": "bottomRight",
+            "shape": "other"
+          },
+          {
+            "name": "bottomLeft",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "CutCornerShape": {
+        "name": "CutCornerShape",
+        "target": "CutCornerShape",
+        "qualified": "androidx.compose.foundation.shape.CutCornerShape",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "topStart",
+            "shape": "other"
+          },
+          {
+            "name": "topEnd",
+            "shape": "other"
+          },
+          {
+            "name": "bottomEnd",
+            "shape": "other"
+          },
+          {
+            "name": "bottomStart",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "GenericShape": {
+        "name": "GenericShape",
+        "target": "GenericShape",
+        "qualified": "androidx.compose.foundation.shape.GenericShape",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "builder",
+            "shape": "function"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "RoundedCornerShape": {
+        "name": "RoundedCornerShape",
+        "target": "RoundedCornerShape",
+        "qualified": "androidx.compose.foundation.shape.RoundedCornerShape",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "topStart",
+            "shape": "other"
+          },
+          {
+            "name": "topEnd",
+            "shape": "other"
+          },
+          {
+            "name": "bottomEnd",
+            "shape": "other"
+          },
+          {
+            "name": "bottomStart",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "InlineTextContent": {
+        "name": "InlineTextContent",
+        "target": "InlineTextContent",
+        "qualified": "androidx.compose.foundation.text.InlineTextContent",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "placeholder",
+            "shape": "other"
+          },
+          {
+            "name": "children",
+            "shape": "function"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "KeyboardActions": {
+        "name": "KeyboardActions",
+        "target": "KeyboardActions",
+        "qualified": "androidx.compose.foundation.text.KeyboardActions",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "onDone",
+            "shape": "function"
+          },
+          {
+            "name": "onGo",
+            "shape": "function"
+          },
+          {
+            "name": "onNext",
+            "shape": "function"
+          },
+          {
+            "name": "onPrevious",
+            "shape": "function"
+          },
+          {
+            "name": "onSearch",
+            "shape": "function"
+          },
+          {
+            "name": "onSend",
+            "shape": "function"
+          }
+        ],
+        "defaultParams": [
+          "onDone",
+          "onGo",
+          "onNext",
+          "onPrevious",
+          "onSearch",
+          "onSend"
+        ],
+        "returnShape": "object"
+      },
+      "KeyboardOptions": {
+        "name": "KeyboardOptions",
+        "target": "KeyboardOptions",
+        "qualified": "androidx.compose.foundation.text.KeyboardOptions",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "capitalization",
+            "shape": "other"
+          },
+          {
+            "name": "autoCorrect",
+            "shape": "boolean"
+          },
+          {
+            "name": "keyboardType",
+            "shape": "other"
+          },
+          {
+            "name": "imeAction",
+            "shape": "other"
+          },
+          {
+            "name": "platformImeOptions",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [
+          "capitalization",
+          "autoCorrect",
+          "keyboardType",
+          "imeAction",
+          "platformImeOptions"
+        ],
+        "returnShape": "object"
+      },
+      "TextDelegate": {
+        "name": "TextDelegate",
+        "target": "TextDelegate",
+        "qualified": "androidx.compose.foundation.text.TextDelegate",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "text",
+            "shape": "other"
+          },
+          {
+            "name": "style",
+            "shape": "other"
+          },
+          {
+            "name": "maxLines",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          {
+            "name": "minLines",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          {
+            "name": "softWrap",
+            "shape": "boolean"
+          },
+          {
+            "name": "overflow",
+            "shape": "other"
+          },
+          {
+            "name": "density",
+            "shape": "other"
+          },
+          {
+            "name": "fontFamilyResolver",
+            "shape": "other"
+          },
+          {
+            "name": "placeholders",
+            "shape": "array",
+            "elem": {
+              "name": "",
+              "shape": "other"
+            }
+          }
+        ],
+        "defaultParams": [
+          "maxLines",
+          "minLines",
+          "softWrap",
+          "overflow",
+          "density",
+          "fontFamilyResolver",
+          "placeholders"
+        ],
+        "returnShape": "object"
+      },
+      "TextSelectionColors": {
+        "name": "TextSelectionColors",
+        "target": "TextSelectionColors",
+        "qualified": "androidx.compose.foundation.text.selection.TextSelectionColors",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "handleColor",
+            "shape": "other"
+          },
+          {
+            "name": "backgroundColor",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "TextFieldBuffer": {
+        "name": "TextFieldBuffer",
+        "target": "TextFieldBuffer",
+        "qualified": "androidx.compose.foundation.text2.input.TextFieldBuffer",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "initialValue",
+            "shape": "other"
+          },
+          {
+            "name": "initialChanges",
+            "shape": "other"
+          },
+          {
+            "name": "sourceValue",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [
+          "initialChanges",
+          "sourceValue"
+        ],
+        "returnShape": "object"
+      },
+      "TextFieldState": {
+        "name": "TextFieldState",
+        "target": "TextFieldState",
+        "qualified": "androidx.compose.foundation.text2.input.TextFieldState",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "initialText",
+            "shape": "string"
+          },
+          {
+            "name": "initialSelectionInChars",
+            "shape": "other"
+          },
+          {
+            "name": "initialTextUndoManager",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "TextObfuscationMode": {
+        "name": "TextObfuscationMode",
+        "target": "TextObfuscationMode",
+        "qualified": "androidx.compose.foundation.text2.input.TextObfuscationMode",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "value",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "UndoState": {
+        "name": "UndoState",
+        "target": "UndoState",
+        "qualified": "androidx.compose.foundation.text2.input.UndoState",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "state",
+            "shape": "object",
+            "typeName": "androidx.compose.foundation.text2.input.TextFieldState"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      }
+    },
+    "tags": {
+      "AndroidEmbeddedExternalSurface": {
+        "composable": "AndroidEmbeddedExternalSurface",
+        "imports": [
+          "androidx.compose.foundation.AndroidEmbeddedExternalSurface"
+        ],
+        "attrs": {
+          "isOpaque": "isOpaque"
+        },
+        "attrShapes": {
+          "isOpaque": {
+            "name": "isOpaque",
+            "shape": "boolean"
+          }
+        }
+      },
+      "AndroidExternalSurface": {
+        "composable": "AndroidExternalSurface",
+        "imports": [
+          "androidx.compose.foundation.AndroidExternalSurface"
+        ],
+        "attrs": {
+          "isOpaque": "isOpaque",
+          "isSecure": "isSecure"
+        },
+        "attrShapes": {
+          "isOpaque": {
+            "name": "isOpaque",
+            "shape": "boolean"
+          },
+          "isSecure": {
+            "name": "isSecure",
+            "shape": "boolean"
+          }
+        }
+      },
+      "BasicTooltipBox": {
+        "composable": "BasicTooltipBox",
+        "imports": [
+          "androidx.compose.foundation.BasicTooltipBox"
+        ],
+        "attrs": {
+          "focusable": "focusable",
+          "enableUserInput": "enableUserInput"
+        },
+        "attrShapes": {
+          "focusable": {
+            "name": "focusable",
+            "shape": "boolean"
+          },
+          "enableUserInput": {
+            "name": "enableUserInput",
+            "shape": "boolean"
+          }
+        },
+        "optIn": [
+          "androidx.compose.foundation.ExperimentalFoundationApi"
+        ]
+      },
+      "Canvas": {
+        "composable": "Canvas",
+        "imports": [
+          "androidx.compose.foundation.Canvas"
+        ],
+        "attrs": {}
+      },
+      "Image": {
+        "composable": "Image",
+        "imports": [
+          "androidx.compose.foundation.Image"
+        ],
+        "attrs": {
+          "contentDescription": "contentDescription",
+          "alpha": "alpha"
+        },
+        "attrShapes": {
+          "contentDescription": {
+            "name": "contentDescription",
+            "shape": "string"
+          },
+          "alpha": {
+            "name": "alpha",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          }
+        }
+      },
+      "LazyColumn": {
+        "composable": "LazyColumn",
+        "imports": [
+          "androidx.compose.foundation.lazy.LazyColumn"
+        ],
+        "attrs": {
+          "state": "state",
+          "reverseLayout": "reverseLayout"
+        },
+        "attrShapes": {
+          "state": {
+            "name": "state",
+            "shape": "object",
+            "typeName": "androidx.compose.foundation.lazy.LazyListState"
+          },
+          "reverseLayout": {
+            "name": "reverseLayout",
+            "shape": "boolean"
+          }
+        }
+      },
+      "LazyRow": {
+        "composable": "LazyRow",
+        "imports": [
+          "androidx.compose.foundation.lazy.LazyRow"
+        ],
+        "attrs": {
+          "state": "state",
+          "reverseLayout": "reverseLayout"
+        },
+        "attrShapes": {
+          "state": {
+            "name": "state",
+            "shape": "object",
+            "typeName": "androidx.compose.foundation.lazy.LazyListState"
+          },
+          "reverseLayout": {
+            "name": "reverseLayout",
+            "shape": "boolean"
+          }
+        }
+      },
+      "LazyHorizontalGrid": {
+        "composable": "LazyHorizontalGrid",
+        "imports": [
+          "androidx.compose.foundation.lazy.grid.LazyHorizontalGrid"
+        ],
+        "attrs": {
+          "state": "state",
+          "reverseLayout": "reverseLayout",
+          "userScrollEnabled": "userScrollEnabled"
+        },
+        "attrShapes": {
+          "state": {
+            "name": "state",
+            "shape": "object",
+            "typeName": "androidx.compose.foundation.lazy.grid.LazyGridState"
+          },
+          "reverseLayout": {
+            "name": "reverseLayout",
+            "shape": "boolean"
+          },
+          "userScrollEnabled": {
+            "name": "userScrollEnabled",
+            "shape": "boolean"
+          }
+        }
+      },
+      "LazyVerticalGrid": {
+        "composable": "LazyVerticalGrid",
+        "imports": [
+          "androidx.compose.foundation.lazy.grid.LazyVerticalGrid"
+        ],
+        "attrs": {
+          "state": "state",
+          "reverseLayout": "reverseLayout",
+          "userScrollEnabled": "userScrollEnabled"
+        },
+        "attrShapes": {
+          "state": {
+            "name": "state",
+            "shape": "object",
+            "typeName": "androidx.compose.foundation.lazy.grid.LazyGridState"
+          },
+          "reverseLayout": {
+            "name": "reverseLayout",
+            "shape": "boolean"
+          },
+          "userScrollEnabled": {
+            "name": "userScrollEnabled",
+            "shape": "boolean"
+          }
+        }
+      },
+      "LazyLayout": {
+        "composable": "LazyLayout",
+        "imports": [
+          "androidx.compose.foundation.lazy.layout.LazyLayout"
+        ],
+        "attrs": {
+          "prefetchState": "prefetchState"
+        },
+        "attrShapes": {
+          "prefetchState": {
+            "name": "prefetchState",
+            "shape": "object",
+            "typeName": "androidx.compose.foundation.lazy.layout.LazyLayoutPrefetchState"
+          }
+        },
+        "optIn": [
+          "androidx.compose.foundation.ExperimentalFoundationApi"
+        ]
+      },
+      "LazyLayoutPinnableItem": {
+        "composable": "LazyLayoutPinnableItem",
+        "imports": [
+          "androidx.compose.foundation.lazy.layout.LazyLayoutPinnableItem"
+        ],
+        "attrs": {
+          "key": "key",
+          "index": "index"
+        },
+        "attrShapes": {
+          "key": {
+            "name": "key",
+            "shape": "any"
+          },
+          "index": {
+            "name": "index",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        },
+        "optIn": [
+          "androidx.compose.foundation.ExperimentalFoundationApi"
+        ]
+      },
+      "LazyHorizontalStaggeredGrid": {
+        "composable": "LazyHorizontalStaggeredGrid",
+        "imports": [
+          "androidx.compose.foundation.lazy.staggeredgrid.LazyHorizontalStaggeredGrid"
+        ],
+        "attrs": {
+          "reverseLayout": "reverseLayout",
+          "userScrollEnabled": "userScrollEnabled"
+        },
+        "attrShapes": {
+          "reverseLayout": {
+            "name": "reverseLayout",
+            "shape": "boolean"
+          },
+          "userScrollEnabled": {
+            "name": "userScrollEnabled",
+            "shape": "boolean"
+          }
+        }
+      },
+      "LazyVerticalStaggeredGrid": {
+        "composable": "LazyVerticalStaggeredGrid",
+        "imports": [
+          "androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid"
+        ],
+        "attrs": {
+          "reverseLayout": "reverseLayout",
+          "userScrollEnabled": "userScrollEnabled"
+        },
+        "attrShapes": {
+          "reverseLayout": {
+            "name": "reverseLayout",
+            "shape": "boolean"
+          },
+          "userScrollEnabled": {
+            "name": "userScrollEnabled",
+            "shape": "boolean"
+          }
+        }
+      },
+      "HorizontalPager": {
+        "composable": "HorizontalPager",
+        "imports": [
+          "androidx.compose.foundation.pager.HorizontalPager"
+        ],
+        "attrs": {
+          "beyondBoundsPageCount": "beyondBoundsPageCount",
+          "flingBehavior": "flingBehavior",
+          "userScrollEnabled": "userScrollEnabled",
+          "reverseLayout": "reverseLayout"
+        },
+        "attrShapes": {
+          "beyondBoundsPageCount": {
+            "name": "beyondBoundsPageCount",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          "flingBehavior": {
+            "name": "flingBehavior",
+            "shape": "object",
+            "typeName": "androidx.compose.foundation.gestures.snapping.SnapFlingBehavior"
+          },
+          "userScrollEnabled": {
+            "name": "userScrollEnabled",
+            "shape": "boolean"
+          },
+          "reverseLayout": {
+            "name": "reverseLayout",
+            "shape": "boolean"
+          }
+        },
+        "optIn": [
+          "androidx.compose.foundation.ExperimentalFoundationApi"
+        ]
+      },
+      "VerticalPager": {
+        "composable": "VerticalPager",
+        "imports": [
+          "androidx.compose.foundation.pager.VerticalPager"
+        ],
+        "attrs": {
+          "beyondBoundsPageCount": "beyondBoundsPageCount",
+          "flingBehavior": "flingBehavior",
+          "userScrollEnabled": "userScrollEnabled",
+          "reverseLayout": "reverseLayout"
+        },
+        "attrShapes": {
+          "beyondBoundsPageCount": {
+            "name": "beyondBoundsPageCount",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          "flingBehavior": {
+            "name": "flingBehavior",
+            "shape": "object",
+            "typeName": "androidx.compose.foundation.gestures.snapping.SnapFlingBehavior"
+          },
+          "userScrollEnabled": {
+            "name": "userScrollEnabled",
+            "shape": "boolean"
+          },
+          "reverseLayout": {
+            "name": "reverseLayout",
+            "shape": "boolean"
+          }
+        },
+        "optIn": [
+          "androidx.compose.foundation.ExperimentalFoundationApi"
+        ]
+      },
+      "BasicTextField": {
+        "composable": "BasicTextField",
+        "imports": [
+          "androidx.compose.foundation.text.BasicTextField"
+        ],
+        "attrs": {
+          "enabled": "enabled",
+          "readOnly": "readOnly",
+          "keyboardOptions": "keyboardOptions",
+          "keyboardActions": "keyboardActions",
+          "singleLine": "singleLine",
+          "maxLines": "maxLines"
+        },
+        "attrShapes": {
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "readOnly": {
+            "name": "readOnly",
+            "shape": "boolean"
+          },
+          "keyboardOptions": {
+            "name": "keyboardOptions",
+            "shape": "object",
+            "typeName": "androidx.compose.foundation.text.KeyboardOptions"
+          },
+          "keyboardActions": {
+            "name": "keyboardActions",
+            "shape": "object",
+            "typeName": "androidx.compose.foundation.text.KeyboardActions"
+          },
+          "singleLine": {
+            "name": "singleLine",
+            "shape": "boolean"
+          },
+          "maxLines": {
+            "name": "maxLines",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        }
+      },
+      "BasicText": {
+        "composable": "BasicText",
+        "imports": [
+          "androidx.compose.foundation.text.BasicText"
+        ],
+        "attrs": {
+          "softWrap": "softWrap",
+          "maxLines": "maxLines",
+          "minLines": "minLines",
+          "inlineContent": "inlineContent"
+        },
+        "attrShapes": {
+          "softWrap": {
+            "name": "softWrap",
+            "shape": "boolean"
+          },
+          "maxLines": {
+            "name": "maxLines",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          "minLines": {
+            "name": "minLines",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          "inlineContent": {
+            "name": "inlineContent",
+            "shape": "object",
+            "typeName": "kotlin.collections.Map",
+            "pairElements": [
+              {
+                "name": "",
+                "shape": "string"
+              },
+              {
+                "name": "",
+                "shape": "object",
+                "typeName": "androidx.compose.foundation.text.InlineTextContent"
+              }
+            ]
+          }
+        }
+      },
+      "ClickableText": {
+        "composable": "ClickableText",
+        "imports": [
+          "androidx.compose.foundation.text.ClickableText"
+        ],
+        "attrs": {
+          "softWrap": "softWrap",
+          "maxLines": "maxLines"
+        },
+        "attrShapes": {
+          "softWrap": {
+            "name": "softWrap",
+            "shape": "boolean"
+          },
+          "maxLines": {
+            "name": "maxLines",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        },
+        "optIn": [
+          "androidx.compose.foundation.ExperimentalFoundationApi"
+        ]
+      },
+      "DisableSelection": {
+        "composable": "DisableSelection",
+        "imports": [
+          "androidx.compose.foundation.text.selection.DisableSelection"
+        ],
+        "attrs": {}
+      },
+      "SelectionContainer": {
+        "composable": "SelectionContainer",
+        "imports": [
+          "androidx.compose.foundation.text.selection.SelectionContainer"
+        ],
+        "attrs": {}
+      },
+      "BasicSecureTextField": {
+        "composable": "BasicSecureTextField",
+        "imports": [
+          "androidx.compose.foundation.text2.BasicSecureTextField"
+        ],
+        "attrs": {
+          "state": "state",
+          "textObfuscationMode": "textObfuscationMode",
+          "enabled": "enabled",
+          "scrollState": "scrollState"
+        },
+        "attrShapes": {
+          "state": {
+            "name": "state",
+            "shape": "object",
+            "typeName": "androidx.compose.foundation.text2.input.TextFieldState"
+          },
+          "textObfuscationMode": {
+            "name": "textObfuscationMode",
+            "shape": "object",
+            "typeName": "androidx.compose.foundation.text2.input.TextObfuscationMode"
+          },
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "scrollState": {
+            "name": "scrollState",
+            "shape": "object",
+            "typeName": "androidx.compose.foundation.ScrollState"
+          }
+        },
+        "optIn": [
+          "androidx.compose.foundation.ExperimentalFoundationApi"
+        ]
+      },
+      "BasicTextField2": {
+        "composable": "BasicTextField2",
+        "imports": [
+          "androidx.compose.foundation.text2.BasicTextField2"
+        ],
+        "attrs": {
+          "state": "state",
+          "enabled": "enabled",
+          "readOnly": "readOnly",
+          "keyboardOptions": "keyboardOptions",
+          "keyboardActions": "keyboardActions",
+          "scrollState": "scrollState"
+        },
+        "attrShapes": {
+          "state": {
+            "name": "state",
+            "shape": "object",
+            "typeName": "androidx.compose.foundation.text2.input.TextFieldState"
+          },
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          },
+          "readOnly": {
+            "name": "readOnly",
+            "shape": "boolean"
+          },
+          "keyboardOptions": {
+            "name": "keyboardOptions",
+            "shape": "object",
+            "typeName": "androidx.compose.foundation.text.KeyboardOptions"
+          },
+          "keyboardActions": {
+            "name": "keyboardActions",
+            "shape": "object",
+            "typeName": "androidx.compose.foundation.text.KeyboardActions"
+          },
+          "scrollState": {
+            "name": "scrollState",
+            "shape": "object",
+            "typeName": "androidx.compose.foundation.ScrollState"
+          }
+        },
+        "optIn": [
+          "androidx.compose.foundation.ExperimentalFoundationApi"
+        ]
+      }
+    },
+    "curated": true,
+    "essential": false
+  }
+}

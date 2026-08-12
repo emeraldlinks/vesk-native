@@ -1,0 +1,184 @@
+{
+  "version": 1,
+  "library": {
+    "id": "datetime",
+    "name": "kotlinx-datetime",
+    "description": "Multiplatform date/time (Instant, LocalDate, Clock).",
+    "group": "org.jetbrains.kotlinx",
+    "artifact": "kotlinx-datetime",
+    "version": "0.6.0",
+    "gradle": [
+      "org.jetbrains.kotlinx:kotlinx-datetime:0.6.0"
+    ],
+    "permissions": [],
+    "exports": [
+      "AmPmMarker",
+      "DatePeriod",
+      "FixedOffsetTimeZone",
+      "Instant",
+      "LocalDate",
+      "LocalDateTime",
+      "LocalTime",
+      "Padding",
+      "TimeZone",
+      "UtcOffset"
+    ],
+    "signatures": {
+      "DatePeriod": {
+        "name": "DatePeriod",
+        "target": "DatePeriod",
+        "qualified": "kotlinx.datetime.DatePeriod",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "totalMonths",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          {
+            "name": "days",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "FixedOffsetTimeZone": {
+        "name": "FixedOffsetTimeZone",
+        "target": "FixedOffsetTimeZone",
+        "qualified": "kotlinx.datetime.FixedOffsetTimeZone",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "offset",
+            "shape": "object",
+            "typeName": "kotlinx.datetime.UtcOffset"
+          },
+          {
+            "name": "zoneId",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "Instant": {
+        "name": "Instant",
+        "target": "Instant",
+        "qualified": "kotlinx.datetime.Instant",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "value",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "LocalDate": {
+        "name": "LocalDate",
+        "target": "LocalDate",
+        "qualified": "kotlinx.datetime.LocalDate",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "value",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "LocalDateTime": {
+        "name": "LocalDateTime",
+        "target": "LocalDateTime",
+        "qualified": "kotlinx.datetime.LocalDateTime",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "value",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "LocalTime": {
+        "name": "LocalTime",
+        "target": "LocalTime",
+        "qualified": "kotlinx.datetime.LocalTime",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "value",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "TimeZone": {
+        "name": "TimeZone",
+        "target": "TimeZone",
+        "qualified": "kotlinx.datetime.TimeZone",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "zoneId",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "UtcOffset": {
+        "name": "UtcOffset",
+        "target": "UtcOffset",
+        "qualified": "kotlinx.datetime.UtcOffset",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "zoneOffset",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "AmPmMarker": {
+        "name": "AmPmMarker",
+        "target": "AmPmMarker",
+        "qualified": "kotlinx.datetime.format.AmPmMarker",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "AM",
+          "PM"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      },
+      "Padding": {
+        "name": "Padding",
+        "target": "Padding",
+        "qualified": "kotlinx.datetime.format.Padding",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "NONE",
+          "ZERO",
+          "SPACE"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      }
+    },
+    "tags": {},
+    "curated": true,
+    "essential": false
+  }
+}

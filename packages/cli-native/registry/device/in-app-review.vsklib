@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "library": {
+    "id": "in-app-review",
+    "name": "Play In-App Review",
+    "description": "Google Play in-app review flow.",
+    "group": "com.google.android.play",
+    "artifact": "review",
+    "version": "2.0.1",
+    "gradle": [
+      "com.google.android.play:review:2.0.1"
+    ],
+    "minSdk": 14,
+    "permissions": [],
+    "exports": [],
+    "signatures": {},
+    "tags": {},
+    "curated": true,
+    "essential": false
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "version": 1,
+  "library": {
+    "id": "activity-compose",
+    "name": "AndroidX Activity Compose",
+    "description": "rememberLauncherForActivityResult, BackHandler, edge-to-edge.",
+    "group": "androidx.activity",
+    "artifact": "activity-compose",
+    "version": "1.9.2",
+    "gradle": [
+      "androidx.activity:activity-compose:1.9.2"
+    ],
+    "minSdk": 21,
+    "permissions": [],
+    "exports": [
+      "ManagedActivityResultLauncher"
+    ],
+    "signatures": {
+      "ManagedActivityResultLauncher": {
+        "name": "ManagedActivityResultLauncher",
+        "target": "ManagedActivityResultLauncher",
+        "qualified": "androidx.activity.compose.ManagedActivityResultLauncher",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "launcher",
+            "shape": "other"
+          },
+          {
+            "name": "currentContract",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      }
+    },
+    "tags": {
+      "BackHandler": {
+        "composable": "BackHandler",
+        "imports": [
+          "androidx.activity.compose.BackHandler"
+        ],
+        "attrs": {
+          "enabled": "enabled"
+        },
+        "attrShapes": {
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          }
+        }
+      },
+      "PredictiveBackHandler": {
+        "composable": "PredictiveBackHandler",
+        "imports": [
+          "androidx.activity.compose.PredictiveBackHandler"
+        ],
+        "attrs": {
+          "enabled": "enabled"
+        },
+        "attrShapes": {
+          "enabled": {
+            "name": "enabled",
+            "shape": "boolean"
+          }
+        }
+      },
+      "ReportDrawn": {
+        "composable": "ReportDrawn",
+        "imports": [
+          "androidx.activity.compose.ReportDrawn"
+        ],
+        "attrs": {}
+      },
+      "ReportDrawnAfter": {
+        "composable": "ReportDrawnAfter",
+        "imports": [
+          "androidx.activity.compose.ReportDrawnAfter"
+        ],
+        "attrs": {}
+      },
+      "ReportDrawnWhen": {
+        "composable": "ReportDrawnWhen",
+        "imports": [
+          "androidx.activity.compose.ReportDrawnWhen"
+        ],
+        "attrs": {}
+      }
+    },
+    "curated": true,
+    "essential": false
+  }
+}

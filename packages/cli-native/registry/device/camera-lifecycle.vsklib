@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "library": {
+    "id": "camera-lifecycle",
+    "name": "CameraX Lifecycle",
+    "description": "Lifecycle-aware CameraX use cases (Preview/ImageCapture).",
+    "group": "androidx.camera",
+    "artifact": "camera-lifecycle",
+    "version": "1.3.4",
+    "gradle": [
+      "androidx.camera:camera-lifecycle:1.3.4"
+    ],
+    "minSdk": 14,
+    "permissions": [],
+    "exports": [],
+    "signatures": {},
+    "tags": {},
+    "curated": true,
+    "essential": false
+  }
+}

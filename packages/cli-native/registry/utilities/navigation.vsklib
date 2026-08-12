@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "library": {
+    "id": "navigation",
+    "name": "AndroidX Navigation Compose",
+    "description": "Type-safe Compose navigation (NavHost, navArgument).",
+    "group": "androidx.navigation",
+    "artifact": "navigation-compose",
+    "version": "2.7.7",
+    "gradle": [
+      "androidx.navigation:navigation-compose:2.7.7"
+    ],
+    "minSdk": 21,
+    "permissions": [],
+    "exports": [
+      "ComposeNavigator",
+      "DialogNavigator"
+    ],
+    "signatures": {
+      "ComposeNavigator": {
+        "name": "ComposeNavigator",
+        "target": "ComposeNavigator",
+        "qualified": "androidx.navigation.compose.ComposeNavigator",
+        "isConstructor": true,
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "DialogNavigator": {
+        "name": "DialogNavigator",
+        "target": "DialogNavigator",
+        "qualified": "androidx.navigation.compose.DialogNavigator",
+        "isConstructor": true,
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "object"
+      }
+    },
+    "tags": {
+      "DialogHost": {
+        "composable": "DialogHost",
+        "imports": [
+          "androidx.navigation.compose.DialogHost"
+        ],
+        "attrs": {
+          "dialogNavigator": "dialogNavigator"
+        },
+        "attrShapes": {
+          "dialogNavigator": {
+            "name": "dialogNavigator",
+            "shape": "object",
+            "typeName": "androidx.navigation.compose.DialogNavigator"
+          }
+        }
+      },
+      "NavHost": {
+        "composable": "NavHost",
+        "imports": [
+          "androidx.navigation.compose.NavHost"
+        ],
+        "attrs": {}
+      }
+    },
+    "curated": true,
+    "essential": false
+  }
+}

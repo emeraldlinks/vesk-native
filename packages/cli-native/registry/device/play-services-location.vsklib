@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "library": {
+    "id": "play-services-location",
+    "name": "Play Services Location",
+    "description": "FusedLocationProviderClient, geofences, activity recognition.",
+    "group": "com.google.android.gms",
+    "artifact": "play-services-location",
+    "version": "21.3.0",
+    "gradle": [
+      "com.google.android.gms:play-services-location:21.3.0"
+    ],
+    "minSdk": 21,
+    "permissions": [],
+    "exports": [],
+    "signatures": {},
+    "tags": {},
+    "curated": true,
+    "essential": false
+  }
+}

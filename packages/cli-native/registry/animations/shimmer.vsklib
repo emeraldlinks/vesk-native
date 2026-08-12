@@ -1,0 +1,108 @@
+{
+  "version": 1,
+  "library": {
+    "id": "shimmer",
+    "name": "Compose Shimmer",
+    "description": "Shimmer loading placeholder composable.",
+    "group": "com.valentinilk.shimmer",
+    "artifact": "compose-shimmer",
+    "version": "1.3.1",
+    "gradle": [
+      "com.valentinilk.shimmer:compose-shimmer:1.3.1"
+    ],
+    "minSdk": 21,
+    "permissions": [],
+    "exports": [
+      "Shimmer",
+      "ShimmerBounds",
+      "ShimmerTheme"
+    ],
+    "signatures": {
+      "Shimmer": {
+        "name": "Shimmer",
+        "target": "Shimmer",
+        "qualified": "com.valentinilk.shimmer.Shimmer",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "theme",
+            "shape": "object",
+            "typeName": "com.valentinilk.shimmer.ShimmerTheme"
+          },
+          {
+            "name": "effect",
+            "shape": "other"
+          },
+          {
+            "name": "bounds",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "ShimmerBounds": {
+        "name": "ShimmerBounds",
+        "target": "ShimmerBounds",
+        "qualified": "com.valentinilk.shimmer.ShimmerBounds",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "Custom",
+          "View",
+          "Window"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      },
+      "ShimmerTheme": {
+        "name": "ShimmerTheme",
+        "target": "ShimmerTheme",
+        "qualified": "com.valentinilk.shimmer.ShimmerTheme",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "animationSpec",
+            "shape": "other"
+          },
+          {
+            "name": "blendMode",
+            "shape": "other"
+          },
+          {
+            "name": "rotation",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "shaderColors",
+            "shape": "array",
+            "elem": {
+              "name": "",
+              "shape": "other"
+            }
+          },
+          {
+            "name": "shaderColorStops",
+            "shape": "array",
+            "elem": {
+              "name": "",
+              "shape": "number",
+              "typeName": "kotlin.Float"
+            }
+          },
+          {
+            "name": "shimmerWidth",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      }
+    },
+    "tags": {},
+    "curated": true,
+    "essential": false
+  }
+}

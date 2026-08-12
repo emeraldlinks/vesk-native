@@ -1,0 +1,1906 @@
+{
+  "version": 1,
+  "library": {
+    "id": "ui",
+    "name": "Compose UI",
+    "description": "Base Compose UI primitives (Box, Column, Row, Text, Modifier, Alignment).",
+    "group": "androidx.compose.ui",
+    "artifact": "ui",
+    "version": "1.6.8",
+    "gradle": [
+      "androidx.compose.ui:ui:1.6.8"
+    ],
+    "minSdk": 21,
+    "permissions": [],
+    "exports": [
+      "AccessibilityAction",
+      "AndroidUiFrameClock",
+      "AndroidUriHandler",
+      "AndroidViewConfiguration",
+      "AutofillNode",
+      "AutofillTree",
+      "AutofillType",
+      "BiasAbsoluteAlignment",
+      "BiasAlignment",
+      "BlurredEdgeTreatment",
+      "CacheDrawScope",
+      "CollectionInfo",
+      "CollectionItemInfo",
+      "CombinedModifier",
+      "ComposeView",
+      "CompositingStrategy",
+      "ConsumedData",
+      "CustomAccessibilityAction",
+      "DialogProperties",
+      "DragAndDropEvent",
+      "DragAndDropTransferData",
+      "DrawResult",
+      "FixedScale",
+      "FocusDirection",
+      "FocusOrder",
+      "FocusRequester",
+      "HapticFeedbackType",
+      "HistoricalChange",
+      "HorizontalAlignmentLine",
+      "ImageVector",
+      "InputMode",
+      "InspectableModifier",
+      "InspectorInfo",
+      "Key",
+      "KeyEvent",
+      "KeyEventType",
+      "ModifierInfo",
+      "NestedScrollDispatcher",
+      "NestedScrollSource",
+      "PointerButtons",
+      "PointerEvent",
+      "PointerEventPass",
+      "PointerEventTimeoutCancellationException",
+      "PointerId",
+      "PointerInputChange",
+      "PointerKeyboardModifiers",
+      "PopupProperties",
+      "ProgressBarRangeInfo",
+      "ProvidableModifierLocal",
+      "Ref",
+      "RequestDisallowInterceptTouchEvent",
+      "ResourceResolutionException",
+      "RotaryScrollEvent",
+      "ScaleFactor",
+      "ScrollAxisRange",
+      "SecureFlagPolicy",
+      "SemanticsConfiguration",
+      "SemanticsNode",
+      "SemanticsOwner",
+      "SemanticsPropertyKey",
+      "SubcomposeLayoutState",
+      "TestModifierUpdater",
+      "TextToolbarStatus",
+      "ToggleableState",
+      "TransformOrigin",
+      "ValueElement",
+      "ValueElementSequence",
+      "VectorApplier",
+      "VectorGroup",
+      "VectorPainter",
+      "VectorPath",
+      "VectorProperty",
+      "VelocityTracker",
+      "VelocityTracker1D",
+      "VerticalAlignmentLine"
+    ],
+    "signatures": {
+      "BiasAbsoluteAlignment": {
+        "name": "BiasAbsoluteAlignment",
+        "target": "BiasAbsoluteAlignment",
+        "qualified": "androidx.compose.ui.BiasAbsoluteAlignment",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "horizontalBias",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "verticalBias",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "BiasAlignment": {
+        "name": "BiasAlignment",
+        "target": "BiasAlignment",
+        "qualified": "androidx.compose.ui.BiasAlignment",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "horizontalBias",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "verticalBias",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "CombinedModifier": {
+        "name": "CombinedModifier",
+        "target": "CombinedModifier",
+        "qualified": "androidx.compose.ui.CombinedModifier",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "outer",
+            "shape": "other"
+          },
+          {
+            "name": "inner",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "AutofillNode": {
+        "name": "AutofillNode",
+        "target": "AutofillNode",
+        "qualified": "androidx.compose.ui.autofill.AutofillNode",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "autofillTypes",
+            "shape": "array",
+            "elem": {
+              "name": "",
+              "shape": "enum",
+              "typeName": "androidx.compose.ui.autofill.AutofillType",
+              "enumValues": [
+                "EmailAddress",
+                "Username",
+                "Password",
+                "NewUsername",
+                "NewPassword",
+                "PostalAddress",
+                "PostalCode",
+                "CreditCardNumber",
+                "CreditCardSecurityCode",
+                "CreditCardExpirationDate",
+                "CreditCardExpirationMonth",
+                "CreditCardExpirationYear",
+                "CreditCardExpirationDay",
+                "AddressCountry",
+                "AddressRegion",
+                "AddressLocality",
+                "AddressStreet",
+                "AddressAuxiliaryDetails",
+                "PostalCodeExtended",
+                "PersonFullName",
+                "PersonFirstName",
+                "PersonLastName",
+                "PersonMiddleName",
+                "PersonMiddleInitial",
+                "PersonNamePrefix",
+                "PersonNameSuffix",
+                "PhoneNumber",
+                "PhoneNumberDevice",
+                "PhoneCountryCode",
+                "PhoneNumberNational",
+                "Gender",
+                "BirthDateFull",
+                "BirthDateDay",
+                "BirthDateMonth",
+                "BirthDateYear",
+                "SmsOtpCode"
+              ]
+            }
+          },
+          {
+            "name": "boundingBox",
+            "shape": "other"
+          },
+          {
+            "name": "onFill",
+            "shape": "function"
+          }
+        ],
+        "defaultParams": [
+          "autofillTypes",
+          "boundingBox",
+          "onFill"
+        ],
+        "returnShape": "object"
+      },
+      "AutofillTree": {
+        "name": "AutofillTree",
+        "target": "AutofillTree",
+        "qualified": "androidx.compose.ui.autofill.AutofillTree",
+        "isConstructor": true,
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "AutofillType": {
+        "name": "AutofillType",
+        "target": "AutofillType",
+        "qualified": "androidx.compose.ui.autofill.AutofillType",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "EmailAddress",
+          "Username",
+          "Password",
+          "NewUsername",
+          "NewPassword",
+          "PostalAddress",
+          "PostalCode",
+          "CreditCardNumber",
+          "CreditCardSecurityCode",
+          "CreditCardExpirationDate",
+          "CreditCardExpirationMonth",
+          "CreditCardExpirationYear",
+          "CreditCardExpirationDay",
+          "AddressCountry",
+          "AddressRegion",
+          "AddressLocality",
+          "AddressStreet",
+          "AddressAuxiliaryDetails",
+          "PostalCodeExtended",
+          "PersonFullName",
+          "PersonFirstName",
+          "PersonLastName",
+          "PersonMiddleName",
+          "PersonMiddleInitial",
+          "PersonNamePrefix",
+          "PersonNameSuffix",
+          "PhoneNumber",
+          "PhoneNumberDevice",
+          "PhoneCountryCode",
+          "PhoneNumberNational",
+          "Gender",
+          "BirthDateFull",
+          "BirthDateDay",
+          "BirthDateMonth",
+          "BirthDateYear",
+          "SmsOtpCode"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      },
+      "DragAndDropEvent": {
+        "name": "DragAndDropEvent",
+        "target": "DragAndDropEvent",
+        "qualified": "androidx.compose.ui.draganddrop.DragAndDropEvent",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "dragEvent",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "DragAndDropTransferData": {
+        "name": "DragAndDropTransferData",
+        "target": "DragAndDropTransferData",
+        "qualified": "androidx.compose.ui.draganddrop.DragAndDropTransferData",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "clipData",
+            "shape": "other"
+          },
+          {
+            "name": "localState",
+            "shape": "any"
+          },
+          {
+            "name": "flags",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        ],
+        "defaultParams": [
+          "localState",
+          "flags"
+        ],
+        "returnShape": "object"
+      },
+      "BlurredEdgeTreatment": {
+        "name": "BlurredEdgeTreatment",
+        "target": "BlurredEdgeTreatment",
+        "qualified": "androidx.compose.ui.draw.BlurredEdgeTreatment",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "shape",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "CacheDrawScope": {
+        "name": "CacheDrawScope",
+        "target": "CacheDrawScope",
+        "qualified": "androidx.compose.ui.draw.CacheDrawScope",
+        "isConstructor": true,
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "DrawResult": {
+        "name": "DrawResult",
+        "target": "DrawResult",
+        "qualified": "androidx.compose.ui.draw.DrawResult",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "block",
+            "shape": "function"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "FocusDirection": {
+        "name": "FocusDirection",
+        "target": "FocusDirection",
+        "qualified": "androidx.compose.ui.focus.FocusDirection",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "value",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "FocusOrder": {
+        "name": "FocusOrder",
+        "target": "FocusOrder",
+        "qualified": "androidx.compose.ui.focus.FocusOrder",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "focusProperties",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "FocusRequester": {
+        "name": "FocusRequester",
+        "target": "FocusRequester",
+        "qualified": "androidx.compose.ui.focus.FocusRequester",
+        "isConstructor": true,
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "CompositingStrategy": {
+        "name": "CompositingStrategy",
+        "target": "CompositingStrategy",
+        "qualified": "androidx.compose.ui.graphics.CompositingStrategy",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "value",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "TransformOrigin": {
+        "name": "TransformOrigin",
+        "target": "TransformOrigin",
+        "qualified": "androidx.compose.ui.graphics.TransformOrigin",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "packedValue",
+            "shape": "number",
+            "typeName": "kotlin.Long"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "ImageVector": {
+        "name": "ImageVector",
+        "target": "ImageVector",
+        "qualified": "androidx.compose.ui.graphics.vector.ImageVector",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "name",
+            "shape": "string"
+          },
+          {
+            "name": "defaultWidth",
+            "shape": "other"
+          },
+          {
+            "name": "defaultHeight",
+            "shape": "other"
+          },
+          {
+            "name": "viewportWidth",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "viewportHeight",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "root",
+            "shape": "object",
+            "typeName": "androidx.compose.ui.graphics.vector.VectorGroup"
+          },
+          {
+            "name": "tintColor",
+            "shape": "other"
+          },
+          {
+            "name": "tintBlendMode",
+            "shape": "other"
+          },
+          {
+            "name": "autoMirror",
+            "shape": "boolean"
+          },
+          {
+            "name": "genId",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        ],
+        "defaultParams": [
+          "genId"
+        ],
+        "returnShape": "object"
+      },
+      "VectorApplier": {
+        "name": "VectorApplier",
+        "target": "VectorApplier",
+        "qualified": "androidx.compose.ui.graphics.vector.VectorApplier",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "root",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "VectorGroup": {
+        "name": "VectorGroup",
+        "target": "VectorGroup",
+        "qualified": "androidx.compose.ui.graphics.vector.VectorGroup",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "name",
+            "shape": "string"
+          },
+          {
+            "name": "rotation",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "pivotX",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "pivotY",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "scaleX",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "scaleY",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "translationX",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "translationY",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "clipPathData",
+            "shape": "array",
+            "elem": {
+              "name": "",
+              "shape": "other"
+            }
+          },
+          {
+            "name": "children",
+            "shape": "array",
+            "elem": {
+              "name": "",
+              "shape": "other"
+            }
+          }
+        ],
+        "defaultParams": [
+          "name",
+          "rotation",
+          "pivotX",
+          "pivotY",
+          "scaleX",
+          "scaleY",
+          "translationX",
+          "translationY",
+          "clipPathData",
+          "children"
+        ],
+        "returnShape": "object"
+      },
+      "VectorPainter": {
+        "name": "VectorPainter",
+        "target": "VectorPainter",
+        "qualified": "androidx.compose.ui.graphics.vector.VectorPainter",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "root",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [
+          "root"
+        ],
+        "returnShape": "object"
+      },
+      "VectorPath": {
+        "name": "VectorPath",
+        "target": "VectorPath",
+        "qualified": "androidx.compose.ui.graphics.vector.VectorPath",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "name",
+            "shape": "string"
+          },
+          {
+            "name": "pathData",
+            "shape": "array",
+            "elem": {
+              "name": "",
+              "shape": "other"
+            }
+          },
+          {
+            "name": "pathFillType",
+            "shape": "other"
+          },
+          {
+            "name": "fill",
+            "shape": "other"
+          },
+          {
+            "name": "fillAlpha",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "stroke",
+            "shape": "other"
+          },
+          {
+            "name": "strokeAlpha",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "strokeLineWidth",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "strokeLineCap",
+            "shape": "other"
+          },
+          {
+            "name": "strokeLineJoin",
+            "shape": "other"
+          },
+          {
+            "name": "strokeLineMiter",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "trimPathStart",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "trimPathEnd",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "trimPathOffset",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          }
+        ],
+        "defaultParams": [
+          "name",
+          "pathData",
+          "pathFillType",
+          "fill",
+          "fillAlpha",
+          "stroke",
+          "strokeAlpha",
+          "strokeLineWidth",
+          "strokeLineCap",
+          "strokeLineJoin",
+          "strokeLineMiter",
+          "trimPathStart",
+          "trimPathEnd",
+          "trimPathOffset"
+        ],
+        "returnShape": "object"
+      },
+      "VectorProperty": {
+        "name": "VectorProperty",
+        "target": "VectorProperty",
+        "qualified": "androidx.compose.ui.graphics.vector.VectorProperty",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "Fill",
+          "FillAlpha",
+          "PathData",
+          "PivotX",
+          "PivotY",
+          "Rotation",
+          "ScaleX",
+          "ScaleY",
+          "Stroke",
+          "StrokeAlpha",
+          "StrokeLineWidth",
+          "TranslateX",
+          "TranslateY",
+          "TrimPathEnd",
+          "TrimPathOffset",
+          "TrimPathStart"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      },
+      "HapticFeedbackType": {
+        "name": "HapticFeedbackType",
+        "target": "HapticFeedbackType",
+        "qualified": "androidx.compose.ui.hapticfeedback.HapticFeedbackType",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "value",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "InputMode": {
+        "name": "InputMode",
+        "target": "InputMode",
+        "qualified": "androidx.compose.ui.input.InputMode",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "value",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "Key": {
+        "name": "Key",
+        "target": "Key",
+        "qualified": "androidx.compose.ui.input.key.Key",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "keyCode",
+            "shape": "number",
+            "typeName": "kotlin.Long"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "KeyEvent": {
+        "name": "KeyEvent",
+        "target": "KeyEvent",
+        "qualified": "androidx.compose.ui.input.key.KeyEvent",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "nativeKeyEvent",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "KeyEventType": {
+        "name": "KeyEventType",
+        "target": "KeyEventType",
+        "qualified": "androidx.compose.ui.input.key.KeyEventType",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "value",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "NestedScrollDispatcher": {
+        "name": "NestedScrollDispatcher",
+        "target": "NestedScrollDispatcher",
+        "qualified": "androidx.compose.ui.input.nestedscroll.NestedScrollDispatcher",
+        "isConstructor": true,
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "NestedScrollSource": {
+        "name": "NestedScrollSource",
+        "target": "NestedScrollSource",
+        "qualified": "androidx.compose.ui.input.nestedscroll.NestedScrollSource",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "value",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "ConsumedData": {
+        "name": "ConsumedData",
+        "target": "ConsumedData",
+        "qualified": "androidx.compose.ui.input.pointer.ConsumedData",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "positionChange",
+            "shape": "boolean"
+          },
+          {
+            "name": "downChange",
+            "shape": "boolean"
+          }
+        ],
+        "defaultParams": [
+          "positionChange",
+          "downChange"
+        ],
+        "returnShape": "object"
+      },
+      "HistoricalChange": {
+        "name": "HistoricalChange",
+        "target": "HistoricalChange",
+        "qualified": "androidx.compose.ui.input.pointer.HistoricalChange",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "uptimeMillis",
+            "shape": "number",
+            "typeName": "kotlin.Long"
+          },
+          {
+            "name": "position",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "PointerButtons": {
+        "name": "PointerButtons",
+        "target": "PointerButtons",
+        "qualified": "androidx.compose.ui.input.pointer.PointerButtons",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "packedValue",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "PointerEvent": {
+        "name": "PointerEvent",
+        "target": "PointerEvent",
+        "qualified": "androidx.compose.ui.input.pointer.PointerEvent",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "changes",
+            "shape": "array",
+            "elem": {
+              "name": "",
+              "shape": "object",
+              "typeName": "androidx.compose.ui.input.pointer.PointerInputChange"
+            }
+          },
+          {
+            "name": "internalPointerEvent",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "PointerEventPass": {
+        "name": "PointerEventPass",
+        "target": "PointerEventPass",
+        "qualified": "androidx.compose.ui.input.pointer.PointerEventPass",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "Initial",
+          "Main",
+          "Final"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      },
+      "PointerEventTimeoutCancellationException": {
+        "name": "PointerEventTimeoutCancellationException",
+        "target": "PointerEventTimeoutCancellationException",
+        "qualified": "androidx.compose.ui.input.pointer.PointerEventTimeoutCancellationException",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "time",
+            "shape": "number",
+            "typeName": "kotlin.Long"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "PointerId": {
+        "name": "PointerId",
+        "target": "PointerId",
+        "qualified": "androidx.compose.ui.input.pointer.PointerId",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "value",
+            "shape": "number",
+            "typeName": "kotlin.Long"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "PointerInputChange": {
+        "name": "PointerInputChange",
+        "target": "PointerInputChange",
+        "qualified": "androidx.compose.ui.input.pointer.PointerInputChange",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "id",
+            "shape": "object",
+            "typeName": "androidx.compose.ui.input.pointer.PointerId"
+          },
+          {
+            "name": "uptimeMillis",
+            "shape": "number",
+            "typeName": "kotlin.Long"
+          },
+          {
+            "name": "position",
+            "shape": "other"
+          },
+          {
+            "name": "pressed",
+            "shape": "boolean"
+          },
+          {
+            "name": "pressure",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "previousUptimeMillis",
+            "shape": "number",
+            "typeName": "kotlin.Long"
+          },
+          {
+            "name": "previousPosition",
+            "shape": "other"
+          },
+          {
+            "name": "previousPressed",
+            "shape": "boolean"
+          },
+          {
+            "name": "isInitiallyConsumed",
+            "shape": "boolean"
+          },
+          {
+            "name": "type",
+            "shape": "other"
+          },
+          {
+            "name": "scrollDelta",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [
+          "type",
+          "scrollDelta"
+        ],
+        "returnShape": "object"
+      },
+      "PointerKeyboardModifiers": {
+        "name": "PointerKeyboardModifiers",
+        "target": "PointerKeyboardModifiers",
+        "qualified": "androidx.compose.ui.input.pointer.PointerKeyboardModifiers",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "packedValue",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "RequestDisallowInterceptTouchEvent": {
+        "name": "RequestDisallowInterceptTouchEvent",
+        "target": "RequestDisallowInterceptTouchEvent",
+        "qualified": "androidx.compose.ui.input.pointer.RequestDisallowInterceptTouchEvent",
+        "isConstructor": true,
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "VelocityTracker": {
+        "name": "VelocityTracker",
+        "target": "VelocityTracker",
+        "qualified": "androidx.compose.ui.input.pointer.util.VelocityTracker",
+        "isConstructor": true,
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "VelocityTracker1D": {
+        "name": "VelocityTracker1D",
+        "target": "VelocityTracker1D",
+        "qualified": "androidx.compose.ui.input.pointer.util.VelocityTracker1D",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "isDataDifferential",
+            "shape": "boolean"
+          },
+          {
+            "name": "strategy",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [
+          "isDataDifferential",
+          "strategy"
+        ],
+        "returnShape": "object"
+      },
+      "RotaryScrollEvent": {
+        "name": "RotaryScrollEvent",
+        "target": "RotaryScrollEvent",
+        "qualified": "androidx.compose.ui.input.rotary.RotaryScrollEvent",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "verticalScrollPixels",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "horizontalScrollPixels",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "uptimeMillis",
+            "shape": "number",
+            "typeName": "kotlin.Long"
+          },
+          {
+            "name": "inputDeviceId",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "FixedScale": {
+        "name": "FixedScale",
+        "target": "FixedScale",
+        "qualified": "androidx.compose.ui.layout.FixedScale",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "value",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "HorizontalAlignmentLine": {
+        "name": "HorizontalAlignmentLine",
+        "target": "HorizontalAlignmentLine",
+        "qualified": "androidx.compose.ui.layout.HorizontalAlignmentLine",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "merger",
+            "shape": "function"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "ModifierInfo": {
+        "name": "ModifierInfo",
+        "target": "ModifierInfo",
+        "qualified": "androidx.compose.ui.layout.ModifierInfo",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "modifier",
+            "shape": "other"
+          },
+          {
+            "name": "coordinates",
+            "shape": "other"
+          },
+          {
+            "name": "extra",
+            "shape": "any"
+          }
+        ],
+        "defaultParams": [
+          "extra"
+        ],
+        "returnShape": "object"
+      },
+      "ScaleFactor": {
+        "name": "ScaleFactor",
+        "target": "ScaleFactor",
+        "qualified": "androidx.compose.ui.layout.ScaleFactor",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "packedValue",
+            "shape": "number",
+            "typeName": "kotlin.Long"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "SubcomposeLayoutState": {
+        "name": "SubcomposeLayoutState",
+        "target": "SubcomposeLayoutState",
+        "qualified": "androidx.compose.ui.layout.SubcomposeLayoutState",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "slotReusePolicy",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "TestModifierUpdater": {
+        "name": "TestModifierUpdater",
+        "target": "TestModifierUpdater",
+        "qualified": "androidx.compose.ui.layout.TestModifierUpdater",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "node",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "VerticalAlignmentLine": {
+        "name": "VerticalAlignmentLine",
+        "target": "VerticalAlignmentLine",
+        "qualified": "androidx.compose.ui.layout.VerticalAlignmentLine",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "merger",
+            "shape": "function"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "ProvidableModifierLocal": {
+        "name": "ProvidableModifierLocal",
+        "target": "ProvidableModifierLocal",
+        "qualified": "androidx.compose.ui.modifier.ProvidableModifierLocal",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "defaultFactory",
+            "shape": "function"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "Ref": {
+        "name": "Ref",
+        "target": "Ref",
+        "qualified": "androidx.compose.ui.node.Ref",
+        "isConstructor": true,
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "AndroidUiFrameClock": {
+        "name": "AndroidUiFrameClock",
+        "target": "AndroidUiFrameClock",
+        "qualified": "androidx.compose.ui.platform.AndroidUiFrameClock",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "choreographer",
+            "shape": "other"
+          },
+          {
+            "name": "dispatcher",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "AndroidUriHandler": {
+        "name": "AndroidUriHandler",
+        "target": "AndroidUriHandler",
+        "qualified": "androidx.compose.ui.platform.AndroidUriHandler",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "context",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "AndroidViewConfiguration": {
+        "name": "AndroidViewConfiguration",
+        "target": "AndroidViewConfiguration",
+        "qualified": "androidx.compose.ui.platform.AndroidViewConfiguration",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "viewConfiguration",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "ComposeView": {
+        "name": "ComposeView",
+        "target": "ComposeView",
+        "qualified": "androidx.compose.ui.platform.ComposeView",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "context",
+            "shape": "other"
+          },
+          {
+            "name": "attrs",
+            "shape": "other"
+          },
+          {
+            "name": "defStyleAttr",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        ],
+        "defaultParams": [
+          "attrs",
+          "defStyleAttr"
+        ],
+        "returnShape": "object"
+      },
+      "InspectableModifier": {
+        "name": "InspectableModifier",
+        "target": "InspectableModifier",
+        "qualified": "androidx.compose.ui.platform.InspectableModifier",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "inspectorInfo",
+            "shape": "function"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "InspectorInfo": {
+        "name": "InspectorInfo",
+        "target": "InspectorInfo",
+        "qualified": "androidx.compose.ui.platform.InspectorInfo",
+        "isConstructor": true,
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "TextToolbarStatus": {
+        "name": "TextToolbarStatus",
+        "target": "TextToolbarStatus",
+        "qualified": "androidx.compose.ui.platform.TextToolbarStatus",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "Shown",
+          "Hidden"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      },
+      "ValueElement": {
+        "name": "ValueElement",
+        "target": "ValueElement",
+        "qualified": "androidx.compose.ui.platform.ValueElement",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "name",
+            "shape": "string"
+          },
+          {
+            "name": "value",
+            "shape": "any"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "ValueElementSequence": {
+        "name": "ValueElementSequence",
+        "target": "ValueElementSequence",
+        "qualified": "androidx.compose.ui.platform.ValueElementSequence",
+        "isConstructor": true,
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "ResourceResolutionException": {
+        "name": "ResourceResolutionException",
+        "target": "ResourceResolutionException",
+        "qualified": "androidx.compose.ui.res.ResourceResolutionException",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "message",
+            "shape": "string"
+          },
+          {
+            "name": "cause",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "AccessibilityAction": {
+        "name": "AccessibilityAction",
+        "target": "AccessibilityAction",
+        "qualified": "androidx.compose.ui.semantics.AccessibilityAction",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "label",
+            "shape": "string"
+          },
+          {
+            "name": "action",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "CollectionInfo": {
+        "name": "CollectionInfo",
+        "target": "CollectionInfo",
+        "qualified": "androidx.compose.ui.semantics.CollectionInfo",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "rowCount",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          {
+            "name": "columnCount",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "CollectionItemInfo": {
+        "name": "CollectionItemInfo",
+        "target": "CollectionItemInfo",
+        "qualified": "androidx.compose.ui.semantics.CollectionItemInfo",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "rowIndex",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          {
+            "name": "rowSpan",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          {
+            "name": "columnIndex",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          {
+            "name": "columnSpan",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "CustomAccessibilityAction": {
+        "name": "CustomAccessibilityAction",
+        "target": "CustomAccessibilityAction",
+        "qualified": "androidx.compose.ui.semantics.CustomAccessibilityAction",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "label",
+            "shape": "string"
+          },
+          {
+            "name": "action",
+            "shape": "function"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "ProgressBarRangeInfo": {
+        "name": "ProgressBarRangeInfo",
+        "target": "ProgressBarRangeInfo",
+        "qualified": "androidx.compose.ui.semantics.ProgressBarRangeInfo",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "current",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "range",
+            "shape": "other"
+          },
+          {
+            "name": "steps",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          }
+        ],
+        "defaultParams": [
+          "steps"
+        ],
+        "returnShape": "object"
+      },
+      "ScrollAxisRange": {
+        "name": "ScrollAxisRange",
+        "target": "ScrollAxisRange",
+        "qualified": "androidx.compose.ui.semantics.ScrollAxisRange",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "value",
+            "shape": "function"
+          },
+          {
+            "name": "maxValue",
+            "shape": "function"
+          },
+          {
+            "name": "reverseScrolling",
+            "shape": "boolean"
+          }
+        ],
+        "defaultParams": [
+          "reverseScrolling"
+        ],
+        "returnShape": "object"
+      },
+      "SemanticsConfiguration": {
+        "name": "SemanticsConfiguration",
+        "target": "SemanticsConfiguration",
+        "qualified": "androidx.compose.ui.semantics.SemanticsConfiguration",
+        "isConstructor": true,
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "SemanticsNode": {
+        "name": "SemanticsNode",
+        "target": "SemanticsNode",
+        "qualified": "androidx.compose.ui.semantics.SemanticsNode",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "outerSemanticsNode",
+            "shape": "other"
+          },
+          {
+            "name": "mergingEnabled",
+            "shape": "boolean"
+          },
+          {
+            "name": "layoutNode",
+            "shape": "other"
+          },
+          {
+            "name": "unmergedConfig",
+            "shape": "object",
+            "typeName": "androidx.compose.ui.semantics.SemanticsConfiguration"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "SemanticsOwner": {
+        "name": "SemanticsOwner",
+        "target": "SemanticsOwner",
+        "qualified": "androidx.compose.ui.semantics.SemanticsOwner",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "rootNode",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "SemanticsPropertyKey": {
+        "name": "SemanticsPropertyKey",
+        "target": "SemanticsPropertyKey",
+        "qualified": "androidx.compose.ui.semantics.SemanticsPropertyKey",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "name",
+            "shape": "string"
+          },
+          {
+            "name": "mergePolicy",
+            "shape": "function"
+          }
+        ],
+        "defaultParams": [
+          "mergePolicy"
+        ],
+        "returnShape": "object"
+      },
+      "ToggleableState": {
+        "name": "ToggleableState",
+        "target": "ToggleableState",
+        "qualified": "androidx.compose.ui.state.ToggleableState",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "On",
+          "Off",
+          "Indeterminate"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      },
+      "DialogProperties": {
+        "name": "DialogProperties",
+        "target": "DialogProperties",
+        "qualified": "androidx.compose.ui.window.DialogProperties",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "dismissOnBackPress",
+            "shape": "boolean"
+          },
+          {
+            "name": "dismissOnClickOutside",
+            "shape": "boolean"
+          },
+          {
+            "name": "securePolicy",
+            "shape": "enum",
+            "typeName": "androidx.compose.ui.window.SecureFlagPolicy",
+            "enumValues": [
+              "Inherit",
+              "SecureOn",
+              "SecureOff"
+            ]
+          },
+          {
+            "name": "usePlatformDefaultWidth",
+            "shape": "boolean"
+          },
+          {
+            "name": "decorFitsSystemWindows",
+            "shape": "boolean"
+          }
+        ],
+        "defaultParams": [
+          "dismissOnBackPress",
+          "dismissOnClickOutside",
+          "securePolicy",
+          "usePlatformDefaultWidth",
+          "decorFitsSystemWindows"
+        ],
+        "returnShape": "object"
+      },
+      "PopupProperties": {
+        "name": "PopupProperties",
+        "target": "PopupProperties",
+        "qualified": "androidx.compose.ui.window.PopupProperties",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "focusable",
+            "shape": "boolean"
+          },
+          {
+            "name": "dismissOnBackPress",
+            "shape": "boolean"
+          },
+          {
+            "name": "dismissOnClickOutside",
+            "shape": "boolean"
+          },
+          {
+            "name": "securePolicy",
+            "shape": "enum",
+            "typeName": "androidx.compose.ui.window.SecureFlagPolicy",
+            "enumValues": [
+              "Inherit",
+              "SecureOn",
+              "SecureOff"
+            ]
+          },
+          {
+            "name": "excludeFromSystemGesture",
+            "shape": "boolean"
+          },
+          {
+            "name": "clippingEnabled",
+            "shape": "boolean"
+          },
+          {
+            "name": "usePlatformDefaultWidth",
+            "shape": "boolean"
+          }
+        ],
+        "defaultParams": [
+          "focusable",
+          "dismissOnBackPress",
+          "dismissOnClickOutside",
+          "securePolicy",
+          "excludeFromSystemGesture",
+          "clippingEnabled",
+          "usePlatformDefaultWidth"
+        ],
+        "returnShape": "object"
+      },
+      "SecureFlagPolicy": {
+        "name": "SecureFlagPolicy",
+        "target": "SecureFlagPolicy",
+        "qualified": "androidx.compose.ui.window.SecureFlagPolicy",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "Inherit",
+          "SecureOn",
+          "SecureOff"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      }
+    },
+    "tags": {
+      "Group": {
+        "composable": "Group",
+        "imports": [
+          "androidx.compose.ui.graphics.vector.Group"
+        ],
+        "attrs": {
+          "name": "name",
+          "rotation": "rotation",
+          "pivotX": "pivotX",
+          "pivotY": "pivotY",
+          "scaleX": "scaleX",
+          "scaleY": "scaleY",
+          "translationX": "translationX",
+          "translationY": "translationY"
+        },
+        "attrShapes": {
+          "name": {
+            "name": "name",
+            "shape": "string"
+          },
+          "rotation": {
+            "name": "rotation",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          "pivotX": {
+            "name": "pivotX",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          "pivotY": {
+            "name": "pivotY",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          "scaleX": {
+            "name": "scaleX",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          "scaleY": {
+            "name": "scaleY",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          "translationX": {
+            "name": "translationX",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          "translationY": {
+            "name": "translationY",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          }
+        }
+      },
+      "Path": {
+        "composable": "Path",
+        "imports": [
+          "androidx.compose.ui.graphics.vector.Path"
+        ],
+        "attrs": {
+          "name": "name",
+          "fillAlpha": "fillAlpha",
+          "strokeAlpha": "strokeAlpha",
+          "strokeLineWidth": "strokeLineWidth",
+          "strokeLineMiter": "strokeLineMiter",
+          "trimPathStart": "trimPathStart",
+          "trimPathEnd": "trimPathEnd",
+          "trimPathOffset": "trimPathOffset"
+        },
+        "attrShapes": {
+          "name": {
+            "name": "name",
+            "shape": "string"
+          },
+          "fillAlpha": {
+            "name": "fillAlpha",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          "strokeAlpha": {
+            "name": "strokeAlpha",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          "strokeLineWidth": {
+            "name": "strokeLineWidth",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          "strokeLineMiter": {
+            "name": "strokeLineMiter",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          "trimPathStart": {
+            "name": "trimPathStart",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          "trimPathEnd": {
+            "name": "trimPathEnd",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          "trimPathOffset": {
+            "name": "trimPathOffset",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          }
+        }
+      },
+      "RenderVectorGroup": {
+        "composable": "RenderVectorGroup",
+        "imports": [
+          "androidx.compose.ui.graphics.vector.RenderVectorGroup"
+        ],
+        "attrs": {
+          "group": "group",
+          "configs": "configs"
+        },
+        "attrShapes": {
+          "group": {
+            "name": "group",
+            "shape": "object",
+            "typeName": "androidx.compose.ui.graphics.vector.VectorGroup"
+          },
+          "configs": {
+            "name": "configs",
+            "shape": "object",
+            "typeName": "kotlin.collections.Map",
+            "pairElements": [
+              {
+                "name": "",
+                "shape": "string"
+              },
+              {
+                "name": "",
+                "shape": "other"
+              }
+            ]
+          }
+        }
+      },
+      "Layout": {
+        "composable": "Layout",
+        "imports": [
+          "androidx.compose.ui.layout.Layout"
+        ],
+        "attrs": {}
+      },
+      "MultiMeasureLayout": {
+        "composable": "MultiMeasureLayout",
+        "imports": [
+          "androidx.compose.ui.layout.MultiMeasureLayout"
+        ],
+        "attrs": {}
+      },
+      "LookaheadScope": {
+        "composable": "LookaheadScope",
+        "imports": [
+          "androidx.compose.ui.layout.LookaheadScope"
+        ],
+        "attrs": {}
+      },
+      "SubcomposeLayout": {
+        "composable": "SubcomposeLayout",
+        "imports": [
+          "androidx.compose.ui.layout.SubcomposeLayout"
+        ],
+        "attrs": {}
+      },
+      "TestModifierUpdaterLayout": {
+        "composable": "TestModifierUpdaterLayout",
+        "imports": [
+          "androidx.compose.ui.layout.TestModifierUpdaterLayout"
+        ],
+        "attrs": {}
+      },
+      "Dialog": {
+        "composable": "Dialog",
+        "imports": [
+          "androidx.compose.ui.window.Dialog"
+        ],
+        "attrs": {
+          "properties": "properties"
+        },
+        "attrShapes": {
+          "properties": {
+            "name": "properties",
+            "shape": "object",
+            "typeName": "androidx.compose.ui.window.DialogProperties"
+          }
+        }
+      },
+      "Popup": {
+        "composable": "Popup",
+        "imports": [
+          "androidx.compose.ui.window.Popup"
+        ],
+        "attrs": {
+          "properties": "properties"
+        },
+        "attrShapes": {
+          "properties": {
+            "name": "properties",
+            "shape": "object",
+            "typeName": "androidx.compose.ui.window.PopupProperties"
+          }
+        }
+      }
+    },
+    "curated": true,
+    "essential": false
+  }
+}

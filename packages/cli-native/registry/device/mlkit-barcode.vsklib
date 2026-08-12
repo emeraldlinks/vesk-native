@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "library": {
+    "id": "mlkit-barcode",
+    "name": "ML Kit Barcode Scanning",
+    "description": "On-device barcode / QR scanning.",
+    "group": "com.google.mlkit",
+    "artifact": "barcode-scanning",
+    "version": "17.3.0",
+    "gradle": [
+      "com.google.mlkit:barcode-scanning:17.3.0"
+    ],
+    "minSdk": 21,
+    "permissions": [],
+    "exports": [],
+    "signatures": {},
+    "tags": {},
+    "curated": true,
+    "essential": false
+  }
+}

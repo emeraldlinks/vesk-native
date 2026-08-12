@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "library": {
+    "id": "coroutines",
+    "name": "kotlinx.coroutines",
+    "description": "Coroutines for Android — async/await, flows, scopes.",
+    "group": "org.jetbrains.kotlinx",
+    "artifact": "kotlinx-coroutines-android",
+    "version": "1.7.3",
+    "gradle": [
+      "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
+    ],
+    "permissions": [],
+    "exports": [],
+    "signatures": {},
+    "tags": {},
+    "curated": true,
+    "essential": false
+  }
+}

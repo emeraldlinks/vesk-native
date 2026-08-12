@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "library": {
+    "id": "play-services-auth",
+    "name": "Play Services Auth",
+    "description": "Google Sign-In / One Tap credentials.",
+    "group": "com.google.android.gms",
+    "artifact": "play-services-auth",
+    "version": "20.7.0",
+    "gradle": [
+      "com.google.android.gms:play-services-auth:20.7.0"
+    ],
+    "minSdk": 14,
+    "permissions": [],
+    "exports": [],
+    "signatures": {},
+    "tags": {},
+    "curated": true,
+    "essential": false
+  }
+}

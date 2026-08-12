@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "library": {
+    "id": "animation-graphics",
+    "name": "Compose Animation Graphics",
+    "description": "AnimatedVectorPainter / animated vector drawables.",
+    "group": "androidx.compose.animation",
+    "artifact": "animation-graphics",
+    "version": "1.6.8",
+    "gradle": [
+      "androidx.compose.animation:animation-graphics:1.6.8"
+    ],
+    "minSdk": 21,
+    "permissions": [],
+    "exports": [
+      "AnimatedImageVector"
+    ],
+    "signatures": {
+      "AnimatedImageVector": {
+        "name": "AnimatedImageVector",
+        "target": "AnimatedImageVector",
+        "qualified": "androidx.compose.animation.graphics.vector.AnimatedImageVector",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "imageVector",
+            "shape": "other"
+          },
+          {
+            "name": "targets",
+            "shape": "array",
+            "elem": {
+              "name": "",
+              "shape": "other"
+            }
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      }
+    },
+    "tags": {},
+    "curated": true,
+    "essential": false
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "library": {
+    "id": "preference-ktx",
+    "name": "AndroidX Preference KTX",
+    "description": "SharedPreferences + Preference UI helpers.",
+    "group": "androidx.preference",
+    "artifact": "preference-ktx",
+    "version": "1.2.1",
+    "gradle": [
+      "androidx.preference:preference-ktx:1.2.1"
+    ],
+    "minSdk": 14,
+    "permissions": [],
+    "exports": [],
+    "signatures": {},
+    "tags": {},
+    "curated": true,
+    "essential": false
+  }
+}

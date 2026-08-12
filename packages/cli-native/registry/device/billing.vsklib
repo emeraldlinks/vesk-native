@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "library": {
+    "id": "billing",
+    "name": "Google Play Billing",
+    "description": "In-app purchases / subscriptions (BillingClient).",
+    "group": "com.android.billingclient",
+    "artifact": "billing",
+    "version": "6.2.1",
+    "gradle": [
+      "com.android.billingclient:billing:6.2.1"
+    ],
+    "minSdk": 19,
+    "permissions": [
+      "com.android.vending.BILLING"
+    ],
+    "exports": [],
+    "signatures": {},
+    "tags": {},
+    "curated": true,
+    "essential": false
+  }
+}

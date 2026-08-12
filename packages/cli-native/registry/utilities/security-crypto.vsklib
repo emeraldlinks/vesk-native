@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "library": {
+    "id": "security-crypto",
+    "name": "AndroidX Security Crypto",
+    "description": "EncryptedSharedPreferences / EncryptedFile.",
+    "group": "androidx.security",
+    "artifact": "security-crypto",
+    "version": "1.0.0",
+    "gradle": [
+      "androidx.security:security-crypto:1.0.0"
+    ],
+    "minSdk": 23,
+    "permissions": [],
+    "exports": [],
+    "signatures": {},
+    "tags": {},
+    "curated": true,
+    "essential": false
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "library": {
+    "id": "material-icons",
+    "name": "Material Icons Core",
+    "description": "Core Material icon set (Icons.Filled/Outlined/...) + ImageVector.",
+    "group": "androidx.compose.material",
+    "artifact": "material-icons-core",
+    "version": "1.6.8",
+    "gradle": [
+      "androidx.compose.material:material-icons-core:1.6.8"
+    ],
+    "minSdk": 21,
+    "permissions": [],
+    "exports": [],
+    "signatures": {},
+    "tags": {},
+    "curated": true,
+    "essential": false
+  }
+}
