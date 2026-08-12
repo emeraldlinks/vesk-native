@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "library": {
+    "id": "timber",
+    "name": "Timber",
+    "description": "Logging for Android",
+    "group": "com.jakewharton.timber",
+    "artifact": "timber",
+    "version": "5.0.1",
+    "gradle": ["com.jakewharton.timber:timber:5.0.1"],
+    "permissions": [],
+    "exports": ["Timber"],
+    "tags": {},
+    "curated": true
+  }
+}

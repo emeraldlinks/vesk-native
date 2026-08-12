@@ -44,6 +44,29 @@ export interface VeskRoute {
   exitOnBack?: boolean;
 }
 
+export type VeskSystemBarStyle = 'auto' | 'light' | 'dark';
+
+export interface VeskEdgeToEdge {
+  // Draw the app content behind the system bars (Android's modern default).
+  // Set false for the classic layout: the system bars reserve their own
+  // space and content never draws behind them. On Android 15+ (targetSdk 35)
+  // the OS forces edge-to-edge regardless; the framework then still pads the
+  // content so nothing is hidden under the bars.
+  enabled?: boolean;
+  // Reserve space for the status and navigation bars with insets padding so
+  // content never sits underneath them. Set false for full-bleed layouts
+  // (content draws behind the bars and handles insets per-element). Ignored
+  // when `enabled` is false on Android < 15, where the classic window already
+  // keeps content out of the bars.
+  paddingBars?: boolean;
+  // System bar appearance. 'auto' picks per theme (dark bars in dark mode,
+  // light bars in light mode); 'light' forces light bars (dark icons);
+  // 'dark' forces dark bars (light icons). Scrim colors come from `colors`
+  // and `darkColors`. Ignored when `enabled` is false.
+  statusBarStyle?: VeskSystemBarStyle;
+  navigationBarStyle?: VeskSystemBarStyle;
+}
+
 export interface VeskConfig {
   appId: string;
   appName: string;
@@ -62,6 +85,8 @@ export interface VeskConfig {
   typography?: VeskTypography;
   back?: VeskBack;
   media?: VeskMedia;
+  // System bar / edge-to-edge behavior.
+  edgeToEdge?: VeskEdgeToEdge;
   // Per-screen config: keyed by route path ('/media'), values are passed to
   // the route's page component as props.
   screens?: Record<string, VeskScreen>;

@@ -1,3 +1,5 @@
+import type { LibExportSig, LibParamSig } from './elements.js';
+
 export interface JsNode {
   type: string;
   [k: string]: unknown;
@@ -33,7 +35,10 @@ function escapeKtString(value: string): string {
 }
 
 function ident(name: string): string {
-  return KOTLIN_KEYWORDS.has(name) ? `\`${name}\`` : name;
+  if (KOTLIN_KEYWORDS.has(name)) return `\`${name}\``;
+  let out = '';
+  for (let i = 0; i < name.length; i++) out += name[i] === '$' ? '_' : name[i];
+  return out;
 }
 
 // Does a numeric token's source text carry a decimal/exponent marker (`.`,
@@ -214,8 +219,24 @@ const UNSUPPORTED_BROWSER_OBJS = new Set([
 
 // Browser free functions with no native mapping yet: hard build errors.
 const UNSUPPORTED_BROWSER_FNS = new Set([
-  'fetch', 'atob', 'btoa', 'queueMicrotask', 'structuredClone', 'eval',
+  'atob', 'btoa', 'queueMicrotask', 'structuredClone', 'eval',
 ]);
+
+// Web Storage member surface: `localStorage.length` etc. map to these
+// VeskWebStorage method names (methods, not properties, so usage pruning can
+// see them in generated Kotlin).
+function storeMember(store: 'local' | 'session', member: string): string | null {
+  const base: Record<string, string> = {
+    length: 'Length',
+    getItem: 'GetItem',
+    setItem: 'SetItem',
+    removeItem: 'RemoveItem',
+    clear: 'Clear',
+    key: 'Key',
+  };
+  const suffix = base[member];
+  return suffix === undefined ? null : `${store}${suffix}`;
+}
 
 export class KtErrors {
   errors: string[] = [];
@@ -243,6 +264,16 @@ export class Js2Kt {
   private mapVars = new Set<string>();
   /** Identifiers initialized from an object literal; member access goes through jsMapGet. */
   private objVars = new Set<string>();
+  /** Identifiers initialized from `openSqlite(...)`; member calls map to the
+   *  VeskSqliteDb method surface (exec/run/get/all/close) instead of the
+   *  generic Map/regex member paths. */
+  private sqliteVars = new Set<string>();
+  /** JS-visible library exports (`import { X } from '@vesk/...'`): constructors
+   *  and enums with typed signatures, resolved by the JS name. */
+  libraryExports = new Map<string, LibExportSig>();
+  /** Extra Kotlin import lines discovered while translating (enum members
+   *  referenced through string literals); spliced into the generated file. */
+  libImports = new Set<string>();
 
   constructor(err: KtErrors) {
     this.err = err;
@@ -574,10 +605,27 @@ export class Js2Kt {
       const c = MATH_CONSTS[(prop as { name?: string }).name ?? ''];
       if (c) return c;
     }
+    if (!computed && object.type === 'Identifier' && (object.name === 'localStorage' || object.name === 'sessionStorage') && prop.type === 'Identifier') {
+      const store = object.name === 'localStorage' ? 'local' : 'session';
+      const member = storeMember(store, (prop as { name?: string }).name ?? '');
+      if (member) return `VeskWebStorage.${member}()`;
+    }
     if (object.type === 'Identifier' && UNSUPPORTED_BROWSER_OBJS.has(object.name as string)) {
       const pname = prop.type === 'Identifier' ? (prop.name as string) : this.expr(prop);
       this.err.warn(node, `${object.name}.${pname} has no native Kotlin mapping yet`);
       return `error("vesk: ${object.name}.${pname} is not supported yet")`;
+    }
+    // Library enum exports resolve to Kotlin constants (`PlotType.Line`).
+    if (!computed && object.type === 'Identifier' && prop.type === 'Identifier') {
+      const lib = this.libraryExports.get(object.name as string);
+      if (lib?.isEnum && lib.enumValues) {
+        const member = prop.name as string;
+        if (!lib.enumValues.includes(member)) {
+          this.err.warn(node, `'${object.name}' has no member '${member}' (members: ${lib.enumValues.join(', ')})`);
+          return `error("vesk: unknown '${object.name}' member '${member}'")`;
+        }
+        return `${this.id(object.name as string)}.${this.id(member)}`;
+      }
     }
     const obj = this.expr(object);
     if (computed) {
@@ -654,6 +702,23 @@ export class Js2Kt {
       if (declared) {
         return `${this.id(name)}(${this.callArgs(node, declared)})`;
       }
+      const libExport = this.libraryExports.get(name);
+      if (libExport) {
+        if (libExport.isConstructor) {
+          return this.libConstructorCall(name, libExport, node);
+        }
+        if (this.libCallable(libExport)) {
+          return this.libFunctionCall(name, libExport, node);
+        }
+        this.err.warn(callee, `'${name}' is a ${libExport.isEnum ? 'enum' : 'value'}, not a function`);
+        return `error("vesk: '${name}' is not a function")`;
+      }
+      if (name === 'fetch') return `VeskFetch.fetch(${this.argList(args)})`;
+      if (name === 'openSqlite') return `VeskSqlite.openDatabase(${a0 ? this.expr(a0) : this.ktString('')}${a1 ? `, ${this.expr(a1)}` : ''})`;
+      if (name === 'signUp' || name === 'signIn') return `VeskAuth.${name}(${a0 ? this.expr(a0) : 'null'}, ${a1 ? this.expr(a1) : 'null'})`;
+      if (name === 'signOut') return `VeskAuth.signOut()`;
+      if (name === 'currentUser') return `VeskAuth.currentUser()`;
+      if (name === 'isSignedIn') return `VeskAuth.isSignedIn()`;
       if (UNSUPPORTED_BROWSER_FNS.has(name)) {
         this.err.warn(callee, `${name}() has no native Kotlin mapping yet`);
         return `error("vesk: ${name}() is not supported yet")`;
@@ -737,6 +802,7 @@ export class Js2Kt {
         }
         if (objName === 'window') {
           if (method === 'alert') return `jsAlert(${a0 ? this.expr(a0) : 'null'})`;
+          if (method === 'fetch') return `VeskFetch.fetch(${this.argList(args)})`;
           if (method === 'confirm' || method === 'prompt') {
             this.err.warn(callee, `window.${method}() needs a blocking dialog; Android cannot block the main thread`);
             return `error("vesk: window.${method}() is not supported on Android (blocking dialogs would deadlock the main thread)")`;
@@ -751,10 +817,22 @@ export class Js2Kt {
           this.err.warn(callee, `window.${method ?? '?'}() has no native Kotlin mapping yet`);
           return `error("vesk: window.${method ?? '?'}() is not supported yet")`;
         }
+        if (objName === 'localStorage' || objName === 'sessionStorage') {
+          const store = objName === 'localStorage' ? 'local' : 'session';
+          const fn = method ? storeMember(store, method) : null;
+          if (fn) return `VeskWebStorage.${fn}(${this.argList(args)})`;
+        }
         if (UNSUPPORTED_BROWSER_OBJS.has(objName)) {
           this.err.warn(callee, `${objName}.${method ?? '?'}() has no native Kotlin mapping yet`);
           return `error("vesk: ${objName}.${method ?? '?'}() is not supported yet")`;
         }
+      }
+
+      // VeskSqliteDb handles (from `openSqlite(...)`) keep their own method
+      // surface: exec/run/get/all/close map straight through, which must win
+      // over the generic Map/regex member paths below.
+      if (member.object.type === 'Identifier' && this.sqliteVars.has(member.object.name as string)) {
+        return `${receiver}${safe}${this.id(method ?? '')}(${this.argList(args)})`;
       }
 
       // Map / Set / Date instance methods. The receiver is usually a strongly
@@ -792,7 +870,7 @@ export class Js2Kt {
         find: 'find', findIndex: 'indexOfFirst', some: 'any', every: 'all',
         sortedBy: 'sortedBy', distinctBy: 'distinctBy',
       };
-      if (method && method in LAMBDA_METHODS) {
+      if (method && Object.hasOwn(LAMBDA_METHODS, method)) {
         if (a0 && a0.type === 'ArrowFunctionExpression') {
           return `${receiver}${safe}${LAMBDA_METHODS[method!]}${this.arrowLambda(a0)}`;
         }
@@ -817,13 +895,13 @@ export class Js2Kt {
         pop: 'removeLast()',
         shift: 'removeFirst()',
       };
-      if (method && method in ZERO_ARG_METHODS && args.length === 0) {
+      if (method && Object.hasOwn(ZERO_ARG_METHODS, method) && args.length === 0) {
         return `${receiver}${safe}${ZERO_ARG_METHODS[method!]}`;
       }
       const ZERO_ARG_ONE_OPT: Record<string, string> = {
         toString: 'toString()',
       };
-      if (method && method in ZERO_ARG_ONE_OPT) {
+      if (method && Object.hasOwn(ZERO_ARG_ONE_OPT, method)) {
         return `${receiver}${safe}${ZERO_ARG_ONE_OPT[method!]}`;
       }
 
@@ -980,6 +1058,29 @@ export class Js2Kt {
       return ctor.type === 'Identifier' && ctor.name === 'Map';
     }
     return node.type === 'ObjectExpression';
+  }
+
+  // Calls whose results are JS objects (Kotlin Maps): fetch(url).json(),
+  // JSON.parse(...), and the auth helpers. Identifiers assigned from these get
+  // the jsMapGet member-access path so `user.name` compiles against Any?.
+  // A conditional counts when either branch produces one (`ok ? res.json() :
+  // null`), since jsMapGet is null-safe on the failing branch.
+  private jsObjectProducer(init: JsNode): boolean {
+    if (init.type === 'ConditionalExpression') {
+      return this.jsObjectProducer(init.consequent as JsNode) || this.jsObjectProducer(init.alternate as JsNode);
+    }
+    if (init.type !== 'CallExpression') return false;
+    const callee = init.callee as JsNode;
+    if (callee.type === 'Identifier') {
+      return callee.name === 'currentUser' || callee.name === 'signUp' || callee.name === 'signIn';
+    }
+    if (callee.type === 'MemberExpression') {
+      const prop = (callee.property as { name?: string } | null)?.name;
+      if (prop === 'json') return true;
+      const obj = callee.object as { type?: string; name?: string } | null;
+      return prop === 'parse' && obj?.type === 'Identifier' && obj.name === 'JSON';
+    }
+    return false;
   }
 
   // JS `coll.forEach(cb)` calls cb with (value, key/index, coll). Kotlin's
@@ -1393,6 +1494,260 @@ export class Js2Kt {
     return args.map((a, i) => this.coerceArg(paramTypes[i] ?? 'Any?', a)).join(', ');
   }
 
+  // ---- Library exports (`import { X } from '@vesk/...'`) ----
+
+  /** Translate a call to a library constructor export: a single JS object
+   *  literal whose properties become named Kotlin constructor arguments,
+   *  coerced per the export's typed signature. Fail-closed: unknown
+   *  properties, missing required parameters, spreads and unmappable types
+   *  are build errors, never silent miscompiles. */
+  private libConstructorCall(name: string, sig: LibExportSig, node: JsNode): string {
+    const args = (node.arguments as JsNode[]) ?? [];
+    // Zero-parameter constructors (`Gson()`, `OkHttpClient()`) map to the
+    // Kotlin no-arg constructor.
+    if (sig.params.length === 0) {
+      if (args.length > 0) {
+        this.err.warn(node, `library constructor '${name}' takes no arguments`);
+        return `error("vesk: '${name}' takes no arguments")`;
+      }
+      this.libImports.add(`import ${sig.qualified}`);
+      return `${ident(sig.target)}()`;
+    }
+    if (args.length !== 1) {
+      this.err.warn(node, `library constructor '${name}' takes exactly one object-literal argument`);
+      return `error("vesk: '${name}' expects a single object argument")`;
+    }
+    const obj = args[0] as JsNode;
+    if (obj.type !== 'ObjectExpression') {
+      this.err.warn(node, `library constructor '${name}' argument must be an object literal`);
+      return `error("vesk: '${name}' expects an object literal")`;
+    }
+    return this.libObjectLiteral(sig, obj);
+  }
+
+  // A library export is script-callable when its whole surface is primitive:
+  // every parameter coerces to a Kotlin literal (number/string/boolean/any)
+  // and the return value is a primitive or void. Anything object/array/enum
+  // shaped stays a non-callable value — never guessed at, never emitted.
+  private libCallable(sig: LibExportSig): boolean {
+    if (sig.isEnum) return false;
+    if (!sig.qualified || sig.target.length === 0) return false;
+    if (!sig.params.every((p) => p.shape === 'number' || p.shape === 'string' || p.shape === 'boolean' || p.shape === 'any')) return false;
+    return sig.returnShape === 'void' || sig.returnShape === 'number' || sig.returnShape === 'string' || sig.returnShape === 'boolean' || sig.returnShape === 'any';
+  }
+
+  /** Call a typed library function positionally, coercing each argument to its
+   *  declared Kotlin parameter type (the same coercion constructors use). */
+  private libFunctionCall(name: string, sig: LibExportSig, node: JsNode): string {
+    const args = (node.arguments as JsNode[]) ?? [];
+    const parts: string[] = [];
+    let stoppedAtDefault = false;
+    for (let i = 0; i < sig.params.length; i++) {
+      const p = sig.params[i]!;
+      if (i < args.length) {
+        parts.push(this.libArg(p, args[i]!));
+      } else if (sig.defaultParams.includes(p.name)) {
+        stoppedAtDefault = true;
+        break;
+      } else {
+        const missing = sig.params.slice(i).map((x) => x.name).join(', ');
+        this.err.warn(node, `library function '${name}' requires ${missing}`);
+        return `error("vesk: '${name}' is missing arguments: ${missing}")`;
+      }
+    }
+    if (!stoppedAtDefault && args.length > sig.params.length) {
+      this.err.warn(node, `library function '${name}' takes ${sig.params.length} argument(s), got ${args.length}`);
+    }
+    this.libImports.add(`import ${sig.qualified}`);
+    return `${ident(sig.target)}(${parts.join(', ')})`;
+  }
+
+  /** Translate an object literal into a named-argument constructor call for
+   *  the given constructor signature. */
+  private libObjectLiteral(sig: LibExportSig, obj: JsNode): string {
+    const paramsByName = new Map(sig.params.map((p) => [p.name, p] as const));
+    const provided = new Set<string>();
+    const parts: string[] = [];
+    for (const prop of (obj.properties as JsNode[]) ?? []) {
+      if (prop.type === 'SpreadElement') {
+        this.err.warn(prop, `spread is not supported inside a '${sig.name}' object literal`);
+        return `error("vesk: spread not supported in '${sig.name}'")`;
+      }
+      if (prop.type !== 'Property') {
+        this.err.warn(prop, `unsupported property kind in '${sig.name}' object literal`);
+        return `error("vesk: unsupported property in '${sig.name}'")`;
+      }
+      const key = prop.key as JsNode;
+      const keyName =
+        key.type === 'Identifier'
+          ? (key.name as string)
+          : key.type === 'Literal'
+            ? String((key.value as string | number) ?? '')
+            : null;
+      if (keyName === null) {
+        this.err.warn(prop, `computed keys are not supported in library object literals`);
+        return `error("vesk: computed key not supported in '${sig.name}'")`;
+      }
+      const param = paramsByName.get(keyName);
+      if (!param) {
+        this.err.warn(prop, `'${sig.name}' has no parameter '${keyName}' (parameters: ${sig.params.map((p) => p.name).join(', ')})`);
+        return `error("vesk: unknown '${sig.name}' parameter '${keyName}'")`;
+      }
+      provided.add(keyName);
+      parts.push(`${ident(keyName)} = ${this.libArg(param, prop.value as JsNode)}`);
+    }
+    const missing = sig.params.filter((p) => !provided.has(p.name) && !sig.defaultParams.includes(p.name)).map((p) => p.name);
+    if (missing.length > 0) {
+      this.err.warn(obj, `'${sig.name}' requires ${missing.join(', ')}`);
+      return `error("vesk: '${sig.name}' is missing required parameters: ${missing.join(', ')}")`;
+    }
+    return parts.length === 0 ? `${ident(sig.name)}()` : `${ident(sig.name)}(${parts.join(', ')})`;
+  }
+
+  /** Coerce a JS argument to a typed library parameter. */
+  libArg(param: LibParamSig, arg: JsNode): string {
+    switch (param.shape) {
+      case 'number':
+        return this.libNumber(param.typeName, this.expr(arg));
+      case 'string':
+        return `jsString(${this.expr(arg)})`;
+      case 'boolean':
+        return `truthy(${this.expr(arg)})`;
+      case 'any':
+        return this.expr(arg);
+      case 'enum':
+        return this.libEnum(param, arg);
+      case 'object':
+        return this.libObject(param, arg);
+      case 'array':
+        return this.libArray(param, arg);
+      default:
+        this.err.warn(arg, `library parameter '${param.name}' has an unmappable type (${param.shape})`);
+        return `error("vesk: '${param.name}' type '${param.shape}' is not translatable yet")`;
+    }
+  }
+
+  /** JS numbers coerce to the exact Kotlin numeric type the parameter needs. */
+  private libNumber(typeName: string | undefined, value: string): string {
+    switch (typeName) {
+      case 'kotlin.Float':
+        return `(num(${value})).toFloat()`;
+      case 'kotlin.Int':
+        return `(num(${value})).toInt()`;
+      case 'kotlin.Long':
+        return `(num(${value})).toLong()`;
+      case 'kotlin.Short':
+        return `(num(${value})).toShort()`;
+      case 'kotlin.Byte':
+        return `(num(${value})).toByte()`;
+      default:
+        return `num(${value})`;
+    }
+  }
+
+  /** Enum members resolve to Kotlin constants: `Gravity.TOP` or the equivalent
+   *  string literal `"TOP"`. Member references validate against the declared
+   *  values; unknown members and out-of-range strings are build errors. */
+  private libEnum(param: LibParamSig, arg: JsNode): string {
+    const typeName = param.typeName;
+    const values = param.enumValues;
+    if (!typeName || !values) {
+      this.err.warn(arg, `enum parameter '${param.name}' carries no type information`);
+      return `error("vesk: enum '${param.name}' is not typed")`;
+    }
+    const simpleName = typeName.slice(typeName.lastIndexOf('.') + 1);
+    if (arg.type === 'MemberExpression') {
+      const member = arg as unknown as { object: JsNode; property: JsNode; computed: boolean };
+      if (!member.computed && member.object.type === 'Identifier' && member.property.type === 'Identifier') {
+        const memberName = member.property.name as string;
+        if (!values.includes(memberName)) {
+          this.err.warn(arg, `'${simpleName}' has no member '${memberName}' (members: ${values.join(', ')})`);
+          return `error("vesk: unknown '${simpleName}' member '${memberName}'")`;
+        }
+        return `${ident(simpleName)}.${ident(memberName)}`;
+      }
+    }
+    if (arg.type === 'Literal' && typeof (arg.value as unknown) === 'string') {
+      const member = arg.value as string;
+      if (!values.includes(member)) {
+        this.err.warn(arg, `'${simpleName}' has no value '${member}' (values: ${values.join(', ')})`);
+        return `error("vesk: unknown '${simpleName}' value '${member}'")`;
+      }
+      this.libImports.add(`import ${typeName}`);
+      return `${ident(simpleName)}.${ident(member)}`;
+    }
+    this.err.warn(arg, `enum parameter '${param.name}' must reference a '${simpleName}' member (e.g. ${simpleName}.${values[0] ?? '?'})`);
+    return `error("vesk: '${param.name}' expects a ${simpleName} enum member")`;
+  }
+
+  /** Object params become constructor calls (or `mapOf` for Map/Pair params). */
+  private libObject(param: LibParamSig, arg: JsNode): string {
+    const typeName = param.typeName;
+    if (!typeName) {
+      this.err.warn(arg, `object parameter '${param.name}' carries no type information`);
+      return `error("vesk: '${param.name}' is not typed")`;
+    }
+    if (param.pairElements) {
+      if (arg.type !== 'ObjectExpression') return this.expr(arg);
+      const entries: string[] = [];
+      for (const prop of (arg.properties as JsNode[]) ?? []) {
+        if (prop.type !== 'Property') {
+          this.err.warn(prop, `unsupported map entry in '${param.name}'`);
+          return `error("vesk: unsupported map entry in '${param.name}'")`;
+        }
+        const key = prop.key as JsNode;
+        const keyStr = key.type === 'Identifier' ? (key.name as string) : key.type === 'Literal' ? String((key.value as string | number) ?? '') : null;
+        if (keyStr === null) {
+          this.err.warn(prop, `computed keys are not supported in map literals`);
+          return `error("vesk: computed key not supported in '${param.name}'")`;
+        }
+        const valueSig = param.pairElements[1] ?? ({ name: '', shape: 'any' as const });
+        entries.push(`${this.ktString(keyStr)} to ${this.libArg(valueSig, prop.value as JsNode)}`);
+      }
+      return entries.length === 0 ? `mapOf<String, Any?>()` : `mapOf<String, Any?>(${entries.join(', ')})`;
+    }
+    let target: LibExportSig | null = null;
+    for (const sig of this.libraryExports.values()) {
+      if (sig.isConstructor && sig.qualified === typeName) {
+        target = sig;
+        break;
+      }
+    }
+    if (!target) {
+      this.err.warn(arg, `'${param.name}' has type '${typeName}' which is not a constructible library export`);
+      return `error("vesk: '${param.name}' type '${typeName}' is not constructible")`;
+    }
+    // Non-literal args (constructor calls, variables, member chains) pass
+    // through the expression translator — the Kotlin type checker validates
+    // them against the parameter type at compile time.
+    if (arg.type !== 'ObjectExpression') return this.expr(arg);
+    return this.libObjectLiteral(target, arg);
+  }
+
+  /** Array params become `listOf(...)`, coercing each element. */
+  private libArray(param: LibParamSig, arg: JsNode): string {
+    const elem = param.elem ?? ({ name: '', shape: 'any' as const });
+    if (arg.type !== 'ArrayExpression') {
+      this.err.warn(arg, `'${param.name}' expects an array literal`);
+      return `error("vesk: '${param.name}' expects an array")`;
+    }
+    const elems = ((arg as { elements?: (JsNode | null)[] }).elements ?? []).filter((e): e is JsNode => e !== null);
+    if (elems.length === 0) {
+      const elemType =
+        elem.shape === 'object' || elem.shape === 'enum'
+          ? (elem.typeName ?? 'Any?')
+          : elem.shape === 'number'
+            ? (elem.typeName ?? 'Double')
+            : elem.shape === 'string'
+              ? 'String'
+              : elem.shape === 'boolean'
+                ? 'Boolean'
+                : 'Any?';
+      return `emptyList<${elemType}>()`;
+    }
+    return `listOf(${elems.map((e) => this.libArg(elem, e)).join(', ')})`;
+  }
+
   private blockLines(node: JsNode, indentLevel: number): string[] {
     const pad = '\t'.repeat(indentLevel);
     const lines: string[] = [];
@@ -1633,6 +1988,13 @@ export class Js2Kt {
           }
           if (id.type === 'Identifier' && initNode && initNode.type === 'ObjectExpression') {
             this.objVars.add(id.name as string);
+          }
+          if (id.type === 'Identifier' && initNode && this.jsObjectProducer(initNode as JsNode)) {
+            this.objVars.add(id.name as string);
+          }
+          if (id.type === 'Identifier' && initNode && initNode.type === 'CallExpression') {
+            const fn = initNode.callee as { type?: string; name?: string } | null;
+            if (fn?.type === 'Identifier' && fn.name === 'openSqlite') this.sqliteVars.add(id.name as string);
           }
           if (!(id as unknown as { lazy?: boolean }).lazy && (id.type === 'ObjectPattern' || id.type === 'ArrayPattern')) {
             const bind = (name: string, value: string): string => `${ktKind} ${this.id(name)} = ${value}`;

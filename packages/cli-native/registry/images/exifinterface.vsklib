@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "library": {
+    "id": "exifinterface",
+    "name": "ExifInterface",
+    "description": "Read/write EXIF metadata on image files",
+    "group": "androidx.exifinterface",
+    "artifact": "exifinterface",
+    "version": "1.3.7",
+    "gradle": ["androidx.exifinterface:exifinterface:1.3.7"],
+    "permissions": [],
+    "exports": ["ExifInterface"],
+    "tags": {},
+    "curated": true
+  }
+}

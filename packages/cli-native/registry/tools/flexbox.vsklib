@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "library": {
+    "id": "flexbox",
+    "name": "Flexbox",
+    "description": "Flexbox layout for Android",
+    "group": "com.google.android.flexbox",
+    "artifact": "flexbox",
+    "version": "3.0.0",
+    "gradle": ["com.google.android.flexbox:flexbox:3.0.0"],
+    "permissions": [],
+    "exports": ["FlexboxLayout"],
+    "tags": {},
+    "curated": true
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "library": {
+    "id": "accompanist-permissions",
+    "name": "Accompanist Permissions",
+    "description": "Compose runtime-permission helpers",
+    "group": "com.google.accompanist",
+    "artifact": "accompanist-permissions",
+    "version": "0.36.0",
+    "gradle": ["com.google.accompanist:accompanist-permissions:0.36.0"],
+    "permissions": [],
+    "exports": ["rememberPermissionState"],
+    "tags": {},
+    "curated": true
+  }
+}

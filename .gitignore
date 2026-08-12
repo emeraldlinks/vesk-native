@@ -4,3 +4,8 @@ dist/
 build/
 *.log
 .DS_Store
+.vsklib/
+# Registry binding artifacts are re-downloaded by binding-gen; the .vsklib
+# records and regenerated .ts typing files are the committed source of truth.
+packages/cli-native/registry/**/*.aar
+packages/cli-native/registry/**/*.jar

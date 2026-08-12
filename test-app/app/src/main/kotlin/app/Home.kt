@@ -112,11 +112,16 @@ fun Home(props: HomeProps = HomeProps(), content: @Composable () -> Unit = {}) {
 		Column(
 			modifier = Modifier.fillMaxWidth(),
 		) {
-			Text(
-				text = ("Categories").uppercase(),
+			Row(
 				modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
-				style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.2.sp, color = MaterialTheme.colorScheme.onSurfaceVariant),
-			)
+				verticalAlignment = Alignment.CenterVertically,
+				horizontalArrangement = Arrangement.SpaceBetween,
+			) {
+				Text(
+					text = ("Categories").uppercase(),
+					style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.2.sp, color = MaterialTheme.colorScheme.onSurfaceVariant),
+				)
+			}
 			Row(
 				modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -299,6 +304,62 @@ fun Home(props: HomeProps = HomeProps(), content: @Composable () -> Unit = {}) {
 					}
 					Column(
 						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF4F46E5)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
+					) {
+						Text(
+							text = "Open",
+						)
+					}
+				}
+			}
+		NavLink(props = NavLinkProps(href = "/lib"))
+			{
+				Row(
+					modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color(0xFFECFDF5)).padding(20.dp),
+					verticalAlignment = Alignment.CenterVertically,
+					horizontalArrangement = Arrangement.SpaceBetween,
+				) {
+					Column {
+						Text(
+							text = ("Installed libraries").uppercase(),
+							modifier = Modifier.fillMaxWidth(),
+							style = TextStyle(color = Color(0xFF059669), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.8.sp),
+						)
+						Text(
+							text = "Coil images & charts from .vsklib",
+							modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+							style = TextStyle(color = Color(0xFF064E3B), fontSize = 18.sp, lineHeight = 28.sp, fontWeight = FontWeight.ExtraBold),
+						)
+					}
+					Column(
+						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF059669)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
+					) {
+						Text(
+							text = "Open",
+						)
+					}
+				}
+			}
+		NavLink(props = NavLinkProps(href = "/labs"))
+			{
+				Row(
+					modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color(0xFFF0F9FF)).padding(20.dp),
+					verticalAlignment = Alignment.CenterVertically,
+					horizontalArrangement = Arrangement.SpaceBetween,
+				) {
+					Column {
+						Text(
+							text = ("Browser APIs lab").uppercase(),
+							modifier = Modifier.fillMaxWidth(),
+							style = TextStyle(color = Color(0xFF0284C7), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.8.sp),
+						)
+						Text(
+							text = "Storage, auth, fetch & sqlite",
+							modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+							style = TextStyle(color = Color(0xFF0C4A6E), fontSize = 18.sp, lineHeight = 28.sp, fontWeight = FontWeight.ExtraBold),
+						)
+					}
+					Column(
+						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF0284C7)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
 					) {
 						Text(
 							text = "Open",

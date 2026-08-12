@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "library": {
+    "id": "coil3",
+    "name": "Coil 3",
+    "description": "Multiplatform image loading for Compose",
+    "group": "io.coil-kt.coil3",
+    "artifact": "coil-compose",
+    "version": "3.0.4",
+    "gradle": ["io.coil-kt.coil3:coil-compose:3.0.4", "io.coil-kt.coil3:coil-network-okhttp:3.0.4"],
+    "permissions": ["android.permission.INTERNET"],
+    "exports": ["AsyncImage", "rememberAsyncImagePainter"],
+    "tags": {
+      "Coil3Image": {
+        "composable": "coil3.compose.AsyncImage",
+        "imports": ["coil3.compose.AsyncImage"],
+        "attrs": { "src": "model", "alt": "contentDescription" }
+      }
+    },
+    "curated": true
+  }
+}

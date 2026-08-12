@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "library": {
+    "id": "coil-gif",
+    "name": "Coil GIF",
+    "description": "GIF decoding support for Coil",
+    "group": "io.coil-kt",
+    "artifact": "coil-gif",
+    "version": "2.7.0",
+    "gradle": ["io.coil-kt:coil-gif:2.7.0"],
+    "permissions": [],
+    "exports": ["ImageDecoderDecoder", "PixelOpacity"],
+    "tags": {},
+    "curated": true
+  }
+}

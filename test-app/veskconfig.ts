@@ -51,5 +51,11 @@ export default defineConfig({
     },
   },
   permissions: [],
+  edgeToEdge: {
+    enabled: true,
+    paddingBars: true,
+    statusBarStyle: 'light',
+    navigationBarStyle: 'light',
+  },
   device: 'phone',
 })

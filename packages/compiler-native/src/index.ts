@@ -1,5 +1,6 @@
 export { compileVsk, getCompileErrors, compileVskResult, collectCustomCss, extractStylesheetLinks, extractImageSources, extractMediaSources, compileProjectModule } from '@compiler-native/kotlin-codegen';
 export type { CompileOptions, CompileResult, ProjectModuleCompile } from '@compiler-native/kotlin-codegen';
+export type { VskLibTag, VskLibSurface } from '@compiler-native/elements';
 export { parseCssClasses } from '@compiler-native/css';
 export type { CssParseResult } from '@compiler-native/css';
 export { classify, resolveModifier, resolveTextStyle, layoutArgs, elementAxis, isHidden } from '@compiler-native/tailwind';

@@ -1,6 +1,9 @@
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join, relative, resolve, dirname, basename, extname } from 'node:path';
 import { compileVskResult, collectCustomCss, extractStylesheetLinks, extractMediaSources, parseCssClasses } from '@compiler-native/index';
+import type { VskLibSurface } from '@compiler-native/index';
+import type { LibExportSig, LibParamSig } from '@compiler-native/elements';
+import { browserGlobalDecl, browserModuleDecl } from '@compiler-native/browser-api';
 import { setAdaptiveDark } from '@compiler-native/tailwind';
 import type { ModifierParts } from '@compiler-native/tailwind';
 import { parse } from '@vesk/compiler';
@@ -13,8 +16,10 @@ import { KtErrors } from '@compiler-native/js2kt';
 import type { JsNode } from '@compiler-native/js2kt';
 import type { VeskConfig } from 'vesk-native';
 import { AAPT2_OVERRIDE, DEFAULT_SDK, TEMPLATE_DIR, collectVskFiles, colorLiteral, log, slugify } from '@cli-native/constants';
-import { API_PERMISSIONS, MAX_SDK_PERMS, collectDeviceApiUsage, collectRuntimeUsage } from '@cli-native/usage';
+import { API_PERMISSIONS, MAX_SDK_PERMS, collectBrowserApiUsage, collectDeviceApiUsage, collectRuntimeUsage } from '@cli-native/usage';
 import { BIOMETRIC_AUTH_BODY, BIOMETRIC_CHECK_BODY, QRGEN_BODY, QR_OVERLAY_BLOCK, RUNTIME_CORE, RUNTIME_HELPERS, RUNTIME_ORDER, runtimeImports } from '@cli-native/runtime-templates';
+import { installedLibraries } from '@cli-native/vsklib';
+import type { VskLibRecord } from '@cli-native/vsklib';
 
 export function generateSettingsGradleKts(target: string, config: VeskConfig): void {
   const name = slugify(config.appName);
@@ -48,7 +53,9 @@ include(":app")
 // library ships "just in case". deviceApis is the set of device.* calls in
 // page scripts/elements; used is the set of pruned runtime helpers actually
 // referenced by the generated pages; hasMedia covers media elements.
-export function generateAppBuildGradleKts(target: string, config: VeskConfig, deviceApis: Set<string>, hasMedia: boolean, used: Set<string>): void {
+// libs are the installed .vsklib libraries — registered verbatim (their
+// permissions are wired into the manifest by generateManifest).
+export function generateAppBuildGradleKts(target: string, config: VeskConfig, deviceApis: Set<string>, hasMedia: boolean, used: Set<string>, libs: VskLibRecord[]): void {
   const deps = [
     'implementation(platform("androidx.compose:compose-bom:2026.06.01"))',
     'implementation("androidx.compose.ui:ui")',
@@ -80,6 +87,9 @@ export function generateAppBuildGradleKts(target: string, config: VeskConfig, de
   if (hasMedia || used.has('veskMediaHub') || used.has('veskAudio') || used.has('veskVideo')) {
     deps.push('implementation("androidx.media:media:1.7.0")');
   }
+  for (const lib of libs) {
+    for (const coord of lib.gradle) deps.push(`implementation("${coord}")`);
+  }
   writeFileSync(
     join(target, 'app', 'build.gradle.kts'),
     `plugins {
@@ -96,7 +106,7 @@ android {
 
     defaultConfig {
         applicationId = "${config.appId}"
-        minSdk = ${config.minSdk}
+        minSdk = ${Math.max(config.minSdk ?? 24, ...libs.map((l) => l.minSdk ?? 0))}
         targetSdk = ${config.targetSdk}
         versionCode = ${config.versionCode}
         versionName = "${config.versionName}"
@@ -126,7 +136,7 @@ ${deps.join('\n')}
   log('gen', `app/build.gradle.kts (${deps.length} dependencies, ${deps.length - 7} usage-derived)`);
 }
 
-export function generateManifest(target: string, config: VeskConfig, mediaReadPerms: boolean, mediaNotifyPerms: boolean, mediaButtonReceiver: boolean, deviceApis: Set<string>): void {
+export function generateManifest(target: string, config: VeskConfig, mediaReadPerms: boolean, mediaNotifyPerms: boolean, mediaButtonReceiver: boolean, deviceApis: Set<string>, libs: VskLibRecord[] = [], browserApis: Set<string> = new Set()): void {
   const orientationAttr = config.orientation ? `\n            android:screenOrientation="${config.orientation}"` : '';
   const autoPerms = new Set<string>();
   if (mediaReadPerms) {
@@ -140,6 +150,16 @@ export function generateManifest(target: string, config: VeskConfig, mediaReadPe
   // mirroring how storage permissions are derived from media elements.
   for (const api of deviceApis) {
     for (const p of API_PERMISSIONS[api] ?? []) autoPerms.add(p);
+  }
+  // Browser API usage (fetch -> INTERNET) derives permissions the same way —
+  // never "just in case".
+  for (const api of browserApis) {
+    for (const p of API_PERMISSIONS[api] ?? []) autoPerms.add(p);
+  }
+  // Installed .vsklib libraries register the permissions their APIs require
+  // (e.g. INTERNET for network clients) the same way at generation time.
+  for (const lib of libs) {
+    for (const p of lib.permissions) autoPerms.add(p);
   }
   // Package visibility on 11+: every implicit intent the toolchain can launch
   // needs a <queries> declaration (no broad QUERY_ALL_PACKAGES permission).
@@ -254,8 +274,40 @@ ${receiverBlock}${providerBlock}${screenRecordBlock}        <activity
   log('gen', 'AndroidManifest.xml (appName, orientation from config)');
 }
 
+// Perceived luminance of a '#RRGGBB' color; true for dark backgrounds that
+// need light system-bar icons. Hand-rolled hex scan (no regex in the
+// generator).
+function isDarkColor(hex: string): boolean {
+  let h = hex.trim();
+  if (h.startsWith('#')) h = h.slice(1);
+  if (h.length !== 6) return false;
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b)) return false;
+  return 0.299 * r + 0.587 * g + 0.114 * b < 128;
+}
+
+// `androidx.activity.SystemBarStyle` expression for an edge-to-edge bar
+// preference, with scrim colors drawn from the light/dark theme backgrounds.
+function systemBarStyleExpr(style: 'auto' | 'light' | 'dark' | undefined, lightBg: string, darkBg: string): string {
+  const parse = (c: string): string => `android.graphics.Color.parseColor("${c}")`;
+  switch (style ?? 'auto') {
+    case 'dark':
+      return `SystemBarStyle.dark(${parse(darkBg)})`;
+    case 'light':
+      return `SystemBarStyle.light(${parse(lightBg)}, ${parse(darkBg)})`;
+    default:
+      return `SystemBarStyle.auto(${parse(darkBg)}, ${parse(lightBg)})`;
+  }
+}
+
 export function generateThemes(target: string, config: VeskConfig): void {
   const c = config.colors;
+  // System bar icon contrast follows the bar background: dark bars (light
+  // icons) when the background is dark, light bars (dark icons) otherwise.
+  const darkBar = isDarkColor(c.background);
+  const lightFlags = darkBar ? 'false' : 'true';
   writeFileSync(
     join(target, 'app', 'src', 'main', 'res', 'values', 'themes.xml'),
     `<?xml version="1.0" encoding="utf-8"?>
@@ -266,20 +318,32 @@ export function generateThemes(target: string, config: VeskConfig): void {
         <item name="android:colorAccent">${c.primary}</item>
         <item name="android:colorBackground">${c.background}</item>
         <item name="android:statusBarColor">${c.background}</item>
+        <item name="android:navigationBarColor">${c.background}</item>
         <item name="android:windowBackground">${c.background}</item>
-        <item name="android:windowLightStatusBar">true</item>
-        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:windowLightStatusBar">${lightFlags}</item>
+        <item name="android:windowLightNavigationBar">${lightFlags}</item>
     </style>
 </resources>
 `,
   );
-  log('gen', 'themes.xml (colors from config)');
+  log('gen', 'themes.xml (colors, system-bar contrast from config)');
 }
 
 export function generateMainActivity(target: string, config: VeskConfig, mediaReadPerms: boolean, mediaNotifyPerms: boolean): void {
   const pkgPath = config.appId.split('.').join('/');
   const outDir = join(target, 'app', 'src', 'main', 'kotlin', pkgPath);
   mkdirSync(outDir, { recursive: true });
+  const e2e = config.edgeToEdge ?? {};
+  const e2eEnabled = e2e.enabled !== false;
+  const e2eImports = e2eEnabled ? `import androidx.activity.SystemBarStyle
+import androidx.activity.enableEdgeToEdge
+` : '';
+  const e2eCall = e2eEnabled
+    ? `        enableEdgeToEdge(
+            statusBarStyle = ${systemBarStyleExpr(e2e.statusBarStyle, config.colors.background, config.darkColors.background)},
+            navigationBarStyle = ${systemBarStyleExpr(e2e.navigationBarStyle, config.colors.background, config.darkColors.background)},
+        )\n`
+    : '';
   const permImports = (mediaReadPerms || mediaNotifyPerms)
     ? `import android.os.Build
 import androidx.activity.result.contract.ActivityResultContracts
@@ -294,8 +358,7 @@ import androidx.activity.result.contract.ActivityResultContracts
         if (Thread.getDefaultUncaughtExceptionHandler() !is DebugCrashLog) {
             Thread.setDefaultUncaughtExceptionHandler(DebugCrashLog(Thread.getDefaultUncaughtExceptionHandler()))
         }
-        enableEdgeToEdge()
-        if (intent.getBooleanExtra("vesk_notify_tap", false)) VeskDeviceSession.notifyTap?.invoke()
+${e2eCall}        if (intent.getBooleanExtra("vesk_notify_tap", false)) VeskDeviceSession.notifyTap?.invoke()
         if (Build.VERSION.SDK_INT >= 33) {
             mediaPermLauncher.launch(arrayOf(
                 ${[
@@ -318,8 +381,7 @@ import androidx.activity.result.contract.ActivityResultContracts
         if (Thread.getDefaultUncaughtExceptionHandler() !is DebugCrashLog) {
             Thread.setDefaultUncaughtExceptionHandler(DebugCrashLog(Thread.getDefaultUncaughtExceptionHandler()))
         }
-        enableEdgeToEdge()
-        if (intent.getBooleanExtra("vesk_notify_tap", false)) VeskDeviceSession.notifyTap?.invoke()
+${e2eCall}        if (intent.getBooleanExtra("vesk_notify_tap", false)) VeskDeviceSession.notifyTap?.invoke()
         setContent {`;
   writeFileSync(
     join(outDir, 'DebugCrashLog.kt'),
@@ -356,10 +418,9 @@ class DebugCrashLog(private val previous: Thread.UncaughtExceptionHandler?) : Th
     join(outDir, 'MainActivity.kt'),
     `package ${config.appId}
 
-${permImports}import android.os.Bundle
+${permImports}${e2eImports}import android.os.Bundle
 import android.content.Intent
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.fragment.app.FragmentActivity
@@ -599,7 +660,7 @@ function compileProjectModules(appDir: string): { registry: Map<string, Map<stri
   return { registry, kt: blocks.join('\n\n'), errors };
 }
 
-export function compileVskFiles(appDir: string, config: VeskConfig): void {
+export function compileVskFiles(appDir: string, config: VeskConfig, target: string): void {
   const outDir = join(appDir, 'src', 'main', 'kotlin', 'app');
   mkdirSync(outDir, { recursive: true });
 
@@ -615,20 +676,22 @@ export function compileVskFiles(appDir: string, config: VeskConfig): void {
   }
 
   const componentsWithoutProps = new Set<string>();
-  const componentNames = new Map<string, string[]>();
+  const componentNames = new Set<string>();
+  const componentNamesByFile = new Map<string, string[]>();
   for (const file of vskFiles) {
     const rel = toPosix(relative(appDir, file));
     const ast = parse(readFileSync(file, 'utf8')) as unknown as JsNode;
     const names: string[] = [];
     for (const d of findComponentDecls(ast)) {
       names.push(d.name);
+      componentNames.add(d.name);
       const p = d.params[0];
       if (!p || (p.type === 'Identifier' && p.name === 'content')) componentsWithoutProps.add(d.name);
     }
-    if (names.length) componentNames.set(rel, names);
+    if (names.length) componentNamesByFile.set(rel, names);
   }
 
-  const { registry: moduleRegistry, slugs: moduleSlugs } = buildModuleRegistry(appDir, vskFiles, componentNames);
+  const { registry: moduleRegistry, slugs: moduleSlugs } = buildModuleRegistry(appDir, vskFiles, componentNamesByFile);
 
   // Project JS/TS modules (imported from .vsk headers with relative paths)
   // compile to Kotlin declarations in Modules.kt; the registry maps each
@@ -718,9 +781,21 @@ export function compileVskFiles(appDir: string, config: VeskConfig): void {
   }
 
   const seen = new Map<string, number>();
+  // Installed .vsklib libraries resolve only through explicit header imports
+  // (`import { CoilImage } from '@vesk/coil'`), so a library's tags are never
+  // implicitly in scope for files that don't import them.
+  const vsklibRegistry = new Map<string, VskLibSurface>();
+  for (const lib of installedLibraries(target)) {
+    const exports = new Map<string, import('@compiler-native/elements').LibExportSig>();
+    for (const sig of Object.values(lib.signatures ?? {})) exports.set(sig.name, sig);
+    for (const name of lib.exports ?? []) {
+      if (!exports.has(name)) exports.set(name, { name, target: name, qualified: name, isConstructor: false, params: [], defaultParams: [], returnShape: 'any' });
+    }
+    vsklibRegistry.set(lib.id, { exports, tags: lib.tags ?? {} });
+  }
   for (const file of vskFiles) {
     const source = readFileSync(file, 'utf8');
-    const result = compileVskResult(source, file, { componentsWithoutProps, customClasses, scopedCustomClasses: scopedClasses, imageResources, mediaResources, rClass: `${config.appId}.R`, rootName: config.root ?? '', fileRel: relative(appDir, file), appDir, moduleRegistry, moduleSlugs, projectModuleRegistry, npmRegistry });
+    const result = compileVskResult(source, file, { componentsWithoutProps, componentNames, customClasses, scopedCustomClasses: scopedClasses, imageResources, mediaResources, rClass: `${config.appId}.R`, rootName: config.root ?? '', fileRel: relative(appDir, file), appDir, moduleRegistry, moduleSlugs, projectModuleRegistry, npmRegistry, vsklibRegistry });
     if (result.errors.length > 0) {
       console.error(`  [compile] errors in ${relative(appDir, file)}:`);
       for (const e of result.errors) console.error(`    ! ${e}`);
@@ -946,10 +1021,24 @@ export function generateAppKt(appDir: string, config: VeskConfig): void {
 import androidx.compose.ui.Alignment
 `
     : '';
+  // Edge-to-edge preference drives both the window setup (MainActivity) and
+  // how much room the content reserves for the system bars. With edge-to-edge
+  // disabled the classic window keeps content out of the bars on Android < 15,
+  // but Android 15+ (targetSdk 35) forces edge-to-edge, so the bars still need
+  // padding there.
+  const e2e = config.edgeToEdge ?? {};
+  const e2eEnabled = e2e.enabled !== false;
+  const padBars = e2eEnabled ? e2e.paddingBars !== false : true;
+  const padDecl = e2eEnabled
+    ? (padBars
+        ? `    val barsPadding = Modifier.statusBarsPadding().navigationBarsPadding()`
+        : `    val barsPadding = Modifier`)
+    : `    val barsPadding = if (Build.VERSION.SDK_INT >= 35) Modifier.statusBarsPadding().navigationBarsPadding() else Modifier`;
+  const buildImport = e2eEnabled ? '' : `import android.os.Build\n`;
   const contentBox = tablet
     ? `        // Tablet layout: content is constrained to a centered 840dp column.
         Box(modifier = Modifier.fillMaxSize()) {
-            Box(modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().widthIn(max = 840.dp).align(Alignment.Center)) {
+            Box(modifier = Modifier.fillMaxSize().then(barsPadding).widthIn(max = 840.dp).align(Alignment.Center)) {
                 Layout {
                     AppRouter(start = "/", routes = listOf(
                         ${routeLines}
@@ -957,9 +1046,10 @@ import androidx.compose.ui.Alignment
                 }
             }
         }`
-    : `        // System bars are drawn edge-to-edge; push the app content below the
-        // status bar and above the navigation bar.
-        Box(modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
+    : `        // System bars are drawn edge-to-edge (or, on Android 15+, the OS
+        // forces them to be); push the app content below the status bar and
+        // above the navigation bar.
+        Box(modifier = Modifier.fillMaxSize().then(barsPadding)) {
             Layout {
                 AppRouter(start = "/", routes = listOf(
                     ${routeLines}
@@ -981,7 +1071,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-${tabletImports}import app.navigation.*
+${buildImport}${tabletImports}import app.navigation.*
 
 @Composable
 fun App() {
@@ -990,6 +1080,7 @@ fun App() {
     // Register the current activity for browser-API dialogs (alert).
     val veskContext = LocalContext.current
     SideEffect { veskAppSetup(veskContext) }
+${padDecl}
     CompositionLocalProvider(LocalNavController provides nav) {
         ${contentBox.replace('\n', '\n        ')}
     }
@@ -997,6 +1088,214 @@ fun App() {
 `,
   );
   log('gen', `App.kt -> renders ${pages.length} routed pages${tablet ? ' (tablet layout)' : ''}`);
+}
+
+function isTsIdentifier(name: string): boolean {
+  if (name.length === 0) return false;
+  const c0 = name.charCodeAt(0);
+  const first = (c0 >= 97 && c0 <= 122) || (c0 >= 65 && c0 <= 90) || c0 === 95 || c0 === 36;
+  if (!first) return false;
+  for (let i = 1; i < name.length; i++) {
+    const c = name.charCodeAt(i);
+    const ok = (c >= 97 && c <= 122) || (c >= 65 && c <= 90) || (c >= 48 && c <= 57) || c === 95 || c === 36;
+    if (!ok) return false;
+  }
+  return true;
+}
+
+function tsTypeOf(sig: LibParamSig | undefined): string {
+  if (!sig) return 'any';
+  switch (sig.shape) {
+    case 'number':
+      return 'number';
+    case 'string':
+      return 'string';
+    case 'boolean':
+      return 'boolean';
+    case 'void':
+      return 'void';
+    case 'function':
+      return '(...args: any[]) => any';
+    case 'array':
+      return `Array<${tsTypeOf(sig.elem)}>`;
+    case 'enum': {
+      const values = (sig.enumValues ?? []).filter(isTsIdentifier);
+      return values.length > 0 ? values.map((v) => `'${v}'`).join(' | ') : 'string';
+    }
+    default:
+      return 'any';
+  }
+}
+
+// A library export is script-callable when its whole surface is primitive —
+// must match the compiler's `libCallable` gate so a declared TS signature can
+// never promise a call the compiler refuses to emit.
+function libCallable(sig: LibExportSig): boolean {
+  if (sig.isEnum) return false;
+  if (!sig.qualified || sig.target.length === 0) return false;
+  if (!sig.params.every((p) => p.shape === 'number' || p.shape === 'string' || p.shape === 'boolean' || p.shape === 'any')) return false;
+  return sig.returnShape === 'void' || sig.returnShape === 'number' || sig.returnShape === 'string' || sig.returnShape === 'boolean' || sig.returnShape === 'any';
+}
+
+function tsReturnType(sig: LibExportSig): string {
+  switch (sig.returnShape) {
+    case 'number':
+      return 'number';
+    case 'string':
+      return 'string';
+    case 'boolean':
+      return 'boolean';
+    case 'void':
+      return 'void';
+    default:
+      return 'any';
+  }
+}
+
+function libJsdoc(sig: LibExportSig): string[] {
+  if (!sig.jsdoc || sig.jsdoc.length === 0) return [];
+  const lines = sig.jsdoc.split('\n').map((l) => ` * ${l}`.trimEnd());
+  return ['/**', ...lines, ' */'];
+}
+
+function libExportDecl(sig: LibExportSig): string[] {
+  const doc = libJsdoc(sig);
+  if (sig.isEnum) {
+    const values = (sig.enumValues ?? []).filter(isTsIdentifier);
+    if (values.length === 0) return [...doc, `export declare const ${sig.name}: any;`];
+    const members = values.map((v) => `    readonly ${v}: '${v}';`).join('\n');
+    return [
+      ...doc,
+      `export declare const ${sig.name}: {\n${members}\n  };`,
+      `export declare type ${sig.name} = (typeof ${sig.name})[keyof typeof ${sig.name}];`,
+    ];
+  }
+  // Fully-typed free functions: all-primitive params and a primitive/void
+  // return — exactly the surface the compiler's libCallable gate can emit.
+  if (!sig.isConstructor && libCallable(sig)) {
+    const params = sig.params
+      .map((p, i) => `${isTsIdentifier(p.name) ? p.name : `arg${i}`}${sig.defaultParams.includes(p.name) ? '?' : ''}: ${tsTypeOf(p)}`)
+      .join(', ');
+    return [...doc, `export declare function ${sig.name}(${params}): ${tsReturnType(sig)};`];
+  }
+  // Non-constructor, non-enum exports are opaque values (the compiler only
+  // translates constructors, callable primitive functions and markup tags
+  // into Kotlin calls).
+  if (!sig.isConstructor) return [...doc, `export declare const ${sig.name}: any;`];
+  // Zero-parameter constructors (`Gson()`, `OkHttpClient()`) are plain
+  // function calls; instance types still serve as annotations.
+  if (sig.params.length === 0) {
+    return [
+      `export declare interface ${sig.name} {}`,
+      ...doc,
+      `export declare function ${sig.name}(): ${sig.name};`,
+    ];
+  }
+  // Library constructors are called with a single object literal
+  // (LineChartData({ ... })), and their instance type also serves as a type
+  // annotation (const chart: LineChartData). Emit an opaque interface for the
+  // type space plus a function declaration for the call form the compiler
+  // accepts — required params match the Kotlin params without defaults.
+  const props = sig.params
+    .map((p, i) => `    ${isTsIdentifier(p.name) ? p.name : `arg${i}`}${sig.defaultParams.includes(p.name) ? '?' : ''}: ${tsTypeOf(p)};`)
+    .join('\n');
+  return [
+    `export declare interface ${sig.name} {}`,
+    ...doc,
+    `export declare function ${sig.name}(props: {\n${props}\n  }): ${sig.name};`,
+  ];
+}
+
+// The per-library TS declaration lines for one library record, in the same
+// shape the compiler accepts: typed `export declare` lines for every signature,
+// plus opaque `export declare const` fallbacks for exports/tags without a typed
+// signature. Shared by the ambient module generator (`vesk-env.d.ts`) and the
+// per-library standalone typing files committed in the registry, so the two
+// never drift.
+export function vskLibDeclarationLines(record: VskLibRecord): string[] {
+  const decls = new Map<string, string[]>();
+  const sigs = record.signatures ?? {};
+  for (const name of Object.keys(sigs)) {
+    const sig = sigs[name];
+    if (sig) decls.set(name, libExportDecl(sig));
+  }
+  for (const name of record.exports) {
+    if (!decls.has(name)) decls.set(name, [`export declare const ${name}: any;`]);
+  }
+  for (const name of Object.keys(record.tags ?? {})) {
+    if (!decls.has(name)) decls.set(name, [`export declare const ${name}: any;`]);
+  }
+  return [...decls.values()].flat();
+}
+
+// A standalone, exportable `.ts` typing file for a library's `@vesk/<id>` virtual
+// module — the concrete type surface a library maintainer can ship alongside the
+// `.vsklib` binding. The compiler resolves names from the record (not this
+// file), but keeping this file next to the record gives editors, tsc and tooling
+// a real importable module instead of a synthesized ambient blob.
+export function vskLibTypingFile(record: VskLibRecord): string {
+  const lines = vskLibDeclarationLines(record);
+  const tags = Object.keys(record.tags ?? {});
+  const header = [
+    `// Generated by vesk-native from ${record.id}.vsklib — do not edit by hand.`,
+    `// Type surface for the \`@vesk/${record.id}\` virtual module (${record.name} ${record.version}).`,
+    `// Regenerate with packages/cli-native/src/metadata/regenerate-typings.ts.`,
+    `// The compiler resolves these names from the .vsklib record, not this file.`,
+    tags.length > 0 ? `// Markup tags: ${tags.map((t) => `<${t}>`).join(', ')}.` : '',
+  ].filter(Boolean);
+  return `${header.join('\n')}\n\n${lines.join('\n\n')}\n`;
+}
+
+// Ambient TypeScript declarations for the `@vesk/<id>` virtual modules the
+// compiler resolves at build time. There is no npm package behind them, so a
+// TS type-check or an IDE/LSP that parses the script sections would fail with
+// "Cannot find module '@vesk/<id>'". This generated .d.ts declares each
+// installed library's exports + markup tags from libraries.json — the same
+// source the compiler reads — so imports resolve with useful types. It is
+// regenerated on every build and after `vesk add/remove/update`; users never
+// edit it, and it never ships in the APK (type-only).
+export function generateVskLibDeclarations(target: string): void {
+  const libs = installedLibraries(target);
+  const modules: string[] = [];
+  for (const lib of libs) {
+    const body = vskLibDeclarationLines(lib).map((d) => `  ${d}`).join('\n');
+    modules.push(`declare module '@vesk/${lib.id}' {\n${body}\n}`);
+  }
+  const browserModule = browserModuleDecl();
+  const browserGlobal = browserGlobalDecl();
+  writeFileSync(
+    join(target, 'vesk-env.d.ts'),
+    `// Generated by vesk-native from libraries.json. The @vesk/* imports the
+// compiler resolves at build time are virtual modules with no npm package, so
+// editors, LSP and tsc resolve them against these ambient declarations.
+// Regenerated on every build and after 'vesk add/remove/update'.
+// Do not edit by hand.
+
+${modules.join('\n\n')}
+
+${browserModule}
+`,
+  );
+  if (browserGlobal) {
+    // The browser globals (openSqlite, auth) augment the global scope, which
+    // requires a module file; ambient @vesk module declarations require a
+    // script file — so the two live in separate generated files.
+    writeFileSync(
+      join(target, 'vesk-browser.d.ts'),
+      `// Generated by vesk-native. The vesk browser-API globals (openSqlite,
+// signUp/signIn/signOut/currentUser/isSignedIn + their interfaces) augment the
+// global scope here so they resolve without imports; standard browser globals
+// keep their DOM-lib types. Regenerated on every build. Do not edit by hand.
+
+${browserGlobal}
+
+// Makes this file a module so the declare-global surface above actually
+// augments the global scope.
+export {};
+`,
+    );
+  }
+  log('gen', `vesk-env.d.ts (${libs.length} virtual @vesk modules + @vesk/browser), vesk-browser.d.ts (browser globals)`);
 }
 
 export function generateProject(target: string, config: VeskConfig): void {
@@ -1029,6 +1328,14 @@ export function generateProject(target: string, config: VeskConfig): void {
   const deviceMedia = mediaRefs.some(({ src }) => isFileImageSrc(src));
   const hasMedia = mediaRefs.length > 0;
   const deviceApis = collectDeviceApiUsage(appDir);
+  const browserApis = collectBrowserApiUsage(appDir);
+  // Installed Kotlin libraries (root libraries.json — the committed source of
+  // truth): their gradle coordinates and permissions are registered here, at
+  // generation time.
+  const libs = installedLibraries(target);
+  // The @vesk/* virtual modules need type declarations for editors/LSP — emit
+  // them from the same installed-library records the compiler resolves.
+  generateVskLibDeclarations(target);
 
   generateSettingsGradleKts(target, config);
   // Semantic Tailwind neutrals (surface/onSurface/outline tokens) activate when
@@ -1037,18 +1344,18 @@ export function generateProject(target: string, config: VeskConfig): void {
   // device.* API usage in page scripts derives native needs (RECORD_AUDIO,
   // FileProvider, POST_NOTIFICATIONS) the same way elements derive storage.
   const deviceNotify = deviceApis.has('notify');
-  generateManifest(target, config, deviceMedia, hasMedia || deviceNotify, hasMedia, deviceApis);
+  generateManifest(target, config, deviceMedia, hasMedia || deviceNotify, hasMedia, deviceApis, libs, browserApis);
   generateThemes(target, config);
   generateMainActivity(target, config, deviceMedia, hasMedia || deviceNotify);
   generateThemeKt(target, config);
   generateRouterKt(appDir);
-  compileVskFiles(appDir, config);
+  compileVskFiles(appDir, config, target);
   generateAppKt(appDir, config);
   // Last: Runtime.kt is pruned to the helpers the generated pages actually use.
   // Gradle dependencies are derived from the same usage so they stay in lock
   // step with the pruned imports and code.
   const used = generateRuntimeKt(appDir, config);
-  generateAppBuildGradleKts(target, config, deviceApis, hasMedia, used);
+  generateAppBuildGradleKts(target, config, deviceApis, hasMedia, used, libs);
 }
 
 export function syncAapt2Override(gradleProperties: string): void {

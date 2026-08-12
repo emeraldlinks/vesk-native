@@ -10,6 +10,22 @@ get real compiler/JVM mappings, never workarounds in the demo app.
 
 ## Rules
 
+- **Never guess in registry signatures.** No library signature, browser API
+  surface, parameter type, enum member, or return shape in the `.vsklib`
+  registry (or in `@vesk/*` declarations) may be invented from memory or
+  assumed from the name.
+- **Never guess in the registry.** The registry records themselves are not
+  invented either: every field in a `.vsklib` file — library id, artifact
+  `group:artifact@<version>`, category, tags, essential/curated flags, and
+  every signature —   must come from a real, accessed source.
+  Access the real source to author each entry — the
+  installed AAR/JAR metadata via `binding-gen.ts`, the actual class/function
+  declarations, the library's GitHub repo/source
+  (e.g. GitHub releases, API docs, README examples, or the checked-out
+  source of a dependency), or the runtime source for browser APIs. Guessing has caused
+  runtime crashes before (e.g. the sqlite `bindArgs`/row-type mismatch); a
+  wrong signature is worse than a missing one. If a surface cannot be
+  verified, leave it out and fail closed — never fill it in.
 - **No regex in the compiler, parser, or code generator.** All structural
   source analysis (attributes, elements, template literals, class extraction,
   head/link discovery, CSS blocks) must go through the AST/token surfaces:

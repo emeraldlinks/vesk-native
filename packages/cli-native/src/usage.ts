@@ -68,6 +68,25 @@ const HELPER_FN_NAMES: Record<string, string> = {
   clearTimeout: 'VeskTimers',
   clearInterval: 'VeskTimers',
   veskAppSetup: 'VeskAppContext',
+  fetch: 'VeskFetch',
+  localGetItem: 'VeskWebStorage',
+  localSetItem: 'VeskWebStorage',
+  localRemoveItem: 'VeskWebStorage',
+  localClear: 'VeskWebStorage',
+  localKey: 'VeskWebStorage',
+  localLength: 'VeskWebStorage',
+  sessionGetItem: 'VeskWebStorage',
+  sessionSetItem: 'VeskWebStorage',
+  sessionRemoveItem: 'VeskWebStorage',
+  sessionClear: 'VeskWebStorage',
+  sessionKey: 'VeskWebStorage',
+  sessionLength: 'VeskWebStorage',
+  openDatabase: 'VeskSqlite',
+  signUp: 'VeskAuth',
+  signIn: 'VeskAuth',
+  signOut: 'VeskAuth',
+  currentUser: 'VeskAuth',
+  isSignedIn: 'VeskAuth',
   count: 'JsConsole',
   countReset: 'JsConsole',
   time: 'JsConsole',
@@ -208,6 +227,7 @@ export const API_PERMISSIONS: Record<string, string[]> = {
   checkBiometrics: ['android.permission.USE_BIOMETRIC'],
   authenticate: ['android.permission.USE_BIOMETRIC'],
   startScreenRecord: ['android.permission.FOREGROUND_SERVICE', 'android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION'],
+  fetch: ['android.permission.INTERNET'],
 };
 
 // Permissions that only exist for a bounded SDK range (legacy Bluetooth APIs).
@@ -312,6 +332,45 @@ export function collectDeviceApiUsage(appDir: string): Set<string> {
         if (apis) for (const api of apis) used.add(api);
       }
     });
+  }
+  return used;
+}
+
+// Browser APIs mapped by the native runtime (Web Storage, fetch, sqlite,
+// auth/sessions). Scanning the AST for these decides their manifest needs
+// (INTERNET for fetch) the same way device-API usage drives device
+// permissions — the compiler maps them, never a JS shim.
+const BROWSER_APIS = new Set([
+  'fetch', 'localStorage', 'sessionStorage', 'openSqlite',
+  'signUp', 'signIn', 'signOut', 'currentUser', 'isSignedIn',
+]);
+
+export function collectBrowserApiUsage(appDir: string): Set<string> {
+  const used = new Set<string>();
+  const walk = (node: JsNode): void => {
+    if (node.type === 'CallExpression') {
+      const callee = node.callee as JsNode | null;
+      const api = callee?.type === 'Identifier' ? (callee.name as string) : null;
+      if (api && BROWSER_APIS.has(api)) used.add(api);
+    }
+    if (node.type === 'MemberExpression') {
+      const obj = node.object as JsNode | null;
+      if (obj?.type === 'Identifier' && (obj.name === 'localStorage' || obj.name === 'sessionStorage')) used.add(obj.name);
+    }
+    for (const key of Object.keys(node)) {
+      if (key === 'type') continue;
+      const v = (node as unknown as Record<string, unknown>)[key];
+      if (Array.isArray(v)) {
+        for (const item of v) if (item && typeof item === 'object') walk(item as JsNode);
+      } else if (v && typeof v === 'object') {
+        walk(v as JsNode);
+      }
+    }
+  };
+  for (const f of collectVskFiles(appDir)) {
+    const source = readFileSync(f, 'utf8');
+    const ast = parse(source) as unknown as JsNode;
+    for (const d of findComponentDecls(ast)) walk(d.node);
   }
   return used;
 }

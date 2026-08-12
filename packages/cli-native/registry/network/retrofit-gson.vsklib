@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "library": {
+    "id": "retrofit-gson",
+    "name": "Retrofit Gson Converter",
+    "description": "Gson converter for Retrofit responses",
+    "group": "com.squareup.retrofit2",
+    "artifact": "converter-gson",
+    "version": "2.11.0",
+    "gradle": ["com.squareup.retrofit2:converter-gson:2.11.0"],
+    "permissions": ["android.permission.INTERNET"],
+    "exports": ["GsonConverterFactory"],
+    "tags": {},
+    "curated": true
+  }
+}

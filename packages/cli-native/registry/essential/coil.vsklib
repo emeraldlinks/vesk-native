@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "library": {
+    "id": "coil",
+    "name": "Coil",
+    "description": "Image loading for Compose (AsyncImage, rememberAsyncImagePainter)",
+    "group": "io.coil-kt",
+    "artifact": "coil-compose",
+    "version": "2.7.0",
+    "gradle": ["io.coil-kt:coil-compose:2.7.0"],
+    "permissions": ["android.permission.INTERNET"],
+    "exports": ["AsyncImage", "rememberAsyncImagePainter", "ImageLoader", "ImageRequest"],
+    "tags": {
+      "CoilImage": {
+        "composable": "AsyncImage",
+        "imports": ["coil.compose.AsyncImage"],
+        "attrs": { "src": "model", "alt": "contentDescription" }
+      }
+    },
+    "essential": true,
+    "curated": true
+  }
+}

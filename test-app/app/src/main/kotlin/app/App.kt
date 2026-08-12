@@ -19,10 +19,12 @@ fun App() {
     // Register the current activity for browser-API dialogs (alert).
     val veskContext = LocalContext.current
     SideEffect { veskAppSetup(veskContext) }
+    val barsPadding = Modifier.statusBarsPadding().navigationBarsPadding()
     CompositionLocalProvider(LocalNavController provides nav) {
-                // System bars are drawn edge-to-edge; push the app content below the
-                // status bar and above the navigation bar.
-        Box(modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
+                // System bars are drawn edge-to-edge (or, on Android 15+, the OS
+                // forces them to be); push the app content below the status bar and
+        // above the navigation bar.
+        Box(modifier = Modifier.fillMaxSize().then(barsPadding)) {
             Layout {
                 AppRouter(start = "/", routes = listOf(
                     Route("/about") { About() },
@@ -33,6 +35,8 @@ fun App() {
         Route("/checkout") { CheckoutPage() },
         Route("/lab/badge") { Badge() },
         Route("/lab") { Lab() },
+        Route("/labs") { Labs() },
+        Route("/lib") { Lib() },
         Route("/media") { Media(props = MediaProps(heading = "Native media lab", blurb = "camera, recorder, pickers & media broadcast")) },
         Route("/") { Home(props = HomeProps(promo = "Members save 20% today", cta = "Shop the drop")) },
         Route("/shop/arctic-hoodie") { ArcticHoodie() },

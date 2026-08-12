@@ -2695,6 +2695,13 @@ fun NavLink(props: NavLinkProps, content: @Composable () -> Unit = {}) {
 }
 
 
+fun jsString(v: Any?): String = when (v) {
+    null -> "null"
+    is String -> v
+    else -> v.toString()
+}
+
+
 fun jsStringify(v: Any?): String = when (v) {
     null -> "null"
     is String -> "\"$v\""
@@ -2724,6 +2731,17 @@ fun jsSize(coll: Any?): Int = when (coll) {
     is Set<*> -> coll.size
     is Map<*, *> -> coll.size
     is String -> coll.length
+    else -> 0
+}
+
+
+fun jsLength(coll: Any?): Int = when (coll) {
+    is String -> coll.length
+    is CharSequence -> coll.length
+    is List<*> -> coll.size
+    is Set<*> -> coll.size
+    is Map<*, *> -> coll.size
+    is Array<*> -> coll.size
     else -> 0
 }
 
@@ -2773,4 +2791,251 @@ fun jsAlert(message: Any?) {
         .setMessage(if (message == null) "" else message.toString())
         .setPositiveButton("OK", null)
         .show()
+}
+
+
+// localStorage / sessionStorage (Web Storage): localStorage persists across
+// restarts in SharedPreferences, sessionStorage lives in memory for the
+// process lifetime. JS semantics: values are stored as strings, getItem
+// returns null for missing keys, key(i) is the i-th key or null.
+object VeskWebStorage {
+    private val prefs by lazy {
+        VeskAppContext.activity?.applicationContext
+            ?.getSharedPreferences("vesk_web_storage", android.content.Context.MODE_PRIVATE)
+    }
+    private val session = LinkedHashMap<String?, String>()
+
+    fun localGetItem(key: Any?): Any? = prefs?.getString(key?.toString(), null)
+    fun localSetItem(key: Any?, value: Any?) { prefs?.edit()?.putString(key?.toString(), storeString(value))?.apply() }
+    fun localRemoveItem(key: Any?) { prefs?.edit()?.remove(key?.toString())?.apply() }
+    fun localClear() { prefs?.edit()?.clear()?.apply() }
+    fun localKey(i: Any?): Any? = localKeys().getOrNull(num(i).toInt())
+    fun localLength(): Int = localKeys().size
+
+    fun sessionGetItem(key: Any?): Any? = session[key?.toString()]
+    fun sessionSetItem(key: Any?, value: Any?) { session.put(key?.toString(), storeString(value)) }
+    fun sessionRemoveItem(key: Any?) { session.remove(key?.toString()) }
+    fun sessionClear() { session.clear() }
+    fun sessionKey(i: Any?): Any? = session.keys.toList().getOrNull(num(i).toInt())
+    fun sessionLength(): Int = session.size
+
+    private fun localKeys(): List<String> = prefs?.all?.keys?.sorted() ?: emptyList()
+    private fun storeString(v: Any?): String = if (v == null) "null" else v.toString()
+}
+
+
+fun jsParseJson(s: Any?): Any? = jsJsonValue(org.json.JSONTokener(jsString(s)).nextValue())
+private fun jsJsonValue(v: Any?): Any? = when (v) {
+    org.json.JSONObject.NULL -> null
+    is org.json.JSONObject -> {
+        val m = LinkedHashMap<String, Any?>()
+        val it = v.keys()
+        while (it.hasNext()) { val k = it.next(); m[k] = jsJsonValue(v.opt(k)) }
+        m
+    }
+    is org.json.JSONArray -> List(v.length()) { i -> jsJsonValue(v.opt(i)) }
+    else -> v
+}
+
+
+// window.fetch mapped natively. The request runs on the IO dispatcher and
+// returns a browser-shaped VeskResponse. vesk-native's fetch is synchronous
+// (blocking) until async/await lands; the values (status/ok/statusText/
+// text()/json()) match browser semantics.
+class VeskResponse(
+    val url: String,
+    val status: Int,
+    val statusText: String,
+    val ok: Boolean,
+    val headers: Map<String, String>,
+    private val bodyText: String,
+) {
+    fun text(): String = bodyText
+    fun json(): Any? = jsParseJson(bodyText)
+}
+
+object VeskFetch {
+    fun fetch(url: String, init: Any? = null): VeskResponse {
+        val opts = init as? Map<*, *> ?: emptyMap<Any, Any>()
+        val method = (jsMapGet(opts, "method") as? String)?.uppercase() ?: "GET"
+        val headers = jsMapGet(opts, "headers") as? Map<*, *> ?: emptyMap<Any, Any>()
+        val body = jsMapGet(opts, "body")?.toString()
+        return kotlinx.coroutines.runBlocking(kotlinx.coroutines.Dispatchers.IO) {
+            val conn = runCatching {
+                (java.net.URL(url).openConnection() as java.net.HttpURLConnection).apply {
+                    requestMethod = method
+                    connectTimeout = 8000
+                    readTimeout = 8000
+                    for ((k, v) in headers) setRequestProperty(k.toString(), v.toString())
+                    if (body != null && method != "GET" && method != "HEAD") {
+                        doOutput = true
+                        outputStream.use { it.write(body.toByteArray(Charsets.UTF_8)) }
+                    }
+                }
+            }.getOrElse { return@runBlocking VeskResponse(url, 0, it.message ?: "Network error", false, emptyMap(), "") }
+            val code = conn.responseCode
+            val text = (if (code in 200..299) conn.inputStream else conn.errorStream)
+                ?.bufferedReader(Charsets.UTF_8)?.use { it.readText() } ?: ""
+            val hdrs = buildMap {
+                var i = 0
+                while (true) {
+                    val k = conn.getHeaderFieldKey(i) ?: break
+                    put(k, conn.getHeaderField(i))
+                    i++
+                }
+            }
+            conn.disconnect()
+            VeskResponse(url, code, conn.responseMessage ?: "", code in 200..299, hdrs, text)
+        }
+    }
+}
+
+
+// openSqlite(name) — native SQLite with a better-sqlite3-style surface:
+// exec/run/get/all/close. Rows are List<Map<String, Any?>>; params bind
+// positionally. Handles are cached per database name for the process.
+class VeskSqliteDb internal constructor(db: android.database.sqlite.SQLiteDatabase) {
+    private var database: android.database.sqlite.SQLiteDatabase? = db
+
+    fun exec(sql: String) { database?.execSQL(sql) }
+    fun run(sql: String, params: Any? = null): Map<String, Any?> {
+        val db = database ?: return mapOf("lastInsertRowid" to 0L, "changes" to 0L)
+        val stmt = db.compileStatement(sql)
+        bindStatement(stmt, params)
+        stmt.execute()
+        stmt.close()
+        var lastId = 0L
+        var changes = 0L
+        db.rawQuery("SELECT last_insert_rowid() AS id, changes() AS ch", null).use { c ->
+            if (c.moveToFirst()) {
+                lastId = c.getLong(0)
+                changes = c.getLong(1)
+            }
+        }
+        return mapOf("lastInsertRowid" to lastId, "changes" to changes)
+    }
+    fun get(sql: String, params: Any? = null): Map<String, Any?>? = query(sql, params).firstOrNull()
+    fun all(sql: String, params: Any? = null): List<Map<String, Any?>> = query(sql, params)
+    fun close() { database?.close(); database = null }
+
+    private fun query(sql: String, params: Any?): List<Map<String, Any?>> {
+        val db = database ?: return emptyList()
+        val cur = db.rawQuery(sql, bindArgs(params))
+        return try {
+            val cols = cur.columnNames
+            val out = mutableListOf<Map<String, Any?>>()
+            while (cur.moveToNext()) {
+                val row = LinkedHashMap<String, Any?>()
+                for (c in cols) row[c] = colValue(cur, c)
+                out.add(row)
+            }
+            out
+        } finally {
+            cur.close()
+        }
+    }
+    private fun bindStatement(stmt: android.database.sqlite.SQLiteStatement, params: Any?) {
+        val list: List<Any?> = when (params) {
+            null -> emptyList()
+            is List<*> -> params
+            is Array<*> -> params.toList()
+            else -> return
+        }
+        list.forEachIndexed { i, v ->
+            if (v == null) stmt.bindNull(i + 1) else stmt.bindString(i + 1, bindValue(v) ?: "")
+        }
+    }
+    private fun bindArgs(params: Any?): Array<String?>? = when (params) {
+        null -> null
+        is List<*> -> params.map { bindValue(it) }.toTypedArray()
+        is Array<*> -> params.map { bindValue(it) }.toTypedArray()
+        else -> null
+    }
+    private fun bindValue(v: Any?): String? = when (v) {
+        null -> null
+        is Boolean -> if (v) "1" else "0"
+        else -> v.toString()
+    }
+    private fun colValue(cur: android.database.Cursor, col: String): Any? {
+        val idx = cur.getColumnIndexOrThrow(col)
+        return when (cur.getType(idx)) {
+            android.database.Cursor.FIELD_TYPE_INTEGER -> cur.getLong(idx)
+            android.database.Cursor.FIELD_TYPE_FLOAT -> cur.getDouble(idx)
+            android.database.Cursor.FIELD_TYPE_BLOB -> cur.getBlob(idx)
+            else -> cur.getString(idx)
+        }
+    }
+}
+
+object VeskSqlite {
+    private val handles = mutableMapOf<String, VeskSqliteDb>()
+    fun openDatabase(name: String, version: Int = 1): VeskSqliteDb = handles.getOrPut(name) {
+        val ctx = VeskAppContext.activity?.applicationContext
+        val db = if (ctx == null) {
+            android.database.sqlite.SQLiteDatabase.create(null)
+        } else {
+            ctx.openOrCreateDatabase(name, android.content.Context.MODE_PRIVATE, null)
+        }
+        VeskSqliteDb(db)
+    }
+}
+
+
+// Auth + sessions: users live in a native sqlite database (vesk_auth); the
+// current session persists in localStorage so it survives app restarts.
+// Passwords are stored as a SHA-256 hash of "username:password" — a native
+// hash, never a JS shim.
+object VeskAuth {
+    private const val DB_NAME = "vesk_auth"
+    private const val SESSION_USER = "vesk.session.user"
+    private const val SESSION_STATE = "vesk.session.signedIn"
+    private val db by lazy { VeskSqlite.openDatabase(DB_NAME) }
+    private var ready = false
+
+    private fun ensure() {
+        if (ready) return
+        db.exec("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE NOT NULL, pass TEXT NOT NULL)")
+        ready = true
+    }
+
+    fun signUp(username: Any?, password: Any?): Map<String, Any?>? {
+        val u = username?.toString()?.trim() ?: return null
+        val p = password?.toString() ?: ""
+        if (u.isEmpty() || p.isEmpty()) return null
+        ensure()
+        if (db.get("SELECT id FROM users WHERE username = ?", listOf(u)) != null) return null
+        db.run("INSERT INTO users (username, pass) VALUES (?, ?)", listOf(u, hash("$u:$p")))
+        return db.get("SELECT id, username FROM users WHERE username = ?", listOf(u))
+    }
+
+    fun signIn(username: Any?, password: Any?): Map<String, Any?>? {
+        val u = username?.toString()?.trim() ?: return null
+        val p = password?.toString() ?: ""
+        ensure()
+        val user = db.get(
+            "SELECT id, username FROM users WHERE username = ? AND pass = ?",
+            listOf(u, hash("$u:$p")),
+        ) ?: return null
+        VeskWebStorage.localSetItem(SESSION_USER, jsMapGet(user, "username"))
+        VeskWebStorage.localSetItem(SESSION_STATE, "1")
+        return user
+    }
+
+    fun signOut() {
+        VeskWebStorage.localRemoveItem(SESSION_USER)
+        VeskWebStorage.localRemoveItem(SESSION_STATE)
+    }
+
+    fun currentUser(): Map<String, Any?>? {
+        if (VeskWebStorage.localGetItem(SESSION_STATE) != "1") return null
+        val u = VeskWebStorage.localGetItem(SESSION_USER)?.toString() ?: return null
+        ensure()
+        return db.get("SELECT id, username FROM users WHERE username = ?", listOf(u))
+    }
+
+    fun isSignedIn(): Boolean = currentUser() != null
+
+    private fun hash(s: String): String = java.security.MessageDigest.getInstance("SHA-256")
+        .digest(s.toByteArray(Charsets.UTF_8))
+        .joinToString("") { b -> (b.toInt() and 0xFF).toString(16).padStart(2, '0') }
 }

@@ -110,6 +110,7 @@
 **Goal:** All common native mobile APIs callable directly from `.vsk`.
 
 ### 5a — Core APIs
+- [x] **Browser API mappings (storage, auth, fetch, sqlite):** `localStorage`/`sessionStorage` → SharedPreferences `VeskWebStorage`; `fetch()` → native `VeskFetch`/`VeskResponse` (synchronous, browser-shaped); `signUp`/`signIn`/`signOut`/`currentUser`/`isSignedIn` → `VeskAuth` (SHA-256 users in sqlite, session in localStorage); `openSqlite()` → `VeskSqlite`/`VeskSqliteDb` (better-sqlite3-style exec/run/get/all/close). Usage-derived: fetch → `INTERNET` permission only when a page calls it; helpers pruned unless used. Demo at `test-app/app/labs/page.vsk` (reachable via home button).
 - [ ] Biometrics: `BiometricPrompt` (fingerprint, face) via `@vesk/native/biometrics`
 - [ ] Notifications: channels, `POST_NOTIFICATIONS` permission, `@vesk/native/notifications`
 - [ ] Clipboard: read/write text, `@vesk/native/clipboard`
@@ -177,7 +178,7 @@
 ### 7c — Project Polish
 - [ ] App icons: generated from `veskconfig.json` (adaptive icons Android, iOS)
 - [ ] Splash screen: configurable color + logo
-- [ ] Edge-to-edge display, system bars theming
+- [x] Edge-to-edge display, system bars theming — `edgeToEdge` in `veskconfig.ts`: `enabled` (classic layout on Android < 15, with SDK-35+ runtime fallback padding), `paddingBars` (full-bleed), `statusBarStyle`/`navigationBarStyle` (`auto`/`light`/`dark` → `SystemBarStyle`), plus luminance-derived `windowLightStatusBar`/`windowLightNavigationBar` and bar colors in themes.xml
 - [ ] ProGuard/R8 rules generated for Compose + native APIs
 - [ ] Play Store / App Store signing config scaffold
 - [ ] Documentation site: getting started, API reference, examples
@@ -198,11 +199,96 @@
 
 ---
 
+## Phase 9 — Library Ecosystem: npm Packages & Kotlin Libraries
+**Goal:** Vanilla-JS npm packages compile to Kotlin; native Kotlin libraries install and are used from `.vsk` via (auto-generated) bindings. Full design: `vsklibs.md`.
+
+### 9a — npm Tier 1: Static ESM (in progress)
+- [ ] Four acorn-blocking mechanisms: per-instance overrides, `this`-binding (`.call`/`.apply` → binding-arg), static object props + method aliases, dynamic-flags `jsRegExp`
+- [ ] Module object model: map-builder constructor rewriting; module-mode `jsMapGet`/`jsMapSet` member routing; `this.X`/class-name receivers stay raw
+- [ ] acorn compiles clean (0 errors); lab imports `parse`/`version` from acorn; Gradle green
+- [ ] Recursive dep-graph resolution: cycles, realpath dedupe, one `app.vmod.<pkg>` per package
+- [ ] `exports` condition maps (`browser`/`node`/subpaths), dual CJS/ESM preference, `type` field
+- [ ] Lockfile-pinned, deterministic resolution (npm/pnpm/yarn agnostic)
+- [ ] Conformance fixtures `fixtures/npm/` (one package per pattern, assert-clean)
+- [ ] Pre-flight package scanner (all blockers reported in one pass)
+- [ ] Hard-error taxonomy: package → file → construct → reason
+
+### 9b — npm Tier 2: CJS Packages
+- [ ] `module.exports`/`exports.x`/`require()` → ESM-shaped AST reuse of the module compiler
+- [ ] `require` specifiers resolved through `resolveNpmTarget`
+- [ ] CJS fixture conformance; hard error for truly unportable shapes
+
+### 9c — Vanilla JS UI Kits (render bridge)
+- [ ] `vesk.render(html)` → Compose `Text`/`AnnotatedString` (marked/micromark/markdown-it)
+- [ ] `vesk.icon(paths)` → `ImageVector` bridge (lucide-style path data)
+- [ ] `vesk.canvas(ops)` → Compose `Canvas` bridge (chart.js layout/scale math)
+- [ ] `vesk.animate(...)` → Compose `animate*`/spring bridge (motion.js easing math)
+- [ ] Coupling test enforced: kits reaching into React/DOM internals = hard error → `.vsk` kit instead
+
+### 9d — npm Tier 3: Node Built-ins
+- [ ] Register Kotlin mappings per API (never JS shims): `events`, `util`, `assert`, `path`, `process.env` → config
+- [ ] `crypto` → Keystore/`MessageDigest` where semantics match; unmappable → hard error
+- [ ] `fs`/`stream`/`buffer`/`net` → hard errors until a real Android mapping exists
+
+### 9e — npm Tier 4: Language Features
+- [ ] Promises/`async`/`await` → coroutines
+- [ ] Generators, `Symbol`, `Proxy`/`Reflect`, `WeakMap`, typed arrays, `BigInt` — exact-or-error
+
+### 9f — Kotlin Libraries: `.vsklib`
+- [ ] Binding format (`.vsklib`): exports, tags, coercions, glue helpers, gradle deps, permissions
+- [x] `.vsklib/libraries.json` installed-library registry + CLI library management (see 9f1)
+- [ ] Import resolution branch: relative file → npm compiled → `.vsklib` registry
+- [ ] Tag + script usage from `.vsk` and `.ts` (virtual JS module surface); unbound API = hard error
+- [ ] Coercion glue at the JS↔Kotlin boundary (Map facades for object-returning APIs)
+- [ ] Builtin registry growth: Room/SQLite, WorkManager, location, notifications, charts, typed HTTP (MVP: coil/retrofit/okhttp/gson/moshi/serialization/datastore/lottie/zxing/flexbox/palette)
+- [ ] Third-party `.vsklib` publish format
+
+### 9f1 — CLI library management (`vesk [command] [pkg] [dir]`) — **MVP landed**
+- [x] `.vsklib/libraries.json` schema: `{ version, libraries: { id: { id, name, group, artifact, version, gradle[], permissions[], exports[], tags[] } } }`
+- [x] Builtin registry (`LIBRARY_REGISTRY` in `packages/cli-native/src/vsklib.ts`): real Maven coordinates + permissions, registered like `API_PERMISSIONS`
+- [x] `vesk add <pkg>`: registry resolve (builtin) → best-effort Maven Central verify (404/missing version = hard error, offline = warn) → append pinned record → print exports/tags
+- [x] `vesk add`/`update` derive library permissions **at add/update time** (never manual-after-add): `deriveLibraryPermissions` merges the AAR's declared manifest permissions with `LIBRARY_PERMISSION_RULES` (Maven-group rules for network clients — coil/glide/okhttp/okhttp3/retrofit2/picasso/ktor → `INTERNET` — which ship without declaring it); `config.permissions` remains the manual escape hatch. test-app manifest verified: INTERNET derived from coil+glide records, zero manual entries.
+- [x] `vesk update <pkg>` / `vesk update`: bump pin (`id@version` or latest registry version), all libs when no pkg
+- [x] `vesk remove <pkg>`: drop record; next build prunes gradle dep + manifest permissions
+- [x] `[pkg]` forms `id | id@version | group:artifact`; app-dir positional detection for `[dir]`
+- [x] Build-time wiring in `generateProject`: gradle `implementation(...)` deps + manifest `<uses-permission>` entries emitted from installed records
+- [x] Editor/LSP + `tsc` support for the `@vesk/<id>` virtual module surface: generated `vesk-env.d.ts` (regenerated on every build and on add/update/remove) declares `declare module '@vesk/<id>'` per installed library, typed from `libraries.json` — constructors as opaque `interface X {}` + object-literal-call `function X(props): X`, enums as const map + `(typeof X)[keyof typeof X]` type alias, tags/plain exports as `const X: any`. Demo call forms type-check clean under repo tsc.
+- [ ] Third-party `.vsklib` sources (registry URL / local path) in the resolve chain
+- [ ] Usage-derived pruning of installed deps/perms/helpers once the binding compiler lands
+- [ ] Same `[command] [pkg]` verbs extended to npm packages (`vesk add marked`) once Tier 1/2 land
+
+### 9g — Auto-generated Bindings (@Metadata)
+- [x] `kotlinx-metadata` extractor → API model (classes/functions/composables/params/types/nullability)
+- [x] Rule table: Kotlin type → JS type; `@Composable` → tags; nullable/`hasDefault` → optional; sealed-object types → enums
+- [x] Generate `.vsklib` + typed export signatures (`VskLibRecord.signatures`, tag `attrShapes`)
+- [x] Compiler-side translation: JS object-literal constructor calls → Kotlin named-arg calls with numeric/enum/list coercion; `attrShapes`-driven markup attr coercion
+- [x] Conservative fallback: `suspend`/reified/inline/unmappable → hard-error stubs
+- [ ] Java-class fallback (JVM signature extractor or unsupported)
+- [x] Conformance harness: generated probe calls verified against the real library (coil 2.7.0 + ycharts 2.1.0 + glide compose 1.0.0-beta01)
+
+- [ ] **Acceptance:** Lab app imports one npm package (acorn) and installs one Kotlin library (Coil or Room), both used from `.vsk` with zero manual Kotlin; full gates green (tsc, lexer/parser/fragment smokes, Gradle `assembleDebug`)
+
+- [x] **9g milestone:** `vesk add co.yml:ycharts@2.1.0` auto-generates a signature-backed binding (39 exports: 34 constructors + 3 enums + 2 sealed-enums); script-side `LineChartData({ linePlotData: LinePlotData({ plotType: PlotType.Line, lines: [Line({ dataPoints: [Point({ x, y })] })] }) })` translates to typed Kotlin constructor calls and `<LineChart lineChartData={chart}>` renders in the app. `BUILD SUCCESSFUL` verified.
+- [x] **9g arbitrary-lib evidence:** `vesk add com.github.bumptech.glide:compose@1.0.0-beta01` (not in the builtin registry) auto-generates a binding from the published AAR — `<GlideImage>`/`<GlideSubcomposition>` tags with `model`/`contentDescription`/`alpha` attrShapes. Experimental-API opt-in propagation added end-to-end: `@RequiresOptIn` marker classes are detected from classfile annotations, tags carry `optIn`, and generated files emit `@file:OptIn(...)` before `package`. `BUILD SUCCESSFUL` verified; conformance gate extended to glue + glide.
+
+- [ ] **9g next primitive — script-callable composables + sealed-class factories (lottie determination):** `vesk add lottie` binds `<LottieAnimation>` (71 classes, 5 exports, 65 skipped), but it cannot animate end-to-end: the required `composition: LottieComposition?` param is opaque and filtered out of the markup attrs (verified hard error `has no attribute "composition"`), and the loader `rememberLottieComposition` (a value-returning `@Composable`) plus `LottieCompositionSpec.Url/.Asset` (nested sealed-interface factories) are not expressible — so no script can construct a `LottieComposition`. Unblock = real compiler/JVM mapping: (a) export value-returning `@Composable` functions as script-callable (valid: .vsk script compiles inside the composable body), (b) surface nested sealed-interface factory constructors like `LottieCompositionSpec.Url({ url })`/`.Asset({ assetName })` so `rememberLottieComposition({ spec })` is constructible, then `<LottieAnimation composition={comp}>` works.
+
+---
+
 ## Current Sprint Recommendation
 
-**Phase 3 is complete.** File-based routing and manual route configs both work, with `Link`/`NavLink`/`Outlet` wired to a native `NavController`.
+**npm module imports work for project files** (`.vsk`/`.ts`/`.js`); the npm
+package pipeline is in progress. Acorn (self-contained ESM) stress-compiles
+578 → 27 errors; the remaining blockers are Tier 1 mechanisms documented in
+`vsklibs.md` §A4.
 
-Next priority: **Phase 4 — Styling, Theme & CSS**. This unblocks visual fidelity because:
-- Full Tailwind v3 coverage is needed for copied Vesk web demos to look correct
-- Dark mode and theme tokens make the generated apps feel native
-- Phase 5 (native APIs) and Phase 6 (iOS) can proceed in parallel once styling is solid.
+Next priority: **Phase 9a — finish the acorn milestone**. This unblocks the whole library ecosystem because:
+- It proves the npm pipeline (resolution → transform → codegen → pruned runtime helpers) end-to-end on a real package
+- Each fixed pattern (per-instance overrides, `this`-binding, method aliasing) is one more class of real-world package
+- `.vsklib` (9f/9g) and CJS (9b) build directly on the same compiler machinery
+
+After 9a: **Phase 9f1 — CLI library management** (`vesk add|update|remove <pkg>`,
+design in `vsklibs.md` §B1.5) landed: `.vsklib/libraries.json` tracks installed
+Kotlin libraries and `generateProject` registers their gradle deps + manifest
+permissions at build time. Next in 9f is the binding compiler + import branch
+that makes installed libraries callable from `.vsk`/`.ts`.

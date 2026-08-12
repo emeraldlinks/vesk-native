@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "library": {
+    "id": "glide",
+    "name": "Glide",
+    "description": "Image loading for Android (Views)",
+    "group": "com.github.bumptech.glide",
+    "artifact": "glide",
+    "version": "4.16.0",
+    "gradle": ["com.github.bumptech.glide:glide:4.16.0"],
+    "permissions": ["android.permission.INTERNET"],
+  "exports": ["Glide", "RequestOptions"],
+  "tags": {},
+  "signatures": {
+    "RequestOptions": {
+      "name": "RequestOptions",
+      "target": "RequestOptions",
+      "qualified": "com.bumptech.glide.request.RequestOptions",
+      "jsdoc": "Per-request options (placeholder, error, size, transform). RequestOptions() with no chained builders.",
+      "isConstructor": true,
+      "params": [],
+      "defaultParams": [],
+      "returnShape": "other"
+    }
+  },
+  "curated": true
+}
+}

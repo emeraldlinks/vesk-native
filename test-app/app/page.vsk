@@ -21,7 +21,9 @@ component Home(props: { promo: string, cta: string }) {
         </section>
 
         <section>
-            <h2 class="text-sm font-bold tracking-wide uppercase text-gray-700 mb-3">Categories</h2>
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700">Categories</h2>
+            </div>
             <div class="flex gap-2 flex-nowrap overflow-x-auto">
                 <NavLink href="/shop">
                     <div class="bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-full">All outerwear</div>
@@ -76,6 +78,26 @@ component Home(props: { promo: string, cta: string }) {
                     <h3 class="text-indigo-900 text-lg font-extrabold mt-1">Grid, positioning &amp; utility tests</h3>
                 </div>
                 <div class="bg-indigo-600 text-white text-sm font-semibold px-4 py-2 rounded-full">Open</div>
+            </div>
+        </NavLink>
+
+        <NavLink href="/lib">
+            <div class="bg-emerald-50 rounded-2xl p-5 flex items-center justify-between">
+                <div>
+                    <p class="text-emerald-600 text-xs font-semibold tracking-widest uppercase">Installed libraries</p>
+                    <h3 class="text-emerald-900 text-lg font-extrabold mt-1">Coil images &amp; charts from .vsklib</h3>
+                </div>
+                <div class="bg-emerald-600 text-white text-sm font-semibold px-4 py-2 rounded-full">Open</div>
+            </div>
+        </NavLink>
+
+        <NavLink href="/labs">
+            <div class="bg-sky-50 rounded-2xl p-5 flex items-center justify-between">
+                <div>
+                    <p class="text-sky-600 text-xs font-semibold tracking-widest uppercase">Browser APIs lab</p>
+                    <h3 class="text-sky-900 text-lg font-extrabold mt-1">Storage, auth, fetch &amp; sqlite</h3>
+                </div>
+                <div class="bg-sky-600 text-white text-sm font-semibold px-4 py-2 rounded-full">Open</div>
             </div>
         </NavLink>
 

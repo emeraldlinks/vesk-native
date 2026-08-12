@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "library": {
+    "id": "okhttp",
+    "name": "OkHttp",
+    "description": "HTTP client (HTTP/2, TLS, connection pooling)",
+    "group": "com.squareup.okhttp3",
+    "artifact": "okhttp",
+    "version": "4.12.0",
+    "gradle": ["com.squareup.okhttp3:okhttp:4.12.0"],
+    "permissions": ["android.permission.INTERNET"],
+    "exports": ["OkHttpClient", "Request", "Response", "RequestBody"],
+    "tags": {},
+    "signatures": {
+      "OkHttpClient": {
+        "name": "OkHttpClient",
+        "target": "OkHttpClient",
+        "qualified": "okhttp3.OkHttpClient",
+        "jsdoc": "HTTP client. Construct with OkHttpClient(); configure via OkHttpClient().newBuilder() before building requests.",
+        "isConstructor": true,
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "other"
+      }
+    },
+    "essential": true,
+    "curated": true
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "library": {
+    "id": "apollo",
+    "name": "Apollo GraphQL",
+    "description": "GraphQL client for Kotlin",
+    "group": "com.apollographql.apollo3",
+    "artifact": "apollo-runtime",
+    "version": "3.8.3",
+    "gradle": ["com.apollographql.apollo3:apollo-runtime:3.8.3"],
+    "permissions": ["android.permission.INTERNET"],
+    "exports": ["ApolloClient"],
+    "tags": {},
+    "curated": true
+  }
+}

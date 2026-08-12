@@ -36,6 +36,12 @@ const DEFAULT_CONFIG: VeskConfig = {
   routes: [],
   permissions: [],
   device: 'phone',
+  edgeToEdge: {
+    enabled: true,
+    paddingBars: true,
+    statusBarStyle: 'auto',
+    navigationBarStyle: 'auto',
+  },
   back: {
     mode: 'stack',
     doubleBackToExit: true,
@@ -63,6 +69,7 @@ export async function loadConfig(target: string): Promise<VeskConfig> {
     ...raw,
     colors: { ...DEFAULT_CONFIG.colors, ...raw.colors },
     darkColors: { ...DEFAULT_CONFIG.darkColors, ...raw.darkColors },
+    edgeToEdge: { ...DEFAULT_CONFIG.edgeToEdge, ...raw.edgeToEdge },
   };
 }
 export function writeDefaultConfig(target: string): void {
@@ -106,6 +113,12 @@ export default defineConfig({
     doubleBackToExit: true,
     exitDelayMs: 2000,
     exitRoutes: [],
+  },
+  edgeToEdge: {
+    enabled: true,
+    paddingBars: true,
+    statusBarStyle: 'auto',
+    navigationBarStyle: 'auto',
   },
   media: {
     broadcast: true,

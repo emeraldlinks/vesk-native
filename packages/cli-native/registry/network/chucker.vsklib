@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "library": {
+    "id": "chucker",
+    "name": "Chucker",
+    "description": "In-app HTTP inspector for OkHttp",
+    "group": "com.github.chuckerteam.chucker",
+    "artifact": "library",
+    "version": "4.0.0",
+    "gradle": ["com.github.chuckerteam.chucker:library:4.0.0"],
+    "permissions": ["android.permission.INTERNET"],
+    "exports": ["ChuckerInterceptor"],
+    "tags": {},
+    "curated": true
+  }
+}

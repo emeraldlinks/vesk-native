@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "library": {
+    "id": "retrofit-moshi",
+    "name": "Retrofit Moshi Converter",
+    "description": "Moshi converter for Retrofit responses",
+    "group": "com.squareup.retrofit2",
+    "artifact": "converter-moshi",
+    "version": "2.11.0",
+    "gradle": ["com.squareup.retrofit2:converter-moshi:2.11.0"],
+    "permissions": ["android.permission.INTERNET"],
+    "exports": ["MoshiConverterFactory"],
+    "tags": {},
+    "curated": true
+  }
+}

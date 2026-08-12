@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "library": {
+    "id": "leakcanary",
+    "name": "LeakCanary",
+    "description": "Automatic memory leak detection (debug builds)",
+    "group": "com.squareup.leakcanary",
+    "artifact": "leakcanary-android",
+    "version": "2.14",
+    "gradle": ["com.squareup.leakcanary:leakcanary-android:2.14"],
+    "permissions": [],
+    "exports": ["LeakCanary"],
+    "tags": {},
+    "curated": true
+  }
+}

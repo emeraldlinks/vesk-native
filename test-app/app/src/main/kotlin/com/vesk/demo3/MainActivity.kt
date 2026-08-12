@@ -2,10 +2,11 @@ package com.vesk.demo3
 
 import android.os.Build
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.SystemBarStyle
+import androidx.activity.enableEdgeToEdge
 import android.os.Bundle
 import android.content.Intent
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.fragment.app.FragmentActivity
@@ -21,7 +22,10 @@ class MainActivity : FragmentActivity() {
         if (Thread.getDefaultUncaughtExceptionHandler() !is DebugCrashLog) {
             Thread.setDefaultUncaughtExceptionHandler(DebugCrashLog(Thread.getDefaultUncaughtExceptionHandler()))
         }
-        enableEdgeToEdge()
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.light(android.graphics.Color.parseColor("#FFFFFF"), android.graphics.Color.parseColor("#0F172A")),
+            navigationBarStyle = SystemBarStyle.light(android.graphics.Color.parseColor("#FFFFFF"), android.graphics.Color.parseColor("#0F172A")),
+        )
         if (intent.getBooleanExtra("vesk_notify_tap", false)) VeskDeviceSession.notifyTap?.invoke()
         if (Build.VERSION.SDK_INT >= 33) {
             mediaPermLauncher.launch(arrayOf(

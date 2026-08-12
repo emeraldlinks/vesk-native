@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "library": {
+    "id": "okio",
+    "name": "Okio",
+    "description": "Fast I/O and buffers for JVM/Android",
+    "group": "com.squareup.okio",
+    "artifact": "okio",
+    "version": "3.9.0",
+    "gradle": ["com.squareup.okio:okio:3.9.0"],
+    "permissions": [],
+    "exports": ["Buffer", "ByteString"],
+    "tags": {},
+    "curated": true
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "library": {
+    "id": "workmanager",
+    "name": "WorkManager",
+    "description": "Deferred, guaranteed background work",
+    "group": "androidx.work",
+    "artifact": "work-runtime",
+    "version": "2.9.1",
+    "gradle": ["androidx.work:work-runtime:2.9.1"],
+    "permissions": [],
+    "exports": ["WorkManager", "OneTimeWorkRequest"],
+    "tags": {},
+    "signatures": {},
+    "essential": true,
+    "curated": true
+  }
+}

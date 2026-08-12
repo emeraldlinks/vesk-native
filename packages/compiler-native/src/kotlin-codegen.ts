@@ -28,18 +28,29 @@ import type { JsNode } from '@compiler-native/js2kt';
 import { ktIdent } from '@compiler-native/js2kt';
 import { findComponentDecls, generatePropsClass, inferPropsFromUsage, generateInferredPropsClass } from '@compiler-native/props';
 import { elementInfo, CONTAINER_TAGS } from '@compiler-native/elements';
+import { BROWSER_API_EXPORTS } from '@compiler-native/browser-api';
+import type { LibExportSig, LibParamSig, VskLibTag, VskLibSurface } from '@compiler-native/elements';
 import { layoutArgs, elementAxis } from '@compiler-native/layout-args';
 import { classify, buildModifier, buildTextStyle, isHidden, isAbsolute, RADIUS } from '@compiler-native/tailwind';
 import type { ModifierParts } from '@compiler-native/tailwind';
 import { parseCssClasses } from '@compiler-native/css';
 import { walkIR } from '@compiler-native/walk-ir';
 import { relative } from 'node:path';
-import { collectHeaderSymbols, importSource, npmImportLines, pkgImportLines, resolveJsTsTarget, resolveVskTarget, slugFor, splitVskHeader, toPosix, vskImportLines } from '@compiler-native/modules';
+import { collectHeaderSymbols, declarationName, importSource, importSpecifiers, npmImportLines, pkgImportLines, resolveJsTsTarget, resolveVskTarget, sanitizeIdent, slugFor, splitVskHeader, toPosix, transformModuleStatements, vskImportLines } from '@compiler-native/modules';
 import type { ModuleExport, ModuleRegistry } from '@compiler-native/modules';
+
+// The runtime's router components are the only non-`.vsk` callables emitted
+// through `componentCallLines` (their Props data classes live in the runtime
+// template). Everything else must be a custom component or an imported
+// `.vsklib` tag — anything else is a hard build error.
+const FRAMEWORK_COMPONENT_CALLS = new Set(['Link', 'NavLink', 'Outlet']);
 
 export interface CompileOptions {
   packageName?: string;
   componentsWithoutProps?: Set<string>;
+  /** Every custom component name declared in any app .vsk file (with or
+   *  without props). Used to distinguish real components from unknown tags. */
+  componentNames?: Set<string>;
   customClasses?: Map<string, ModifierParts>;
   scopedCustomClasses?: Map<string, Map<string, ModifierParts>>;
   imageResources?: Map<string, string>;
@@ -58,6 +69,10 @@ export interface CompileOptions {
   projectModuleRegistry?: Map<string, Map<string, ModuleExport>>;
   /** npm specifier -> exported name -> { pkg, name } for compiled npm modules. */
   npmRegistry?: Map<string, Map<string, ModuleExport>>;
+  /** Installed .vsklib libraries (id -> JS surface). Resolved only via
+   *  explicit `import { X } from '@vesk/<id>'` header imports — a library is
+   *  never globally in scope without an import. */
+  vsklibRegistry?: Map<string, VskLibSurface>;
 }
 
 const CLASS_ATTRS = new Set(['class', 'className']);
@@ -558,20 +573,32 @@ class Emitter {
   j2k: Js2Kt;
   tracked: Map<string, TrackedInfo>;
   componentsWithoutProps?: Set<string>;
+  componentNames?: Set<string>;
   customClasses?: Map<string, ModifierParts>;
   imageResources?: Map<string, string>;
   mediaResources?: Map<string, string>;
   rClass: string;
+  libraryTags?: Map<string, VskLibTag>;
+  libImports: Set<string>;
+  vsklibRegistry?: Map<string, VskLibSurface>;
+  libraryExports: Map<string, LibExportSig>;
 
-  constructor(err: KtErrors, tracked: Map<string, TrackedInfo>, componentsWithoutProps?: Set<string>, customClasses?: Map<string, ModifierParts>, imageResources?: Map<string, string>, mediaResources?: Map<string, string>, rClass = 'app.R') {
+  constructor(err: KtErrors, tracked: Map<string, TrackedInfo>, componentsWithoutProps?: Set<string>, customClasses?: Map<string, ModifierParts>, imageResources?: Map<string, string>, mediaResources?: Map<string, string>, rClass = 'app.R', libraryTags?: Map<string, VskLibTag>, libImports: Set<string> = new Set(), componentNames?: Set<string>, vsklibRegistry?: Map<string, VskLibSurface>, libraryExports: Map<string, LibExportSig> = new Map()) {
     this.err = err;
     this.j2k = new Js2Kt(err);
+    this.j2k.libraryExports = libraryExports;
+    this.j2k.libImports = libImports;
     this.tracked = tracked;
     this.componentsWithoutProps = componentsWithoutProps;
+    this.componentNames = componentNames ?? componentsWithoutProps;
     this.customClasses = customClasses;
     this.imageResources = imageResources;
     this.mediaResources = mediaResources;
     this.rClass = rClass;
+    this.libraryTags = libraryTags;
+    this.libImports = libImports;
+    this.vsklibRegistry = vsklibRegistry;
+    this.libraryExports = libraryExports;
   }
 
   private guardCount = 0;
@@ -610,6 +637,54 @@ class Emitter {
     const transformed = transformTracked(expr, this.tracked);
     const ast = this.parseExprInit(transformed);
     return ast;
+  }
+
+  // Coerce a library tag attribute value against its typed attr shape
+  // (from `attrShapes`): plain string literals become enum constants, object
+  // literals become constructor calls, arrays become listOf(...). Returns
+  // null when the value should fall through to the plain expression path.
+  libraryAttrValue(shape: LibParamSig, expr: Expression): string | null {
+    const ast = this.ensureAst(expr);
+    if (!ast) return null;
+    if (shape.shape === 'enum') {
+      if (ast.type === 'Literal' && typeof (ast.value as unknown) === 'string') {
+        const values = shape.enumValues ?? [];
+        const member = ast.value as string;
+        if (!values.includes(member)) {
+          this.err.warn(null, `enum attribute expects one of: ${values.join(', ')} (got '${member}')`);
+          return `error("vesk: invalid enum value '${member}'")`;
+        }
+        if (!shape.typeName) return null;
+        this.libImports.add(`import ${shape.typeName}`);
+        return `${ktIdent(shape.typeName.slice(shape.typeName.lastIndexOf('.') + 1))}.${ktIdent(member)}`;
+      }
+      return this.j2k.libArg(shape, ast);
+    }
+    if (shape.shape === 'object' || shape.shape === 'array') {
+      if (shape.shape === 'object' && shape.typeName) this.ensureLibraryObject(shape.typeName);
+      return this.j2k.libArg(shape, ast);
+    }
+    return null;
+  }
+
+  // Make a constructor export (referenced by a tag's attrShapes typeName)
+  // resolvable in this file's script scope so bare object-literal attributes
+  // like lineChartData={{ ... }} translate to constructor calls.
+  ensureLibraryObject(typeName: string): void {
+    if (this.j2k.libraryExports.size > 0) {
+      for (const sig of this.j2k.libraryExports.values()) {
+        if (sig.qualified === typeName) return;
+      }
+    }
+    if (!this.vsklibRegistry) return;
+    for (const surface of this.vsklibRegistry.values()) {
+      for (const sig of surface.exports.values()) {
+        if (sig.qualified === typeName) {
+          this.j2k.libraryExports.set(sig.name, sig);
+          return;
+        }
+      }
+    }
   }
 
   stmtOf(node: RuntimeStatement): string {
@@ -857,6 +932,66 @@ function makeTextCall(text: string, classes: string[], level: number, em: Emitte
   if (tp.overflow !== undefined) lines.push(`${pad}\toverflow = TextOverflow.${tp.overflow},`);
   lines.push(pad + ')');
   return lines.join('\n');
+}
+
+// A .vsklib library tag (e.g. <CoilImage src="..." alt="..."/>): emit the
+// binding's composable with props mapped to its parameters. `class`/`className`
+// become the modifier; unknown props are hard errors so a typo never silently
+// miscompiles. Children render into a trailing content lambda when the binding
+// is a container.
+function libraryTagLines(node: ComponentCall, em: Emitter, level: number, parentAxis: 'column' | 'row' | null = null, flowParent = false, boxScope = false): string[] {
+  const binding = em.libraryTags?.get(node.componentName);
+  if (!binding) return [componentCallLines(node, em, level, parentAxis, flowParent, boxScope)];
+  for (const imp of binding.imports) {
+    em.libImports.add(imp.startsWith('import ') ? imp : `import ${imp}`);
+  }
+
+  const pad = '\t'.repeat(level);
+  const padIn = '\t'.repeat(level + 1);
+  const argLines: string[] = [];
+  for (const p of node.props) {
+    const param = binding.attrs[p.name];
+    if (p.name === 'class' || p.name === 'className') {
+      const raw = (p.value.raw ?? '').trim();
+      const cls = raw.length >= 2 && (raw[0] === '"' || raw[0] === "'") && raw[raw.length - 1] === raw[0]
+        ? raw.slice(1, -1)
+        : raw;
+      const classes = cls.split(/\s+/).filter(Boolean);
+      const fill = parentAxis !== 'row';
+      const modifier = modifierFor(classes, em, parentAxis, fill, null, boxScope);
+      if (modifier) argLines.push(`${padIn}modifier = ${modifier},`);
+      continue;
+    }
+    if (!param) {
+      em.err.warn(null, `<${node.componentName}> has no attribute "${p.name}" — library tag attributes: ${Object.keys(binding.attrs).join(', ')}`);
+      continue;
+    }
+    const shape = binding.attrShapes?.[param];
+    if (shape && shape.shape !== 'any') {
+      const coerced = em.libraryAttrValue(shape, p.value);
+      if (coerced !== null) {
+        argLines.push(`${padIn}${ktIdent(param)} = ${coerced},`);
+        continue;
+      }
+    }
+    argLines.push(`${padIn}${ktIdent(param)} = ${em.exprOf(p.value)},`);
+  }
+  for (const sp of node.spreadProps) {
+    em.err.warn(null, `spread props are not supported in library tags: ...${sp.raw}`);
+  }
+  const out: string[] = [];
+  out.push(pad + `${binding.composable}(`);
+  out.push(...argLines);
+  out.push(pad + `)`);
+  if (binding.container && node.children.length > 0) {
+    out.pop();
+    out.push(padIn + '{');
+    for (const child of node.children) {
+      out.push(...emitChild(child, em, level + 2, parentAxis, null, flowParent, boxScope));
+    }
+    out.push(pad + '}');
+  }
+  return out;
 }
 
 function componentCallLines(node: ComponentCall, em: Emitter, level: number, parentAxis: 'column' | 'row' | null = null, flowParent = false, boxScope = false): string {
@@ -1188,6 +1323,23 @@ function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'colum
     return out;
   }
   if (child instanceof ComponentCall) {
+    if (em.libraryTags?.has(child.componentName)) {
+      return libraryTagLines(child, em, level, parentAxis, flowParent, boxScope);
+    }
+    const name = child.componentName;
+    const known = (em.componentNames?.has(name) ?? false) || FRAMEWORK_COMPONENT_CALLS.has(name);
+    if (!known) {
+      let hint = '';
+      if (em.vsklibRegistry) {
+        for (const [libId, surface] of em.vsklibRegistry) {
+          if (surface.tags[name]) {
+            hint = ` — this is an installed library tag; import it in the header: import { ${name} } from '@vesk/${libId}'`;
+            break;
+          }
+        }
+      }
+      em.err.warn(null, `<${name}>: unknown component${hint}`);
+    }
     return splitLines(componentCallLines(child, em, level, parentAxis, flowParent, boxScope));
   }
   if (child instanceof TrackDecl) {
@@ -1394,28 +1546,84 @@ function emitVskHeader(
   npmRegistry: Map<string, Map<string, { pkg: string; name: string }>> | undefined,
   slugs: Map<string, string> | undefined,
   projectRegistry: Map<string, Map<string, { pkg: string; name: string }>> | undefined,
+  vsklibRegistry: Map<string, VskLibSurface> | undefined,
   err: KtErrors,
-): { imports: string[]; decls: string[] } {
+  libExportImports: Set<string> = new Set(),
+): { imports: string[]; decls: string[]; libraryTags: Map<string, VskLibTag>; libraryExports: Map<string, LibExportSig> } {
   const imports: string[] = [];
   const decls: string[] = [];
   const aliases: string[] = [];
+  const libraryTags = new Map<string, VskLibTag>();
+  const libraryExports = new Map<string, LibExportSig>();
   const { header } = splitVskHeader(source);
-  if (!header.trim()) return { imports, decls };
+  if (!header.trim()) return { imports, decls, libraryTags, libraryExports };
 
   const { symbols, error } = collectHeaderSymbols(header);
   if (error) {
     err.warn(null, error);
-    return { imports, decls };
+    return { imports, decls, libraryTags, libraryExports };
   }
+  for (const e of symbols.expressions) err.warn(e, `top-level expression statements are not supported in a .vsk script header`);
   const slug = slugs?.get(fileRel) ?? slugFor(fileRel);
   const j2k = new Js2Kt(err);
-  const localKt = (name: string): string => `${slug}_${name}`;
+  j2k.libImports = libExportImports;
+  const localKt = (name: string): string => sanitizeIdent(`${slug}_${name}`);
 
   for (const imp of symbols.imports) {
     const spec = importSource(imp);
     let lines: string[] = [];
     let errors: string[] = [];
-    if (resolveVskTarget(spec, fileRel, appDir)) {
+    if (spec === '@vesk/browser') {
+      // Built-in browser-API surface (sqlite, web storage, auth, fetch,
+      // timers, alert, console, JSON). These names compile to Vesk* runtime
+      // helpers by name, so importing is purely for IDE/tooling; validation
+      // fails closed on unknown names instead of silently compiling nothing.
+      const names = BROWSER_API_EXPORTS.map((d) => d.name);
+      for (const s of (imp.specifiers as JsNode[]) ?? []) {
+        if (s.type !== 'ImportSpecifier') {
+          errors.push(`import '${spec}': only named imports are supported from '@vesk/browser'`);
+          continue;
+        }
+        const imported = (s.imported as JsNode).name as string;
+        if (!names.includes(imported)) {
+          errors.push(`import '${imported}' from '@vesk/browser': not a vesk browser API (available: ${names.join(', ')})`);
+        }
+      }
+    } else if (spec.startsWith('@vesk/')) {
+      // Installed Kotlin library: `import { CoilImage } from '@vesk/coil'`.
+      // Only explicitly imported names are in scope — installing a library
+      // never puts its tags in every file implicitly.
+      const libId = spec.slice('@vesk/'.length);
+      const lib = vsklibRegistry?.get(libId);
+      if (!lib) {
+        errors.push(`import '${spec}': unknown .vsklib library — install it with: vesk add ${libId}`);
+      } else {
+        const tagNames = Object.keys(lib.tags);
+        for (const s of (imp.specifiers as JsNode[]) ?? []) {
+          if (s.type !== 'ImportSpecifier') {
+            errors.push(`import '${spec}': only named imports are supported from .vsklib libraries`);
+            continue;
+          }
+          const imported = (s.imported as JsNode).name as string;
+          const tag = lib.tags[imported];
+          if (tag) {
+            libraryTags.set(imported, tag);
+          } else {
+            const sig = lib.exports.get(imported);
+            if (sig) {
+              // Constructor/enum export: the Kotlin class is imported by its
+              // fully-qualified name and made callable in the script scope.
+              imports.push(`import ${sig.qualified}`);
+              libraryExports.set(imported, sig);
+            } else if (lib.exports.has(imported)) {
+              errors.push(`import '${imported}' from '@vesk/${libId}': this export has no JS-callable binding yet (markup tags: ${tagNames.map((t) => `<${t}>`).join(', ') || 'none'})`);
+            } else {
+              errors.push(`import '${imported}' from '@vesk/${libId}': not exported (available: ${[...tagNames, ...lib.exports.keys()].join(', ')})`);
+            }
+          }
+        }
+      }
+    } else if (resolveVskTarget(spec, fileRel, appDir)) {
       const r = vskImportLines(imp, fileRel, appDir, registry ?? new Map());
       lines = r.lines;
       errors = r.errors;
@@ -1438,6 +1646,7 @@ function emitVskHeader(
     for (const l of lines) imports.push(l);
     for (const e of errors) err.warn(null, e);
   }
+  j2k.libraryExports = libraryExports;
 
   const emitDecl = (name: string, node: JsNode, kotlinName: string, isDefaultExpr: boolean): void => {
     let kt: string;
@@ -1447,7 +1656,7 @@ function emitVskHeader(
       kt = j2k.stmt(renameDeclared(node, kotlinName));
     }
     decls.push(kt);
-    if (name !== 'default' && name !== kotlinName) aliases.push(`import app.${kotlinName} as ${name}`);
+    if (name !== 'default' && sanitizeIdent(name) !== kotlinName) aliases.push(`import app.${kotlinName} as ${sanitizeIdent(name)}`);
   };
 
   for (const e of symbols.exportDecls) {
@@ -1460,7 +1669,7 @@ function emitVskHeader(
   }
 
   imports.push(...aliases);
-  return { imports, decls };
+  return { imports, decls, libraryTags, libraryExports };
 }
 
 export interface ProjectModuleCompile {
@@ -1470,21 +1679,43 @@ export interface ProjectModuleCompile {
   kt: string;
 }
 
-// Compile a standalone project JS/TS module (pure scripts — no components) to
-// Kotlin plus its export registry. Top-level imports are a hard error for now
-// (no intra-module graph yet); imports/exports/declarations only, mirroring
-// the `.vsk` header contract.
-export function compileProjectModule(source: string, fileRel: string, err: KtErrors): ProjectModuleCompile {
+export interface ProjectModuleCompileOptions {
+  /** Kotlin package the declarations are emitted into. Default 'app'. */
+  packageName?: string;
+  /** Map a JS name to its Kotlin declaration name. Default `${slug}_${name}`
+   *  (sanitized); npm entry modules pass the identity so exports keep their
+   *  names inside `app.vmod.<pkg>`. */
+  kotlinName?: (jsName: string) => string;
+  /** Emit `import <pkg>.<decl> as <name>` self-aliases so the module's own
+   *  top-level references resolve (declaration names are prefixed). */
+  selfAlias?: boolean;
+  /** Resolve an import binding to a Kotlin import line (npm module graph).
+   *  Absent => warned and skipped (project modules have no graph yet). */
+  resolveImport?: (source: string, local: string, imported: string) => { line?: string; error?: string } | null;
+  /** Resolve a re-exported name to the target module's export (npm module
+   *  graph). Absent => warned and skipped. */
+  resolveReExport?: (source: string, local: string) => ModuleExport | null;
+  /** Accept top-level expression statements (class-augmentation patterns in
+   *  generated ESM). Default false. */
+  allowExpressions?: boolean;
+}
+
+// Compile a standalone JS/TS module (pure scripts — no components) to Kotlin
+// plus its export registry. Import/export/declaration statements only, plus
+// (for npm packages) the class-augmentation patterns generated ESM uses.
+export function compileProjectModule(source: string, fileRel: string, err: KtErrors, opts: ProjectModuleCompileOptions = {}): ProjectModuleCompile {
+  const packageName = opts.packageName ?? 'app';
+  const slug = slugFor(fileRel);
+  const nameFor = opts.kotlinName ?? ((n: string): string => sanitizeIdent(`${slug}_${n}`));
   const { symbols, error } = collectHeaderSymbols(source);
   if (error) {
     err.warn(null, error);
     return { registryEntry: new Map(), kt: '' };
   }
-  for (const imp of symbols.imports) err.warn(null, `imports inside project modules are not supported yet: '${importSource(imp)}'`);
-  const slug = slugFor(fileRel);
   const j2k = new Js2Kt(err);
   const registryEntry = new Map<string, ModuleExport>();
   const decls: string[] = [];
+  const importLines: string[] = [];
   const emitDecl = (node: JsNode, kotlinName: string, isDefaultExpr: boolean): void => {
     let kt: string;
     if (isDefaultExpr && node.type !== 'FunctionDeclaration' && node.type !== 'ClassDeclaration') {
@@ -1494,16 +1725,89 @@ export function compileProjectModule(source: string, fileRel: string, err: KtErr
     }
     decls.push(kt);
   };
+
+  for (const imp of symbols.imports) {
+    const spec = importSource(imp);
+    for (const s of importSpecifiers(imp)) {
+      if (s.kind === 'namespace') {
+        err.warn(imp, `namespace imports are not supported`);
+        continue;
+      }
+      if (opts.resolveImport) {
+        const r = opts.resolveImport(spec, s.local, s.name);
+        if (r?.error) err.warn(imp, r.error);
+        else if (r?.line) importLines.push(r.line);
+      } else {
+        err.warn(imp, `imports inside project modules are not supported yet: '${spec}'`);
+      }
+    }
+  }
+
+  let emitted: JsNode[] = [];
+  if (opts.allowExpressions && symbols.program) {
+    const t = transformModuleStatements(symbols.program);
+    for (const e of t.errors) err.warn(null, e);
+    emitted = t.statements.filter(
+      (s) => s.type !== 'ImportDeclaration' && s.type !== 'ExportNamedDeclaration' && s.type !== 'ExportAllDeclaration' && s.type !== 'ExportDefaultDeclaration',
+    );
+  } else {
+    for (const e of symbols.expressions) err.warn(e, `top-level expression statements are not supported in a module`);
+    emitted = symbols.decls.map((d) => d.node);
+  }
+
+  for (const node of emitted) {
+    if (node.type === 'VariableDeclaration' || node.type === 'FunctionDeclaration' || node.type === 'ClassDeclaration') {
+      const name = declarationName(node);
+      if (name === null) {
+        err.warn(node, 'could not determine module declaration name');
+        continue;
+      }
+      emitDecl(node, nameFor(name), false);
+    } else if (node.type === 'ExpressionStatement') {
+      err.warn(node, 'unsupported top-level expression in module');
+    }
+  }
+
   for (const e of symbols.exportDecls) {
-    const kotlinName = `${slug}_${e.name === 'default' ? 'default' : e.name}`;
-    emitDecl(e.node, kotlinName, e.name === 'default');
     const exportName = e.name === 'default' ? 'default' : e.name;
-    registryEntry.set(exportName, { pkg: 'app', name: kotlinName });
+    const kotlinName = nameFor(exportName);
+    emitDecl(e.node, kotlinName, e.name === 'default');
+    registryEntry.set(exportName, { pkg: packageName, name: kotlinName });
   }
-  for (const d of symbols.decls) {
-    emitDecl(d.node, `${slug}_${d.name}`, false);
+  for (const a of symbols.aliasExports) {
+    registryEntry.set(a.exported, { pkg: packageName, name: nameFor(a.local) });
   }
-  return { registryEntry, kt: decls.join('\n') };
+  const reAliasLines: string[] = [];
+  for (const re of symbols.reExports) {
+    if (re.exported === '*') {
+      err.warn(null, `export * from '${re.source}' is not supported`);
+      continue;
+    }
+    if (opts.resolveReExport) {
+      const target = opts.resolveReExport(re.source, re.local);
+      if (target) {
+        registryEntry.set(re.exported, target);
+        reAliasLines.push(`val ${sanitizeIdent(re.exported)} get() = ${target.pkg}.${target.name}`);
+      } else {
+        err.warn(null, `re-export '${re.exported}' from '${re.source}' could not be resolved`);
+      }
+    } else {
+      err.warn(null, `re-exports inside project modules are not supported yet: '${re.exported}' from '${re.source}'`);
+    }
+  }
+
+  if (opts.selfAlias) {
+    const aliasFor = (jsName: string): void => {
+      const ktName = nameFor(jsName);
+      const plain = sanitizeIdent(jsName);
+      if (plain !== ktName) importLines.push(`import ${packageName}.${ktName} as ${plain}`);
+    };
+    for (const e of symbols.exportDecls) aliasFor(e.name === 'default' ? 'default' : e.name);
+    for (const d of symbols.decls) aliasFor(d.name);
+  }
+
+  if (err.errors.length > 0) return { registryEntry, kt: '' };
+  return { registryEntry, kt: [...importLines, ...reAliasLines, ...decls].join('\n') };
 }
 
 function runCompile(source: string, filename: string, options: CompileOptions): CompileResult {
@@ -1524,17 +1828,39 @@ function runCompile(source: string, filename: string, options: CompileOptions): 
   }
 
   const out: string[] = [];
-  out.push(`package ${pkg}`, '', IMPORTS, '');
+
+  // .vsklib library tag imports are collected per-file as tags are emitted
+  // and spliced in right after the static import block.
+  const libImports = new Set<string>();
+  let fileLibraryTags: Map<string, VskLibTag> | undefined;
+  const fileLibraryExports = new Map<string, LibExportSig>();
+  // Experimental-API opt-in markers required by the library tags this file
+  // uses; emitted as `@file:OptIn(...)` before the package declaration.
+  const fileOptIns = new Set<string>();
 
   if (options.fileRel && options.appDir) {
     const appDir = options.appDir;
     const importerRel = toPosix(options.fileRel).startsWith('/')
       ? toPosix(relative(appDir, options.fileRel))
       : toPosix(options.fileRel);
-    const headerOut = emitVskHeader(source, importerRel, appDir, options.moduleRegistry, options.npmRegistry, options.moduleSlugs, options.projectModuleRegistry, err);
+    const headerOut = emitVskHeader(source, importerRel, appDir, options.moduleRegistry, options.npmRegistry, options.moduleSlugs, options.projectModuleRegistry, options.vsklibRegistry, err, libImports);
     for (const l of headerOut.imports) out.push(l);
     if (headerOut.decls.length) out.push('', ...headerOut.decls);
+    if (headerOut.libraryTags.size > 0) {
+      fileLibraryTags = headerOut.libraryTags;
+      for (const tag of headerOut.libraryTags.values()) {
+        for (const marker of tag.optIn ?? []) fileOptIns.add(marker);
+      }
+    }
+    for (const [name, sig] of headerOut.libraryExports) fileLibraryExports.set(name, sig);
   }
+  out.unshift(`package ${pkg}`, '', IMPORTS, '');
+  // `@file:` annotations must precede the package statement, so these are
+  // unshifted after the package block.
+  if (fileOptIns.size > 0) {
+    out.unshift(`@file:OptIn(${[...fileOptIns].map((m) => `${m}::class`).join(', ')})`, '');
+  }
+
   out.push('');
 
   for (const comp of ir.components) {
@@ -1560,7 +1886,7 @@ function runCompile(source: string, filename: string, options: CompileOptions): 
       resolvedClasses = new Map(customClasses);
       for (const [k, v] of own) resolvedClasses.set(k, v); // scoped wins over global
     }
-    const em = new Emitter(err, tracked, options.componentsWithoutProps, resolvedClasses, options.imageResources, options.mediaResources, options.rClass);
+    const em = new Emitter(err, tracked, options.componentsWithoutProps, resolvedClasses, options.imageResources, options.mediaResources, options.rClass, fileLibraryTags, libImports, options.componentNames, options.vsklibRegistry, fileLibraryExports);
 
     const propsArg = propsClass ? `props: ${comp.name}Props${propsParamDefault ? ` = ${comp.name}Props()` : ''}` : '';
     const params = [propsArg, 'content: @Composable () -> Unit = {}'].filter(Boolean).join(', ');
@@ -1578,6 +1904,10 @@ function runCompile(source: string, filename: string, options: CompileOptions): 
       for (const node of comp.body) bodyLines.push(...em.emitTopLevel(node, 1));
       out.push(...bodyLines, '}', '');
     }
+  }
+
+  if (libImports.size > 0) {
+    out.splice(4, 0, ...[...libImports].sort(), '');
   }
 
   return { kt: out.join('\n').trimEnd() + '\n', errors: err.errors, notes: err.notes };

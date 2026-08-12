@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "library": {
+    "id": "lottie",
+    "name": "Lottie",
+    "description": "After Effects animation rendering for Compose",
+    "group": "com.airbnb.android",
+    "artifact": "lottie-compose",
+    "version": "6.5.2",
+    "gradle": ["com.airbnb.android:lottie-compose:6.5.2"],
+    "permissions": [],
+    "exports": ["LottieComposition"],
+    "tags": {},
+    "signatures": {},
+    "essential": true,
+    "curated": true
+  }
+}

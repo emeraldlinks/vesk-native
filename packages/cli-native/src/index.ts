@@ -1,39 +1,64 @@
 import { realpathSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildApp, initApp, runApp, setupToolchain } from '@cli-native/commands';
+import { addLibrary, buildApp, initApp, installApp, parseLibraryArgs, removeLibrary, runApp, setupToolchain, updateLibraries } from '@cli-native/commands';
 import { TOOLCHAIN_ROOT, usage } from '@cli-native/constants';
 
 // Programmatic surface for tooling, scripts, and tests (the CLI entry point
 // is main() below; importing this module never runs the CLI).
 export { loadConfig, writeDefaultConfig } from '@cli-native/config';
 export { generateAppKt, generateAppBuildGradleKts, generateMainActivity, generateManifest, generateProject, generateRouterKt, generateRuntimeKt, generateSettingsGradleKts, generateThemeKt, generateThemes, syncAapt2Override } from '@cli-native/generators';
-export { collectDeviceApiUsage, collectRuntimeUsage } from '@cli-native/usage';
+export { addLibrary, installApp, removeLibrary, updateLibraries } from '@cli-native/commands';
+export { collectBrowserApiUsage, collectDeviceApiUsage, collectRuntimeUsage } from '@cli-native/usage';
 export { API_PERMISSIONS } from '@cli-native/usage';
 export { RUNTIME_ORDER } from '@cli-native/runtime-templates';
+export { LIBRARY_REGISTRY, installedLibraries, loadLibraries, parseLibrarySpec, regenerateVsklib, resolveLibrary, saveLibraries, verifyLibrary, writeVsklibCache } from '@cli-native/vsklib';
 
 async function main(): Promise<void> {
-  const [cmd, arg] = process.argv.slice(2);
+  const [cmd] = process.argv.slice(2);
   switch (cmd) {
     case 'init':
-      if (!arg) {
+      if (!process.argv[3]) {
         usage();
         process.exit(1);
       }
-      await initApp(arg);
+      await initApp(process.argv[3]!);
       break;
     case 'build':
-      await buildApp(arg ? resolve(arg) : process.cwd());
+      await buildApp(process.argv[3] ? resolve(process.argv[3]) : process.cwd());
       break;
     case 'run':
-      await runApp(arg ? resolve(arg) : process.cwd());
+      await runApp(process.argv[3] ? resolve(process.argv[3]) : process.cwd());
       break;
     case 'install':
-      await runApp(arg ? resolve(arg) : process.cwd());
+      await installApp(process.argv[3] ? resolve(process.argv[3]) : process.cwd());
       break;
     case 'setup':
       setupToolchain(TOOLCHAIN_ROOT);
       break;
+    case 'add': {
+      const { spec, dir } = parseLibraryArgs(process.argv.slice(3));
+      if (!spec) {
+        usage();
+        process.exit(1);
+      }
+      await addLibrary(dir, spec);
+      break;
+    }
+    case 'update': {
+      const { spec, dir } = parseLibraryArgs(process.argv.slice(3));
+      await updateLibraries(dir, spec);
+      break;
+    }
+    case 'remove': {
+      const { spec, dir } = parseLibraryArgs(process.argv.slice(3));
+      if (!spec) {
+        usage();
+        process.exit(1);
+      }
+      await removeLibrary(dir, spec);
+      break;
+    }
     case 'dev':
       console.log('  [dev] not implemented yet (Phase 7)');
       break;

@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "library": {
+    "id": "gson",
+    "name": "Gson",
+    "description": "JSON serialization/deserialization (reflection-based)",
+    "group": "com.google.code.gson",
+    "artifact": "gson",
+    "version": "2.11.0",
+    "gradle": ["com.google.code.gson:gson:2.11.0"],
+    "permissions": [],
+    "exports": ["Gson", "JsonParser", "JsonObject"],
+    "tags": {},
+    "signatures": {
+      "Gson": {
+        "name": "Gson",
+        "target": "Gson",
+        "qualified": "com.google.gson.Gson",
+        "jsdoc": "JSON (de)serializer. Gson().toJson(obj) serializes; fromJson(json, type) parses.",
+        "isConstructor": true,
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "other"
+      },
+      "JsonParser": {
+        "name": "JsonParser",
+        "target": "JsonParser",
+        "qualified": "com.google.gson.JsonParser",
+        "jsdoc": "Parses JSON text into a JsonElement tree. JsonParser().parse(text).",
+        "isConstructor": true,
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "other"
+      },
+      "JsonObject": {
+        "name": "JsonObject",
+        "target": "JsonObject",
+        "qualified": "com.google.gson.JsonObject",
+        "jsdoc": "Mutable JSON object node. JsonObject().addProperty(key, value) / get(key).",
+        "isConstructor": true,
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "other"
+      }
+    },
+    "essential": true,
+    "curated": true
+  }
+}

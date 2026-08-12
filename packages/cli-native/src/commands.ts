@@ -1,10 +1,12 @@
 import { chmodSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { join, resolve, relative } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { AAPT2_OVERRIDE, DEFAULT_GRADLE, GRADLE_VERSION, SAMPLE_VSK, DEFAULT_SDK, GRADLE_URL, SDK_PACKAGES, TEMPLATE_DIR, TERMUX_AAPT2, TERMUX_BIN, TERMUX_HOME, TERMUX_LIB, cmdlineToolsUrl, collectVskFiles, hostInfo, log } from '@cli-native/constants';
+import { AAPT2_OVERRIDE, CONFIG_JSON, CONFIG_TS, DEFAULT_GRADLE, GRADLE_VERSION, SAMPLE_VSK, DEFAULT_SDK, GRADLE_URL, SDK_PACKAGES, TEMPLATE_DIR, TERMUX_AAPT2, TERMUX_BIN, TERMUX_HOME, TERMUX_LIB, cmdlineToolsUrl, collectVskFiles, hostInfo, log } from '@cli-native/constants';
 import { loadConfig, writeDefaultConfig } from '@cli-native/config';
-import { generateProject } from '@cli-native/generators';
+import { generateProject, generateVskLibDeclarations } from '@cli-native/generators';
 import type { HostInfo } from '@cli-native/constants';
+import { deriveLibraryPermissions, installedLibraries, loadLibraries, mavenMetadata, parseLibrarySpec, regenerateVsklib, resolveLibrary, saveLibraries, verifyLibrary, withVersion, writeVsklibCache } from '@cli-native/vsklib';
+import type { VskLibRecord } from '@cli-native/vsklib';
 
 export async function initApp(dir: string): Promise<void> {
   const target = resolve(dir);
@@ -223,6 +225,278 @@ function stageApk(apk: string): string | null {
   writeFileSync(dest, readFileSync(apk));
   log('run', `APK staged at ${dest}`);
   return dest;
+}
+
+function isAppDir(dir: string): boolean {
+  return existsSync(join(dir, CONFIG_TS)) || existsSync(join(dir, CONFIG_JSON));
+}
+
+function requireApp(target: string): void {
+  if (!isAppDir(target)) {
+    console.error(`  [lib] ${target} is not a vesk app (no ${CONFIG_TS}/${CONFIG_JSON})`);
+    process.exit(1);
+  }
+}
+
+// `vesk <verb> [pkg] [dir]` — positionals that look like app dirs are treated
+// as the target, the rest as the package spec (so `vesk update /path` updates
+// everything in that app and `vesk update coil /path` targets one library).
+export function parseLibraryArgs(rest: string[]): { spec?: string; dir: string } {
+  const dirs = rest.filter((r) => isAppDir(resolve(r)));
+  const specs = rest.filter((r) => !isAppDir(resolve(r)));
+  return { spec: specs[0], dir: dirs[0] ? resolve(dirs[0]) : process.cwd() };
+}
+
+function printSurface(rec: VskLibRecord): void {
+  const surface: string[] = [];
+  if (rec.exports.length > 0) surface.push(`  exports: ${rec.exports.join(', ')}`);
+  const tagNames = Object.keys(rec.tags ?? {});
+  if (tagNames.length > 0) surface.push(`  tags:    ${tagNames.map((t) => `<${t}>`).join(', ')}`);
+  if (surface.length > 0) {
+    console.log(`  JS surface:`);
+    for (const line of surface) console.log(line);
+  }
+  if (rec.permissions.length > 0) {
+    console.log(`  manifest permissions (derived at add/update from the AAR + rules): ${rec.permissions.join(', ')}`);
+  }
+}
+
+// Generate the typed binding (tags, exports, signatures, AAR manifest
+// permissions) for a library record. Returns the regenerated record (keeping
+// the pinned id) or null when metadata is unavailable (offline, Java-only
+// artifact, no mappable surface) so the pinned record stands unchanged.
+async function generateBindingFor(rec: VskLibRecord, verb: 'add' | 'update'): Promise<VskLibRecord | null> {
+  try {
+    const { generateLibraryBinding } = await import('@cli-native/metadata/binding-gen');
+    const result = await generateLibraryBinding({ group: rec.group, artifact: rec.artifact, version: rec.version });
+    if (result.stats.classes > 0) {
+      if (verb === 'add') {
+        console.log(`  [add] read ${result.stats.classes} classes, ${result.stats.facades} file facades`);
+        console.log(`  [add] ${result.stats.composables} composable tags, ${result.stats.exports} JS exports`);
+        if (result.skipped.length > 0) {
+          console.log(`  [add] ${result.skipped.length} declarations skipped (not expressible yet):`);
+          for (const s of result.skipped.slice(0, 8)) console.log(`    - ${s}`);
+          if (result.skipped.length > 8) console.log(`    - … and ${result.skipped.length - 8} more`);
+        }
+      }
+      return { ...result.record, id: rec.id || result.record.id };
+    }
+    log(verb, `${rec.id}: metadata yielded no binding surface — keeping the pinned record`);
+    return null;
+  } catch (e) {
+    log(verb, `${rec.id}: metadata binding unavailable (${(e as Error).message}) — keeping the pinned record`);
+    return null;
+  }
+}
+
+export async function addLibrary(dir: string, spec: string): Promise<void> {
+  const target = resolve(dir);
+  requireApp(target);
+  let rec: VskLibRecord;
+  const parsed = parseLibrarySpec(spec);
+  try {
+    rec = resolveLibrary(parsed);
+    // Curated catalog records are trusted as authored — never regenerate.
+    // Non-catalog records (auto-generated at a previous `add`) and records
+    // predating metadata auto-generation get a binding regenerated so
+    // `vesk add lottie` installs real signatures/tags. If the metadata is
+    // unavailable (offline, Java-only artifact) the registry record stands.
+    if (!rec.curated && rec.signatures === undefined) {
+      const regen = await generateBindingFor(rec, 'add');
+      if (regen) rec = regen;
+    }
+  } catch (e) {
+    if (parsed.group && parsed.artifact && !parsed.id) {
+      if (!parsed.version) {
+        console.error(`  [add] ${parsed.group}:${parsed.artifact} is not in the builtin registry — auto-generation needs an exact version: vesk add ${parsed.group}:${parsed.artifact}@<version>`);
+        process.exit(1);
+      }
+      log('add', `${parsed.group}:${parsed.artifact}@${parsed.version} is not in the builtin registry — generating a binding from Kotlin metadata`);
+      const regen = await generateBindingFor(
+        { id: '', name: parsed.artifact, description: '', group: parsed.group, artifact: parsed.artifact, version: parsed.version, gradle: [], permissions: [], exports: [], tags: {} },
+        'add',
+      );
+      if (!regen) {
+        console.error(`  [add] no binding surface for ${parsed.group}:${parsed.artifact}@${parsed.version} — cannot install`);
+        process.exit(1);
+      }
+      rec = regen;
+    } else {
+      console.error(`  [add] ${(e as Error).message}`);
+      process.exit(1);
+    }
+  }
+  const data = loadLibraries(target);
+  const existing = data.libraries[rec.id];
+  if (existing) {
+    console.error(`  [add] ${rec.id} ${existing.version} is already installed — use: vesk update ${rec.id}`);
+    process.exit(1);
+  }
+  if (rec.signatures === undefined) {
+    const verify = await verifyLibrary(rec);
+    if (verify.status === 'not-found') {
+      console.error(`  [add] ${rec.group}:${rec.artifact} does not resolve on Maven Central — check the coordinates`);
+      process.exit(1);
+    }
+    if (verify.status === 'version-missing') {
+      console.error(`  [add] ${rec.id} version ${rec.version} not found on Maven Central${verify.latest ? ` — latest is ${verify.latest}` : ''}`);
+      process.exit(1);
+    }
+    if (verify.status === 'verified') log('add', `${rec.id} ${rec.version} verified on Maven Central`);
+    else log('add', 'Maven Central unreachable — pinning registry version without verification');
+  }
+  // Permissions are derived at add time: the AAR's own manifest declarations
+  // merged with the coordinate rules (e.g. INTERNET for network clients) and
+  // persisted into the record — the build never needs a manual permission.
+  rec = { ...rec, permissions: deriveLibraryPermissions(rec) };
+
+  data.libraries[rec.id] = rec;
+  saveLibraries(target, data);
+  writeVsklibCache(target, installedLibraries(target));
+  generateVskLibDeclarations(target);
+  log('add', `${rec.name} (${rec.gradle.join(', ')}) pinned to libraries.json`);
+  printSurface(rec);
+  console.log(`\n  next: vesk-native build ${target} registers the dependency + permissions.`);
+}
+
+// Next version for an installed record: an explicit spec version wins, then
+// the builtin registry pin, then the latest published on Maven Central (for
+// auto-generated non-registry libraries like `vesk add group:artifact@version`).
+async function nextVersionOf(rec: VskLibRecord, specVersion?: string): Promise<{ next: string; source: string }> {
+  if (specVersion) return { next: specVersion, source: 'pinned' };
+  try {
+    return { next: resolveLibrary({ id: rec.id }).version, source: 'registry' };
+  } catch {
+    const meta = await mavenMetadata(rec);
+    if (!meta.reachable || meta.notFound || meta.versions.length === 0) {
+      throw new Error(`cannot discover a newer ${rec.id} version — Maven Central unreachable or lists none; pass one explicitly: vesk update ${rec.id}@<version>`);
+    }
+    return { next: meta.latest ?? rec.version, source: 'maven' };
+  }
+}
+
+// Re-pin a library at a new version: regenerate the binding surface + AAR
+// manifest permissions from the artifact, then derive the coordinate rules.
+// Falls back to the version-bumped pinned record when metadata is unavailable.
+async function rederiveAtVersion(rec: VskLibRecord, next: string): Promise<VskLibRecord> {
+  const bumped = withVersion(rec, next);
+  const regen = await generateBindingFor(bumped, 'update');
+  const base = regen ?? bumped;
+  return { ...base, permissions: deriveLibraryPermissions(base) };
+}
+
+export async function updateLibraries(dir: string, spec?: string): Promise<void> {
+  const target = resolve(dir);
+  requireApp(target);
+  const data = loadLibraries(target);
+  const ids = Object.keys(data.libraries);
+  if (ids.length === 0) {
+    console.error('  [update] no libraries installed — use: vesk add <pkg>');
+    process.exit(1);
+  }
+  if (spec) {
+    let parsed;
+    try {
+      parsed = parseLibrarySpec(spec);
+    } catch (e) {
+      console.error(`  [update] ${(e as Error).message}`);
+      process.exit(1);
+    }
+    if (!parsed.id) {
+      console.error(`  [update] "${spec}" is not an installed library (installed: ${ids.join(', ')})`);
+      process.exit(1);
+    }
+    const installed = data.libraries[parsed.id];
+    if (!installed) {
+      console.error(`  [update] "${spec}" is not an installed library (installed: ${ids.join(', ')})`);
+      process.exit(1);
+    }
+    let next: string;
+    let source: string;
+    try {
+      ({ next, source } = await nextVersionOf(installed, parsed.version));
+    } catch (e) {
+      console.error(`  [update] ${(e as Error).message}`);
+      process.exit(1);
+    }
+    if (next === installed.version) {
+      log('update', `${installed.id} already at ${installed.version}`);
+      return;
+    }
+    const rec = await rederiveAtVersion(installed, next);
+    data.libraries[rec.id] = rec;
+    saveLibraries(target, data);
+    writeVsklibCache(target, installedLibraries(target));
+    generateVskLibDeclarations(target);
+    log('update', `${rec.id} ${installed.version} -> ${rec.version}${parsed.version ? '' : ` (${source})`}`);
+    printSurface(rec);
+    return;
+  }
+  const bumped: string[] = [];
+  for (const id of ids) {
+    const installed = data.libraries[id]!;
+    let next: string;
+    try {
+      ({ next } = await nextVersionOf(installed));
+    } catch (e) {
+      log('update', `keeping ${id} — ${(e as Error).message}`);
+      continue;
+    }
+    if (next === installed.version) continue;
+    const rec = await rederiveAtVersion(installed, next);
+    data.libraries[id] = rec;
+    bumped.push(`${rec.id} ${installed.version} -> ${rec.version}`);
+  }
+  saveLibraries(target, data);
+  writeVsklibCache(target, installedLibraries(target));
+  generateVskLibDeclarations(target);
+  if (bumped.length === 0) {
+    log('update', 'all installed libraries are at the latest version');
+    return;
+  }
+  log('update', `${bumped.length} library(ies) bumped to the latest version`);
+}
+
+export async function removeLibrary(dir: string, spec: string): Promise<void> {
+  const target = resolve(dir);
+  requireApp(target);
+  let parsed;
+  try {
+    parsed = parseLibrarySpec(spec);
+  } catch (e) {
+    console.error(`  [remove] ${(e as Error).message}`);
+    process.exit(1);
+  }
+  if (!parsed.id) {
+    console.error(`  [remove] expected a library id (e.g. "vesk remove coil")`);
+    process.exit(1);
+  }
+  const data = loadLibraries(target);
+  const rec = data.libraries[parsed.id];
+  if (!rec) {
+    console.error(`  [remove] ${parsed.id} is not installed (installed: ${Object.keys(data.libraries).join(', ') || 'none'})`);
+    process.exit(1);
+  }
+  delete data.libraries[parsed.id];
+  saveLibraries(target, data);
+  writeVsklibCache(target, installedLibraries(target));
+  generateVskLibDeclarations(target);
+  log('remove', `${parsed.id} removed — the next build drops its gradle dep${rec.permissions.length > 0 ? ' + permissions' : ''}`);
+}
+
+// `vesk install` = restore libraries from the committed manifest (regenerate
+// the disposable `.vsklib/` from libraries.json, re-verifying each pin) then
+// build + install the APK on the device.
+export async function installApp(dir: string): Promise<void> {
+  const target = resolve(dir);
+  requireApp(target);
+  const restored = await regenerateVsklib(target);
+  if (restored.length === 0) {
+    log('install', 'no libraries in libraries.json — .vsklib regenerated empty');
+  } else {
+    log('install', `regenerated .vsklib from libraries.json (${restored.map((r) => r.id).join(', ')})`);
+  }
+  await runApp(target);
 }
 
 export async function runApp(dir: string): Promise<void> {

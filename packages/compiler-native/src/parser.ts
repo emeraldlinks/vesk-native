@@ -1332,7 +1332,12 @@ export class Parser {
 
   private isTsDeclStart(): boolean {
     const nt = this.peekAhead(1);
-    return nt.type === Tok.Ident || nt.type === Tok.Str || (nt.type === Tok.Punct && nt.value === '{');
+    return (
+      nt.type === Tok.Ident ||
+      nt.type === Tok.Keyword ||
+      nt.type === Tok.Str ||
+      (nt.type === Tok.Punct && nt.value === '{')
+    );
   }
 
   private skipTsDeclaration(): JsNode {
@@ -1360,10 +1365,17 @@ export class Parser {
           depth--;
           this.next();
           if (depth === 0) {
-            if (this.eatPunct(';')) {
-              // trailing semicolon after the body
+            // The body closed, but the declaration may continue (e.g. a
+            // function signature `f(props: { ... }): ReturnType;`). Only stop
+            // here when the next token is NOT a continuation of the same decl.
+            const nt = this.peek();
+            const cont =
+              nt.type === Tok.Punct &&
+              (nt.value === ')' || nt.value === ':' || nt.value === '=>' || nt.value === '|' || nt.value === '&');
+            if (!cont) {
+              this.eatPunct(';'); // trailing semicolon after the body
+              break;
             }
-            break;
           }
           continue;
         }

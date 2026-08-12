@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "library": {
+    "id": "ktor-client",
+    "name": "Ktor Client OkHttp",
+    "description": "Multiplatform HTTP client (OkHttp engine)",
+    "group": "io.ktor",
+    "artifact": "ktor-client-okhttp",
+    "version": "2.3.12",
+    "gradle": ["io.ktor:ktor-client-okhttp:2.3.12"],
+    "permissions": ["android.permission.INTERNET"],
+    "exports": ["HttpClient"],
+    "tags": {},
+    "curated": true
+  }
+}

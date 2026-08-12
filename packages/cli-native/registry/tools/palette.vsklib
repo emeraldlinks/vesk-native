@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "library": {
+    "id": "palette",
+    "name": "Palette",
+    "description": "Extract prominent colors from images",
+    "group": "androidx.palette",
+    "artifact": "palette-ktx",
+    "version": "1.0.0",
+    "gradle": ["androidx.palette:palette-ktx:1.0.0"],
+    "permissions": [],
+    "exports": ["Palette"],
+    "tags": {},
+    "curated": true
+  }
+}

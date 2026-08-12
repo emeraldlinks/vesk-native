@@ -1,0 +1,2127 @@
+{
+  "version": 1,
+  "library": {
+    "id": "ycharts",
+    "name": "YCharts",
+    "description": "Line/bar/pie charting for Android (Compose-wrapped Views)",
+    "group": "co.yml",
+    "artifact": "ycharts",
+    "version": "2.1.0",
+    "gradle": [
+      "co.yml:ycharts:2.1.0"
+    ],
+    "minSdk": 26,
+    "permissions": [],
+    "exports": [
+      "AccessibilityConfig",
+      "AxisConfig",
+      "AxisData",
+      "AxisPosition",
+      "BarChartData",
+      "BarChartType",
+      "BarData",
+      "BarPlotData",
+      "BarStyle",
+      "Bubble",
+      "BubbleChartData",
+      "BubbleGradientType",
+      "BubbleStyle",
+      "CombinedChartData",
+      "DataCategoryOptions",
+      "Gravity",
+      "GridLines",
+      "GroupBar",
+      "GroupBarChartData",
+      "GroupSeparatorConfig",
+      "IntersectionPoint",
+      "LegendLabel",
+      "LegendsConfig",
+      "Line",
+      "LineChartData",
+      "LinePlotData",
+      "LineStyle",
+      "PieChartConfig",
+      "PieChartData",
+      "PlotType",
+      "Point",
+      "SelectionHighlightData",
+      "SelectionHighlightPoint",
+      "SelectionHighlightPopUp",
+      "ShadowUnderLine",
+      "Wave",
+      "WaveChartData",
+      "WaveFillColor",
+      "WavePlotData"
+    ],
+    "tags": {
+      "YLineChart": {
+        "composable": "veskYchartsLineChart",
+        "imports": [],
+        "attrs": {
+          "values": "values",
+          "labels": "labels"
+        }
+      }
+    },
+    "signatures": {
+      "AxisConfig": {
+        "name": "AxisConfig",
+        "target": "AxisConfig",
+        "qualified": "co.yml.charts.axis.AxisConfig",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "isAxisLineRequired",
+            "shape": "boolean"
+          },
+          {
+            "name": "shouldEllipsizeAxisLabel",
+            "shape": "boolean"
+          },
+          {
+            "name": "minTextWidthToEllipsize",
+            "shape": "other"
+          },
+          {
+            "name": "ellipsizeAt",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [
+          "isAxisLineRequired",
+          "shouldEllipsizeAxisLabel",
+          "minTextWidthToEllipsize",
+          "ellipsizeAt"
+        ],
+        "returnShape": "object"
+      },
+      "AxisData": {
+        "name": "AxisData",
+        "target": "AxisData",
+        "qualified": "co.yml.charts.axis.AxisData",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "steps",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          {
+            "name": "labelData",
+            "shape": "function"
+          },
+          {
+            "name": "axisPos",
+            "shape": "enum",
+            "typeName": "co.yml.charts.axis.Gravity",
+            "enumValues": [
+              "TOP",
+              "LEFT",
+              "RIGHT",
+              "BOTTOM"
+            ]
+          },
+          {
+            "name": "labelAndAxisLinePadding",
+            "shape": "other"
+          },
+          {
+            "name": "axisOffset",
+            "shape": "other"
+          },
+          {
+            "name": "axisTopPadding",
+            "shape": "other"
+          },
+          {
+            "name": "axisBottomPadding",
+            "shape": "other"
+          },
+          {
+            "name": "axisStartPadding",
+            "shape": "other"
+          },
+          {
+            "name": "axisEndPadding",
+            "shape": "other"
+          },
+          {
+            "name": "axisStepSize",
+            "shape": "other"
+          },
+          {
+            "name": "axisLabelAngle",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "axisLineColor",
+            "shape": "other"
+          },
+          {
+            "name": "axisLabelColor",
+            "shape": "other"
+          },
+          {
+            "name": "axisLabelFontSize",
+            "shape": "other"
+          },
+          {
+            "name": "axisLineThickness",
+            "shape": "other"
+          },
+          {
+            "name": "indicatorLineWidth",
+            "shape": "other"
+          },
+          {
+            "name": "backgroundColor",
+            "shape": "other"
+          },
+          {
+            "name": "typeface",
+            "shape": "other"
+          },
+          {
+            "name": "axisConfig",
+            "shape": "object",
+            "typeName": "co.yml.charts.axis.AxisConfig"
+          },
+          {
+            "name": "startDrawPadding",
+            "shape": "other"
+          },
+          {
+            "name": "shouldDrawAxisLineTillEnd",
+            "shape": "boolean"
+          },
+          {
+            "name": "axisLabelDescription",
+            "shape": "function"
+          },
+          {
+            "name": "dataCategoryOptions",
+            "shape": "object",
+            "typeName": "co.yml.charts.axis.DataCategoryOptions"
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "DataCategoryOptions": {
+        "name": "DataCategoryOptions",
+        "target": "DataCategoryOptions",
+        "qualified": "co.yml.charts.axis.DataCategoryOptions",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "isDataCategoryInYAxis",
+            "shape": "boolean"
+          },
+          {
+            "name": "isDataCategoryStartFromBottom",
+            "shape": "boolean"
+          }
+        ],
+        "defaultParams": [
+          "isDataCategoryInYAxis",
+          "isDataCategoryStartFromBottom"
+        ],
+        "returnShape": "object"
+      },
+      "Gravity": {
+        "name": "Gravity",
+        "target": "Gravity",
+        "qualified": "co.yml.charts.axis.Gravity",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "TOP",
+          "LEFT",
+          "RIGHT",
+          "BOTTOM"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      },
+      "AccessibilityConfig": {
+        "name": "AccessibilityConfig",
+        "target": "AccessibilityConfig",
+        "qualified": "co.yml.charts.common.model.AccessibilityConfig",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "chartDescription",
+            "shape": "string"
+          },
+          {
+            "name": "shouldHandleBackWhenTalkBackPopUpShown",
+            "shape": "boolean"
+          },
+          {
+            "name": "popUpTopRightButtonTitle",
+            "shape": "string"
+          },
+          {
+            "name": "popUpTopRightButtonDescription",
+            "shape": "string"
+          },
+          {
+            "name": "dividerColor",
+            "shape": "other"
+          },
+          {
+            "name": "dividerThickness",
+            "shape": "other"
+          },
+          {
+            "name": "titleTextSize",
+            "shape": "other"
+          },
+          {
+            "name": "descriptionTextSize",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [
+          "chartDescription",
+          "shouldHandleBackWhenTalkBackPopUpShown",
+          "popUpTopRightButtonTitle",
+          "popUpTopRightButtonDescription",
+          "dividerColor",
+          "dividerThickness",
+          "titleTextSize",
+          "descriptionTextSize"
+        ],
+        "returnShape": "object"
+      },
+      "LegendLabel": {
+        "name": "LegendLabel",
+        "target": "LegendLabel",
+        "qualified": "co.yml.charts.common.model.LegendLabel",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "color",
+            "shape": "other"
+          },
+          {
+            "name": "name",
+            "shape": "string"
+          },
+          {
+            "name": "brush",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [
+          "color",
+          "name",
+          "brush"
+        ],
+        "returnShape": "object"
+      },
+      "LegendsConfig": {
+        "name": "LegendsConfig",
+        "target": "LegendsConfig",
+        "qualified": "co.yml.charts.common.model.LegendsConfig",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "legendLabelList",
+            "shape": "array",
+            "elem": {
+              "name": "",
+              "shape": "object",
+              "typeName": "co.yml.charts.common.model.LegendLabel"
+            }
+          },
+          {
+            "name": "textSize",
+            "shape": "other"
+          },
+          {
+            "name": "gridColumnCount",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          {
+            "name": "gridPaddingHorizontal",
+            "shape": "other"
+          },
+          {
+            "name": "gridPaddingVertical",
+            "shape": "other"
+          },
+          {
+            "name": "colorBoxSize",
+            "shape": "other"
+          },
+          {
+            "name": "textStyle",
+            "shape": "other"
+          },
+          {
+            "name": "spaceBWLabelAndColorBox",
+            "shape": "other"
+          },
+          {
+            "name": "legendsArrangement",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [
+          "textSize",
+          "gridColumnCount",
+          "gridPaddingHorizontal",
+          "gridPaddingVertical",
+          "colorBoxSize",
+          "textStyle",
+          "spaceBWLabelAndColorBox",
+          "legendsArrangement"
+        ],
+        "returnShape": "object"
+      },
+      "PlotType": {
+        "name": "PlotType",
+        "target": "PlotType",
+        "qualified": "co.yml.charts.common.model.PlotType",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "Bar",
+          "Donut",
+          "Line",
+          "Pie",
+          "Wave"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      },
+      "Point": {
+        "name": "Point",
+        "target": "Point",
+        "qualified": "co.yml.charts.common.model.Point",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "x",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "y",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "description",
+            "shape": "string"
+          }
+        ],
+        "defaultParams": [
+          "description"
+        ],
+        "returnShape": "object"
+      },
+      "BarChartData": {
+        "name": "BarChartData",
+        "target": "BarChartData",
+        "qualified": "co.yml.charts.ui.barchart.models.BarChartData",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "chartData",
+            "shape": "array",
+            "elem": {
+              "name": "",
+              "shape": "object",
+              "typeName": "co.yml.charts.ui.barchart.models.BarData"
+            }
+          },
+          {
+            "name": "xAxisData",
+            "shape": "object",
+            "typeName": "co.yml.charts.axis.AxisData"
+          },
+          {
+            "name": "yAxisData",
+            "shape": "object",
+            "typeName": "co.yml.charts.axis.AxisData"
+          },
+          {
+            "name": "backgroundColor",
+            "shape": "other"
+          },
+          {
+            "name": "horizontalExtraSpace",
+            "shape": "other"
+          },
+          {
+            "name": "barStyle",
+            "shape": "object",
+            "typeName": "co.yml.charts.ui.barchart.models.BarStyle"
+          },
+          {
+            "name": "paddingEnd",
+            "shape": "other"
+          },
+          {
+            "name": "paddingTop",
+            "shape": "other"
+          },
+          {
+            "name": "tapPadding",
+            "shape": "other"
+          },
+          {
+            "name": "showYAxis",
+            "shape": "boolean"
+          },
+          {
+            "name": "showXAxis",
+            "shape": "boolean"
+          },
+          {
+            "name": "accessibilityConfig",
+            "shape": "object",
+            "typeName": "co.yml.charts.common.model.AccessibilityConfig"
+          },
+          {
+            "name": "barChartType",
+            "shape": "enum",
+            "typeName": "co.yml.charts.ui.barchart.models.BarChartType",
+            "enumValues": [
+              "VERTICAL",
+              "HORIZONTAL"
+            ]
+          },
+          {
+            "name": "drawBar",
+            "shape": "function"
+          }
+        ],
+        "defaultParams": [
+          "xAxisData",
+          "yAxisData",
+          "backgroundColor",
+          "horizontalExtraSpace",
+          "barStyle",
+          "paddingEnd",
+          "paddingTop",
+          "tapPadding",
+          "showYAxis",
+          "showXAxis",
+          "accessibilityConfig",
+          "barChartType",
+          "drawBar"
+        ],
+        "returnShape": "object"
+      },
+      "BarChartType": {
+        "name": "BarChartType",
+        "target": "BarChartType",
+        "qualified": "co.yml.charts.ui.barchart.models.BarChartType",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "VERTICAL",
+          "HORIZONTAL"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      },
+      "BarData": {
+        "name": "BarData",
+        "target": "BarData",
+        "qualified": "co.yml.charts.ui.barchart.models.BarData",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "point",
+            "shape": "object",
+            "typeName": "co.yml.charts.common.model.Point"
+          },
+          {
+            "name": "color",
+            "shape": "other"
+          },
+          {
+            "name": "label",
+            "shape": "string"
+          },
+          {
+            "name": "gradientColorList",
+            "shape": "array",
+            "elem": {
+              "name": "",
+              "shape": "other"
+            }
+          },
+          {
+            "name": "dataCategoryOptions",
+            "shape": "object",
+            "typeName": "co.yml.charts.axis.DataCategoryOptions"
+          },
+          {
+            "name": "description",
+            "shape": "string"
+          }
+        ],
+        "defaultParams": [
+          "color",
+          "label",
+          "gradientColorList",
+          "dataCategoryOptions",
+          "description"
+        ],
+        "returnShape": "object"
+      },
+      "BarPlotData": {
+        "name": "BarPlotData",
+        "target": "BarPlotData",
+        "qualified": "co.yml.charts.ui.barchart.models.BarPlotData",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "plotType",
+            "shape": "enum",
+            "typeName": "co.yml.charts.common.model.PlotType",
+            "enumValues": [
+              "Bar",
+              "Donut",
+              "Line",
+              "Pie",
+              "Wave"
+            ]
+          },
+          {
+            "name": "groupBarList",
+            "shape": "array",
+            "elem": {
+              "name": "",
+              "shape": "object",
+              "typeName": "co.yml.charts.ui.barchart.models.GroupBar"
+            }
+          },
+          {
+            "name": "groupingSize",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          {
+            "name": "barColorPaletteList",
+            "shape": "array",
+            "elem": {
+              "name": "",
+              "shape": "other"
+            }
+          },
+          {
+            "name": "barStyle",
+            "shape": "object",
+            "typeName": "co.yml.charts.ui.barchart.models.BarStyle"
+          }
+        ],
+        "defaultParams": [
+          "plotType",
+          "groupBarList",
+          "groupingSize",
+          "barColorPaletteList",
+          "barStyle"
+        ],
+        "returnShape": "object"
+      },
+      "BarStyle": {
+        "name": "BarStyle",
+        "target": "BarStyle",
+        "qualified": "co.yml.charts.ui.barchart.models.BarStyle",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "barWidth",
+            "shape": "other"
+          },
+          {
+            "name": "cornerRadius",
+            "shape": "other"
+          },
+          {
+            "name": "paddingBetweenBars",
+            "shape": "other"
+          },
+          {
+            "name": "isGradientEnabled",
+            "shape": "boolean"
+          },
+          {
+            "name": "barBlendMode",
+            "shape": "other"
+          },
+          {
+            "name": "barDrawStyle",
+            "shape": "other"
+          },
+          {
+            "name": "selectionHighlightData",
+            "shape": "object",
+            "typeName": "co.yml.charts.ui.barchart.models.SelectionHighlightData"
+          }
+        ],
+        "defaultParams": [
+          "barWidth",
+          "cornerRadius",
+          "paddingBetweenBars",
+          "isGradientEnabled",
+          "barBlendMode",
+          "barDrawStyle",
+          "selectionHighlightData"
+        ],
+        "returnShape": "object"
+      },
+      "GroupBar": {
+        "name": "GroupBar",
+        "target": "GroupBar",
+        "qualified": "co.yml.charts.ui.barchart.models.GroupBar",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "label",
+            "shape": "string"
+          },
+          {
+            "name": "barList",
+            "shape": "array",
+            "elem": {
+              "name": "",
+              "shape": "object",
+              "typeName": "co.yml.charts.ui.barchart.models.BarData"
+            }
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "GroupBarChartData": {
+        "name": "GroupBarChartData",
+        "target": "GroupBarChartData",
+        "qualified": "co.yml.charts.ui.barchart.models.GroupBarChartData",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "barPlotData",
+            "shape": "object",
+            "typeName": "co.yml.charts.ui.barchart.models.BarPlotData"
+          },
+          {
+            "name": "xAxisData",
+            "shape": "object",
+            "typeName": "co.yml.charts.axis.AxisData"
+          },
+          {
+            "name": "yAxisData",
+            "shape": "object",
+            "typeName": "co.yml.charts.axis.AxisData"
+          },
+          {
+            "name": "backgroundColor",
+            "shape": "other"
+          },
+          {
+            "name": "horizontalExtraSpace",
+            "shape": "other"
+          },
+          {
+            "name": "paddingEnd",
+            "shape": "other"
+          },
+          {
+            "name": "paddingTop",
+            "shape": "other"
+          },
+          {
+            "name": "showYAxis",
+            "shape": "boolean"
+          },
+          {
+            "name": "showXAxis",
+            "shape": "boolean"
+          },
+          {
+            "name": "tapPadding",
+            "shape": "other"
+          },
+          {
+            "name": "groupSeparatorConfig",
+            "shape": "object",
+            "typeName": "co.yml.charts.ui.barchart.models.GroupSeparatorConfig"
+          },
+          {
+            "name": "accessibilityConfig",
+            "shape": "object",
+            "typeName": "co.yml.charts.common.model.AccessibilityConfig"
+          },
+          {
+            "name": "paddingBetweenStackedBars",
+            "shape": "other"
+          },
+          {
+            "name": "drawBar",
+            "shape": "function"
+          }
+        ],
+        "defaultParams": [
+          "xAxisData",
+          "yAxisData",
+          "backgroundColor",
+          "horizontalExtraSpace",
+          "paddingEnd",
+          "paddingTop",
+          "showYAxis",
+          "showXAxis",
+          "tapPadding",
+          "groupSeparatorConfig",
+          "accessibilityConfig",
+          "paddingBetweenStackedBars",
+          "drawBar"
+        ],
+        "returnShape": "object"
+      },
+      "GroupSeparatorConfig": {
+        "name": "GroupSeparatorConfig",
+        "target": "GroupSeparatorConfig",
+        "qualified": "co.yml.charts.ui.barchart.models.GroupSeparatorConfig",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "separatorWidth",
+            "shape": "other"
+          },
+          {
+            "name": "separatorColor",
+            "shape": "other"
+          },
+          {
+            "name": "showSeparator",
+            "shape": "boolean"
+          },
+          {
+            "name": "separatorBlendMode",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [
+          "separatorWidth",
+          "separatorColor",
+          "showSeparator",
+          "separatorBlendMode"
+        ],
+        "returnShape": "object"
+      },
+      "SelectionHighlightData": {
+        "name": "SelectionHighlightData",
+        "target": "SelectionHighlightData",
+        "qualified": "co.yml.charts.ui.barchart.models.SelectionHighlightData",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "highlightTextOffset",
+            "shape": "other"
+          },
+          {
+            "name": "highlightTextSize",
+            "shape": "other"
+          },
+          {
+            "name": "highlightTextColor",
+            "shape": "other"
+          },
+          {
+            "name": "highlightTextBackgroundColor",
+            "shape": "other"
+          },
+          {
+            "name": "highlightTextBackgroundAlpha",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "highlightTextTypeface",
+            "shape": "other"
+          },
+          {
+            "name": "highlightBarCornerRadius",
+            "shape": "other"
+          },
+          {
+            "name": "highlightBarColor",
+            "shape": "other"
+          },
+          {
+            "name": "highlightBarStrokeWidth",
+            "shape": "other"
+          },
+          {
+            "name": "highlightPopUpCornerRadius",
+            "shape": "other"
+          },
+          {
+            "name": "backgroundColorFilter",
+            "shape": "other"
+          },
+          {
+            "name": "backgroundBlendMode",
+            "shape": "other"
+          },
+          {
+            "name": "backgroundStyle",
+            "shape": "other"
+          },
+          {
+            "name": "highlightLabelAlignment",
+            "shape": "other"
+          },
+          {
+            "name": "isHighlightBarRequired",
+            "shape": "boolean"
+          },
+          {
+            "name": "isHighlightFullBar",
+            "shape": "boolean"
+          },
+          {
+            "name": "popUpLabel",
+            "shape": "function"
+          },
+          {
+            "name": "drawPopUp",
+            "shape": "function"
+          },
+          {
+            "name": "drawHighlightBar",
+            "shape": "function"
+          },
+          {
+            "name": "groupBarPopUpLabel",
+            "shape": "function"
+          },
+          {
+            "name": "drawGroupBarPopUp",
+            "shape": "function"
+          },
+          {
+            "name": "barChartType",
+            "shape": "enum",
+            "typeName": "co.yml.charts.ui.barchart.models.BarChartType",
+            "enumValues": [
+              "VERTICAL",
+              "HORIZONTAL"
+            ]
+          }
+        ],
+        "defaultParams": [
+          "highlightTextOffset",
+          "highlightTextSize",
+          "highlightTextColor",
+          "highlightTextBackgroundColor",
+          "highlightTextBackgroundAlpha",
+          "highlightTextTypeface",
+          "highlightBarCornerRadius",
+          "highlightBarColor",
+          "highlightBarStrokeWidth",
+          "highlightPopUpCornerRadius",
+          "backgroundColorFilter",
+          "backgroundBlendMode",
+          "backgroundStyle",
+          "highlightLabelAlignment",
+          "isHighlightBarRequired",
+          "isHighlightFullBar",
+          "popUpLabel",
+          "drawPopUp",
+          "drawHighlightBar",
+          "groupBarPopUpLabel",
+          "drawGroupBarPopUp",
+          "barChartType"
+        ],
+        "returnShape": "object"
+      },
+      "Bubble": {
+        "name": "Bubble",
+        "target": "Bubble",
+        "qualified": "co.yml.charts.ui.bubblechart.model.Bubble",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "center",
+            "shape": "object",
+            "typeName": "co.yml.charts.common.model.Point"
+          },
+          {
+            "name": "density",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "bubbleStyle",
+            "shape": "object",
+            "typeName": "co.yml.charts.ui.bubblechart.model.BubbleStyle"
+          },
+          {
+            "name": "intersectionPoint",
+            "shape": "object",
+            "typeName": "co.yml.charts.ui.linechart.model.IntersectionPoint"
+          },
+          {
+            "name": "selectionHighlightPoint",
+            "shape": "object",
+            "typeName": "co.yml.charts.ui.linechart.model.SelectionHighlightPoint"
+          },
+          {
+            "name": "selectionHighlightPopUp",
+            "shape": "object",
+            "typeName": "co.yml.charts.ui.linechart.model.SelectionHighlightPopUp"
+          },
+          {
+            "name": "draw",
+            "shape": "function"
+          }
+        ],
+        "defaultParams": [
+          "bubbleStyle",
+          "intersectionPoint",
+          "selectionHighlightPoint",
+          "selectionHighlightPopUp",
+          "draw"
+        ],
+        "returnShape": "object"
+      },
+      "BubbleChartData": {
+        "name": "BubbleChartData",
+        "target": "BubbleChartData",
+        "qualified": "co.yml.charts.ui.bubblechart.model.BubbleChartData",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "bubbles",
+            "shape": "array",
+            "elem": {
+              "name": "",
+              "shape": "object",
+              "typeName": "co.yml.charts.ui.bubblechart.model.Bubble"
+            }
+          },
+          {
+            "name": "maximumBubbleRadius",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "xAxisData",
+            "shape": "object",
+            "typeName": "co.yml.charts.axis.AxisData"
+          },
+          {
+            "name": "yAxisData",
+            "shape": "object",
+            "typeName": "co.yml.charts.axis.AxisData"
+          },
+          {
+            "name": "isZoomAllowed",
+            "shape": "boolean"
+          },
+          {
+            "name": "paddingTop",
+            "shape": "other"
+          },
+          {
+            "name": "bottomPadding",
+            "shape": "other"
+          },
+          {
+            "name": "paddingRight",
+            "shape": "other"
+          },
+          {
+            "name": "containerPaddingEnd",
+            "shape": "other"
+          },
+          {
+            "name": "backgroundColor",
+            "shape": "other"
+          },
+          {
+            "name": "gridLines",
+            "shape": "object",
+            "typeName": "co.yml.charts.ui.linechart.model.GridLines"
+          },
+          {
+            "name": "accessibilityConfig",
+            "shape": "object",
+            "typeName": "co.yml.charts.common.model.AccessibilityConfig"
+          }
+        ],
+        "defaultParams": [
+          "maximumBubbleRadius",
+          "xAxisData",
+          "yAxisData",
+          "isZoomAllowed",
+          "paddingTop",
+          "bottomPadding",
+          "paddingRight",
+          "containerPaddingEnd",
+          "backgroundColor",
+          "gridLines",
+          "accessibilityConfig"
+        ],
+        "returnShape": "object"
+      },
+      "BubbleGradientType": {
+        "name": "BubbleGradientType",
+        "target": "BubbleGradientType",
+        "qualified": "co.yml.charts.ui.bubblechart.model.BubbleGradientType",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "HorizontalGradient",
+          "LinearGradient",
+          "RadialGradient",
+          "VerticalGradient"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      },
+      "BubbleStyle": {
+        "name": "BubbleStyle",
+        "target": "BubbleStyle",
+        "qualified": "co.yml.charts.ui.bubblechart.model.BubbleStyle",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "gradientColors",
+            "shape": "array",
+            "elem": {
+              "name": "",
+              "shape": "other"
+            }
+          },
+          {
+            "name": "gradientType",
+            "shape": "enum",
+            "typeName": "co.yml.charts.ui.bubblechart.model.BubbleGradientType",
+            "enumValues": [
+              "HorizontalGradient",
+              "LinearGradient",
+              "RadialGradient",
+              "VerticalGradient"
+            ]
+          },
+          {
+            "name": "tileMode",
+            "shape": "other"
+          },
+          {
+            "name": "useGradience",
+            "shape": "boolean"
+          },
+          {
+            "name": "solidColor",
+            "shape": "other"
+          },
+          {
+            "name": "width",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "alpha",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "style",
+            "shape": "other"
+          },
+          {
+            "name": "colorFilter",
+            "shape": "other"
+          },
+          {
+            "name": "blendMode",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [
+          "gradientColors",
+          "gradientType",
+          "tileMode",
+          "useGradience",
+          "solidColor",
+          "width",
+          "alpha",
+          "style",
+          "colorFilter",
+          "blendMode"
+        ],
+        "returnShape": "object"
+      },
+      "CombinedChartData": {
+        "name": "CombinedChartData",
+        "target": "CombinedChartData",
+        "qualified": "co.yml.charts.ui.combinedchart.model.CombinedChartData",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "combinedPlotDataList",
+            "shape": "array",
+            "elem": {
+              "name": "",
+              "shape": "other"
+            }
+          },
+          {
+            "name": "xAxisData",
+            "shape": "object",
+            "typeName": "co.yml.charts.axis.AxisData"
+          },
+          {
+            "name": "yAxisData",
+            "shape": "object",
+            "typeName": "co.yml.charts.axis.AxisData"
+          },
+          {
+            "name": "paddingTop",
+            "shape": "other"
+          },
+          {
+            "name": "bottomPadding",
+            "shape": "other"
+          },
+          {
+            "name": "paddingEnd",
+            "shape": "other"
+          },
+          {
+            "name": "horizontalExtraSpace",
+            "shape": "other"
+          },
+          {
+            "name": "containerPaddingEnd",
+            "shape": "other"
+          },
+          {
+            "name": "backgroundColor",
+            "shape": "other"
+          },
+          {
+            "name": "tapPadding",
+            "shape": "other"
+          },
+          {
+            "name": "isZoomAllowed",
+            "shape": "boolean"
+          },
+          {
+            "name": "accessibilityConfig",
+            "shape": "object",
+            "typeName": "co.yml.charts.common.model.AccessibilityConfig"
+          }
+        ],
+        "defaultParams": [
+          "xAxisData",
+          "yAxisData",
+          "paddingTop",
+          "bottomPadding",
+          "paddingEnd",
+          "horizontalExtraSpace",
+          "containerPaddingEnd",
+          "backgroundColor",
+          "tapPadding",
+          "isZoomAllowed",
+          "accessibilityConfig"
+        ],
+        "returnShape": "object"
+      },
+      "GridLines": {
+        "name": "GridLines",
+        "target": "GridLines",
+        "qualified": "co.yml.charts.ui.linechart.model.GridLines",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "color",
+            "shape": "other"
+          },
+          {
+            "name": "lineWidth",
+            "shape": "other"
+          },
+          {
+            "name": "pathEffect",
+            "shape": "other"
+          },
+          {
+            "name": "alpha",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "colorFilter",
+            "shape": "other"
+          },
+          {
+            "name": "blendMode",
+            "shape": "other"
+          },
+          {
+            "name": "enableHorizontalLines",
+            "shape": "boolean"
+          },
+          {
+            "name": "enableVerticalLines",
+            "shape": "boolean"
+          },
+          {
+            "name": "drawHorizontalLines",
+            "shape": "function"
+          },
+          {
+            "name": "drawVerticalLines",
+            "shape": "function"
+          }
+        ],
+        "defaultParams": [
+          "color",
+          "lineWidth",
+          "pathEffect",
+          "alpha",
+          "colorFilter",
+          "blendMode",
+          "enableHorizontalLines",
+          "enableVerticalLines",
+          "drawHorizontalLines",
+          "drawVerticalLines"
+        ],
+        "returnShape": "object"
+      },
+      "IntersectionPoint": {
+        "name": "IntersectionPoint",
+        "target": "IntersectionPoint",
+        "qualified": "co.yml.charts.ui.linechart.model.IntersectionPoint",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "color",
+            "shape": "other"
+          },
+          {
+            "name": "radius",
+            "shape": "other"
+          },
+          {
+            "name": "alpha",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "style",
+            "shape": "other"
+          },
+          {
+            "name": "colorFilter",
+            "shape": "other"
+          },
+          {
+            "name": "blendMode",
+            "shape": "other"
+          },
+          {
+            "name": "draw",
+            "shape": "function"
+          }
+        ],
+        "defaultParams": [
+          "color",
+          "radius",
+          "alpha",
+          "style",
+          "colorFilter",
+          "blendMode",
+          "draw"
+        ],
+        "returnShape": "object"
+      },
+      "Line": {
+        "name": "Line",
+        "target": "Line",
+        "qualified": "co.yml.charts.ui.linechart.model.Line",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "dataPoints",
+            "shape": "array",
+            "elem": {
+              "name": "",
+              "shape": "object",
+              "typeName": "co.yml.charts.common.model.Point"
+            }
+          },
+          {
+            "name": "lineStyle",
+            "shape": "object",
+            "typeName": "co.yml.charts.ui.linechart.model.LineStyle"
+          },
+          {
+            "name": "intersectionPoint",
+            "shape": "object",
+            "typeName": "co.yml.charts.ui.linechart.model.IntersectionPoint"
+          },
+          {
+            "name": "selectionHighlightPoint",
+            "shape": "object",
+            "typeName": "co.yml.charts.ui.linechart.model.SelectionHighlightPoint"
+          },
+          {
+            "name": "shadowUnderLine",
+            "shape": "object",
+            "typeName": "co.yml.charts.ui.linechart.model.ShadowUnderLine"
+          },
+          {
+            "name": "selectionHighlightPopUp",
+            "shape": "object",
+            "typeName": "co.yml.charts.ui.linechart.model.SelectionHighlightPopUp"
+          }
+        ],
+        "defaultParams": [
+          "lineStyle",
+          "intersectionPoint",
+          "selectionHighlightPoint",
+          "shadowUnderLine",
+          "selectionHighlightPopUp"
+        ],
+        "returnShape": "object"
+      },
+      "LineChartData": {
+        "name": "LineChartData",
+        "target": "LineChartData",
+        "qualified": "co.yml.charts.ui.linechart.model.LineChartData",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "linePlotData",
+            "shape": "object",
+            "typeName": "co.yml.charts.ui.linechart.model.LinePlotData"
+          },
+          {
+            "name": "xAxisData",
+            "shape": "object",
+            "typeName": "co.yml.charts.axis.AxisData"
+          },
+          {
+            "name": "yAxisData",
+            "shape": "object",
+            "typeName": "co.yml.charts.axis.AxisData"
+          },
+          {
+            "name": "isZoomAllowed",
+            "shape": "boolean"
+          },
+          {
+            "name": "paddingTop",
+            "shape": "other"
+          },
+          {
+            "name": "bottomPadding",
+            "shape": "other"
+          },
+          {
+            "name": "paddingRight",
+            "shape": "other"
+          },
+          {
+            "name": "containerPaddingEnd",
+            "shape": "other"
+          },
+          {
+            "name": "backgroundColor",
+            "shape": "other"
+          },
+          {
+            "name": "gridLines",
+            "shape": "object",
+            "typeName": "co.yml.charts.ui.linechart.model.GridLines"
+          },
+          {
+            "name": "accessibilityConfig",
+            "shape": "object",
+            "typeName": "co.yml.charts.common.model.AccessibilityConfig"
+          }
+        ],
+        "defaultParams": [
+          "xAxisData",
+          "yAxisData",
+          "isZoomAllowed",
+          "paddingTop",
+          "bottomPadding",
+          "paddingRight",
+          "containerPaddingEnd",
+          "backgroundColor",
+          "gridLines",
+          "accessibilityConfig"
+        ],
+        "returnShape": "object"
+      },
+      "LinePlotData": {
+        "name": "LinePlotData",
+        "target": "LinePlotData",
+        "qualified": "co.yml.charts.ui.linechart.model.LinePlotData",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "plotType",
+            "shape": "enum",
+            "typeName": "co.yml.charts.common.model.PlotType",
+            "enumValues": [
+              "Bar",
+              "Donut",
+              "Line",
+              "Pie",
+              "Wave"
+            ]
+          },
+          {
+            "name": "lines",
+            "shape": "array",
+            "elem": {
+              "name": "",
+              "shape": "object",
+              "typeName": "co.yml.charts.ui.linechart.model.Line"
+            }
+          }
+        ],
+        "defaultParams": [
+          "plotType",
+          "lines"
+        ],
+        "returnShape": "object"
+      },
+      "LineStyle": {
+        "name": "LineStyle",
+        "target": "LineStyle",
+        "qualified": "co.yml.charts.ui.linechart.model.LineStyle",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "lineType",
+            "shape": "other"
+          },
+          {
+            "name": "color",
+            "shape": "other"
+          },
+          {
+            "name": "width",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "alpha",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "style",
+            "shape": "other"
+          },
+          {
+            "name": "colorFilter",
+            "shape": "other"
+          },
+          {
+            "name": "blendMode",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [
+          "lineType",
+          "color",
+          "width",
+          "alpha",
+          "style",
+          "colorFilter",
+          "blendMode"
+        ],
+        "returnShape": "object"
+      },
+      "SelectionHighlightPoint": {
+        "name": "SelectionHighlightPoint",
+        "target": "SelectionHighlightPoint",
+        "qualified": "co.yml.charts.ui.linechart.model.SelectionHighlightPoint",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "color",
+            "shape": "other"
+          },
+          {
+            "name": "radius",
+            "shape": "other"
+          },
+          {
+            "name": "alpha",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "style",
+            "shape": "other"
+          },
+          {
+            "name": "colorFilter",
+            "shape": "other"
+          },
+          {
+            "name": "blendMode",
+            "shape": "other"
+          },
+          {
+            "name": "draw",
+            "shape": "function"
+          },
+          {
+            "name": "isHighlightLineRequired",
+            "shape": "boolean"
+          },
+          {
+            "name": "drawHighlightLine",
+            "shape": "function"
+          }
+        ],
+        "defaultParams": [
+          "color",
+          "radius",
+          "alpha",
+          "style",
+          "colorFilter",
+          "blendMode",
+          "draw",
+          "isHighlightLineRequired",
+          "drawHighlightLine"
+        ],
+        "returnShape": "object"
+      },
+      "SelectionHighlightPopUp": {
+        "name": "SelectionHighlightPopUp",
+        "target": "SelectionHighlightPopUp",
+        "qualified": "co.yml.charts.ui.linechart.model.SelectionHighlightPopUp",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "backgroundColor",
+            "shape": "other"
+          },
+          {
+            "name": "backgroundAlpha",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "backgroundCornerRadius",
+            "shape": "other"
+          },
+          {
+            "name": "backgroundColorFilter",
+            "shape": "other"
+          },
+          {
+            "name": "backgroundBlendMode",
+            "shape": "other"
+          },
+          {
+            "name": "backgroundStyle",
+            "shape": "other"
+          },
+          {
+            "name": "paddingBetweenPopUpAndPoint",
+            "shape": "other"
+          },
+          {
+            "name": "labelSize",
+            "shape": "other"
+          },
+          {
+            "name": "labelColor",
+            "shape": "other"
+          },
+          {
+            "name": "labelAlignment",
+            "shape": "other"
+          },
+          {
+            "name": "labelTypeface",
+            "shape": "other"
+          },
+          {
+            "name": "popUpLabel",
+            "shape": "function"
+          },
+          {
+            "name": "draw",
+            "shape": "function"
+          }
+        ],
+        "defaultParams": [
+          "backgroundColor",
+          "backgroundAlpha",
+          "backgroundCornerRadius",
+          "backgroundColorFilter",
+          "backgroundBlendMode",
+          "backgroundStyle",
+          "paddingBetweenPopUpAndPoint",
+          "labelSize",
+          "labelColor",
+          "labelAlignment",
+          "labelTypeface",
+          "popUpLabel",
+          "draw"
+        ],
+        "returnShape": "object"
+      },
+      "ShadowUnderLine": {
+        "name": "ShadowUnderLine",
+        "target": "ShadowUnderLine",
+        "qualified": "co.yml.charts.ui.linechart.model.ShadowUnderLine",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "color",
+            "shape": "other"
+          },
+          {
+            "name": "brush",
+            "shape": "other"
+          },
+          {
+            "name": "alpha",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "style",
+            "shape": "other"
+          },
+          {
+            "name": "colorFilter",
+            "shape": "other"
+          },
+          {
+            "name": "blendMode",
+            "shape": "other"
+          },
+          {
+            "name": "draw",
+            "shape": "function"
+          },
+          {
+            "name": "drawMultiColor",
+            "shape": "function"
+          }
+        ],
+        "defaultParams": [
+          "color",
+          "brush",
+          "alpha",
+          "style",
+          "colorFilter",
+          "blendMode",
+          "draw",
+          "drawMultiColor"
+        ],
+        "returnShape": "object"
+      },
+      "PieChartConfig": {
+        "name": "PieChartConfig",
+        "target": "PieChartConfig",
+        "qualified": "co.yml.charts.ui.piechart.models.PieChartConfig",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "startAngle",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "showSliceLabels",
+            "shape": "boolean"
+          },
+          {
+            "name": "sliceLabelTextSize",
+            "shape": "other"
+          },
+          {
+            "name": "sliceLabelTextColor",
+            "shape": "other"
+          },
+          {
+            "name": "sliceLabelTypeface",
+            "shape": "other"
+          },
+          {
+            "name": "isAnimationEnable",
+            "shape": "boolean"
+          },
+          {
+            "name": "animationDuration",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          {
+            "name": "strokeWidth",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "labelFontSize",
+            "shape": "other"
+          },
+          {
+            "name": "labelTypeface",
+            "shape": "other"
+          },
+          {
+            "name": "labelVisible",
+            "shape": "boolean"
+          },
+          {
+            "name": "labelType",
+            "shape": "other"
+          },
+          {
+            "name": "labelColor",
+            "shape": "other"
+          },
+          {
+            "name": "labelColorType",
+            "shape": "other"
+          },
+          {
+            "name": "backgroundColor",
+            "shape": "other"
+          },
+          {
+            "name": "activeSliceAlpha",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "inActiveSliceAlpha",
+            "shape": "number",
+            "typeName": "kotlin.Float"
+          },
+          {
+            "name": "isEllipsizeEnabled",
+            "shape": "boolean"
+          },
+          {
+            "name": "sliceMinTextWidthToEllipsize",
+            "shape": "other"
+          },
+          {
+            "name": "sliceLabelEllipsizeAt",
+            "shape": "other"
+          },
+          {
+            "name": "chartPadding",
+            "shape": "number",
+            "typeName": "kotlin.Int"
+          },
+          {
+            "name": "accessibilityConfig",
+            "shape": "object",
+            "typeName": "co.yml.charts.common.model.AccessibilityConfig"
+          },
+          {
+            "name": "isSumVisible",
+            "shape": "boolean"
+          },
+          {
+            "name": "sumUnit",
+            "shape": "string"
+          },
+          {
+            "name": "isClickOnSliceEnabled",
+            "shape": "boolean"
+          }
+        ],
+        "defaultParams": [
+          "startAngle",
+          "showSliceLabels",
+          "sliceLabelTextSize",
+          "sliceLabelTextColor",
+          "sliceLabelTypeface",
+          "isAnimationEnable",
+          "animationDuration",
+          "strokeWidth",
+          "labelFontSize",
+          "labelTypeface",
+          "labelVisible",
+          "labelType",
+          "labelColor",
+          "labelColorType",
+          "backgroundColor",
+          "activeSliceAlpha",
+          "inActiveSliceAlpha",
+          "isEllipsizeEnabled",
+          "sliceMinTextWidthToEllipsize",
+          "sliceLabelEllipsizeAt",
+          "chartPadding",
+          "accessibilityConfig",
+          "isSumVisible",
+          "sumUnit",
+          "isClickOnSliceEnabled"
+        ],
+        "returnShape": "object"
+      },
+      "PieChartData": {
+        "name": "PieChartData",
+        "target": "PieChartData",
+        "qualified": "co.yml.charts.ui.piechart.models.PieChartData",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "slices",
+            "shape": "array",
+            "elem": {
+              "name": "",
+              "shape": "other"
+            }
+          },
+          {
+            "name": "plotType",
+            "shape": "enum",
+            "typeName": "co.yml.charts.common.model.PlotType",
+            "enumValues": [
+              "Bar",
+              "Donut",
+              "Line",
+              "Pie",
+              "Wave"
+            ]
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "AxisPosition": {
+        "name": "AxisPosition",
+        "target": "AxisPosition",
+        "qualified": "co.yml.charts.ui.wavechart.model.AxisPosition",
+        "isConstructor": false,
+        "isEnum": true,
+        "enumValues": [
+          "TOP",
+          "BOTTOM",
+          "INTERSECT"
+        ],
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      },
+      "Wave": {
+        "name": "Wave",
+        "target": "Wave",
+        "qualified": "co.yml.charts.ui.wavechart.model.Wave",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "dataPoints",
+            "shape": "array",
+            "elem": {
+              "name": "",
+              "shape": "object",
+              "typeName": "co.yml.charts.common.model.Point"
+            }
+          },
+          {
+            "name": "waveStyle",
+            "shape": "object",
+            "typeName": "co.yml.charts.ui.linechart.model.LineStyle"
+          },
+          {
+            "name": "intersectionPoint",
+            "shape": "object",
+            "typeName": "co.yml.charts.ui.linechart.model.IntersectionPoint"
+          },
+          {
+            "name": "selectionHighlightPoint",
+            "shape": "object",
+            "typeName": "co.yml.charts.ui.linechart.model.SelectionHighlightPoint"
+          },
+          {
+            "name": "shadowUnderLine",
+            "shape": "object",
+            "typeName": "co.yml.charts.ui.linechart.model.ShadowUnderLine"
+          },
+          {
+            "name": "selectionHighlightPopUp",
+            "shape": "object",
+            "typeName": "co.yml.charts.ui.linechart.model.SelectionHighlightPopUp"
+          },
+          {
+            "name": "waveFillColor",
+            "shape": "object",
+            "typeName": "co.yml.charts.ui.wavechart.model.WaveFillColor"
+          }
+        ],
+        "defaultParams": [
+          "waveStyle",
+          "intersectionPoint",
+          "selectionHighlightPoint",
+          "shadowUnderLine",
+          "selectionHighlightPopUp",
+          "waveFillColor"
+        ],
+        "returnShape": "object"
+      },
+      "WaveChartData": {
+        "name": "WaveChartData",
+        "target": "WaveChartData",
+        "qualified": "co.yml.charts.ui.wavechart.model.WaveChartData",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "wavePlotData",
+            "shape": "object",
+            "typeName": "co.yml.charts.ui.wavechart.model.WavePlotData"
+          },
+          {
+            "name": "xAxisData",
+            "shape": "object",
+            "typeName": "co.yml.charts.axis.AxisData"
+          },
+          {
+            "name": "yAxisData",
+            "shape": "object",
+            "typeName": "co.yml.charts.axis.AxisData"
+          },
+          {
+            "name": "isZoomAllowed",
+            "shape": "boolean"
+          },
+          {
+            "name": "paddingTop",
+            "shape": "other"
+          },
+          {
+            "name": "bottomPadding",
+            "shape": "other"
+          },
+          {
+            "name": "paddingRight",
+            "shape": "other"
+          },
+          {
+            "name": "containerPaddingEnd",
+            "shape": "other"
+          },
+          {
+            "name": "backgroundColor",
+            "shape": "other"
+          },
+          {
+            "name": "gridLines",
+            "shape": "object",
+            "typeName": "co.yml.charts.ui.linechart.model.GridLines"
+          },
+          {
+            "name": "accessibilityConfig",
+            "shape": "object",
+            "typeName": "co.yml.charts.common.model.AccessibilityConfig"
+          }
+        ],
+        "defaultParams": [
+          "xAxisData",
+          "yAxisData",
+          "isZoomAllowed",
+          "paddingTop",
+          "bottomPadding",
+          "paddingRight",
+          "containerPaddingEnd",
+          "backgroundColor",
+          "gridLines",
+          "accessibilityConfig"
+        ],
+        "returnShape": "object"
+      },
+      "WaveFillColor": {
+        "name": "WaveFillColor",
+        "target": "WaveFillColor",
+        "qualified": "co.yml.charts.ui.wavechart.model.WaveFillColor",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "topColor",
+            "shape": "other"
+          },
+          {
+            "name": "bottomColor",
+            "shape": "other"
+          },
+          {
+            "name": "topBrush",
+            "shape": "other"
+          },
+          {
+            "name": "bottomBrush",
+            "shape": "other"
+          }
+        ],
+        "defaultParams": [
+          "topColor",
+          "bottomColor",
+          "topBrush",
+          "bottomBrush"
+        ],
+        "returnShape": "object"
+      },
+      "WavePlotData": {
+        "name": "WavePlotData",
+        "target": "WavePlotData",
+        "qualified": "co.yml.charts.ui.wavechart.model.WavePlotData",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "plotType",
+            "shape": "enum",
+            "typeName": "co.yml.charts.common.model.PlotType",
+            "enumValues": [
+              "Bar",
+              "Donut",
+              "Line",
+              "Pie",
+              "Wave"
+            ]
+          },
+          {
+            "name": "lines",
+            "shape": "array",
+            "elem": {
+              "name": "",
+              "shape": "object",
+              "typeName": "co.yml.charts.ui.wavechart.model.Wave"
+            }
+          }
+        ],
+        "defaultParams": [
+          "plotType",
+          "lines"
+        ],
+        "returnShape": "object"
+      }
+    },
+    "curated": true
+  }
+}

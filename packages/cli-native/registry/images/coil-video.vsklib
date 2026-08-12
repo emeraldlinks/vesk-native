@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "library": {
+    "id": "coil-video",
+    "name": "Coil Video",
+    "description": "Video-frame decoding support for Coil",
+    "group": "io.coil-kt",
+    "artifact": "coil-video",
+    "version": "2.7.0",
+    "gradle": ["io.coil-kt:coil-video:2.7.0"],
+    "permissions": [],
+    "exports": ["VideoFrameDecoder"],
+    "tags": {},
+    "curated": true
+  }
+}

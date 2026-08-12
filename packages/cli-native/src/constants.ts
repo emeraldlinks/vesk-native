@@ -67,8 +67,12 @@ export function usage(): void {
 Usage:
   vesk-native init <dir>       Scaffold a native app in <dir> (from veskconfig.ts + .vsk sources)
   vesk-native build [dir]      Regenerate everything from source + gradle assembleDebug (default: .)
+  vesk-native install [dir]    Regenerate .vsklib from libraries.json, build + install the APK (default: .)
   vesk-native run [dir]        Build, stage APK, open the on-device installer, launch (default: .)
   vesk-native setup            Install the toolchain (JDK check, Android SDK, Gradle) for this OS/arch
+  vesk-native add <pkg> [dir]  Add a Kotlin library to libraries.json (id | id@version | group:artifact) — the single committed source of truth
+  vesk-native update [pkg] [dir]  Bump installed library version(s) to the latest builtin registry version
+  vesk-native remove <pkg> [dir]  Uninstall a Kotlin library (gradle dep + permissions drop on next build)
   vesk-native dev [dir]        (not yet implemented — Phase 7)
 `);
 }

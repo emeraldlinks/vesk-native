@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "library": {
+    "id": "picasso",
+    "name": "Picasso",
+    "description": "Image loading for Android Views",
+    "group": "com.squareup.picasso",
+    "artifact": "picasso",
+    "version": "2.8",
+    "gradle": ["com.squareup.picasso:picasso:2.8"],
+    "permissions": ["android.permission.INTERNET"],
+    "exports": ["Picasso"],
+    "tags": {},
+    "curated": true
+  }
+}

@@ -12,7 +12,7 @@ android {
 
     defaultConfig {
         applicationId = "com.vesk.demo3"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 36
         versionCode = 4
         versionName = "0.4.0"
@@ -51,4 +51,7 @@ implementation("androidx.camera:camera-view:1.4.1")
 implementation("androidx.biometric:biometric:1.4.0-alpha02")
 implementation("com.google.zxing:core:3.5.3")
 implementation("androidx.media:media:1.7.0")
+implementation("io.coil-kt:coil-compose:2.7.0")
+implementation("co.yml:ycharts:2.1.0")
+implementation("com.github.bumptech.glide:compose:1.0.0-beta01")
 }

@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "library": {
+    "id": "moshi",
+    "name": "Moshi",
+    "description": "JSON library for Kotlin & Java",
+    "group": "com.squareup.moshi",
+    "artifact": "moshi",
+    "version": "1.15.1",
+    "gradle": ["com.squareup.moshi:moshi:1.15.1"],
+    "permissions": [],
+  "exports": ["Moshi", "JsonAdapter"],
+  "tags": {},
+  "signatures": {
+    "JsonAdapter": {
+      "name": "JsonAdapter",
+      "target": "JsonAdapter",
+      "qualified": "com.squareup.moshi.JsonAdapter",
+      "jsdoc": "Typed JSON adapter. JsonAdapter() is the abstract base; Moshi.adapter(type) returns a concrete instance.",
+      "isConstructor": true,
+      "params": [],
+      "defaultParams": [],
+      "returnShape": "other"
+    }
+  },
+  "essential": true,
+  "curated": true
+}
+}
