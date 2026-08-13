@@ -7,12 +7,18 @@
     "group": "androidx.work",
     "artifact": "work-runtime",
     "version": "2.9.1",
-    "gradle": ["androidx.work:work-runtime:2.9.1"],
+    "gradle": [
+      "androidx.work:work-runtime:2.9.1"
+    ],
     "permissions": [],
-    "exports": ["WorkManager", "OneTimeWorkRequest"],
+    "exports": [
+      "WorkManager",
+      "OneTimeWorkRequest"
+    ],
     "tags": {},
     "signatures": {},
     "essential": true,
-    "curated": true
+    "curated": true,
+    "libType": "utility"
   }
 }

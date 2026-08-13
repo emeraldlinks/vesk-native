@@ -5,7 +5,7 @@ import { AAPT2_OVERRIDE, CONFIG_JSON, CONFIG_TS, DEFAULT_GRADLE, GRADLE_VERSION,
 import { loadConfig, writeDefaultConfig } from '@cli-native/config';
 import { generateProject, generateVskLibDeclarations } from '@cli-native/generators';
 import type { HostInfo } from '@cli-native/constants';
-import { deriveLibraryPermissions, installedLibraries, loadLibraries, mavenMetadata, parseLibrarySpec, regenerateVsklib, resolveLibrary, saveLibraries, verifyLibrary, withVersion, writeVsklibCache } from '@cli-native/vsklib';
+import { deriveLibraryPermissions, installedLibraries, loadLibraries, mavenMetadata, parseLibrarySpec, resolveLibrary, saveLibraries, verifyLibraries, verifyLibrary, withVersion, writeVsklibCache } from '@cli-native/vsklib';
 import type { VskLibRecord } from '@cli-native/vsklib';
 
 export async function initApp(dir: string): Promise<void> {
@@ -249,6 +249,7 @@ export function parseLibraryArgs(rest: string[]): { spec?: string; dir: string }
 
 function printSurface(rec: VskLibRecord): void {
   const surface: string[] = [];
+  surface.push(`  libType: ${rec.libType}`);
   if (rec.exports.length > 0) surface.push(`  exports: ${rec.exports.join(', ')}`);
   const tagNames = Object.keys(rec.tags ?? {});
   if (tagNames.length > 0) surface.push(`  tags:    ${tagNames.map((t) => `<${t}>`).join(', ')}`);
@@ -313,7 +314,7 @@ export async function addLibrary(dir: string, spec: string): Promise<void> {
       }
       log('add', `${parsed.group}:${parsed.artifact}@${parsed.version} is not in the builtin registry — generating a binding from Kotlin metadata`);
       const regen = await generateBindingFor(
-        { id: '', name: parsed.artifact, description: '', group: parsed.group, artifact: parsed.artifact, version: parsed.version, gradle: [], permissions: [], exports: [], tags: {} },
+        { id: '', name: parsed.artifact, description: '', group: parsed.group, artifact: parsed.artifact, version: parsed.version, gradle: [], permissions: [], exports: [], tags: {}, libType: 'utility' },
         'add',
       );
       if (!regen) {
@@ -385,6 +386,27 @@ async function rederiveAtVersion(rec: VskLibRecord, next: string): Promise<VskLi
   return { ...base, permissions: deriveLibraryPermissions(base) };
 }
 
+// Curated registry records are the trusted source of truth for their surface.
+// `vesk update` refreshes the manifest snapshot when the catalog improved
+// (new exports/signatures/tags/attrs) without a version bump. Non-curated
+// records keep their generated binding — the registry entry is only a pin.
+function resyncFromRegistry(installed: VskLibRecord): VskLibRecord | null {
+  let catalog: VskLibRecord;
+  try {
+    catalog = resolveLibrary({ id: installed.id });
+  } catch {
+    return null;
+  }
+  if (!catalog.curated) return null;
+  const changed =
+    catalog.version !== installed.version ||
+    JSON.stringify(catalog.signatures) !== JSON.stringify(installed.signatures) ||
+    JSON.stringify(catalog.tags) !== JSON.stringify(installed.tags);
+  if (!changed) return null;
+  // Permissions stay as derived at the previous add/update — the catalog has none.
+  return { ...catalog, permissions: installed.permissions };
+}
+
 export async function updateLibraries(dir: string, spec?: string): Promise<void> {
   const target = resolve(dir);
   requireApp(target);
@@ -420,6 +442,16 @@ export async function updateLibraries(dir: string, spec?: string): Promise<void>
       process.exit(1);
     }
     if (next === installed.version) {
+      const synced = resyncFromRegistry(installed);
+      if (synced) {
+        data.libraries[synced.id] = synced;
+        saveLibraries(target, data);
+        writeVsklibCache(target, installedLibraries(target));
+        generateVskLibDeclarations(target);
+        log('update', `${synced.id} re-synced from the registry (surface refreshed at ${synced.version})`);
+        printSurface(synced);
+        return;
+      }
       log('update', `${installed.id} already at ${installed.version}`);
       return;
     }
@@ -433,6 +465,7 @@ export async function updateLibraries(dir: string, spec?: string): Promise<void>
     return;
   }
   const bumped: string[] = [];
+  const synced: string[] = [];
   for (const id of ids) {
     const installed = data.libraries[id]!;
     let next: string;
@@ -442,7 +475,14 @@ export async function updateLibraries(dir: string, spec?: string): Promise<void>
       log('update', `keeping ${id} — ${(e as Error).message}`);
       continue;
     }
-    if (next === installed.version) continue;
+    if (next === installed.version) {
+      const resynced = resyncFromRegistry(installed);
+      if (resynced) {
+        data.libraries[id] = resynced;
+        synced.push(`${id} re-synced from the registry`);
+      }
+      continue;
+    }
     const rec = await rederiveAtVersion(installed, next);
     data.libraries[id] = rec;
     bumped.push(`${rec.id} ${installed.version} -> ${rec.version}`);
@@ -450,11 +490,9 @@ export async function updateLibraries(dir: string, spec?: string): Promise<void>
   saveLibraries(target, data);
   writeVsklibCache(target, installedLibraries(target));
   generateVskLibDeclarations(target);
-  if (bumped.length === 0) {
-    log('update', 'all installed libraries are at the latest version');
-    return;
-  }
-  log('update', `${bumped.length} library(ies) bumped to the latest version`);
+  if (bumped.length > 0) log('update', `${bumped.length} library(ies) bumped to the latest version`);
+  if (synced.length > 0) for (const s of synced) log('update', s);
+  if (bumped.length === 0 && synced.length === 0) log('update', 'all installed libraries are at the latest version');
 }
 
 export async function removeLibrary(dir: string, spec: string): Promise<void> {
@@ -484,19 +522,41 @@ export async function removeLibrary(dir: string, spec: string): Promise<void> {
   log('remove', `${parsed.id} removed — the next build drops its gradle dep${rec.permissions.length > 0 ? ' + permissions' : ''}`);
 }
 
-// `vesk install` = restore libraries from the committed manifest (regenerate
-// the disposable `.vsklib/` from libraries.json, re-verifying each pin) then
-// build + install the APK on the device.
+// `vesk install` = build + install the APK on the device. Resolution needs
+// no pre-build step: the compiler reads the committed manifest directly and
+// gradle fetches the pinned artifacts at build time.
 export async function installApp(dir: string): Promise<void> {
   const target = resolve(dir);
   requireApp(target);
-  const restored = await regenerateVsklib(target);
-  if (restored.length === 0) {
-    log('install', 'no libraries in libraries.json — .vsklib regenerated empty');
-  } else {
-    log('install', `regenerated .vsklib from libraries.json (${restored.map((r) => r.id).join(', ')})`);
-  }
   await runApp(target);
+}
+
+// `vesk verify` — read-only check that every pinned coordinate in the
+// manifest resolves on its real repository (Google Maven for androidx,
+// Maven Central otherwise). Exits non-zero when any pin is bad, so it can
+// gate CI without ever touching build output.
+export async function verifyApp(dir: string): Promise<void> {
+  const target = resolve(dir);
+  requireApp(target);
+  const results = await verifyLibraries(target);
+  let bad = 0;
+  for (const r of results) {
+    if (r.status === 'verified') log('verify', `${r.id} ${r.coordinate} verified`);
+    else if (r.status === 'not-found') {
+      console.error(`  [verify] ${r.id} ${r.coordinate} does not resolve — remove it with: vesk remove ${r.id}`);
+      bad++;
+    } else if (r.status === 'version-missing') {
+      console.error(`  [verify] ${r.id} ${r.coordinate} not found${r.latest ? ` — latest is ${r.latest}` : ''} — use: vesk update ${r.id}`);
+      bad++;
+    } else {
+      log('verify', `${r.id} ${r.coordinate} unreachable — skipping (offline)`);
+    }
+  }
+  if (bad > 0) {
+    console.error(`  [verify] ${bad} of ${results.length} pinned libraries do not resolve`);
+    process.exit(1);
+  }
+  log('verify', `all ${results.length} pinned libraries resolve`);
 }
 
 export async function runApp(dir: string): Promise<void> {

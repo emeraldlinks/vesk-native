@@ -7,10 +7,16 @@
     "group": "io.coil-kt",
     "artifact": "coil-gif",
     "version": "2.7.0",
-    "gradle": ["io.coil-kt:coil-gif:2.7.0"],
+    "gradle": [
+      "io.coil-kt:coil-gif:2.7.0"
+    ],
     "permissions": [],
-    "exports": ["ImageDecoderDecoder", "PixelOpacity"],
+    "exports": [
+      "ImageDecoderDecoder",
+      "PixelOpacity"
+    ],
     "tags": {},
-    "curated": true
+    "curated": true,
+    "libType": "utility"
   }
 }

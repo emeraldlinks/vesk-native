@@ -7,9 +7,15 @@
     "group": "com.google.code.gson",
     "artifact": "gson",
     "version": "2.11.0",
-    "gradle": ["com.google.code.gson:gson:2.11.0"],
+    "gradle": [
+      "com.google.code.gson:gson:2.11.0"
+    ],
     "permissions": [],
-    "exports": ["Gson", "JsonParser", "JsonObject"],
+    "exports": [
+      "Gson",
+      "JsonParser",
+      "JsonObject"
+    ],
     "tags": {},
     "signatures": {
       "Gson": {
@@ -44,6 +50,7 @@
       }
     },
     "essential": true,
-    "curated": true
+    "curated": true,
+    "libType": "utility"
   }
 }

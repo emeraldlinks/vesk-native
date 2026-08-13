@@ -36,7 +36,6 @@
       "RepeatMode",
       "RepeatableSpec",
       "SeekableTransitionState",
-      "SnapSpec",
       "SpringSpec",
       "TargetBasedAnimation",
       "Transition",
@@ -594,23 +593,6 @@
         "defaultParams": [],
         "returnShape": "object"
       },
-      "SnapSpec": {
-        "name": "SnapSpec",
-        "target": "SnapSpec",
-        "qualified": "androidx.compose.animation.core.SnapSpec",
-        "isConstructor": true,
-        "params": [
-          {
-            "name": "delay",
-            "shape": "number",
-            "typeName": "kotlin.Int"
-          }
-        ],
-        "defaultParams": [
-          "delay"
-        ],
-        "returnShape": "object"
-      },
       "SpringSpec": {
         "name": "SpringSpec",
         "target": "SpringSpec",
@@ -895,6 +877,7 @@
     },
     "tags": {},
     "curated": true,
-    "essential": false
+    "essential": false,
+    "libType": "utility"
   }
 }

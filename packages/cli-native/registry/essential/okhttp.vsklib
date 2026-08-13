@@ -7,9 +7,18 @@
     "group": "com.squareup.okhttp3",
     "artifact": "okhttp",
     "version": "4.12.0",
-    "gradle": ["com.squareup.okhttp3:okhttp:4.12.0"],
-    "permissions": ["android.permission.INTERNET"],
-    "exports": ["OkHttpClient", "Request", "Response", "RequestBody"],
+    "gradle": [
+      "com.squareup.okhttp3:okhttp:4.12.0"
+    ],
+    "permissions": [
+      "android.permission.INTERNET"
+    ],
+    "exports": [
+      "OkHttpClient",
+      "Request",
+      "Response",
+      "RequestBody"
+    ],
     "tags": {},
     "signatures": {
       "OkHttpClient": {
@@ -24,6 +33,7 @@
       }
     },
     "essential": true,
-    "curated": true
+    "curated": true,
+    "libType": "utility"
   }
 }

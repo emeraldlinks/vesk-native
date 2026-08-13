@@ -7,10 +7,15 @@
     "group": "com.squareup.leakcanary",
     "artifact": "leakcanary-android",
     "version": "2.14",
-    "gradle": ["com.squareup.leakcanary:leakcanary-android:2.14"],
+    "gradle": [
+      "com.squareup.leakcanary:leakcanary-android:2.14"
+    ],
     "permissions": [],
-    "exports": ["LeakCanary"],
+    "exports": [
+      "LeakCanary"
+    ],
     "tags": {},
-    "curated": true
+    "curated": true,
+    "libType": "utility"
   }
 }

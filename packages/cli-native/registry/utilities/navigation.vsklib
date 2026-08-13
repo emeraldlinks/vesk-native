@@ -62,6 +62,7 @@
       }
     },
     "curated": true,
-    "essential": false
+    "essential": false,
+    "libType": "component"
   }
 }

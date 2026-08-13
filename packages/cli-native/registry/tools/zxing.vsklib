@@ -7,9 +7,15 @@
     "group": "com.google.zxing",
     "artifact": "core",
     "version": "3.5.3",
-    "gradle": ["com.google.zxing:core:3.5.3"],
+    "gradle": [
+      "com.google.zxing:core:3.5.3"
+    ],
     "permissions": [],
-    "exports": ["QRCodeWriter", "QRCodeReader", "BarcodeFormat"],
+    "exports": [
+      "QRCodeWriter",
+      "QRCodeReader",
+      "BarcodeFormat"
+    ],
     "tags": {},
     "signatures": {
       "QRCodeWriter": {
@@ -17,22 +23,33 @@
         "target": "QRCodeWriter",
         "qualified": "com.google.zxing.qrcode.QRCodeWriter",
         "jsdoc": "Encodes QR codes. QRCodeWriter().encode(content, format, width, height) returns a BitMatrix.",
-      "isConstructor": true,
-      "params": [],
-      "defaultParams": [],
-      "returnShape": "other"
+        "isConstructor": true,
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "other"
+      },
+      "QRCodeReader": {
+        "name": "QRCodeReader",
+        "target": "QRCodeReader",
+        "qualified": "com.google.zxing.qrcode.QRCodeReader",
+        "jsdoc": "Decodes QR codes. QRCodeReader().decode(binaryBitmap) returns a Result.",
+        "isConstructor": true,
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "other"
+      },
+      "BarcodeFormat": {
+        "name": "BarcodeFormat",
+        "target": "BarcodeFormat",
+        "qualified": "com.google.zxing.BarcodeFormat",
+        "jsdoc": "Barcode/QR format enum. Pass BarcodeFormat.QR_CODE to QRCodeWriter().encode().",
+        "isConstructor": false,
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "string"
+      }
     },
-    "QRCodeReader": {
-      "name": "QRCodeReader",
-      "target": "QRCodeReader",
-      "qualified": "com.google.zxing.qrcode.QRCodeReader",
-      "jsdoc": "Decodes QR codes. QRCodeReader().decode(binaryBitmap) returns a Result.",
-      "isConstructor": true,
-      "params": [],
-      "defaultParams": [],
-      "returnShape": "other"
-    }
-  },
-  "curated": true
-}
+    "curated": true,
+    "libType": "utility"
+  }
 }

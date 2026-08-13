@@ -7,17 +7,31 @@
     "group": "com.github.bumptech.glide",
     "artifact": "compose",
     "version": "1.0.0-beta01",
-    "gradle": ["com.github.bumptech.glide:compose:1.0.0-beta01"],
-    "permissions": ["android.permission.INTERNET"],
-    "exports": ["GlideImage"],
+    "gradle": [
+      "com.github.bumptech.glide:compose:1.0.0-beta01"
+    ],
+    "permissions": [
+      "android.permission.INTERNET"
+    ],
+    "exports": [
+      "GlideImage"
+    ],
     "tags": {
       "GlideImage": {
         "composable": "GlideImage",
-        "imports": ["com.bumptech.glide.integration.compose.GlideImage"],
-        "attrs": { "src": "model", "alt": "contentDescription" },
-        "optIn": ["com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi"]
+        "imports": [
+          "com.bumptech.glide.integration.compose.GlideImage"
+        ],
+        "attrs": {
+          "src": "model",
+          "alt": "contentDescription"
+        },
+        "optIn": [
+          "com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi"
+        ]
       }
     },
-    "curated": true
+    "curated": true,
+    "libType": "component"
   }
 }

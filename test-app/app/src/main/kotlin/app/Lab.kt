@@ -64,12 +64,13 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 
 import app.Badge
-import app.lab_utils_titleCase as titleCase
+import app.lab_js_helper_jsMotto as jsMotto
+import app.lab_js_helper_jsTagline as jsTagline
+import app.lab_js_helper_jsYear as jsYear
 import app.lab_utils_clamp as clamp
 import app.lab_utils_shippedFrom as shippedFrom
-import app.lab_js_helper_jsTagline as jsTagline
-import app.lab_js_helper_jsMotto as jsMotto
-import app.lab_js_helper_jsYear as jsYear
+import app.lab_utils_titleCase as titleCase
+
 
 @Composable
 fun Lab(content: @Composable () -> Unit = {}) {

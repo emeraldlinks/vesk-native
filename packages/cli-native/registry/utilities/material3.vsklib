@@ -2306,7 +2306,8 @@
             "shape": "object",
             "typeName": "androidx.compose.material3.ButtonElevation"
           }
-        }
+        },
+        "container": true
       },
       "ElevatedButton": {
         "composable": "ElevatedButton",
@@ -2333,7 +2334,8 @@
             "shape": "object",
             "typeName": "androidx.compose.material3.ButtonElevation"
           }
-        }
+        },
+        "container": true
       },
       "FilledTonalButton": {
         "composable": "FilledTonalButton",
@@ -2360,7 +2362,8 @@
             "shape": "object",
             "typeName": "androidx.compose.material3.ButtonElevation"
           }
-        }
+        },
+        "container": true
       },
       "OutlinedButton": {
         "composable": "OutlinedButton",
@@ -2387,7 +2390,8 @@
             "shape": "object",
             "typeName": "androidx.compose.material3.ButtonElevation"
           }
-        }
+        },
+        "container": true
       },
       "TextButton": {
         "composable": "TextButton",
@@ -2414,7 +2418,8 @@
             "shape": "object",
             "typeName": "androidx.compose.material3.ButtonElevation"
           }
-        }
+        },
+        "container": true
       },
       "Card": {
         "composable": "Card",
@@ -2441,7 +2446,8 @@
             "shape": "object",
             "typeName": "androidx.compose.material3.CardElevation"
           }
-        }
+        },
+        "container": true
       },
       "ElevatedCard": {
         "composable": "ElevatedCard",
@@ -2468,7 +2474,8 @@
             "shape": "object",
             "typeName": "androidx.compose.material3.CardElevation"
           }
-        }
+        },
+        "container": true
       },
       "OutlinedCard": {
         "composable": "OutlinedCard",
@@ -3112,12 +3119,17 @@
           "androidx.compose.material3.Icon"
         ],
         "attrs": {
-          "contentDescription": "contentDescription"
+          "contentDescription": "contentDescription",
+          "imageVector": "imageVector"
         },
         "attrShapes": {
           "contentDescription": {
             "name": "contentDescription",
             "shape": "string"
+          },
+          "imageVector": {
+            "name": "imageVector",
+            "shape": "other"
           }
         }
       },
@@ -4075,6 +4087,7 @@
       }
     },
     "curated": true,
-    "essential": false
+    "essential": false,
+    "libType": "component"
   }
 }

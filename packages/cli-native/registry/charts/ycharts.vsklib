@@ -2122,6 +2122,7 @@
         "returnShape": "object"
       }
     },
-    "curated": true
+    "curated": true,
+    "libType": "component"
   }
 }

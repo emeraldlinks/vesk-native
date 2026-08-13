@@ -724,6 +724,7 @@ export async function generateLibraryBinding(coord: MavenCoord, opts?: BindingGe
       exports: [...exportsSet].sort(),
       signatures,
       tags,
+      libType: Object.keys(tags).length > 0 ? 'component' : 'utility',
     };
     if (opts?.cacheTo) {
       writeFileSync(opts.cacheTo, `${JSON.stringify({ version: 1, libraries: { [id]: record } }, null, 2)}\n`);

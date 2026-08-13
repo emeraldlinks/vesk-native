@@ -1,8 +1,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import type { LibExportSig, VskLibTag } from '@compiler-native/elements';
-import { log } from '@cli-native/constants';
-import { loadRegistry, readVsklibRecordFile, writeVsklibRecordFile } from '@cli-native/vsklib-registry';
+import { loadRegistry, writeVsklibRecordFile } from '@cli-native/vsklib-registry';
 
 // Installed Kotlin libraries are tracked in the app's root `libraries.json` —
 // the single source of truth, committed to git like package.json, and written
@@ -42,6 +41,12 @@ export interface VskLibRecord {
   // compiler (attrs map .vsk props to composable parameters; imports are the
   // page-file Kotlin imports the callable needs).
   tags: Record<string, VskLibTag>;
+  // How the library is consumed from `.vsk`. A `component` library exposes
+  // markup tags — a composable usable directly as an element (e.g. <GlideImage>
+  // or <YLineChart>) — while a `utility` library is used through its JS-visible
+  // function/value exports (e.g. Gson(), OkHttpClient()). Derived from whether
+  // the record carries markup `tags`; never hand-authored from memory.
+  libType: 'utility' | 'component';
   // The first-curated tier of the catalog: the libraries almost every app
   // needs (images, HTTP, JSON, persistence, work). Always resolvable offline,
   // surfaced first in `vesk registry` and in `vesk add` help. It is a data
@@ -115,26 +120,12 @@ export function saveLibraries(target: string, data: VskLibrariesFile): void {
 }
 
 export function installedLibraries(target: string): VskLibRecord[] {
-  // The committed root manifest is the source of truth for a fresh clone; once
-  // `.vsklib/<id>.vsklib` record files exist they are the freshest reflection
-  // of the installed state (they hold the same full records, and are what
-  // add/remove/update write). Prefer them when present.
-  const cacheDir = join(target, VSKLIB_DIR);
-  const files = existsSync(cacheDir)
-    ? readdirSync(cacheDir).filter((n) => n.endsWith('.vsklib')).sort()
-    : [];
-  if (files.length > 0) {
-    const records: VskLibRecord[] = [];
-    for (const f of files) {
-      const p = join(cacheDir, f);
-      try {
-        records.push(readVsklibRecordFile(p));
-      } catch {
-        log('lib', `skipping unreadable .vsklib record ${p}`);
-      }
-    }
-    return records;
-  }
+  // The committed root manifest (libraries.json) is the single source of
+  // truth: its records hold the full surface (metadata + exports + typed
+  // signatures) and are exactly what the compiler consumes at build time.
+  // The .vsklib/ cache is a derived, disposable mirror written by add/update/
+  // remove — never consulted for resolution, so a stale or missing cache
+  // cannot change what compiles.
   return Object.values(loadLibraries(target).libraries);
 }
 
@@ -153,35 +144,32 @@ export function writeVsklibCache(target: string, records: VskLibRecord[]): void 
   for (const rec of records) writeVsklibRecordFile(join(cacheDir, `${rec.id}.vsklib`), rec);
 }
 
-// `vesk install` restores a fresh clone to a freshly-added state: read the
-// committed root manifest and regenerate `.vsklib/` with every pinned version
-// re-verified against Maven Central. Libraries that no longer resolve are
-// reported (not silently kept); offline falls back to the pinned version.
-export async function regenerateVsklib(target: string): Promise<VskLibRecord[]> {
+// `vesk verify` — explicit, read-only diagnostic: check every pinned
+// coordinate in the committed manifest against the real repositories
+// (androidx on Google Maven, everything else on Maven Central). It never
+// mutates state: the build compiles against the manifest as-is, so a bad pin
+// fails loudly at gradle time, not silently here. Offline → 'unverified'
+// (warn, keep the pin).
+export interface VerifySummary {
+  id: string;
+  coordinate: string;
+  status: VerifyResult['status'];
+  latest?: string;
+}
+
+export async function verifyLibraries(target: string): Promise<VerifySummary[]> {
   const data = loadLibraries(target);
-  const ids = Object.keys(data.libraries);
-  if (ids.length === 0) {
-    writeVsklibCache(target, []);
-    return [];
-  }
-  const kept: VskLibRecord[] = [];
-  for (const id of ids) {
-    const rec = data.libraries[id]!;
+  const out: VerifySummary[] = [];
+  for (const rec of Object.values(data.libraries)) {
     const verify = await verifyLibrary(rec);
-    if (verify.status === 'not-found') {
-      console.error(`  [install] ${rec.group}:${rec.artifact} no longer resolves on Maven Central — remove it with: vesk remove ${rec.id}`);
-      continue;
-    }
-    if (verify.status === 'version-missing') {
-      console.error(`  [install] ${rec.id}@${rec.version} not found on Maven Central${verify.latest ? ` — latest is ${verify.latest}` : ''} — use: vesk update ${rec.id}`);
-      continue;
-    }
-    if (verify.status === 'verified') log('install', `${rec.id} ${rec.version} verified on Maven Central`);
-    else log('install', `Maven Central unreachable — keeping pinned ${rec.id} ${rec.version}`);
-    kept.push({ ...rec, permissions: deriveLibraryPermissions(rec) });
+    out.push({
+      id: rec.id,
+      coordinate: `${rec.group}:${rec.artifact}@${rec.version}`,
+      status: verify.status,
+      latest: verify.latest,
+    });
   }
-  writeVsklibCache(target, kept);
-  return kept;
+  return out;
 }
 
 // Library spec forms: `id`, `id@version`, `group:artifact`, `group:artifact@version`.
@@ -269,21 +257,29 @@ function parseVersions(xml: string): string[] {
 }
 
 export async function mavenMetadata(rec: VskLibRecord): Promise<{ reachable: boolean; notFound: boolean; latest?: string; versions: string[] }> {
-  const url = `https://repo1.maven.org/maven2/${rec.group.replaceAll('.', '/')}/${rec.artifact}/maven-metadata.xml`;
-  try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(10_000), redirect: 'follow' });
-    if (res.status === 404) return { reachable: true, notFound: true, versions: [] };
-    if (!res.ok) return { reachable: true, notFound: false, versions: [] };
-    const text = await res.text();
-    return {
-      reachable: true,
-      notFound: false,
-      latest: tagContent(text, 'latest') ?? undefined,
-      versions: parseVersions(text),
-    };
-  } catch {
-    return { reachable: false, notFound: false, versions: [] };
+  // androidx artifacts publish to Google Maven, everything else to Maven
+  // Central; a coordinate is only 'not-found' when it 404s on both.
+  const urls = [
+    `https://repo1.maven.org/maven2/${rec.group.replaceAll('.', '/')}/${rec.artifact}/maven-metadata.xml`,
+    `https://dl.google.com/android/maven2/${rec.group.replaceAll('.', '/')}/${rec.artifact}/maven-metadata.xml`,
+  ];
+  for (const url of urls) {
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(10_000), redirect: 'follow' });
+      if (res.status === 404) continue;
+      if (!res.ok) return { reachable: true, notFound: false, versions: [] };
+      const text = await res.text();
+      return {
+        reachable: true,
+        notFound: false,
+        latest: tagContent(text, 'latest') ?? undefined,
+        versions: parseVersions(text),
+      };
+    } catch {
+      return { reachable: false, notFound: false, versions: [] };
+    }
   }
+  return { reachable: true, notFound: true, versions: [] };
 }
 
 // Best-effort check against Maven Central so a typo'd coordinate fails loudly

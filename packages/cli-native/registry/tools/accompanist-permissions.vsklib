@@ -7,10 +7,15 @@
     "group": "com.google.accompanist",
     "artifact": "accompanist-permissions",
     "version": "0.36.0",
-    "gradle": ["com.google.accompanist:accompanist-permissions:0.36.0"],
+    "gradle": [
+      "com.google.accompanist:accompanist-permissions:0.36.0"
+    ],
     "permissions": [],
-    "exports": ["rememberPermissionState"],
+    "exports": [
+      "rememberPermissionState"
+    ],
     "tags": {},
-    "curated": true
+    "curated": true,
+    "libType": "utility"
   }
 }

@@ -182,12 +182,6 @@ export declare function SeekableTransitionState(props: {
     targetState: any;
   }): SeekableTransitionState;
 
-export declare interface SnapSpec {}
-
-export declare function SnapSpec(props: {
-    delay?: number;
-  }): SnapSpec;
-
 export declare interface SpringSpec {}
 
 export declare function SpringSpec(props: {

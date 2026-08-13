@@ -7,10 +7,15 @@
     "group": "androidx.palette",
     "artifact": "palette-ktx",
     "version": "1.0.0",
-    "gradle": ["androidx.palette:palette-ktx:1.0.0"],
+    "gradle": [
+      "androidx.palette:palette-ktx:1.0.0"
+    ],
     "permissions": [],
-    "exports": ["Palette"],
+    "exports": [
+      "Palette"
+    ],
     "tags": {},
-    "curated": true
+    "curated": true,
+    "libType": "utility"
   }
 }

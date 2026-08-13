@@ -85,17 +85,20 @@
           "androidx.compose.animation.AnimatedVisibility"
         ],
         "attrs": {
-          "label": "label"
+          "label": "label",
+          "visible": "visible"
         },
         "attrShapes": {
           "label": {
             "name": "label",
             "shape": "string"
           }
-        }
+        },
+        "container": true
       }
     },
     "curated": true,
-    "essential": false
+    "essential": false,
+    "libType": "component"
   }
 }

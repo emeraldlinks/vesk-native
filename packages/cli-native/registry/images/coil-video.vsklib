@@ -7,10 +7,15 @@
     "group": "io.coil-kt",
     "artifact": "coil-video",
     "version": "2.7.0",
-    "gradle": ["io.coil-kt:coil-video:2.7.0"],
+    "gradle": [
+      "io.coil-kt:coil-video:2.7.0"
+    ],
     "permissions": [],
-    "exports": ["VideoFrameDecoder"],
+    "exports": [
+      "VideoFrameDecoder"
+    ],
     "tags": {},
-    "curated": true
+    "curated": true,
+    "libType": "utility"
   }
 }

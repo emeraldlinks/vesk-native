@@ -15,6 +15,7 @@
     "signatures": {},
     "tags": {},
     "curated": true,
-    "essential": false
+    "essential": false,
+    "libType": "utility"
   }
 }

@@ -7,12 +7,19 @@
     "group": "com.squareup.retrofit2",
     "artifact": "retrofit",
     "version": "2.11.0",
-    "gradle": ["com.squareup.retrofit2:retrofit:2.11.0"],
-    "permissions": ["android.permission.INTERNET"],
-    "exports": ["Retrofit"],
+    "gradle": [
+      "com.squareup.retrofit2:retrofit:2.11.0"
+    ],
+    "permissions": [
+      "android.permission.INTERNET"
+    ],
+    "exports": [
+      "Retrofit"
+    ],
     "tags": {},
     "signatures": {},
     "essential": true,
-    "curated": true
+    "curated": true,
+    "libType": "utility"
   }
 }

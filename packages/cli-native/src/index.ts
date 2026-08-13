@@ -1,18 +1,18 @@
 import { realpathSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { addLibrary, buildApp, initApp, installApp, parseLibraryArgs, removeLibrary, runApp, setupToolchain, updateLibraries } from '@cli-native/commands';
+import { addLibrary, buildApp, initApp, installApp, parseLibraryArgs, removeLibrary, runApp, setupToolchain, updateLibraries, verifyApp } from '@cli-native/commands';
 import { TOOLCHAIN_ROOT, usage } from '@cli-native/constants';
 
 // Programmatic surface for tooling, scripts, and tests (the CLI entry point
 // is main() below; importing this module never runs the CLI).
 export { loadConfig, writeDefaultConfig } from '@cli-native/config';
 export { generateAppKt, generateAppBuildGradleKts, generateMainActivity, generateManifest, generateProject, generateRouterKt, generateRuntimeKt, generateSettingsGradleKts, generateThemeKt, generateThemes, syncAapt2Override } from '@cli-native/generators';
-export { addLibrary, installApp, removeLibrary, updateLibraries } from '@cli-native/commands';
+export { addLibrary, installApp, removeLibrary, updateLibraries, verifyApp } from '@cli-native/commands';
 export { collectBrowserApiUsage, collectDeviceApiUsage, collectRuntimeUsage } from '@cli-native/usage';
 export { API_PERMISSIONS } from '@cli-native/usage';
 export { RUNTIME_ORDER } from '@cli-native/runtime-templates';
-export { LIBRARY_REGISTRY, installedLibraries, loadLibraries, parseLibrarySpec, regenerateVsklib, resolveLibrary, saveLibraries, verifyLibrary, writeVsklibCache } from '@cli-native/vsklib';
+export { LIBRARY_REGISTRY, installedLibraries, loadLibraries, parseLibrarySpec, resolveLibrary, saveLibraries, verifyLibraries, verifyLibrary, writeVsklibCache } from '@cli-native/vsklib';
 
 async function main(): Promise<void> {
   const [cmd] = process.argv.slice(2);
@@ -32,6 +32,9 @@ async function main(): Promise<void> {
       break;
     case 'install':
       await installApp(process.argv[3] ? resolve(process.argv[3]) : process.cwd());
+      break;
+    case 'verify':
+      await verifyApp(process.argv[3] ? resolve(process.argv[3]) : process.cwd());
       break;
     case 'setup':
       setupToolchain(TOOLCHAIN_ROOT);

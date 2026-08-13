@@ -4,10 +4,1900 @@
 // Regenerated on every build and after 'vesk add/remove/update'.
 // Do not edit by hand.
 
+declare module '@vesk/activity-compose' {
+  export declare interface ManagedActivityResultLauncher {}
+  export declare function ManagedActivityResultLauncher(props: {
+    launcher: any;
+    currentContract: any;
+  }): ManagedActivityResultLauncher;
+  export declare const BackHandler: any;
+  export declare const PredictiveBackHandler: any;
+  export declare const ReportDrawn: any;
+  export declare const ReportDrawnAfter: any;
+  export declare const ReportDrawnWhen: any;
+}
+
+declare module '@vesk/animation-core' {
+  export declare interface Animatable {}
+  export declare function Animatable(props: {
+    initialValue: any;
+    typeConverter: any;
+    visibilityThreshold?: any;
+    label?: string;
+  }): Animatable;
+  export declare const AnimationEndReason: {
+    readonly BoundReached: 'BoundReached';
+    readonly Finished: 'Finished';
+  };
+  export declare type AnimationEndReason = (typeof AnimationEndReason)[keyof typeof AnimationEndReason];
+  export declare interface AnimationResult {}
+  export declare function AnimationResult(props: {
+    endState: any;
+    endReason: 'BoundReached' | 'Finished';
+  }): AnimationResult;
+  export declare interface AnimationScope {}
+  export declare function AnimationScope(props: {
+    initialValue: any;
+    typeConverter: any;
+    initialVelocityVector: any;
+    lastFrameTimeNanos: number;
+    targetValue: any;
+    startTimeNanos: number;
+    isRunning: boolean;
+    onCancel: (...args: any[]) => any;
+  }): AnimationScope;
+  export declare interface AnimationState {}
+  export declare function AnimationState(props: {
+    typeConverter: any;
+    initialValue: any;
+    initialVelocityVector?: any;
+    lastFrameTimeNanos?: number;
+    finishedTimeNanos?: number;
+    isRunning?: boolean;
+  }): AnimationState;
+  export declare interface AnimationVector1D {}
+  export declare function AnimationVector1D(props: {
+    initVal: number;
+  }): AnimationVector1D;
+  export declare interface AnimationVector2D {}
+  export declare function AnimationVector2D(props: {
+    v1: number;
+    v2: number;
+  }): AnimationVector2D;
+  export declare interface AnimationVector3D {}
+  export declare function AnimationVector3D(props: {
+    v1: number;
+    v2: number;
+    v3: number;
+  }): AnimationVector3D;
+  export declare interface AnimationVector4D {}
+  export declare function AnimationVector4D(props: {
+    v1: number;
+    v2: number;
+    v3: number;
+    v4: number;
+  }): AnimationVector4D;
+  export declare interface CubicBezierEasing {}
+  export declare function CubicBezierEasing(props: {
+    a: number;
+    b: number;
+    c: number;
+    d: number;
+  }): CubicBezierEasing;
+  export declare interface DecayAnimation {}
+  export declare function DecayAnimation(props: {
+    animationSpec: any;
+    typeConverter: any;
+    initialValue: any;
+    initialVelocityVector: any;
+  }): DecayAnimation;
+  export declare interface FloatExponentialDecaySpec {}
+  export declare function FloatExponentialDecaySpec(props: {
+    frictionMultiplier?: number;
+    absVelocityThreshold?: number;
+  }): FloatExponentialDecaySpec;
+  export declare interface FloatSpringSpec {}
+  export declare function FloatSpringSpec(props: {
+    dampingRatio?: number;
+    stiffness?: number;
+    visibilityThreshold?: number;
+  }): FloatSpringSpec;
+  export declare interface FloatTweenSpec {}
+  export declare function FloatTweenSpec(props: {
+    duration?: number;
+    delay?: number;
+    easing?: any;
+  }): FloatTweenSpec;
+  export declare interface InfiniteRepeatableSpec {}
+  export declare function InfiniteRepeatableSpec(props: {
+    animation: any;
+    repeatMode?: 'Restart' | 'Reverse';
+    initialStartOffset?: any;
+  }): InfiniteRepeatableSpec;
+  export declare interface InfiniteTransition {}
+  export declare function InfiniteTransition(props: {
+    label: string;
+  }): InfiniteTransition;
+  export declare interface KeyframesSpec {}
+  export declare function KeyframesSpec(props: {
+    config: any;
+  }): KeyframesSpec;
+  export declare interface KeyframesWithSplineSpec {}
+  export declare function KeyframesWithSplineSpec(props: {
+    config: any;
+  }): KeyframesWithSplineSpec;
+  export declare interface MutableTransitionState {}
+  export declare function MutableTransitionState(props: {
+    initialState: any;
+  }): MutableTransitionState;
+  export declare interface PathEasing {}
+  export declare function PathEasing(props: {
+    path: any;
+  }): PathEasing;
+  export declare const RepeatMode: {
+    readonly Restart: 'Restart';
+    readonly Reverse: 'Reverse';
+  };
+  export declare type RepeatMode = (typeof RepeatMode)[keyof typeof RepeatMode];
+  export declare interface RepeatableSpec {}
+  export declare function RepeatableSpec(props: {
+    iterations: number;
+    animation: any;
+    repeatMode?: 'Restart' | 'Reverse';
+    initialStartOffset?: any;
+  }): RepeatableSpec;
+  export declare interface SeekableTransitionState {}
+  export declare function SeekableTransitionState(props: {
+    initialState: any;
+    targetState: any;
+  }): SeekableTransitionState;
+  export declare interface SpringSpec {}
+  export declare function SpringSpec(props: {
+    dampingRatio?: number;
+    stiffness?: number;
+    visibilityThreshold?: any;
+  }): SpringSpec;
+  export declare interface TargetBasedAnimation {}
+  export declare function TargetBasedAnimation(props: {
+    animationSpec: any;
+    typeConverter: any;
+    initialValue: any;
+    targetValue: any;
+    initialVelocityVector?: any;
+  }): TargetBasedAnimation;
+  export declare interface Transition {}
+  export declare function Transition(props: {
+    transitionState: any;
+    label?: string;
+  }): Transition;
+  export declare interface TweenSpec {}
+  export declare function TweenSpec(props: {
+    durationMillis?: number;
+    delay?: number;
+    easing?: any;
+  }): TweenSpec;
+  export declare interface VectorizedFloatAnimationSpec {}
+  export declare function VectorizedFloatAnimationSpec(props: {
+    anims: any;
+  }): VectorizedFloatAnimationSpec;
+  export declare interface VectorizedInfiniteRepeatableSpec {}
+  export declare function VectorizedInfiniteRepeatableSpec(props: {
+    animation: any;
+    repeatMode?: 'Restart' | 'Reverse';
+    initialStartOffset?: any;
+  }): VectorizedInfiniteRepeatableSpec;
+  export declare interface VectorizedKeyframesSpec {}
+  export declare function VectorizedKeyframesSpec(props: {
+    keyframes: any;
+    durationMillis: number;
+    delayMillis?: number;
+  }): VectorizedKeyframesSpec;
+  export declare interface VectorizedRepeatableSpec {}
+  export declare function VectorizedRepeatableSpec(props: {
+    iterations: number;
+    animation: any;
+    repeatMode?: 'Restart' | 'Reverse';
+    initialStartOffset?: any;
+  }): VectorizedRepeatableSpec;
+  export declare interface VectorizedSnapSpec {}
+  export declare function VectorizedSnapSpec(props: {
+    delayMillis?: number;
+  }): VectorizedSnapSpec;
+  export declare interface VectorizedTweenSpec {}
+  export declare function VectorizedTweenSpec(props: {
+    durationMillis?: number;
+    delayMillis?: number;
+    easing?: any;
+  }): VectorizedTweenSpec;
+}
+
+declare module '@vesk/animation-graphics' {
+  export declare interface AnimatedImageVector {}
+  export declare function AnimatedImageVector(props: {
+    imageVector: any;
+    targets: Array<any>;
+  }): AnimatedImageVector;
+}
+
+declare module '@vesk/animation' {
+  export declare interface ContentTransform {}
+  export declare function ContentTransform(props: {
+    targetContentEnter: any;
+    initialContentExit: any;
+    targetContentZIndex?: number;
+    sizeTransform?: any;
+  }): ContentTransform;
+  export declare const EnterExitState: {
+    readonly PreEnter: 'PreEnter';
+    readonly Visible: 'Visible';
+    readonly PostExit: 'PostExit';
+  };
+  export declare type EnterExitState = (typeof EnterExitState)[keyof typeof EnterExitState];
+  export declare interface SplineBasedFloatDecayAnimationSpec {}
+  export declare function SplineBasedFloatDecayAnimationSpec(props: {
+    density: any;
+  }): SplineBasedFloatDecayAnimationSpec;
+  export declare const AnimatedVisibility: any;
+}
+
 declare module '@vesk/coil' {
   export declare const AsyncImage: any;
   export declare const rememberAsyncImagePainter: any;
   export declare const CoilImage: any;
+}
+
+declare module '@vesk/coil3' {
+  export declare const AsyncImage: any;
+  export declare const rememberAsyncImagePainter: any;
+  export declare const Coil3Image: any;
+}
+
+declare module '@vesk/compose' {
+  export declare interface CrossFade {}
+  export declare function CrossFade(props: {
+    animationSpec: any;
+  }): CrossFade;
+  export declare const GlideImage: any;
+  export declare const GlideSubcomposition: any;
+}
+
+declare module '@vesk/constraintlayout-compose' {
+  export declare interface Arc {}
+  export declare function Arc(props: {
+    name: string;
+  }): Arc;
+  export declare interface ChainStyle {}
+  export declare function ChainStyle(props: {
+    name: string;
+    bias?: number;
+  }): ChainStyle;
+  export declare interface ConstrainScope {}
+  export declare function ConstrainScope(props: {
+    id: any;
+    containerObject: any;
+  }): ConstrainScope;
+  export declare interface ConstrainedLayoutReference {}
+  export declare function ConstrainedLayoutReference(props: {
+    id: any;
+  }): ConstrainedLayoutReference;
+  export declare interface ConstraintLayoutScope {}
+  export declare function ConstraintLayoutScope(): ConstraintLayoutScope;
+  export declare interface ConstraintSetRef {}
+  export declare function ConstraintSetRef(props: {
+    name: string;
+  }): ConstraintSetRef;
+  export declare interface ConstraintSetScope {}
+  export declare function ConstraintSetScope(props: {
+    extendFrom: any;
+  }): ConstraintSetScope;
+  export declare interface CurveFit {}
+  export declare function CurveFit(props: {
+    name: string;
+  }): CurveFit;
+  export declare interface DebugFlags {}
+  export declare function DebugFlags(props: {
+    flags: number;
+  }): DebugFlags;
+  export declare interface Easing {}
+  export declare function Easing(props: {
+    name: string;
+  }): Easing;
+  export declare interface FlowStyle {}
+  export declare function FlowStyle(props: {
+    name: string;
+  }): FlowStyle;
+  export declare interface HorizontalAlign {}
+  export declare function HorizontalAlign(props: {
+    name: string;
+  }): HorizontalAlign;
+  export declare interface HorizontalChainReference {}
+  export declare function HorizontalChainReference(props: {
+    id: any;
+  }): HorizontalChainReference;
+  export declare interface HorizontalChainScope {}
+  export declare function HorizontalChainScope(props: {
+    id: any;
+    containerObject: any;
+  }): HorizontalChainScope;
+  export declare interface InvalidationStrategy {}
+  export declare function InvalidationStrategy(props: {
+    onIncomingConstraints?: (...args: any[]) => any;
+    onObservedStateChange?: (...args: any[]) => any;
+  }): InvalidationStrategy;
+  export declare interface InvalidationStrategySpecification {}
+  export declare function InvalidationStrategySpecification(): InvalidationStrategySpecification;
+  export declare interface KeyAttributeScope {}
+  export declare function KeyAttributeScope(): KeyAttributeScope;
+  export declare interface KeyAttributesScope {}
+  export declare function KeyAttributesScope(props: {
+    targets: Array<any>;
+  }): KeyAttributesScope;
+  export declare interface KeyCycleScope {}
+  export declare function KeyCycleScope(): KeyCycleScope;
+  export declare interface KeyCyclesScope {}
+  export declare function KeyCyclesScope(props: {
+    targets: Array<any>;
+  }): KeyCyclesScope;
+  export declare interface KeyPositionScope {}
+  export declare function KeyPositionScope(): KeyPositionScope;
+  export declare interface KeyPositionsScope {}
+  export declare function KeyPositionsScope(props: {
+    targets: Array<any>;
+  }): KeyPositionsScope;
+  export declare const LayoutInfoFlags: {
+    readonly NONE: 'NONE';
+    readonly BOUNDS: 'BOUNDS';
+  };
+  export declare type LayoutInfoFlags = (typeof LayoutInfoFlags)[keyof typeof LayoutInfoFlags];
+  export declare const MotionLayoutDebugFlags: {
+    readonly NONE: 'NONE';
+    readonly SHOW_ALL: 'SHOW_ALL';
+    readonly UNKNOWN: 'UNKNOWN';
+  };
+  export declare type MotionLayoutDebugFlags = (typeof MotionLayoutDebugFlags)[keyof typeof MotionLayoutDebugFlags];
+  export declare const MotionLayoutFlag: {
+    readonly Default: 'Default';
+    readonly FullMeasure: 'FullMeasure';
+  };
+  export declare type MotionLayoutFlag = (typeof MotionLayoutFlag)[keyof typeof MotionLayoutFlag];
+  export declare interface MotionLayoutScope {}
+  export declare function MotionLayoutScope(props: {
+    measurer: any;
+    motionProgress: any;
+  }): MotionLayoutScope;
+  export declare interface MotionSceneScope {}
+  export declare function MotionSceneScope(): MotionSceneScope;
+  export declare interface OnSwipe {}
+  export declare function OnSwipe(props: {
+    anchor: any;
+    side: any;
+    direction: any;
+    dragScale?: number;
+    dragThreshold?: number;
+    dragAround?: any;
+    limitBoundsTo?: any;
+    onTouchUp?: any;
+    mode?: any;
+  }): OnSwipe;
+  export declare interface RelativePosition {}
+  export declare function RelativePosition(props: {
+    name: string;
+  }): RelativePosition;
+  export declare interface Span {}
+  export declare function Span(props: {
+    description: string;
+  }): Span;
+  export declare interface SpringBoundary {}
+  export declare function SpringBoundary(props: {
+    name: string;
+  }): SpringBoundary;
+  export declare interface State {}
+  export declare function State(props: {
+    density: any;
+  }): State;
+  export declare interface SwipeDirection {}
+  export declare function SwipeDirection(props: {
+    name: string;
+  }): SwipeDirection;
+  export declare interface SwipeMode {}
+  export declare function SwipeMode(props: {
+    name: string;
+    springMass?: number;
+    springStiffness?: number;
+    springDamping?: number;
+    springThreshold?: number;
+    springBoundary?: any;
+    maxVelocity?: number;
+    maxAcceleration?: number;
+  }): SwipeMode;
+  export declare interface SwipeSide {}
+  export declare function SwipeSide(props: {
+    name: string;
+  }): SwipeSide;
+  export declare interface SwipeTouchUp {}
+  export declare function SwipeTouchUp(props: {
+    name: string;
+  }): SwipeTouchUp;
+  export declare interface TransitionScope {}
+  export declare function TransitionScope(props: {
+    from: string;
+    to: string;
+  }): TransitionScope;
+  export declare interface VerticalAlign {}
+  export declare function VerticalAlign(props: {
+    name: string;
+  }): VerticalAlign;
+  export declare interface VerticalChainReference {}
+  export declare function VerticalChainReference(props: {
+    id: any;
+  }): VerticalChainReference;
+  export declare interface VerticalChainScope {}
+  export declare function VerticalChainScope(props: {
+    id: any;
+    containerObject: any;
+  }): VerticalChainScope;
+  export declare interface Visibility {}
+  export declare function Visibility(props: {
+    name: string;
+  }): Visibility;
+  export declare interface Wrap {}
+  export declare function Wrap(props: {
+    name: string;
+  }): Wrap;
+  export declare const ConstraintLayout: any;
+  export declare const ItemHolder: any;
+  export declare const MotionCarousel: any;
+  export declare const MotionLayout: any;
+}
+
+declare module '@vesk/datetime' {
+  export declare interface DatePeriod {}
+  export declare function DatePeriod(props: {
+    totalMonths: number;
+    days: number;
+  }): DatePeriod;
+  export declare interface FixedOffsetTimeZone {}
+  export declare function FixedOffsetTimeZone(props: {
+    offset: any;
+    zoneId: any;
+  }): FixedOffsetTimeZone;
+  export declare interface Instant {}
+  export declare function Instant(props: {
+    value: any;
+  }): Instant;
+  export declare interface LocalDate {}
+  export declare function LocalDate(props: {
+    value: any;
+  }): LocalDate;
+  export declare interface LocalDateTime {}
+  export declare function LocalDateTime(props: {
+    value: any;
+  }): LocalDateTime;
+  export declare interface LocalTime {}
+  export declare function LocalTime(props: {
+    value: any;
+  }): LocalTime;
+  export declare interface TimeZone {}
+  export declare function TimeZone(props: {
+    zoneId: any;
+  }): TimeZone;
+  export declare interface UtcOffset {}
+  export declare function UtcOffset(props: {
+    zoneOffset: any;
+  }): UtcOffset;
+  export declare const AmPmMarker: {
+    readonly AM: 'AM';
+    readonly PM: 'PM';
+  };
+  export declare type AmPmMarker = (typeof AmPmMarker)[keyof typeof AmPmMarker];
+  export declare const Padding: {
+    readonly NONE: 'NONE';
+    readonly ZERO: 'ZERO';
+    readonly SPACE: 'SPACE';
+  };
+  export declare type Padding = (typeof Padding)[keyof typeof Padding];
+}
+
+declare module '@vesk/foundation-layout' {
+  export declare const IntrinsicSize: {
+    readonly Min: 'Min';
+    readonly Max: 'Max';
+  };
+  export declare type IntrinsicSize = (typeof IntrinsicSize)[keyof typeof IntrinsicSize];
+  export declare interface MutableWindowInsets {}
+  export declare function MutableWindowInsets(props: {
+    initialInsets?: any;
+  }): MutableWindowInsets;
+  export declare const Box: any;
+  export declare const BoxWithConstraints: any;
+  export declare const Column: any;
+  export declare const FlowColumn: any;
+  export declare const FlowRow: any;
+  export declare const Row: any;
+  export declare const Spacer: any;
+}
+
+declare module '@vesk/foundation' {
+  export declare interface BorderStroke {}
+  export declare function BorderStroke(props: {
+    width: any;
+    brush: any;
+  }): BorderStroke;
+  export declare const MutatePriority: {
+    readonly Default: 'Default';
+    readonly UserInput: 'UserInput';
+    readonly PreventUserInput: 'PreventUserInput';
+  };
+  export declare type MutatePriority = (typeof MutatePriority)[keyof typeof MutatePriority];
+  export declare interface MutatorMutex {}
+  export declare function MutatorMutex(): MutatorMutex;
+  export declare interface OverscrollConfiguration {}
+  export declare function OverscrollConfiguration(props: {
+    glowColor?: any;
+    drawPadding?: any;
+  }): OverscrollConfiguration;
+  export declare interface ScrollState {}
+  export declare function ScrollState(props: {
+    initial: number;
+  }): ScrollState;
+  export declare interface AnchoredDraggableState {}
+  export declare function AnchoredDraggableState(props: {
+    initialValue: any;
+    positionalThreshold: (...args: any[]) => any;
+    velocityThreshold: (...args: any[]) => any;
+    animationSpec: any;
+    confirmValueChange?: (...args: any[]) => any;
+  }): AnchoredDraggableState;
+  export declare interface DraggableAnchorsConfig {}
+  export declare function DraggableAnchorsConfig(): DraggableAnchorsConfig;
+  export declare interface GestureCancellationException {}
+  export declare function GestureCancellationException(props: {
+    message?: string;
+  }): GestureCancellationException;
+  export declare const Orientation: {
+    readonly Vertical: 'Vertical';
+    readonly Horizontal: 'Horizontal';
+  };
+  export declare type Orientation = (typeof Orientation)[keyof typeof Orientation];
+  export declare interface SnapFlingBehavior {}
+  export declare function SnapFlingBehavior(props: {
+    snapLayoutInfoProvider: any;
+    lowVelocityAnimationSpec: any;
+    highVelocityAnimationSpec: any;
+    snapAnimationSpec: any;
+  }): SnapFlingBehavior;
+  export declare interface LazyListState {}
+  export declare function LazyListState(props: {
+    firstVisibleItemIndex?: number;
+    firstVisibleItemScrollOffset?: number;
+  }): LazyListState;
+  export declare interface GridItemSpan {}
+  export declare function GridItemSpan(props: {
+    packedValue: number;
+  }): GridItemSpan;
+  export declare interface LazyGridState {}
+  export declare function LazyGridState(props: {
+    firstVisibleItemIndex?: number;
+    firstVisibleItemScrollOffset?: number;
+  }): LazyGridState;
+  export declare interface LazyLayoutPrefetchState {}
+  export declare function LazyLayoutPrefetchState(): LazyLayoutPrefetchState;
+  export declare interface MutableIntervalList {}
+  export declare function MutableIntervalList(): MutableIntervalList;
+  export declare interface AbsoluteCutCornerShape {}
+  export declare function AbsoluteCutCornerShape(props: {
+    topLeft: any;
+    topRight: any;
+    bottomRight: any;
+    bottomLeft: any;
+  }): AbsoluteCutCornerShape;
+  export declare interface AbsoluteRoundedCornerShape {}
+  export declare function AbsoluteRoundedCornerShape(props: {
+    topLeft: any;
+    topRight: any;
+    bottomRight: any;
+    bottomLeft: any;
+  }): AbsoluteRoundedCornerShape;
+  export declare interface CutCornerShape {}
+  export declare function CutCornerShape(props: {
+    topStart: any;
+    topEnd: any;
+    bottomEnd: any;
+    bottomStart: any;
+  }): CutCornerShape;
+  export declare interface GenericShape {}
+  export declare function GenericShape(props: {
+    builder: (...args: any[]) => any;
+  }): GenericShape;
+  export declare interface RoundedCornerShape {}
+  export declare function RoundedCornerShape(props: {
+    topStart: any;
+    topEnd: any;
+    bottomEnd: any;
+    bottomStart: any;
+  }): RoundedCornerShape;
+  export declare interface InlineTextContent {}
+  export declare function InlineTextContent(props: {
+    placeholder: any;
+    children: (...args: any[]) => any;
+  }): InlineTextContent;
+  export declare interface KeyboardActions {}
+  export declare function KeyboardActions(props: {
+    onDone?: (...args: any[]) => any;
+    onGo?: (...args: any[]) => any;
+    onNext?: (...args: any[]) => any;
+    onPrevious?: (...args: any[]) => any;
+    onSearch?: (...args: any[]) => any;
+    onSend?: (...args: any[]) => any;
+  }): KeyboardActions;
+  export declare interface KeyboardOptions {}
+  export declare function KeyboardOptions(props: {
+    capitalization?: any;
+    autoCorrect?: boolean;
+    keyboardType?: any;
+    imeAction?: any;
+    platformImeOptions?: any;
+  }): KeyboardOptions;
+  export declare interface TextDelegate {}
+  export declare function TextDelegate(props: {
+    text: any;
+    style: any;
+    maxLines?: number;
+    minLines?: number;
+    softWrap?: boolean;
+    overflow?: any;
+    density?: any;
+    fontFamilyResolver?: any;
+    placeholders?: Array<any>;
+  }): TextDelegate;
+  export declare interface TextSelectionColors {}
+  export declare function TextSelectionColors(props: {
+    handleColor: any;
+    backgroundColor: any;
+  }): TextSelectionColors;
+  export declare interface TextFieldBuffer {}
+  export declare function TextFieldBuffer(props: {
+    initialValue: any;
+    initialChanges?: any;
+    sourceValue?: any;
+  }): TextFieldBuffer;
+  export declare interface TextFieldState {}
+  export declare function TextFieldState(props: {
+    initialText: string;
+    initialSelectionInChars: any;
+    initialTextUndoManager: any;
+  }): TextFieldState;
+  export declare interface TextObfuscationMode {}
+  export declare function TextObfuscationMode(props: {
+    value: number;
+  }): TextObfuscationMode;
+  export declare interface UndoState {}
+  export declare function UndoState(props: {
+    state: any;
+  }): UndoState;
+  export declare const getDefaultLazyLayoutKey: any;
+  export declare const AndroidEmbeddedExternalSurface: any;
+  export declare const AndroidExternalSurface: any;
+  export declare const BasicTooltipBox: any;
+  export declare const Canvas: any;
+  export declare const Image: any;
+  export declare const LazyColumn: any;
+  export declare const LazyRow: any;
+  export declare const LazyHorizontalGrid: any;
+  export declare const LazyVerticalGrid: any;
+  export declare const LazyLayout: any;
+  export declare const LazyLayoutPinnableItem: any;
+  export declare const LazyHorizontalStaggeredGrid: any;
+  export declare const LazyVerticalStaggeredGrid: any;
+  export declare const HorizontalPager: any;
+  export declare const VerticalPager: any;
+  export declare const BasicTextField: any;
+  export declare const BasicText: any;
+  export declare const ClickableText: any;
+  export declare const DisableSelection: any;
+  export declare const SelectionContainer: any;
+  export declare const BasicSecureTextField: any;
+  export declare const BasicTextField2: any;
+}
+
+declare module '@vesk/gson' {
+  export declare interface Gson {}
+  /**
+   * JSON (de)serializer. Gson().toJson(obj) serializes; fromJson(json, type) parses.
+   */
+  export declare function Gson(): Gson;
+  export declare interface JsonParser {}
+  /**
+   * Parses JSON text into a JsonElement tree. JsonParser().parse(text).
+   */
+  export declare function JsonParser(): JsonParser;
+  export declare interface JsonObject {}
+  /**
+   * Mutable JSON object node. JsonObject().addProperty(key, value) / get(key).
+   */
+  export declare function JsonObject(): JsonObject;
+}
+
+declare module '@vesk/immutable-collections' {
+  export declare interface ImmutableCollectionAdapter {}
+  export declare function ImmutableCollectionAdapter(props: {
+    impl: Array<any>;
+  }): ImmutableCollectionAdapter;
+}
+
+declare module '@vesk/kotlinx-serialization' {
+  export declare interface JsonObject {}
+  /**
+   * Immutable JSON object. JsonObject({ key: value, ... }) builds from entries (values are JsonElement).
+   */
+  export declare function JsonObject(props: {
+    content: any;
+  }): JsonObject;
+  export declare interface JsonArray {}
+  /**
+   * Immutable JSON array. JsonArray([ element, ... ]) builds from JsonElement values.
+   */
+  export declare function JsonArray(props: {
+    content: Array<any>;
+  }): JsonArray;
+  export declare const Json: any;
+  export declare const JsonPrimitive: any;
+  export declare const buildJsonObject: any;
+  export declare const buildJsonArray: any;
+}
+
+declare module '@vesk/material-icons' {
+  /**
+   * Icons object — use Icons.Filled.<Name> (e.g. Icons.Filled.Home) as imageVector on the material3 <Icon> tag.
+   */
+  export declare const Icons: any;
+  /**
+   * Material icon 'AccountBox' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const AccountBox: any;
+  /**
+   * Material icon 'AccountCircle' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const AccountCircle: any;
+  /**
+   * Material icon 'Add' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const Add: any;
+  /**
+   * Material icon 'AddCircle' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const AddCircle: any;
+  /**
+   * Material icon 'ArrowBack' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const ArrowBack: any;
+  /**
+   * Material icon 'ArrowDropDown' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const ArrowDropDown: any;
+  /**
+   * Material icon 'ArrowForward' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const ArrowForward: any;
+  /**
+   * Material icon 'Build' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const Build: any;
+  /**
+   * Material icon 'Call' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const Call: any;
+  /**
+   * Material icon 'Check' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const Check: any;
+  /**
+   * Material icon 'CheckCircle' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const CheckCircle: any;
+  /**
+   * Material icon 'Clear' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const Clear: any;
+  /**
+   * Material icon 'Close' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const Close: any;
+  /**
+   * Material icon 'Create' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const Create: any;
+  /**
+   * Material icon 'DateRange' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const DateRange: any;
+  /**
+   * Material icon 'Delete' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const Delete: any;
+  /**
+   * Material icon 'Done' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const Done: any;
+  /**
+   * Material icon 'Edit' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const Edit: any;
+  /**
+   * Material icon 'Email' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const Email: any;
+  /**
+   * Material icon 'ExitToApp' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const ExitToApp: any;
+  /**
+   * Material icon 'Face' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const Face: any;
+  /**
+   * Material icon 'Favorite' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const Favorite: any;
+  /**
+   * Material icon 'FavoriteBorder' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const FavoriteBorder: any;
+  /**
+   * Material icon 'Home' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const Home: any;
+  /**
+   * Material icon 'Info' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const Info: any;
+  /**
+   * Material icon 'KeyboardArrowDown' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const KeyboardArrowDown: any;
+  /**
+   * Material icon 'KeyboardArrowLeft' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const KeyboardArrowLeft: any;
+  /**
+   * Material icon 'KeyboardArrowRight' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const KeyboardArrowRight: any;
+  /**
+   * Material icon 'KeyboardArrowUp' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const KeyboardArrowUp: any;
+  /**
+   * Material icon 'List' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const List: any;
+  /**
+   * Material icon 'LocationOn' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const LocationOn: any;
+  /**
+   * Material icon 'Lock' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const Lock: any;
+  /**
+   * Material icon 'MailOutline' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const MailOutline: any;
+  /**
+   * Material icon 'Menu' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const Menu: any;
+  /**
+   * Material icon 'MoreVert' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const MoreVert: any;
+  /**
+   * Material icon 'Notifications' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const Notifications: any;
+  /**
+   * Material icon 'Person' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const Person: any;
+  /**
+   * Material icon 'Phone' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const Phone: any;
+  /**
+   * Material icon 'Place' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const Place: any;
+  /**
+   * Material icon 'PlayArrow' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const PlayArrow: any;
+  /**
+   * Material icon 'Refresh' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const Refresh: any;
+  /**
+   * Material icon 'Search' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const Search: any;
+  /**
+   * Material icon 'Send' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const Send: any;
+  /**
+   * Material icon 'Settings' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const Settings: any;
+  /**
+   * Material icon 'Share' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const Share: any;
+  /**
+   * Material icon 'ShoppingCart' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const ShoppingCart: any;
+  /**
+   * Material icon 'Star' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const Star: any;
+  /**
+   * Material icon 'ThumbUp' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const ThumbUp: any;
+  /**
+   * Material icon 'Warning' (Icons.Default). Use as imageVector on the material3 <Icon> tag.
+   */
+  export declare const Warning: any;
+}
+
+declare module '@vesk/material-ripple' {
+  export declare interface RippleAlpha {}
+  export declare function RippleAlpha(props: {
+    draggedAlpha: number;
+    focusedAlpha: number;
+    hoveredAlpha: number;
+    pressedAlpha: number;
+  }): RippleAlpha;
+}
+
+declare module '@vesk/material' {
+  export declare interface BackdropScaffoldState {}
+  export declare function BackdropScaffoldState(props: {
+    initialValue: 'Concealed' | 'Revealed';
+    animationSpec?: any;
+    confirmStateChange?: (...args: any[]) => any;
+    snackbarHostState?: any;
+  }): BackdropScaffoldState;
+  export declare const BackdropValue: {
+    readonly Concealed: 'Concealed';
+    readonly Revealed: 'Revealed';
+  };
+  export declare type BackdropValue = (typeof BackdropValue)[keyof typeof BackdropValue];
+  export declare interface BottomDrawerState {}
+  export declare function BottomDrawerState(props: {
+    initialValue: 'Closed' | 'Open' | 'Expanded';
+    confirmStateChange?: (...args: any[]) => any;
+  }): BottomDrawerState;
+  export declare const BottomDrawerValue: {
+    readonly Closed: 'Closed';
+    readonly Open: 'Open';
+    readonly Expanded: 'Expanded';
+  };
+  export declare type BottomDrawerValue = (typeof BottomDrawerValue)[keyof typeof BottomDrawerValue];
+  export declare interface BottomSheetScaffoldState {}
+  export declare function BottomSheetScaffoldState(props: {
+    bottomSheetState: any;
+    snackbarHostState: any;
+  }): BottomSheetScaffoldState;
+  export declare interface BottomSheetState {}
+  export declare function BottomSheetState(props: {
+    initialValue: 'Collapsed' | 'Expanded';
+    animationSpec?: any;
+    confirmValueChange?: (...args: any[]) => any;
+  }): BottomSheetState;
+  export declare const BottomSheetValue: {
+    readonly Collapsed: 'Collapsed';
+    readonly Expanded: 'Expanded';
+  };
+  export declare type BottomSheetValue = (typeof BottomSheetValue)[keyof typeof BottomSheetValue];
+  export declare interface Colors {}
+  export declare function Colors(props: {
+    primary: any;
+    primaryVariant: any;
+    secondary: any;
+    secondaryVariant: any;
+    background: any;
+    surface: any;
+    error: any;
+    onPrimary: any;
+    onSecondary: any;
+    onBackground: any;
+    onSurface: any;
+    onError: any;
+    isLight: boolean;
+  }): Colors;
+  export declare const DismissDirection: {
+    readonly StartToEnd: 'StartToEnd';
+    readonly EndToStart: 'EndToStart';
+  };
+  export declare type DismissDirection = (typeof DismissDirection)[keyof typeof DismissDirection];
+  export declare interface DismissState {}
+  export declare function DismissState(props: {
+    initialValue: 'Default' | 'DismissedToEnd' | 'DismissedToStart';
+    confirmStateChange?: (...args: any[]) => any;
+  }): DismissState;
+  export declare const DismissValue: {
+    readonly Default: 'Default';
+    readonly DismissedToEnd: 'DismissedToEnd';
+    readonly DismissedToStart: 'DismissedToStart';
+  };
+  export declare type DismissValue = (typeof DismissValue)[keyof typeof DismissValue];
+  export declare interface DrawerState {}
+  export declare function DrawerState(props: {
+    initialValue: 'Closed' | 'Open';
+    confirmStateChange?: (...args: any[]) => any;
+  }): DrawerState;
+  export declare const DrawerValue: {
+    readonly Closed: 'Closed';
+    readonly Open: 'Open';
+  };
+  export declare type DrawerValue = (typeof DrawerValue)[keyof typeof DrawerValue];
+  export declare interface FabPosition {}
+  export declare function FabPosition(props: {
+    value: number;
+  }): FabPosition;
+  export declare interface FixedThreshold {}
+  export declare function FixedThreshold(props: {
+    offset: any;
+  }): FixedThreshold;
+  export declare interface FractionalThreshold {}
+  export declare function FractionalThreshold(props: {
+    fraction: number;
+  }): FractionalThreshold;
+  export declare interface ModalBottomSheetState {}
+  export declare function ModalBottomSheetState(props: {
+    initialValue: 'Hidden' | 'Expanded' | 'HalfExpanded';
+    animationSpec?: any;
+    isSkipHalfExpanded?: boolean;
+    confirmStateChange?: (...args: any[]) => any;
+  }): ModalBottomSheetState;
+  export declare const ModalBottomSheetValue: {
+    readonly Hidden: 'Hidden';
+    readonly Expanded: 'Expanded';
+    readonly HalfExpanded: 'HalfExpanded';
+  };
+  export declare type ModalBottomSheetValue = (typeof ModalBottomSheetValue)[keyof typeof ModalBottomSheetValue];
+  export declare interface ResistanceConfig {}
+  export declare function ResistanceConfig(props: {
+    basis: number;
+    factorAtMin?: number;
+    factorAtMax?: number;
+  }): ResistanceConfig;
+  export declare interface ScaffoldState {}
+  export declare function ScaffoldState(props: {
+    drawerState: any;
+    snackbarHostState: any;
+  }): ScaffoldState;
+  export declare interface Shapes {}
+  export declare function Shapes(props: {
+    small?: any;
+    medium?: any;
+    large?: any;
+  }): Shapes;
+  export declare const SnackbarDuration: {
+    readonly Short: 'Short';
+    readonly Long: 'Long';
+    readonly Indefinite: 'Indefinite';
+  };
+  export declare type SnackbarDuration = (typeof SnackbarDuration)[keyof typeof SnackbarDuration];
+  export declare interface SnackbarHostState {}
+  export declare function SnackbarHostState(): SnackbarHostState;
+  export declare const SnackbarResult: {
+    readonly Dismissed: 'Dismissed';
+    readonly ActionPerformed: 'ActionPerformed';
+  };
+  export declare type SnackbarResult = (typeof SnackbarResult)[keyof typeof SnackbarResult];
+  export declare interface SwipeProgress {}
+  export declare function SwipeProgress(props: {
+    from: any;
+    to: any;
+    fraction: number;
+  }): SwipeProgress;
+  export declare interface SwipeableState {}
+  export declare function SwipeableState(props: {
+    initialValue: any;
+    animationSpec?: any;
+    confirmStateChange?: (...args: any[]) => any;
+  }): SwipeableState;
+  export declare interface TabPosition {}
+  export declare function TabPosition(props: {
+    left: any;
+    width: any;
+  }): TabPosition;
+  export declare interface Typography {}
+  export declare function Typography(props: {
+    h1: any;
+    h2: any;
+    h3: any;
+    h4: any;
+    h5: any;
+    h6: any;
+    subtitle1: any;
+    subtitle2: any;
+    body1: any;
+    body2: any;
+    button: any;
+    caption: any;
+    overline: any;
+  }): Typography;
+  export declare interface PullRefreshState {}
+  export declare function PullRefreshState(props: {
+    animationScope: any;
+    onRefreshState: any;
+    refreshingOffset: number;
+    threshold: number;
+  }): PullRefreshState;
+  export declare const AlertDialog: any;
+  export declare const DropdownMenu: any;
+  export declare const DropdownMenuItem: any;
+  export declare const BottomAppBar: any;
+  export declare const TopAppBar: any;
+  export declare const BackdropScaffold: any;
+  export declare const Badge: any;
+  export declare const BadgedBox: any;
+  export declare const BottomNavigation: any;
+  export declare const BottomSheetScaffold: any;
+  export declare const Button: any;
+  export declare const OutlinedButton: any;
+  export declare const TextButton: any;
+  export declare const Card: any;
+  export declare const Checkbox: any;
+  export declare const TriStateCheckbox: any;
+  export declare const Chip: any;
+  export declare const FilterChip: any;
+  export declare const Divider: any;
+  export declare const BottomDrawer: any;
+  export declare const ModalDrawer: any;
+  export declare const ExposedDropdownMenuBox: any;
+  export declare const ExtendedFloatingActionButton: any;
+  export declare const FloatingActionButton: any;
+  export declare const IconButton: any;
+  export declare const IconToggleButton: any;
+  export declare const Icon: any;
+  export declare const ListItem: any;
+  export declare const MaterialTheme: any;
+  export declare const ModalBottomSheetLayout: any;
+  export declare const NavigationRail: any;
+  export declare const NavigationRailItem: any;
+  export declare const OutlinedTextField: any;
+  export declare const CircularProgressIndicator: any;
+  export declare const LinearProgressIndicator: any;
+  export declare const RadioButton: any;
+  export declare const Scaffold: any;
+  export declare const RangeSlider: any;
+  export declare const Slider: any;
+  export declare const SnackbarHost: any;
+  export declare const Snackbar: any;
+  export declare const Surface: any;
+  export declare const SwipeToDismiss: any;
+  export declare const Switch: any;
+  export declare const LeadingIconTab: any;
+  export declare const Tab: any;
+  export declare const ScrollableTabRow: any;
+  export declare const TabRow: any;
+  export declare const TextField: any;
+  export declare const ProvideTextStyle: any;
+  export declare const Text: any;
+  export declare const PullRefreshIndicator: any;
+}
+
+declare module '@vesk/material3' {
+  export declare interface BottomSheetScaffoldState {}
+  export declare function BottomSheetScaffoldState(props: {
+    bottomSheetState: any;
+    snackbarHostState: any;
+  }): BottomSheetScaffoldState;
+  export declare interface ButtonColors {}
+  export declare function ButtonColors(props: {
+    containerColor: any;
+    contentColor: any;
+    disabledContainerColor: any;
+    disabledContentColor: any;
+  }): ButtonColors;
+  export declare interface ButtonElevation {}
+  export declare function ButtonElevation(props: {
+    defaultElevation: any;
+    pressedElevation: any;
+    focusedElevation: any;
+    hoveredElevation: any;
+    disabledElevation: any;
+  }): ButtonElevation;
+  export declare interface CardColors {}
+  export declare function CardColors(props: {
+    containerColor: any;
+    contentColor: any;
+    disabledContainerColor: any;
+    disabledContentColor: any;
+  }): CardColors;
+  export declare interface CardElevation {}
+  export declare function CardElevation(props: {
+    defaultElevation: any;
+    pressedElevation: any;
+    focusedElevation: any;
+    hoveredElevation: any;
+    draggedElevation: any;
+    disabledElevation: any;
+  }): CardElevation;
+  export declare interface CaretProperties {}
+  export declare function CaretProperties(props: {
+    caretHeight: any;
+    caretWidth: any;
+  }): CaretProperties;
+  export declare interface CheckboxColors {}
+  export declare function CheckboxColors(props: {
+    checkedCheckmarkColor: any;
+    uncheckedCheckmarkColor: any;
+    checkedBoxColor: any;
+    uncheckedBoxColor: any;
+    disabledCheckedBoxColor: any;
+    disabledUncheckedBoxColor: any;
+    disabledIndeterminateBoxColor: any;
+    checkedBorderColor: any;
+    uncheckedBorderColor: any;
+    disabledBorderColor: any;
+    disabledUncheckedBorderColor: any;
+    disabledIndeterminateBorderColor: any;
+  }): CheckboxColors;
+  export declare interface ChipBorder {}
+  export declare function ChipBorder(props: {
+    borderColor: any;
+    disabledBorderColor: any;
+    borderWidth: any;
+  }): ChipBorder;
+  export declare interface ChipColors {}
+  export declare function ChipColors(props: {
+    containerColor: any;
+    labelColor: any;
+    leadingIconContentColor: any;
+    trailingIconContentColor: any;
+    disabledContainerColor: any;
+    disabledLabelColor: any;
+    disabledLeadingIconContentColor: any;
+    disabledTrailingIconContentColor: any;
+  }): ChipColors;
+  export declare interface ChipElevation {}
+  export declare function ChipElevation(props: {
+    elevation: any;
+    pressedElevation: any;
+    focusedElevation: any;
+    hoveredElevation: any;
+    draggedElevation: any;
+    disabledElevation: any;
+  }): ChipElevation;
+  export declare interface ColorScheme {}
+  export declare function ColorScheme(props: {
+    primary: any;
+    onPrimary: any;
+    primaryContainer: any;
+    onPrimaryContainer: any;
+    inversePrimary: any;
+    secondary: any;
+    onSecondary: any;
+    secondaryContainer: any;
+    onSecondaryContainer: any;
+    tertiary: any;
+    onTertiary: any;
+    tertiaryContainer: any;
+    onTertiaryContainer: any;
+    background: any;
+    onBackground: any;
+    surface: any;
+    onSurface: any;
+    surfaceVariant: any;
+    onSurfaceVariant: any;
+    surfaceTint: any;
+    inverseSurface: any;
+    inverseOnSurface: any;
+    error: any;
+    onError: any;
+    errorContainer: any;
+    onErrorContainer: any;
+    outline: any;
+    outlineVariant: any;
+    scrim: any;
+    surfaceBright: any;
+    surfaceDim: any;
+    surfaceContainer: any;
+    surfaceContainerHigh: any;
+    surfaceContainerHighest: any;
+    surfaceContainerLow: any;
+    surfaceContainerLowest: any;
+  }): ColorScheme;
+  export declare interface DatePickerColors {}
+  export declare function DatePickerColors(props: {
+    containerColor: any;
+    titleContentColor: any;
+    headlineContentColor: any;
+    weekdayContentColor: any;
+    subheadContentColor: any;
+    navigationContentColor: any;
+    yearContentColor: any;
+    disabledYearContentColor: any;
+    currentYearContentColor: any;
+    selectedYearContentColor: any;
+    disabledSelectedYearContentColor: any;
+    selectedYearContainerColor: any;
+    disabledSelectedYearContainerColor: any;
+    dayContentColor: any;
+    disabledDayContentColor: any;
+    selectedDayContentColor: any;
+    disabledSelectedDayContentColor: any;
+    selectedDayContainerColor: any;
+    disabledSelectedDayContainerColor: any;
+    todayContentColor: any;
+    todayDateBorderColor: any;
+    dayInSelectionRangeContainerColor: any;
+    dayInSelectionRangeContentColor: any;
+    dividerColor: any;
+    dateTextFieldColors: any;
+  }): DatePickerColors;
+  export declare const DismissDirection: {
+    readonly StartToEnd: 'StartToEnd';
+    readonly EndToStart: 'EndToStart';
+  };
+  export declare type DismissDirection = (typeof DismissDirection)[keyof typeof DismissDirection];
+  export declare const DismissValue: {
+    readonly Default: 'Default';
+    readonly DismissedToEnd: 'DismissedToEnd';
+    readonly DismissedToStart: 'DismissedToStart';
+  };
+  export declare type DismissValue = (typeof DismissValue)[keyof typeof DismissValue];
+  export declare interface DisplayMode {}
+  export declare function DisplayMode(props: {
+    value: number;
+  }): DisplayMode;
+  export declare interface DrawerState {}
+  export declare function DrawerState(props: {
+    initialValue: 'Closed' | 'Open';
+    confirmStateChange?: (...args: any[]) => any;
+  }): DrawerState;
+  export declare const DrawerValue: {
+    readonly Closed: 'Closed';
+    readonly Open: 'Open';
+  };
+  export declare type DrawerValue = (typeof DrawerValue)[keyof typeof DrawerValue];
+  export declare interface FabPosition {}
+  export declare function FabPosition(props: {
+    value: number;
+  }): FabPosition;
+  export declare interface FloatingActionButtonElevation {}
+  export declare function FloatingActionButtonElevation(props: {
+    defaultElevation: any;
+    pressedElevation: any;
+    focusedElevation: any;
+    hoveredElevation: any;
+  }): FloatingActionButtonElevation;
+  export declare interface IconButtonColors {}
+  export declare function IconButtonColors(props: {
+    containerColor: any;
+    contentColor: any;
+    disabledContainerColor: any;
+    disabledContentColor: any;
+  }): IconButtonColors;
+  export declare interface IconToggleButtonColors {}
+  export declare function IconToggleButtonColors(props: {
+    containerColor: any;
+    contentColor: any;
+    disabledContainerColor: any;
+    disabledContentColor: any;
+    checkedContainerColor: any;
+    checkedContentColor: any;
+  }): IconToggleButtonColors;
+  export declare interface ListItemColors {}
+  export declare function ListItemColors(props: {
+    containerColor: any;
+    headlineColor: any;
+    leadingIconColor: any;
+    overlineColor: any;
+    supportingTextColor: any;
+    trailingIconColor: any;
+    disabledHeadlineColor: any;
+    disabledLeadingIconColor: any;
+    disabledTrailingIconColor: any;
+  }): ListItemColors;
+  export declare interface MenuItemColors {}
+  export declare function MenuItemColors(props: {
+    textColor: any;
+    leadingIconColor: any;
+    trailingIconColor: any;
+    disabledTextColor: any;
+    disabledLeadingIconColor: any;
+    disabledTrailingIconColor: any;
+  }): MenuItemColors;
+  export declare interface ModalBottomSheetProperties {}
+  export declare function ModalBottomSheetProperties(props: {
+    securePolicy: any;
+    isFocusable: boolean;
+    shouldDismissOnBackPress: boolean;
+  }): ModalBottomSheetProperties;
+  export declare interface NavigationBarItemColors {}
+  export declare function NavigationBarItemColors(props: {
+    selectedIconColor: any;
+    selectedTextColor: any;
+    selectedIndicatorColor: any;
+    unselectedIconColor: any;
+    unselectedTextColor: any;
+    disabledIconColor: any;
+    disabledTextColor: any;
+  }): NavigationBarItemColors;
+  export declare interface NavigationRailItemColors {}
+  export declare function NavigationRailItemColors(props: {
+    selectedIconColor: any;
+    selectedTextColor: any;
+    selectedIndicatorColor: any;
+    unselectedIconColor: any;
+    unselectedTextColor: any;
+    disabledIconColor: any;
+    disabledTextColor: any;
+  }): NavigationRailItemColors;
+  export declare interface RadioButtonColors {}
+  export declare function RadioButtonColors(props: {
+    selectedColor: any;
+    unselectedColor: any;
+    disabledSelectedColor: any;
+    disabledUnselectedColor: any;
+  }): RadioButtonColors;
+  export declare interface RangeSliderState {}
+  export declare function RangeSliderState(props: {
+    activeRangeStart?: number;
+    activeRangeEnd?: number;
+    steps?: number;
+    onValueChangeFinished?: (...args: any[]) => any;
+    valueRange?: any;
+  }): RangeSliderState;
+  export declare interface RichTooltipColors {}
+  export declare function RichTooltipColors(props: {
+    containerColor: any;
+    contentColor: any;
+    titleContentColor: any;
+    actionContentColor: any;
+  }): RichTooltipColors;
+  export declare interface SearchBarColors {}
+  export declare function SearchBarColors(props: {
+    containerColor: any;
+    dividerColor: any;
+    inputFieldColors: any;
+  }): SearchBarColors;
+  export declare interface SegmentedButtonColors {}
+  export declare function SegmentedButtonColors(props: {
+    activeContainerColor: any;
+    activeContentColor: any;
+    activeBorderColor: any;
+    inactiveContainerColor: any;
+    inactiveContentColor: any;
+    inactiveBorderColor: any;
+    disabledActiveContainerColor: any;
+    disabledActiveContentColor: any;
+    disabledActiveBorderColor: any;
+    disabledInactiveContainerColor: any;
+    disabledInactiveContentColor: any;
+    disabledInactiveBorderColor: any;
+  }): SegmentedButtonColors;
+  export declare interface SelectableChipColors {}
+  export declare function SelectableChipColors(props: {
+    containerColor: any;
+    labelColor: any;
+    leadingIconColor: any;
+    trailingIconColor: any;
+    disabledContainerColor: any;
+    disabledLabelColor: any;
+    disabledLeadingIconColor: any;
+    disabledTrailingIconColor: any;
+    selectedContainerColor: any;
+    disabledSelectedContainerColor: any;
+    selectedLabelColor: any;
+    selectedLeadingIconColor: any;
+    selectedTrailingIconColor: any;
+  }): SelectableChipColors;
+  export declare interface SelectableChipElevation {}
+  export declare function SelectableChipElevation(props: {
+    elevation: any;
+    pressedElevation: any;
+    focusedElevation: any;
+    hoveredElevation: any;
+    draggedElevation: any;
+    disabledElevation: any;
+  }): SelectableChipElevation;
+  export declare interface Shapes {}
+  export declare function Shapes(props: {
+    extraSmall?: any;
+    small?: any;
+    medium?: any;
+    large?: any;
+    extraLarge?: any;
+  }): Shapes;
+  export declare interface SheetState {}
+  export declare function SheetState(props: {
+    skipPartiallyExpanded: boolean;
+    initialValue?: 'Hidden' | 'Expanded' | 'PartiallyExpanded';
+    confirmValueChange?: (...args: any[]) => any;
+    skipHiddenState?: boolean;
+  }): SheetState;
+  export declare const SheetValue: {
+    readonly Hidden: 'Hidden';
+    readonly Expanded: 'Expanded';
+    readonly PartiallyExpanded: 'PartiallyExpanded';
+  };
+  export declare type SheetValue = (typeof SheetValue)[keyof typeof SheetValue];
+  export declare interface SliderColors {}
+  export declare function SliderColors(props: {
+    thumbColor: any;
+    activeTrackColor: any;
+    activeTickColor: any;
+    inactiveTrackColor: any;
+    inactiveTickColor: any;
+    disabledThumbColor: any;
+    disabledActiveTrackColor: any;
+    disabledActiveTickColor: any;
+    disabledInactiveTrackColor: any;
+    disabledInactiveTickColor: any;
+  }): SliderColors;
+  export declare interface SliderPositions {}
+  export declare function SliderPositions(props: {
+    initialActiveRange?: any;
+    initialTickFractions?: Array<any>;
+  }): SliderPositions;
+  export declare interface SliderState {}
+  export declare function SliderState(props: {
+    value?: number;
+    steps?: number;
+    onValueChangeFinished?: (...args: any[]) => any;
+    valueRange?: any;
+  }): SliderState;
+  export declare const SnackbarDuration: {
+    readonly Short: 'Short';
+    readonly Long: 'Long';
+    readonly Indefinite: 'Indefinite';
+  };
+  export declare type SnackbarDuration = (typeof SnackbarDuration)[keyof typeof SnackbarDuration];
+  export declare interface SnackbarHostState {}
+  export declare function SnackbarHostState(): SnackbarHostState;
+  export declare const SnackbarResult: {
+    readonly Dismissed: 'Dismissed';
+    readonly ActionPerformed: 'ActionPerformed';
+  };
+  export declare type SnackbarResult = (typeof SnackbarResult)[keyof typeof SnackbarResult];
+  export declare interface SwipeToDismissBoxState {}
+  export declare function SwipeToDismissBoxState(props: {
+    initialValue: 'StartToEnd' | 'EndToStart' | 'Settled';
+    density: any;
+    confirmValueChange?: (...args: any[]) => any;
+    positionalThreshold?: (...args: any[]) => any;
+  }): SwipeToDismissBoxState;
+  export declare const SwipeToDismissBoxValue: {
+    readonly StartToEnd: 'StartToEnd';
+    readonly EndToStart: 'EndToStart';
+    readonly Settled: 'Settled';
+  };
+  export declare type SwipeToDismissBoxValue = (typeof SwipeToDismissBoxValue)[keyof typeof SwipeToDismissBoxValue];
+  export declare interface SwitchColors {}
+  export declare function SwitchColors(props: {
+    checkedThumbColor: any;
+    checkedTrackColor: any;
+    checkedBorderColor: any;
+    checkedIconColor: any;
+    uncheckedThumbColor: any;
+    uncheckedTrackColor: any;
+    uncheckedBorderColor: any;
+    uncheckedIconColor: any;
+    disabledCheckedThumbColor: any;
+    disabledCheckedTrackColor: any;
+    disabledCheckedBorderColor: any;
+    disabledCheckedIconColor: any;
+    disabledUncheckedThumbColor: any;
+    disabledUncheckedTrackColor: any;
+    disabledUncheckedBorderColor: any;
+    disabledUncheckedIconColor: any;
+  }): SwitchColors;
+  export declare interface TabPosition {}
+  export declare function TabPosition(props: {
+    left: any;
+    width: any;
+    contentWidth: any;
+  }): TabPosition;
+  export declare interface TextFieldColors {}
+  export declare function TextFieldColors(props: {
+    focusedTextColor: any;
+    unfocusedTextColor: any;
+    disabledTextColor: any;
+    errorTextColor: any;
+    focusedContainerColor: any;
+    unfocusedContainerColor: any;
+    disabledContainerColor: any;
+    errorContainerColor: any;
+    cursorColor: any;
+    errorCursorColor: any;
+    textSelectionColors: any;
+    focusedIndicatorColor: any;
+    unfocusedIndicatorColor: any;
+    disabledIndicatorColor: any;
+    errorIndicatorColor: any;
+    focusedLeadingIconColor: any;
+    unfocusedLeadingIconColor: any;
+    disabledLeadingIconColor: any;
+    errorLeadingIconColor: any;
+    focusedTrailingIconColor: any;
+    unfocusedTrailingIconColor: any;
+    disabledTrailingIconColor: any;
+    errorTrailingIconColor: any;
+    focusedLabelColor: any;
+    unfocusedLabelColor: any;
+    disabledLabelColor: any;
+    errorLabelColor: any;
+    focusedPlaceholderColor: any;
+    unfocusedPlaceholderColor: any;
+    disabledPlaceholderColor: any;
+    errorPlaceholderColor: any;
+    focusedSupportingTextColor: any;
+    unfocusedSupportingTextColor: any;
+    disabledSupportingTextColor: any;
+    errorSupportingTextColor: any;
+    focusedPrefixColor: any;
+    unfocusedPrefixColor: any;
+    disabledPrefixColor: any;
+    errorPrefixColor: any;
+    focusedSuffixColor: any;
+    unfocusedSuffixColor: any;
+    disabledSuffixColor: any;
+    errorSuffixColor: any;
+  }): TextFieldColors;
+  export declare interface TimePickerColors {}
+  export declare function TimePickerColors(props: {
+    clockDialColor: any;
+    selectorColor: any;
+    containerColor: any;
+    periodSelectorBorderColor: any;
+    clockDialSelectedContentColor: any;
+    clockDialUnselectedContentColor: any;
+    periodSelectorSelectedContainerColor: any;
+    periodSelectorUnselectedContainerColor: any;
+    periodSelectorSelectedContentColor: any;
+    periodSelectorUnselectedContentColor: any;
+    timeSelectorSelectedContainerColor: any;
+    timeSelectorUnselectedContainerColor: any;
+    timeSelectorSelectedContentColor: any;
+    timeSelectorUnselectedContentColor: any;
+  }): TimePickerColors;
+  export declare interface TimePickerLayoutType {}
+  export declare function TimePickerLayoutType(props: {
+    value: number;
+  }): TimePickerLayoutType;
+  export declare interface TimePickerState {}
+  export declare function TimePickerState(props: {
+    initialHour: number;
+    initialMinute: number;
+    is24Hour: boolean;
+  }): TimePickerState;
+  export declare interface TopAppBarColors {}
+  export declare function TopAppBarColors(props: {
+    containerColor: any;
+    scrolledContainerColor: any;
+    navigationIconContentColor: any;
+    titleContentColor: any;
+    actionIconContentColor: any;
+  }): TopAppBarColors;
+  export declare interface TopAppBarState {}
+  export declare function TopAppBarState(props: {
+    initialHeightOffsetLimit: number;
+    initialHeightOffset: number;
+    initialContentOffset: number;
+  }): TopAppBarState;
+  export declare interface Typography {}
+  export declare function Typography(props: {
+    displayLarge?: any;
+    displayMedium?: any;
+    displaySmall?: any;
+    headlineLarge?: any;
+    headlineMedium?: any;
+    headlineSmall?: any;
+    titleLarge?: any;
+    titleMedium?: any;
+    titleSmall?: any;
+    bodyLarge?: any;
+    bodyMedium?: any;
+    bodySmall?: any;
+    labelLarge?: any;
+    labelMedium?: any;
+    labelSmall?: any;
+  }): Typography;
+  export declare const AlertDialog: any;
+  export declare const BasicAlertDialog: any;
+  export declare const DropdownMenu: any;
+  export declare const DropdownMenuItem: any;
+  export declare const BottomAppBar: any;
+  export declare const CenterAlignedTopAppBar: any;
+  export declare const LargeTopAppBar: any;
+  export declare const MediumTopAppBar: any;
+  export declare const SmallTopAppBar: any;
+  export declare const TopAppBar: any;
+  export declare const Badge: any;
+  export declare const BadgedBox: any;
+  export declare const BottomSheetScaffold: any;
+  export declare const Button: any;
+  export declare const ElevatedButton: any;
+  export declare const FilledTonalButton: any;
+  export declare const OutlinedButton: any;
+  export declare const TextButton: any;
+  export declare const Card: any;
+  export declare const ElevatedCard: any;
+  export declare const OutlinedCard: any;
+  export declare const Checkbox: any;
+  export declare const TriStateCheckbox: any;
+  export declare const AssistChip: any;
+  export declare const ElevatedAssistChip: any;
+  export declare const ElevatedFilterChip: any;
+  export declare const ElevatedSuggestionChip: any;
+  export declare const FilterChip: any;
+  export declare const InputChip: any;
+  export declare const SuggestionChip: any;
+  export declare const DatePickerDialog: any;
+  export declare const DatePicker: any;
+  export declare const DateRangePicker: any;
+  export declare const Divider: any;
+  export declare const HorizontalDivider: any;
+  export declare const VerticalDivider: any;
+  export declare const ExposedDropdownMenuBox: any;
+  export declare const ExtendedFloatingActionButton: any;
+  export declare const FloatingActionButton: any;
+  export declare const LargeFloatingActionButton: any;
+  export declare const SmallFloatingActionButton: any;
+  export declare const FilledIconButton: any;
+  export declare const FilledIconToggleButton: any;
+  export declare const FilledTonalIconButton: any;
+  export declare const FilledTonalIconToggleButton: any;
+  export declare const IconButton: any;
+  export declare const IconToggleButton: any;
+  export declare const OutlinedIconButton: any;
+  export declare const OutlinedIconToggleButton: any;
+  export declare const Icon: any;
+  export declare const Label: any;
+  export declare const ListItem: any;
+  export declare const MaterialTheme: any;
+  export declare const ModalBottomSheet: any;
+  export declare const NavigationBar: any;
+  export declare const DismissibleDrawerSheet: any;
+  export declare const DismissibleNavigationDrawer: any;
+  export declare const ModalDrawerSheet: any;
+  export declare const ModalNavigationDrawer: any;
+  export declare const NavigationDrawerItem: any;
+  export declare const PermanentDrawerSheet: any;
+  export declare const PermanentNavigationDrawer: any;
+  export declare const NavigationRail: any;
+  export declare const NavigationRailItem: any;
+  export declare const OutlinedTextField: any;
+  export declare const CircularProgressIndicator: any;
+  export declare const LinearProgressIndicator: any;
+  export declare const RadioButton: any;
+  export declare const Scaffold: any;
+  export declare const DockedSearchBar: any;
+  export declare const SearchBar: any;
+  export declare const MultiChoiceSegmentedButtonRow: any;
+  export declare const SingleChoiceSegmentedButtonRow: any;
+  export declare const RangeSlider: any;
+  export declare const Slider: any;
+  export declare const SnackbarHost: any;
+  export declare const Snackbar: any;
+  export declare const Surface: any;
+  export declare const SwipeToDismiss: any;
+  export declare const SwipeToDismissBox: any;
+  export declare const Switch: any;
+  export declare const LeadingIconTab: any;
+  export declare const Tab: any;
+  export declare const PrimaryScrollableTabRow: any;
+  export declare const PrimaryTabRow: any;
+  export declare const ScrollableTabRow: any;
+  export declare const SecondaryScrollableTabRow: any;
+  export declare const SecondaryTabRow: any;
+  export declare const TabRow: any;
+  export declare const TextField: any;
+  export declare const ProvideTextStyle: any;
+  export declare const Text: any;
+  export declare const TimeInput: any;
+  export declare const TimePicker: any;
+  export declare const RichTooltip: any;
+  export declare const TooltipBox: any;
+  export declare const PullToRefreshContainer: any;
+}
+
+declare module '@vesk/moshi' {
+  export declare interface JsonAdapter {}
+  /**
+   * Typed JSON adapter. JsonAdapter() is the abstract base; Moshi.adapter(type) returns a concrete instance.
+   */
+  export declare function JsonAdapter(): JsonAdapter;
+  export declare const Moshi: any;
+}
+
+declare module '@vesk/navigation' {
+  export declare interface ComposeNavigator {}
+  export declare function ComposeNavigator(): ComposeNavigator;
+  export declare interface DialogNavigator {}
+  export declare function DialogNavigator(): DialogNavigator;
+  export declare const DialogHost: any;
+  export declare const NavHost: any;
+}
+
+declare module '@vesk/okhttp' {
+  export declare interface OkHttpClient {}
+  /**
+   * HTTP client. Construct with OkHttpClient(); configure via OkHttpClient().newBuilder() before building requests.
+   */
+  export declare function OkHttpClient(): OkHttpClient;
+  export declare const Request: any;
+  export declare const Response: any;
+  export declare const RequestBody: any;
+}
+
+declare module '@vesk/retrofit' {
+  export declare const Retrofit: any;
+}
+
+declare module '@vesk/shimmer' {
+  export declare interface Shimmer {}
+  export declare function Shimmer(props: {
+    theme: any;
+    effect: any;
+    bounds: any;
+  }): Shimmer;
+  export declare const ShimmerBounds: {
+    readonly Custom: 'Custom';
+    readonly View: 'View';
+    readonly Window: 'Window';
+  };
+  export declare type ShimmerBounds = (typeof ShimmerBounds)[keyof typeof ShimmerBounds];
+  export declare interface ShimmerTheme {}
+  export declare function ShimmerTheme(props: {
+    animationSpec: any;
+    blendMode: any;
+    rotation: number;
+    shaderColors: Array<any>;
+    shaderColorStops: Array<number>;
+    shimmerWidth: any;
+  }): ShimmerTheme;
+}
+
+declare module '@vesk/timber' {
+  export declare const Timber: any;
+}
+
+declare module '@vesk/vico' {
+  export declare interface ChartScrollSpec {}
+  export declare function ChartScrollSpec(props: {
+    isScrollEnabled: boolean;
+    initialScroll: any;
+    autoScrollCondition: any;
+    autoScrollAnimationSpec: any;
+  }): ChartScrollSpec;
+  export declare interface ChartScrollState {}
+  export declare function ChartScrollState(): ChartScrollState;
+  export declare interface BrushShader {}
+  export declare function BrushShader(props: {
+    brush: any;
+  }): BrushShader;
+  export declare interface ChartEntryModelWrapper {}
+  export declare function ChartEntryModelWrapper(props: {
+    chartEntryModel?: any;
+    previousChartEntryModel?: any;
+    chartValuesProvider?: any;
+  }): ChartEntryModelWrapper;
+  export declare interface ChartStyle {}
+  export declare function ChartStyle(props: {
+    axis: any;
+    columnChart: any;
+    lineChart: any;
+    marker: any;
+    elevationOverlayColor: any;
+  }): ChartStyle;
+  export declare const ProvideChartStyle: any;
 }
 
 declare module '@vesk/ycharts' {
@@ -462,13 +2352,21 @@ declare module '@vesk/ycharts' {
   export declare const WaveChart: any;
 }
 
-declare module '@vesk/compose' {
-  export declare interface CrossFade {}
-  export declare function CrossFade(props: {
-    animationSpec: any;
-  }): CrossFade;
-  export declare const GlideImage: any;
-  export declare const GlideSubcomposition: any;
+declare module '@vesk/zxing' {
+  export declare interface QRCodeWriter {}
+  /**
+   * Encodes QR codes. QRCodeWriter().encode(content, format, width, height) returns a BitMatrix.
+   */
+  export declare function QRCodeWriter(): QRCodeWriter;
+  export declare interface QRCodeReader {}
+  /**
+   * Decodes QR codes. QRCodeReader().decode(binaryBitmap) returns a Result.
+   */
+  export declare function QRCodeReader(): QRCodeReader;
+  /**
+   * Barcode/QR format enum. Pass BarcodeFormat.QR_CODE to QRCodeWriter().encode().
+   */
+  export declare function BarcodeFormat(): string;
 }
 
 declare module '@vesk/browser' {

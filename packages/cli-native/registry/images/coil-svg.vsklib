@@ -7,10 +7,15 @@
     "group": "io.coil-kt",
     "artifact": "coil-svg",
     "version": "2.7.0",
-    "gradle": ["io.coil-kt:coil-svg:2.7.0"],
+    "gradle": [
+      "io.coil-kt:coil-svg:2.7.0"
+    ],
     "permissions": [],
-    "exports": ["SvgDecoder"],
+    "exports": [
+      "SvgDecoder"
+    ],
     "tags": {},
-    "curated": true
+    "curated": true,
+    "libType": "utility"
   }
 }

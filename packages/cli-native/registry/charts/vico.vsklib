@@ -7,10 +7,16 @@
     "group": "com.patrykandpatrick.vico",
     "artifact": "compose",
     "version": "1.14.0",
-    "gradle": ["com.patrykandpatrick.vico:compose:1.14.0"],
+    "gradle": [
+      "com.patrykandpatrick.vico:compose:1.14.0"
+    ],
     "permissions": [],
-    "exports": ["Chart", "lineChart", "columnChart"],
+    "exports": [
+      "Chart",
+      "lineChart",
+      "columnChart"
+    ],
     "tags": {},
-    "curated": true
+    "libType": "utility"
   }
 }

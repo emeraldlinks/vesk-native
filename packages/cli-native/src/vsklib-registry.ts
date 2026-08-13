@@ -80,6 +80,11 @@ export function validateRecord(rec: VskLibRecord, source: string): VskLibRecord 
       throw new Error(`registry entry ${source}: signature "${name}" needs isConstructor`);
     }
   }
+  // Derive libType from the presence of markup tags so every loaded record
+  // carries it, even catalog entries authored before the field existed.
+  if (rec.libType !== 'utility' && rec.libType !== 'component') {
+    rec.libType = Object.keys(rec.tags).length > 0 ? 'component' : 'utility';
+  }
   return rec;
 }
 

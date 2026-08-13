@@ -7,10 +7,17 @@
     "group": "com.squareup.picasso",
     "artifact": "picasso",
     "version": "2.8",
-    "gradle": ["com.squareup.picasso:picasso:2.8"],
-    "permissions": ["android.permission.INTERNET"],
-    "exports": ["Picasso"],
+    "gradle": [
+      "com.squareup.picasso:picasso:2.8"
+    ],
+    "permissions": [
+      "android.permission.INTERNET"
+    ],
+    "exports": [
+      "Picasso"
+    ],
     "tags": {},
-    "curated": true
+    "curated": true,
+    "libType": "utility"
   }
 }

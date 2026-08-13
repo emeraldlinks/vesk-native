@@ -7,12 +7,19 @@
     "group": "androidx.room",
     "artifact": "room-runtime",
     "version": "2.6.1",
-    "gradle": ["androidx.room:room-runtime:2.6.1", "androidx.room:room-ktx:2.6.1"],
+    "gradle": [
+      "androidx.room:room-runtime:2.6.1",
+      "androidx.room:room-ktx:2.6.1"
+    ],
     "permissions": [],
-    "exports": ["Room", "RoomDatabase"],
+    "exports": [
+      "Room",
+      "RoomDatabase"
+    ],
     "tags": {},
     "signatures": {},
     "essential": true,
-    "curated": true
+    "curated": true,
+    "libType": "utility"
   }
 }

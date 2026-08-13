@@ -982,14 +982,14 @@ function libraryTagLines(node: ComponentCall, em: Emitter, level: number, parent
   const out: string[] = [];
   out.push(pad + `${binding.composable}(`);
   out.push(...argLines);
-  out.push(pad + `)`);
   if (binding.container && node.children.length > 0) {
-    out.pop();
-    out.push(padIn + '{');
+    out.push(pad + `) {`);
     for (const child of node.children) {
-      out.push(...emitChild(child, em, level + 2, parentAxis, null, flowParent, boxScope));
+      out.push(...emitChild(child, em, level + 1, parentAxis, null, flowParent, boxScope));
     }
-    out.push(pad + '}');
+    out.push(pad + `}`);
+  } else {
+    out.push(pad + `)`);
   }
   return out;
 }
@@ -1844,7 +1844,7 @@ function runCompile(source: string, filename: string, options: CompileOptions): 
       ? toPosix(relative(appDir, options.fileRel))
       : toPosix(options.fileRel);
     const headerOut = emitVskHeader(source, importerRel, appDir, options.moduleRegistry, options.npmRegistry, options.moduleSlugs, options.projectModuleRegistry, options.vsklibRegistry, err, libImports);
-    for (const l of headerOut.imports) out.push(l);
+    for (const l of headerOut.imports) libImports.add(l);
     if (headerOut.decls.length) out.push('', ...headerOut.decls);
     if (headerOut.libraryTags.size > 0) {
       fileLibraryTags = headerOut.libraryTags;

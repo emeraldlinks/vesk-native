@@ -7,37 +7,68 @@
     "group": "org.jetbrains.kotlinx",
     "artifact": "kotlinx-serialization-json",
     "version": "1.7.3",
-    "gradle": ["org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3"],
+    "gradle": [
+      "org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3"
+    ],
     "permissions": [],
-    "exports": ["Json", "JsonObject", "JsonArray", "JsonPrimitive", "buildJsonObject", "buildJsonArray"],
-  "tags": {},
-  "signatures": {
-    "JsonObject": {
-      "name": "JsonObject",
-      "target": "JsonObject",
-      "qualified": "kotlinx.serialization.json.JsonObject",
-      "jsdoc": "Immutable JSON object. JsonObject({ key: value, ... }) builds from entries (values are JsonElement).",
-      "isConstructor": true,
-      "params": [
-        { "name": "content", "shape": "object", "typeName": "kotlin.collections.Map", "pairElements": [ { "name": "", "shape": "string" }, { "name": "", "shape": "other" } ] }
-      ],
-      "defaultParams": [],
-      "returnShape": "object"
+    "exports": [
+      "Json",
+      "JsonObject",
+      "JsonArray",
+      "JsonPrimitive",
+      "buildJsonObject",
+      "buildJsonArray"
+    ],
+    "tags": {},
+    "signatures": {
+      "JsonObject": {
+        "name": "JsonObject",
+        "target": "JsonObject",
+        "qualified": "kotlinx.serialization.json.JsonObject",
+        "jsdoc": "Immutable JSON object. JsonObject({ key: value, ... }) builds from entries (values are JsonElement).",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "content",
+            "shape": "object",
+            "typeName": "kotlin.collections.Map",
+            "pairElements": [
+              {
+                "name": "",
+                "shape": "string"
+              },
+              {
+                "name": "",
+                "shape": "other"
+              }
+            ]
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      },
+      "JsonArray": {
+        "name": "JsonArray",
+        "target": "JsonArray",
+        "qualified": "kotlinx.serialization.json.JsonArray",
+        "jsdoc": "Immutable JSON array. JsonArray([ element, ... ]) builds from JsonElement values.",
+        "isConstructor": true,
+        "params": [
+          {
+            "name": "content",
+            "shape": "array",
+            "elem": {
+              "name": "",
+              "shape": "other"
+            }
+          }
+        ],
+        "defaultParams": [],
+        "returnShape": "object"
+      }
     },
-    "JsonArray": {
-      "name": "JsonArray",
-      "target": "JsonArray",
-      "qualified": "kotlinx.serialization.json.JsonArray",
-      "jsdoc": "Immutable JSON array. JsonArray([ element, ... ]) builds from JsonElement values.",
-      "isConstructor": true,
-      "params": [
-        { "name": "content", "shape": "array", "elem": { "name": "", "shape": "other" } }
-      ],
-      "defaultParams": [],
-      "returnShape": "object"
-    }
-  },
-  "essential": true,
-  "curated": true
-}
+    "essential": true,
+    "curated": true,
+    "libType": "utility"
+  }
 }

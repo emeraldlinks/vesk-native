@@ -7,12 +7,17 @@
     "group": "androidx.datastore",
     "artifact": "datastore-preferences",
     "version": "1.1.1",
-    "gradle": ["androidx.datastore:datastore-preferences:1.1.1"],
+    "gradle": [
+      "androidx.datastore:datastore-preferences:1.1.1"
+    ],
     "permissions": [],
-    "exports": ["preferencesDataStore"],
+    "exports": [
+      "preferencesDataStore"
+    ],
     "tags": {},
     "signatures": {},
     "essential": true,
-    "curated": true
+    "curated": true,
+    "libType": "utility"
   }
 }

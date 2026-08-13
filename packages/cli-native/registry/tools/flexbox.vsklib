@@ -7,10 +7,15 @@
     "group": "com.google.android.flexbox",
     "artifact": "flexbox",
     "version": "3.0.0",
-    "gradle": ["com.google.android.flexbox:flexbox:3.0.0"],
+    "gradle": [
+      "com.google.android.flexbox:flexbox:3.0.0"
+    ],
     "permissions": [],
-    "exports": ["FlexboxLayout"],
+    "exports": [
+      "FlexboxLayout"
+    ],
     "tags": {},
-    "curated": true
+    "curated": true,
+    "libType": "utility"
   }
 }

@@ -1,6 +1,27 @@
 import { CoilImage } from '@vesk/coil'
 import { GlideImage } from '@vesk/compose'
+import { Coil3Image } from '@vesk/coil3'
 import { LineChart, LineChartData, LinePlotData, Line, Point, PlotType } from '@vesk/ycharts'
+import { SnackbarHostState } from '@vesk/material'
+import { Divider, Card } from '@vesk/material3'
+import { Box, Spacer } from '@vesk/foundation-layout'
+import { MutatorMutex, LazyListState } from '@vesk/foundation'
+import { Gson, JsonParser } from '@vesk/gson'
+import { OkHttpClient } from '@vesk/okhttp'
+import { QRCodeWriter, BarcodeFormat } from '@vesk/zxing'
+import { ComposeNavigator, DialogNavigator } from '@vesk/navigation'
+import { FloatTweenSpec } from '@vesk/animation-core'
+import { RippleAlpha } from '@vesk/material-ripple'
+import { ImmutableCollectionAdapter } from '@vesk/immutable-collections'
+import { ConstraintLayoutScope } from '@vesk/constraintlayout-compose'
+import { JsonAdapter } from '@vesk/moshi'
+import { AnimatedVisibility } from '@vesk/animation'
+import { Instant, TimeZone } from '@vesk/datetime'
+import { Shimmer } from '@vesk/shimmer'
+import { JsonObject } from '@vesk/kotlinx-serialization'
+import { ChartScrollState } from '@vesk/vico'
+import { Icons, Home, Search, Favorite, Star, Settings, ShoppingCart, Face, ThumbUp, Email, Notifications } from '@vesk/material-icons'
+import { Icon } from '@vesk/material3'
 
 component Lib() {
     const chart = LineChartData({
@@ -20,55 +41,277 @@ component Lib() {
             ],
         }),
     })
+
+    const snackbarHost = SnackbarHostState()
+    const mutex = MutatorMutex()
+    const listState = LazyListState({})
+
+    const gson = Gson()
+    const json = gson.toJson({ name: 'vesk', version: '0.1', year: 2026 })
+    const parsed = JsonParser().parse(json)
+
+    const client = OkHttpClient()
+
+    const writer = QRCodeWriter()
+    const qr = writer.encode('VESK', BarcodeFormat.QR_CODE, 21, 21).toString()
+
+    const navigator = ComposeNavigator()
+    const dialogNav = DialogNavigator()
+
+    const tween = FloatTweenSpec({})
+    const ripple = RippleAlpha({ draggedAlpha: 0.4, focusedAlpha: 0.3, hoveredAlpha: 0.2, pressedAlpha: 0.6 })
+    const adapter = ImmutableCollectionAdapter({ impl: [] })
+
+    const &[showAnim] = track(true)
+
+    const inst = Instant.parse('2026-08-12T10:00:00Z')
+
+    const vicoScroll = ChartScrollState()
+
     <div class="flex-col gap-6 px-4 py-4">
 
         <section>
-            <h1 class="text-2xl font-extrabold tracking-tight">Installed libraries</h1>
+            <h1 class="text-2xl font-extrabold tracking-tight">27 installed libraries</h1>
             <p class="text-gray-500 text-sm mt-1">
-                coil + ycharts + compose (glide) — wired from libraries.json at build time
+                coil, compose (glide), coil3, ycharts, material, material3, foundation, foundation-layout,
+                constraintlayout-compose, animation, navigation, activity-compose, datetime, animation-core,
+                animation-graphics, immutable-collections, material-ripple, shimmer, gson, moshi, okhttp,
+                retrofit, zxing, timber, kotlinx-serialization, vico, material-icons
             </p>
         </section>
 
         <section>
-            <div class="flex items-center justify-between mb-3">
-                <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700">Coil · network images</h2>
-                <p class="text-xs text-gray-400">io.coil-kt:coil-compose</p>
-            </div>
-            <div class="flex gap-3 flex-nowrap overflow-x-auto">
-                <CoilImage src="https://picsum.photos/seed/vesk1/200/260" alt="random photo one" class="w-40 h-52 rounded-2xl" />
-                <CoilImage src="https://picsum.photos/seed/vesk2/200/260" alt="random photo two" class="w-40 h-52 rounded-2xl" />
-                <CoilImage src="https://picsum.photos/seed/vesk3/200/260" alt="random photo three" class="w-40 h-52 rounded-2xl" />
-            </div>
-        </section>
-
-        <section>
-            <div class="flex items-center justify-between mb-3">
-                <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700">Glide · network images</h2>
-                <p class="text-xs text-gray-400">com.github.bumptech.glide:compose</p>
-            </div>
-            <div class="flex gap-3 flex-nowrap overflow-x-auto">
-                <GlideImage model="https://picsum.photos/seed/veskg1/200/260" contentDescription="random photo one" class="w-40 h-52 rounded-2xl" />
-                <GlideImage model="https://picsum.photos/seed/veskg2/200/260" contentDescription="random photo two" class="w-40 h-52 rounded-2xl" />
-                <GlideImage model="https://picsum.photos/seed/veskg3/200/260" contentDescription="random photo three" class="w-40 h-52 rounded-2xl" />
-            </div>
-        </section>
-
-
-        <section>
-            <div class="flex items-center justify-between mb-3">
-                <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700">YCharts · line chart</h2>
-                <p class="text-xs text-gray-400">co.yml:ycharts</p>
-            </div>
             <div class="bg-white rounded-2xl p-4">
+                <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-2">1. coil — async images</h2>
+                <div class="flex gap-2">
+                    <CoilImage src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=240&q=80" alt="coil 1" class="w-24 h-32 rounded-xl" />
+                    <CoilImage src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=240&q=80" alt="coil 2" class="w-24 h-32 rounded-xl" />
+                    <CoilImage src="https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=240&q=80" alt="coil 3" class="w-24 h-32 rounded-xl" />
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <div class="bg-white rounded-2xl p-4">
+                <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-2">2. compose (glide) — async images</h2>
+                <div class="flex gap-2">
+                    <GlideImage model="https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=240&q=80" contentDescription="glide 1" class="w-24 h-32 rounded-xl" />
+                    <GlideImage model="https://images.unsplash.com/photo-1519681393784-d120267933ba?w=240&q=80" contentDescription="glide 2" class="w-24 h-32 rounded-xl" />
+                    <GlideImage model="https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=240&q=80" contentDescription="glide 3" class="w-24 h-32 rounded-xl" />
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <div class="bg-white rounded-2xl p-4">
+                <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-2">3. coil3 — async images</h2>
+                <div class="flex gap-2">
+                    <Coil3Image src="https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=240&q=80" alt="coil3 1" class="w-24 h-32 rounded-xl" />
+                    <Coil3Image src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=240&q=80" alt="coil3 2" class="w-24 h-32 rounded-xl" />
+                    <Coil3Image src="https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=240&q=80" alt="coil3 3" class="w-24 h-32 rounded-xl" />
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <div class="bg-white rounded-2xl p-4">
+                <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-2">4. ycharts — line chart</h2>
                 <LineChart lineChartData={chart} class="h-56 w-full" />
             </div>
         </section>
 
         <section>
-            <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-3">Install more</h2>
-            <pre class="bg-gray-900 text-green-400 text-xs rounded-2xl p-4">vesk add com.github.bumptech.glide:compose@1.0.0-beta01
-vesk add co.yml:ycharts@2.1.0
-vesk update</pre>
+            <div class="bg-white rounded-2xl p-4 flex-col gap-3">
+                <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700">5. material (M2)</h2>
+                <p class="text-gray-600 text-sm">SnackbarHostState constructed in script — ready for SnackbarHost.</p>
+            </div>
+        </section>
+
+        <section>
+            <div class="bg-white rounded-2xl p-4 flex-col gap-3">
+                <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-1">6. material3 (M3)</h2>
+                <Card class="w-full bg-gray-50 p-3">
+                    <div class="flex-col gap-1">
+                        <p class="text-sm font-bold">Card + Divider</p>
+                        <p class="text-gray-600 text-xs">M3 card with a divider between its rows.</p>
+                    </div>
+                </Card>
+                <Divider class="h-2" />
+                <p class="text-gray-600 text-xs">Divider above.</p>
+            </div>
+        </section>
+
+        <section>
+            <div class="bg-white rounded-2xl p-4 flex-col gap-3">
+                <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700">7. foundation-layout</h2>
+                <Box class="w-16 h-16 bg-indigo-500 rounded-2xl" />
+                <Spacer class="h-2" />
+                <p class="text-gray-600 text-sm">Colored Box above, Spacer below.</p>
+            </div>
+        </section>
+
+        <section>
+            <div class="bg-white rounded-2xl p-4 flex-col gap-3">
+                <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700">8. foundation</h2>
+                <p class="text-gray-600 text-sm">LazyListState — firstVisibleItemIndex: {listState.firstVisibleItemIndex}</p>
+                <p class="text-gray-600 text-sm">MutatorMutex constructed in script.</p>
+            </div>
+        </section>
+
+        <section>
+            <div class="bg-white rounded-2xl p-4 flex-col gap-3">
+                <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-1">9. gson — JSON</h2>
+                <p class="text-xs text-gray-500">serialized:</p>
+                <pre class="bg-gray-900 text-green-400 text-xs rounded-xl p-3 whitespace-pre-wrap">{json}</pre>
+                <p class="text-xs text-gray-500 mt-1">parsed back (JsonParser):</p>
+                <pre class="bg-gray-900 text-green-400 text-xs rounded-xl p-3 whitespace-pre-wrap">{parsed.toString()}</pre>
+            </div>
+        </section>
+
+        <section>
+            <div class="bg-white rounded-2xl p-4 flex-col gap-1">
+                <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-1">10. okhttp — HTTP client</h2>
+                <p class="text-gray-600 text-sm">connectTimeout: {client.connectTimeoutMillis} ms</p>
+                <p class="text-gray-600 text-sm">readTimeout: {client.readTimeoutMillis} ms</p>
+                <p class="text-gray-600 text-sm">callTimeout: {client.callTimeoutMillis} ms</p>
+            </div>
+        </section>
+
+        <section>
+            <div class="bg-white rounded-2xl p-4">
+                <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-2">11. zxing — QR encode (21x21)</h2>
+                <pre class="bg-gray-900 text-green-400 text-[10px] leading-4 rounded-xl p-3">{qr}</pre>
+            </div>
+        </section>
+
+        <section>
+            <div class="bg-white rounded-2xl p-4 flex-col gap-1">
+                <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-1">12. navigation</h2>
+                <p class="text-gray-600 text-sm">ComposeNavigator constructed — ready for a NavHost.</p>
+                <p class="text-gray-600 text-sm">DialogNavigator constructed — ready for a DialogHost.</p>
+            </div>
+        </section>
+
+        <section>
+            <div class="bg-white rounded-2xl p-4 flex-col gap-1">
+                <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-1">13. animation-core</h2>
+                <p class="text-gray-600 text-sm">FloatTweenSpec — duration: {tween.duration} ms, delay: {tween.delay} ms</p>
+            </div>
+        </section>
+
+        <section>
+            <div class="bg-white rounded-2xl p-4 flex-col gap-1">
+                <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-1">14. material-ripple</h2>
+                <p class="text-gray-600 text-sm">pressed: {ripple.pressedAlpha} · focused: {ripple.focusedAlpha}</p>
+                <p class="text-gray-600 text-sm">hovered: {ripple.hoveredAlpha} · dragged: {ripple.draggedAlpha}</p>
+            </div>
+        </section>
+
+        <section>
+            <div class="bg-white rounded-2xl p-4 flex-col gap-1">
+                <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-1">15. immutable-collections</h2>
+                <p class="text-gray-600 text-sm">ImmutableCollectionAdapter — {adapter.size} items: {adapter.joinToString()}</p>
+            </div>
+        </section>
+
+        <section>
+            <div class="bg-white rounded-2xl p-4 flex-col gap-1">
+                <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-1">16. constraintlayout-compose</h2>
+                <p class="text-gray-600 text-sm">ConstraintLayoutScope — its primary constructor is internal, so it can't be constructed from JS; imports fail closed by design.</p>
+            </div>
+        </section>
+
+        <section>
+            <div class="bg-white rounded-2xl p-4 flex-col gap-1">
+                <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-1">17. moshi</h2>
+                <p class="text-gray-600 text-sm">JsonAdapter is abstract (per-usage subclasses generated by Moshi's codegen) — not constructible from JS; imports fail closed by design.</p>
+            </div>
+        </section>
+
+        <section>
+            <div class="bg-white rounded-2xl p-4 flex-col gap-3">
+                <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700">18. animation</h2>
+                <button class="bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-xl" onClick={() => { showAnim = !showAnim }}>
+                    {showAnim ? 'Hide' : 'Show'} animated card
+                </button>
+                <AnimatedVisibility visible={showAnim} label="demo">
+                    <div class="bg-blue-500 text-white font-bold rounded-xl px-6 py-4">fade + scale in / out</div>
+                </AnimatedVisibility>
+            </div>
+        </section>
+
+        <section>
+            <div class="bg-white rounded-2xl p-4 flex-col gap-1">
+                <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-1">19. activity-compose</h2>
+                <p class="text-gray-600 text-sm">ManagedActivityResultLauncher — interface-only surface (remember launchers); imports fail closed by design.</p>
+            </div>
+        </section>
+
+        <section>
+            <div class="bg-white rounded-2xl p-4 flex-col gap-1">
+                <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-1">20. datetime</h2>
+                <p class="text-gray-600 text-sm">Instant: {inst.toString()}</p>
+                <p class="text-gray-600 text-sm">Zone: {TimeZone.UTC.toString()}</p>
+            </div>
+        </section>
+
+        <section>
+            <div class="bg-white rounded-2xl p-4 flex-col gap-1">
+                <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-1">21. animation-graphics</h2>
+                <p class="text-gray-600 text-sm">AnimatedImageVector — needs an ImageVector resource, not constructible from JS; imports fail closed by design.</p>
+            </div>
+        </section>
+
+        <section>
+            <div class="bg-white rounded-2xl p-4 flex-col gap-1">
+                <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-1">22. shimmer</h2>
+                <p class="text-gray-600 text-sm">Shimmer — its modifier surface needs a modifier binding; importable, fails closed on construction.</p>
+            </div>
+        </section>
+
+        <section>
+            <div class="bg-white rounded-2xl p-4 flex-col gap-1">
+                <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-1">23. kotlinx-serialization</h2>
+                <pre class="bg-gray-900 text-green-400 text-xs rounded-xl p-3 whitespace-pre-wrap">JsonObject's content map needs JsonElement values — JS object literals map to Map&lt;String, Any?&gt;, so construction fails closed by design.</pre>
+            </div>
+        </section>
+
+        <section>
+            <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-3">24-25. retrofit + timber</h2>
+            <pre class="bg-gray-900 text-green-400 text-xs rounded-2xl p-4 whitespace-pre-wrap">installed; real metadata (retrofit 2.11.0, timber 5.0.1) exposes no JS-callable surface —
+retrofit: no public constructor exports; timber: non-public class. Imports fail closed by design.</pre>
+        </section>
+
+        <section>
+            <div class="bg-white rounded-2xl p-4 flex-col gap-2">
+                <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-1">26. vico — chart scroll state</h2>
+                <div class="bg-gray-100 rounded-xl px-4 py-3 flex-col gap-1">
+                    <p class="text-sm font-bold">ChartScrollState from vico 1.14.0</p>
+                    <p class="text-gray-600 text-xs">scroll state: {vicoScroll.toString()}</p>
+                    <p class="text-gray-600 text-xs">ChartStyle/lineChart/columnChart bindings fail closed — their parameter types aren't JS-constructible.</p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <div class="bg-white rounded-2xl p-4 flex-col gap-3">
+                <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-1">27. material-icons — 49 core icons</h2>
+                <div class="flex gap-3 items-center">
+                    <Icon imageVector={Icons.Filled.Home} contentDescription="home" class="w-8 h-8 text-gray-700" />
+                    <Icon imageVector={Icons.Filled.Search} contentDescription="search" class="w-8 h-8 text-gray-700" />
+                    <Icon imageVector={Icons.Filled.Favorite} contentDescription="favorite" class="w-8 h-8 text-red-500" />
+                    <Icon imageVector={Icons.Filled.Star} contentDescription="star" class="w-8 h-8 text-amber-500" />
+                    <Icon imageVector={Icons.Filled.Settings} contentDescription="settings" class="w-8 h-8 text-gray-700" />
+                    <Icon imageVector={Icons.Filled.ShoppingCart} contentDescription="cart" class="w-8 h-8 text-gray-700" />
+                </div>
+                <div class="flex gap-3 items-center">
+                    <Icon imageVector={Icons.Filled.Face} contentDescription="face" class="w-8 h-8 text-gray-700" />
+                    <Icon imageVector={Icons.Filled.ThumbUp} contentDescription="thumbs up" class="w-8 h-8 text-gray-700" />
+                    <Icon imageVector={Icons.Filled.Email} contentDescription="email" class="w-8 h-8 text-gray-700" />
+                    <Icon imageVector={Icons.Filled.Notifications} contentDescription="notifications" class="w-8 h-8 text-gray-700" />
+                </div>
+                <p class="text-gray-600 text-xs">All 49 Icons.Default (filled) vectors from material-icons-core 1.6.8.</p>
+            </div>
         </section>
     </div>
 }
