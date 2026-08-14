@@ -1,0 +1,8 @@
+{
+  "name": "test-app",
+  "private": true,
+  "scripts": {
+    "demo": "npx tsx ../packages/cli-native/src/index.ts install",
+    "release": "npx tsx ../packages/cli-native/src/index.ts install release"
+  }
+}

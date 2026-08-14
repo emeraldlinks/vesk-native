@@ -89,6 +89,8 @@ get real compiler/JVM mappings, never workarounds in the demo app.
   The CLI is cwd-based (it runs from a project's node_modules): from inside
   `test-app/` the equivalent is `npx tsx ../packages/cli-native/src/index.ts build`,
   and `bundle [android|ios]` takes the platform as its only positional.
+  Demo install scripts live in `test-app/package.json`: `npm run demo` (install
+  debug) and `npm run release` (install the prebuilt release APK).
 - `npx tsc --noEmit -p tsconfig.json` after any compiler change.
 - **Tracked state is vesk cells, not React state.** Verification source:
   `/root/vesk/packages/runtime/src/track.ts` (web runtime), the `&[...]`
