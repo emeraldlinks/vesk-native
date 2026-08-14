@@ -538,9 +538,13 @@ interface Ctx {
   position: 'absolute' | 'fixed' | 'relative' | null;
   insets: Insets;
   neg: boolean;
+  // True when the element being classified is an ancestor of the routed
+  // content slot ({props.children}) — i.e. the layout shell's page scroll
+  // container. Only such containers key their vertical scroll by route.
+  scrollRouteKeyed: boolean;
 }
 
-function makeCtx(parts: ModifierParts, axis: Axis): Ctx {
+function makeCtx(parts: ModifierParts, axis: Axis, scrollRouteKeyed = false): Ctx {
   return {
     parts, layout: {}, axis,
     borderWidth: null, borderColor: null, borderColorFromSide: false,
@@ -551,7 +555,7 @@ function makeCtx(parts: ModifierParts, axis: Axis): Ctx {
     divide: { axis: null, width: 1, color: null, style: null },
     gridCols: null, gapX: null, gapY: null,
     position: null, insets: { top: null, end: null, bottom: null, start: null },
-    neg: false,
+    neg: false, scrollRouteKeyed,
   };
 }
 
@@ -926,7 +930,13 @@ const UTILITIES: UtilitySpec[] = [
   { name: 'overflow', bucket: 'clip', ns: [], render: (r, ctx) => {
     const v = r.raw;
     if (v === 'hidden' || v === 'clip' || v === 'x-hidden' || v === 'y-hidden') ctx.parts.clip.push('clip(RoundedCornerShape(0.dp))');
-    else if (v === 'y-auto' || v === 'y-scroll') ctx.parts.scroll.push('verticalScroll(rememberScrollState())');
+    // A vertical page-scroll container (an ancestor of the routed content
+    // slot) is keyed by route so forward navigation starts at the top and
+    // back navigation restores the previous offset (NavHost-style). Nested
+    // scroll regions stay independent per element, like CSS — an
+    // overflow-y-auto/overflow-x-auto never shares scroll position with
+    // anything else (rows and strips each scroll on their own).
+    else if (v === 'y-auto' || v === 'y-scroll') ctx.parts.scroll.push(`verticalScroll(${ctx.scrollRouteKeyed ? 'rememberRouteScrollState()' : 'rememberScrollState()'})`);
     else if (v === 'x-auto' || v === 'x-scroll') ctx.parts.scroll.push('horizontalScroll(rememberScrollState())');
   } },
   // ---- transforms ----
@@ -1237,9 +1247,9 @@ function skippedByVariant(variants: string[]): boolean {
 
 // ---------- public API ----------
 
-export function classify(classes: string[], custom?: Map<string, ModifierParts>, axis: Axis = 'column'): ModifierParts {
+export function classify(classes: string[], custom?: Map<string, ModifierParts>, axis: Axis = 'column', scrollRouteKeyed = false): ModifierParts {
   const parts = emptyParts();
-  const ctx = makeCtx(parts, axis);
+  const ctx = makeCtx(parts, axis, scrollRouteKeyed);
   const unhandled: string[] = [];
 
   for (const cls0 of classes) {

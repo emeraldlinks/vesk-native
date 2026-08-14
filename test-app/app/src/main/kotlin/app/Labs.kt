@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.Arrangement
@@ -25,7 +26,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -120,7 +120,7 @@ fun Labs(content: @Composable () -> Unit = {}) {
 					horizontalArrangement = Arrangement.spacedBy(8.dp),
 				) {
 					Button(
-						onClick = { run __veskret0@ { VeskWebStorage.localSetItem(lsKey.value, lsValue.value); lsOut.value = ((("Saved \"" + lsValue.value) + "\" under \"") + lsKey.value) + "\"" } },
+						onClick = jsSafe({ run __veskret0@ { VeskWebStorage.localSetItem(lsKey.value, lsValue.value); lsOut.value = ((("Saved \"" + lsValue.value) + "\" under \"") + lsKey.value) + "\"" } }),
 						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF4F46E5)),
 						shape = RoundedCornerShape(9999.dp),
 						colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -134,7 +134,7 @@ fun Labs(content: @Composable () -> Unit = {}) {
 					)
 					}
 					Button(
-						onClick = { run __veskret1@ { val v = VeskWebStorage.localGetItem(lsKey.value); lsOut.value = if (truthy(v == null)) ("No value for \"" + lsKey.value) + "\"" else "Got: " + v } },
+						onClick = jsSafe({ run __veskret1@ { val v = VeskWebStorage.localGetItem(lsKey.value); lsOut.value = if (truthy(v == null)) ("No value for \"" + lsKey.value) + "\"" else "Got: " + v } }),
 						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)),
 						shape = RoundedCornerShape(9999.dp),
 						colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -148,7 +148,7 @@ fun Labs(content: @Composable () -> Unit = {}) {
 					)
 					}
 					Button(
-						onClick = { run __veskret2@ { VeskWebStorage.localRemoveItem(lsKey.value); lsOut.value = ("Removed \"" + lsKey.value) + "\"" } },
+						onClick = jsSafe({ run __veskret2@ { VeskWebStorage.localRemoveItem(lsKey.value); lsOut.value = ("Removed \"" + lsKey.value) + "\"" } }),
 						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)),
 						shape = RoundedCornerShape(9999.dp),
 						colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -162,7 +162,7 @@ fun Labs(content: @Composable () -> Unit = {}) {
 					)
 					}
 					Button(
-						onClick = { run __veskret3@ { VeskWebStorage.localClear(); lsOut.value = "Cleared · length " + VeskWebStorage.localLength() } },
+						onClick = jsSafe({ run __veskret3@ { VeskWebStorage.localClear(); lsOut.value = "Cleared · length " + VeskWebStorage.localLength() } }),
 						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)),
 						shape = RoundedCornerShape(9999.dp),
 						colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -202,7 +202,7 @@ fun Labs(content: @Composable () -> Unit = {}) {
 					horizontalArrangement = Arrangement.spacedBy(8.dp),
 				) {
 					Button(
-						onClick = { run __veskret4@ { VeskWebStorage.sessionSetItem(ssKey.value, ssValue.value); ssOut.value = ((("Saved \"" + ssValue.value) + "\" under \"") + ssKey.value) + "\"" } },
+						onClick = jsSafe({ run __veskret4@ { VeskWebStorage.sessionSetItem(ssKey.value, ssValue.value); ssOut.value = ((("Saved \"" + ssValue.value) + "\" under \"") + ssKey.value) + "\"" } }),
 						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF4F46E5)),
 						shape = RoundedCornerShape(9999.dp),
 						colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -216,7 +216,7 @@ fun Labs(content: @Composable () -> Unit = {}) {
 					)
 					}
 					Button(
-						onClick = { run __veskret5@ { val v = VeskWebStorage.sessionGetItem(ssKey.value); ssOut.value = if (truthy(v == null)) ("No value for \"" + ssKey.value) + "\"" else "Got: " + v } },
+						onClick = jsSafe({ run __veskret5@ { val v = VeskWebStorage.sessionGetItem(ssKey.value); ssOut.value = if (truthy(v == null)) ("No value for \"" + ssKey.value) + "\"" else "Got: " + v } }),
 						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)),
 						shape = RoundedCornerShape(9999.dp),
 						colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -230,7 +230,7 @@ fun Labs(content: @Composable () -> Unit = {}) {
 					)
 					}
 					Button(
-						onClick = { run __veskret6@ { VeskWebStorage.sessionClear(); ssOut.value = "Cleared · length " + VeskWebStorage.sessionLength() } },
+						onClick = jsSafe({ run __veskret6@ { VeskWebStorage.sessionClear(); ssOut.value = "Cleared · length " + VeskWebStorage.sessionLength() } }),
 						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)),
 						shape = RoundedCornerShape(9999.dp),
 						colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -289,7 +289,10 @@ fun Labs(content: @Composable () -> Unit = {}) {
 					horizontalArrangement = Arrangement.spacedBy(8.dp),
 				) {
 					Button(
-						onClick = { run __veskret7@ { val u = VeskAuth.signUp(authUser.value, authPass.value); session.value = if (truthy(u)) jsString(jsMapGet(u, "username")) else ""; authOut.value = if (truthy(u)) ("Created \"" + jsMapGet(u, "username")) + "\" and signed in" else "Sign up failed (taken or invalid)" } },
+						onClick = jsSafe({ run __veskret7@ { try {
+	val u = VeskAuth.signUp(authUser.value, authPass.value); 	session.value = if (truthy(u)) jsString(jsMapGet(u, "username")) else ""; 	authOut.value = if (truthy(u)) ("Created \"" + jsMapGet(u, "username")) + "\" and signed in" else "Sign up failed (taken or invalid)"; }
+catch (e: Exception) {
+	authOut.value = "Sign up error: " + e.message; } } }),
 						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF059669)),
 						shape = RoundedCornerShape(9999.dp),
 						colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -303,7 +306,10 @@ fun Labs(content: @Composable () -> Unit = {}) {
 					)
 					}
 					Button(
-						onClick = { run __veskret8@ { val u = VeskAuth.signIn(authUser.value, authPass.value); session.value = if (truthy(u)) jsString(jsMapGet(u, "username")) else ""; authOut.value = if (truthy(u)) "Signed in as " + jsMapGet(u, "username") else "Invalid credentials" } },
+						onClick = jsSafe({ run __veskret8@ { try {
+	val u = VeskAuth.signIn(authUser.value, authPass.value); 	session.value = if (truthy(u)) jsString(jsMapGet(u, "username")) else ""; 	authOut.value = if (truthy(u)) "Signed in as " + jsMapGet(u, "username") else "Invalid credentials"; }
+catch (e: Exception) {
+	authOut.value = "Sign in error: " + e.message; } } }),
 						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)),
 						shape = RoundedCornerShape(9999.dp),
 						colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -317,7 +323,7 @@ fun Labs(content: @Composable () -> Unit = {}) {
 					)
 					}
 					Button(
-						onClick = { run __veskret9@ { VeskAuth.signOut(); session.value = ""; authOut.value = "Signed out" } },
+						onClick = jsSafe({ run __veskret9@ { VeskAuth.signOut(); session.value = ""; authOut.value = "Signed out" } }),
 						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)),
 						shape = RoundedCornerShape(9999.dp),
 						colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -331,7 +337,7 @@ fun Labs(content: @Composable () -> Unit = {}) {
 					)
 					}
 					Button(
-						onClick = { run __veskret10@ { val u = VeskAuth.currentUser(); session.value = if (truthy(u)) jsString(jsMapGet(u, "username")) else ""; authOut.value = if (truthy(u)) "Session user: " + jsMapGet(u, "username") else "No active session" } },
+						onClick = jsSafe({ run __veskret10@ { val u = VeskAuth.currentUser(); session.value = if (truthy(u)) jsString(jsMapGet(u, "username")) else ""; authOut.value = if (truthy(u)) "Session user: " + jsMapGet(u, "username") else "No active session" } }),
 						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)),
 						shape = RoundedCornerShape(9999.dp),
 						colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -406,7 +412,13 @@ fun Labs(content: @Composable () -> Unit = {}) {
 					horizontalArrangement = Arrangement.spacedBy(8.dp),
 				) {
 					Button(
-						onClick = { run __veskret11@ { val res = VeskFetch.fetch(fetchUrl.value); fetchOut.value = ("HTTP " + res.status) + (if (truthy(res.ok)) " OK" else " failed"); val `data` = if (truthy(res.ok)) res.json() else null; fetchBody.value = if (truthy(`data`)) jsString(jsMapGet(`data`, "title")) else "(no title)" } },
+						onClick = jsSafe({ run __veskret11@ { try {
+	val res = VeskFetch.fetch(fetchUrl.value); 	if (truthy(res.status == 0)) {
+		fetchOut.value = "Network error: " + res.statusText; 		fetchBody.value = "(no response)"; 	} else {
+		fetchOut.value = ("HTTP " + res.status) + (if (truthy(res.ok)) " OK" else " failed"); 		val `data` = if (truthy(res.ok)) res.json() else null; 		fetchBody.value = if (truthy(`data`)) jsString(jsMapGet(`data`, "title")) else "(no title)"; 	}
+}
+catch (e: Exception) {
+	fetchOut.value = "Fetch error: " + e.message; 	fetchBody.value = ""; } } }),
 						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF0284C7)),
 						shape = RoundedCornerShape(9999.dp),
 						colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -465,7 +477,10 @@ fun Labs(content: @Composable () -> Unit = {}) {
 					horizontalArrangement = Arrangement.spacedBy(8.dp),
 				) {
 					Button(
-						onClick = { run __veskret12@ { val db = VeskSqlite.openDatabase("labs"); db.exec("CREATE TABLE IF NOT EXISTS items (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, qty INTEGER NOT NULL)"); db.run("INSERT INTO items (name, qty) VALUES (?, ?)", listOf(sqlItem.value, 1)); val rows = db.all("SELECT id, name, qty FROM items ORDER BY id"); sqlOut.value = (("rows: " + jsLength(rows)) + " → ") + rows.map { row -> (((("#" + row["id"]) + " ") + row["name"]) + " x") + row["qty"] }.toString() } },
+						onClick = jsSafe({ run __veskret12@ { try {
+	val db = VeskSqlite.openDatabase("labs"); 	db.exec("CREATE TABLE IF NOT EXISTS items (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, qty INTEGER NOT NULL)"); 	db.run("INSERT INTO items (name, qty) VALUES (?, ?)", listOf(sqlItem.value, 1)); 	val rows = db.all("SELECT id, name, qty FROM items ORDER BY id"); 	sqlOut.value = (("rows: " + jsLength(rows)) + " → ") + rows.map { row -> (((("#" + row["id"]) + " ") + row["name"]) + " x") + row["qty"] }.toString(); }
+catch (e: Exception) {
+	sqlOut.value = "Error: " + e.message; } } }),
 						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFD97706)),
 						shape = RoundedCornerShape(9999.dp),
 						colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -479,7 +494,10 @@ fun Labs(content: @Composable () -> Unit = {}) {
 					)
 					}
 					Button(
-						onClick = { run __veskret13@ { val db = VeskSqlite.openDatabase("labs"); val rows = db.all("SELECT id, name, qty FROM items ORDER BY id"); sqlOut.value = (("rows: " + jsLength(rows)) + " → ") + rows.map { row -> (((("#" + row["id"]) + " ") + row["name"]) + " x") + row["qty"] }.toString() } },
+						onClick = jsSafe({ run __veskret13@ { try {
+	val db = VeskSqlite.openDatabase("labs"); 	val rows = db.all("SELECT id, name, qty FROM items ORDER BY id"); 	sqlOut.value = (("rows: " + jsLength(rows)) + " → ") + rows.map { row -> (((("#" + row["id"]) + " ") + row["name"]) + " x") + row["qty"] }.toString(); }
+catch (e: Exception) {
+	sqlOut.value = "Error: " + e.message; } } }),
 						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)),
 						shape = RoundedCornerShape(9999.dp),
 						colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -493,7 +511,10 @@ fun Labs(content: @Composable () -> Unit = {}) {
 					)
 					}
 					Button(
-						onClick = { run __veskret14@ { val db = VeskSqlite.openDatabase("labs"); db.exec("DROP TABLE IF EXISTS items"); sqlOut.value = "Table dropped" } },
+						onClick = jsSafe({ run __veskret14@ { try {
+	val db = VeskSqlite.openDatabase("labs"); 	db.exec("DROP TABLE IF EXISTS items"); 	sqlOut.value = "Table dropped"; }
+catch (e: Exception) {
+	sqlOut.value = "Error: " + e.message; } } }),
 						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)),
 						shape = RoundedCornerShape(9999.dp),
 						colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),

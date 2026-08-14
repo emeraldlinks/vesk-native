@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.Arrangement
@@ -25,7 +26,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -153,7 +153,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				Button(
-					onClick = { color.value = "Pine" },
+					onClick = jsSafe({ color.value = "Pine" }),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
@@ -170,7 +170,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 				}
 				}
 				Button(
-					onClick = { color.value = "Storm" },
+					onClick = jsSafe({ color.value = "Storm" }),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
@@ -187,7 +187,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 				}
 				}
 				Button(
-					onClick = { color.value = "Oat" },
+					onClick = jsSafe({ color.value = "Oat" }),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
@@ -219,7 +219,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				Button(
-					onClick = { size.value = "S" },
+					onClick = jsSafe({ size.value = "S" }),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
@@ -246,7 +246,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 				}
 				}
 				Button(
-					onClick = { size.value = "M" },
+					onClick = jsSafe({ size.value = "M" }),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
@@ -273,7 +273,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 				}
 				}
 				Button(
-					onClick = { size.value = "L" },
+					onClick = jsSafe({ size.value = "L" }),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
@@ -300,7 +300,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 				}
 				}
 				Button(
-					onClick = { size.value = "XL" },
+					onClick = jsSafe({ size.value = "XL" }),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
@@ -339,7 +339,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 				horizontalArrangement = Arrangement.spacedBy(4.dp),
 			) {
 				Button(
-					onClick = { run __veskret0@ { if (truthy(num(qty.value) > num(1))) qty.value = qty.value + -1 } },
+					onClick = jsSafe({ run __veskret0@ { if (truthy(num(qty.value) > num(1))) qty.value = qty.value + -1 } }),
 					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(36.dp).height(36.dp),
 					shape = RoundedCornerShape(9999.dp),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -357,7 +357,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 					style = TextStyle(textAlign = TextAlign.Center, fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
 				)
 				Button(
-					onClick = { qty.value = qty.value + 1 },
+					onClick = jsSafe({ qty.value = qty.value + 1 }),
 					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)).width(36.dp).height(36.dp),
 					shape = RoundedCornerShape(9999.dp),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -371,7 +371,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 				}
 			}
 			Button(
-				onClick = { added.value = !truthy(added.value) },
+				onClick = jsSafe({ added.value = !truthy(added.value) }),
 				modifier = Modifier.shadow(1.dp).clip(RoundedCornerShape(9999.dp)).background(Color(0xFF2563EB)).weight(1f).padding(vertical = 14.dp),
 				shape = RoundedCornerShape(9999.dp),
 				colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),

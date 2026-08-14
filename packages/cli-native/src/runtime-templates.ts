@@ -7,6 +7,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -2183,8 +2184,9 @@ fun veskVideo(
     var ready by remember(url) { mutableStateOf(false) }
 
     fun applyTransform(mp: MediaPlayer?, viewW: Int, viewH: Int) {
-        val vw = mp?.videoWidth ?: return
-        val vh = mp?.videoHeight ?: return
+        val mp = mp ?: return
+        val vw = mp.videoWidth
+        val vh = mp.videoHeight
         if (vw <= 0 || vh <= 0 || viewW <= 0 || viewH <= 0) return
         val m = Matrix()
         when (scale) {
@@ -2691,6 +2693,20 @@ fun Link(props: LinkProps, content: @Composable () -> Unit = {}) {
     }
 }
 ` },
+  'rememberRouteScrollState': { deps: [], src: `
+// Scroll state for overflow-y-auto / overflow-x-auto containers. The scroll
+// wrapper (typically a layout shell) stays in composition across navigations,
+// so plain rememberScrollState would resume the previous page's offset. The
+// NavController keeps one ScrollState per route on the stack: a page that was
+// never visited (or was popped) starts at the top; going back restores the
+// exact offset the page had when it was left — NavHost-style behaviour.
+@Composable
+fun rememberRouteScrollState(initial: Int = 0): ScrollState {
+    val nav = LocalNavController.current
+    val route = nav.currentRoute.value
+    return remember(route) { nav.scrollStateFor(route, initial) }
+}
+` },
   'NavLink': { deps: [], src: `
 data class NavLinkProps(
     val href: String = "",
@@ -2721,6 +2737,19 @@ fun jsString(v: Any?): String = when (v) {
     is String -> v
     else -> v.toString()
 }
+` },
+  'jsHandleError': { deps: [], src: `
+// Uncaught exceptions in event handlers, timers, and callbacks are reported
+// (Logcat, like the browser's window.onerror/console) and the app keeps
+// running — an error in one interaction never takes the app down.
+fun jsHandleError(e: Throwable) {
+    android.util.Log.e("vesk", "uncaught exception (app continues): " + e.message, e)
+}
+` },
+  'jsSafe': { deps: ['jsHandleError'], src: `
+// Wrap an event-handler lambda so a throw reports instead of crashing: the
+// browser fires window.onerror and the page keeps running, and so do we.
+fun jsSafe(fn: () -> Unit): () -> Unit = { try { fn() } catch (e: Throwable) { jsHandleError(e) } }
 ` },
   'jsTypeof': { deps: [], src: `
 fun jsTypeof(v: Any?): String = when (v) {
@@ -2885,12 +2914,13 @@ fun jsSetOf(from: Any?): LinkedHashSet<Any?> {
 }
 ` },
   'jsMapIterable': { deps: [], src: `
-fun jsMapIterable(map: Any?): List<List<Any?>> = (map as Map<Any?, Any?>).map { (k, v) -> listOf(k, v) }
+fun jsMapIterable(map: Any?): List<List<Any?>> = (map as Map<*, *>).map { (k, v) -> listOf(k, v) }
 ` },
   'jsMapGet': { deps: [], src: `
-fun jsMapGet(map: Any?, key: Any?): Any? = (map as? Map<Any?, Any?>)?.get(key)
+fun jsMapGet(map: Any?, key: Any?): Any? = (map as? Map<*, *>)?.get(key)
 ` },
   'jsMapSet': { deps: [], src: `
+@Suppress("UNCHECKED_CAST")
 fun jsMapSet(map: Any?, key: Any?, value: Any?): Any? { (map as MutableMap<Any?, Any?>)[key] = value; return map }
 ` },
   'jsHas': { deps: [], src: `
@@ -2915,13 +2945,13 @@ fun jsClear(coll: Any?) { when (coll) {
 } }
 ` },
   'jsMapKeys': { deps: [], src: `
-fun jsMapKeys(map: Any?): Set<Any?> = (map as Map<Any?, Any?>).keys
+fun jsMapKeys(map: Any?): Set<Any?> = (map as Map<*, *>).keys
 ` },
   'jsMapValues': { deps: [], src: `
-fun jsMapValues(map: Any?): Collection<Any?> = (map as Map<Any?, Any?>).values
+fun jsMapValues(map: Any?): Collection<Any?> = (map as Map<*, *>).values
 ` },
   'jsMapEntries': { deps: [], src: `
-fun jsMapEntries(map: Any?): List<List<Any?>> = (map as Map<Any?, Any?>).map { (k, v) -> listOf(k, v) }
+fun jsMapEntries(map: Any?): List<List<Any?>> = (map as Map<*, *>).map { (k, v) -> listOf(k, v) }
 ` },
   'jsSize': { deps: [], src: `
 fun jsSize(coll: Any?): Int = when (coll) {
@@ -2972,19 +3002,19 @@ object JsConsole {
     fun timeEnd(label: Any?) { val k = jsString(label); val s = times.remove(k) ?: 0L; println("\$k: \${(System.nanoTime() - s) / 1_000_000.0} ms") }
 }
 ` },
-  'VeskTimers': { deps: [], src: `
+  'VeskTimers': { deps: ['jsHandleError'], src: `
 object VeskTimers {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private val jobs = mutableMapOf<Int, Job>()
     private var nextId = 1
     fun setTimeout(fn: () -> Unit, ms: Any? = 0): Int {
         val id = nextId++
-        jobs[id] = scope.launch { delay(ms?.let { num(it) }?.toLong() ?: 0L); jobs.remove(id); fn() }
+        jobs[id] = scope.launch { delay(ms?.let { num(it) }?.toLong() ?: 0L); jobs.remove(id); try { fn() } catch (e: Throwable) { jsHandleError(e) } }
         return id
     }
     fun setInterval(fn: () -> Unit, ms: Any? = 0): Int {
         val id = nextId++
-        jobs[id] = scope.launch { while (isActive) { delay(ms?.let { num(it) }?.toLong() ?: 0L); fn() } }
+        jobs[id] = scope.launch { while (isActive) { delay(ms?.let { num(it) }?.toLong() ?: 0L); try { fn() } catch (e: Throwable) { jsHandleError(e) } } }
         return id
     }
     fun clearTimeout(id: Any?) { jobs.remove(num(id).toInt())?.cancel() }
@@ -3086,9 +3116,11 @@ object VeskFetch {
                     }
                 }
             }.getOrElse { return@runBlocking VeskResponse(url, 0, it.message ?: "Network error", false, emptyMap(), "") }
-            val code = conn.responseCode
-            val text = (if (code in 200..299) conn.inputStream else conn.errorStream)
-                ?.bufferedReader(Charsets.UTF_8)?.use { it.readText() } ?: ""
+            val code = runCatching { conn.responseCode }.getOrElse { conn.disconnect(); return@runBlocking VeskResponse(url, 0, it.message ?: "Network error", false, emptyMap(), "") }
+            val text = runCatching {
+                (if (code in 200..299) conn.inputStream else conn.errorStream)
+                    ?.bufferedReader(Charsets.UTF_8)?.use { it.readText() } ?: ""
+            }.getOrElse { conn.disconnect(); return@runBlocking VeskResponse(url, 0, it.message ?: "Network error", false, emptyMap(), "") }
             val hdrs = buildMap {
                 var i = 0
                 while (true) {
@@ -3291,7 +3323,7 @@ fun veskYchartsLineChart(values: List<*>, labels: List<String>, modifier: Modifi
 ` },
 };
 
-export const RUNTIME_ORDER = ['veskVideo', 'veskAudio', 'veskFileImage', 'veskDeviceCore', 'veskDeviceApi', 'veskQr', 'veskYchartsLineChart', 'veskDragDrop', 'veskColorFilter', 'veskBrightness', 'veskContrast', 'veskGrayscale', 'veskSaturate', 'veskInvert', 'veskSepia', 'veskHueRotate', 'veskDashedBorder', 'veskSideBorder', 'veskDivideLine', 'veskSkew', 'Link', 'NavLink', 'Outlet', 'jsString', 'jsTypeof', 'jsGlobalIsNaN', 'jsGlobalIsFinite', 'jsStrictIsNaN', 'jsStrictIsFinite', 'jsIsInteger', 'jsParseInt', 'jsParseFloat', 'jsEncodeURIComponent', 'jsDecodeURIComponent', 'jsEncodeURI', 'jsDecodeURI', 'jsRegexExec', 'jsRegexSearch', 'jsStringify', 'jsParseJson', 'jsMapOf', 'jsSetOf', 'jsMapIterable', 'jsMapGet', 'jsMapSet', 'jsHas', 'jsDelete', 'jsClear', 'jsMapKeys', 'jsMapValues', 'jsMapEntries', 'jsSize', 'jsLength', 'jsForEach', 'jsDateValue', 'jsTagged', 'JsConsole', 'VeskTimers', 'VeskAppContext', 'jsAlert', 'VeskWebStorage', 'VeskFetch', 'VeskSqlite', 'VeskAuth'];
+export const RUNTIME_ORDER = ['veskVideo', 'veskAudio', 'veskFileImage', 'veskDeviceCore', 'veskDeviceApi', 'veskQr', 'veskYchartsLineChart', 'veskDragDrop', 'veskColorFilter', 'veskBrightness', 'veskContrast', 'veskGrayscale', 'veskSaturate', 'veskInvert', 'veskSepia', 'veskHueRotate', 'veskDashedBorder', 'veskSideBorder', 'veskDivideLine', 'veskSkew', 'rememberRouteScrollState', 'Link', 'NavLink', 'Outlet', 'jsString', 'jsHandleError', 'jsSafe', 'jsTypeof', 'jsGlobalIsNaN', 'jsGlobalIsFinite', 'jsStrictIsNaN', 'jsStrictIsFinite', 'jsIsInteger', 'jsParseInt', 'jsParseFloat', 'jsEncodeURIComponent', 'jsDecodeURIComponent', 'jsEncodeURI', 'jsDecodeURI', 'jsRegexExec', 'jsRegexSearch', 'jsStringify', 'jsParseJson', 'jsMapOf', 'jsSetOf', 'jsMapIterable', 'jsMapGet', 'jsMapSet', 'jsHas', 'jsDelete', 'jsClear', 'jsMapKeys', 'jsMapValues', 'jsMapEntries', 'jsSize', 'jsLength', 'jsForEach', 'jsDateValue', 'jsTagged', 'JsConsole', 'VeskTimers', 'VeskAppContext', 'jsAlert', 'VeskWebStorage', 'VeskFetch', 'VeskSqlite', 'VeskAuth'];
 
 // Function/composable names that come from a differently-named helper unit.
 export const BIOMETRIC_CHECK_BODY = `val pm = context.packageManager

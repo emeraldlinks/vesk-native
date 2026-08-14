@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.Arrangement
@@ -25,7 +26,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -575,7 +575,7 @@ fun Home(props: HomeProps = HomeProps(), content: @Composable () -> Unit = {}) {
 				style = TextStyle(color = Color(0xB3FFFFFF), fontSize = 14.sp, lineHeight = 24.sp),
 			)
 			Button(
-				onClick = { run __veskret0@ { println("Nordi+ membership toggled"); joined.value = !truthy(joined.value) } },
+				onClick = jsSafe({ run __veskret0@ { println("Nordi+ membership toggled"); joined.value = !truthy(joined.value) } }),
 				modifier = Modifier.padding(top = 16.dp).clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.surface).padding(vertical = 10.dp),
 				shape = RoundedCornerShape(9999.dp),
 				colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),

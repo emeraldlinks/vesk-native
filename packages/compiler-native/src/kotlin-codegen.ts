@@ -489,7 +489,7 @@ function emitButton(node: StaticNode, classes: string[], attrs: Map<string, JsNo
 
   const lines: string[] = [];
   lines.push(pad + 'Button(');
-  lines.push(`${padIn}onClick = ${onClickKt},`);
+  lines.push(`${padIn}onClick = jsSafe(${onClickKt}),`);
   const modClasses = classes.filter((c) => !BTN_PAD_RE.test(c));
   const modifier = modifierFor(modClasses, em, parentAxis, false, extraModifier, boxScope);
   if (modifier) lines.push(`${padIn}modifier = ${modifier},`);
@@ -509,6 +509,7 @@ const IMPORTS = `import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.Arrangement
@@ -530,7 +531,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -602,6 +602,7 @@ class Emitter {
   }
 
   private guardCount = 0;
+  shimmerCount = 0;
   nextGuardName(): string {
     return `__veskErr${++this.guardCount}`;
   }
@@ -883,6 +884,33 @@ function modifierFor(classes: string[], em: Emitter, parentAxis: 'column' | 'row
   return prependModifier(modifier, extraModifier);
 }
 
+// True when this element's subtree renders the routed content slot
+// ({props.children} -> SlotNode -> content()). Only such a container is the
+// page-level scroll: it stays composed across route changes, so its vertical
+// scroll is keyed by route (forward = top, back = restore). Nested scroll
+// regions inside page content never contain the slot and stay independent.
+function containsSlot(node: IRNode): boolean {
+  const anyContains = (list: IRNode[]) => list.some((n) => n instanceof StaticNode || n instanceof ComponentCall ? containsSlot(n) : false);
+  if (!(node instanceof StaticNode || node instanceof ComponentCall)) return false;
+  for (const child of node.children) {
+    if (child instanceof SlotNode) return true;
+    if (child instanceof StaticNode || child instanceof ComponentCall) {
+      if (containsSlot(child)) return true;
+    } else if (child instanceof OpaqueDynamicRegion) {
+      if (anyContains(child.consequentNodes) || anyContains(child.alternateNodes)) return true;
+    } else if (child instanceof MapRegion) {
+      if (anyContains(child.bodyTemplate) || anyContains(child.alternateNodes)) return true;
+    } else if (child instanceof WhileLoop || child instanceof ForLoop) {
+      if (anyContains(child.bodyTemplate)) return true;
+    } else if (child instanceof SwitchBlock) {
+      if (child.cases.some((c) => anyContains(c.body))) return true;
+    } else if (child instanceof TryCatch) {
+      if (anyContains(child.bodyTemplate) || anyContains(child.catchBody)) return true;
+    }
+  }
+  return false;
+}
+
 function prependModifier(modifier: string | null, extra: string | null): string | null {
   if (extra === null || extra === '') return modifier;
   if (modifier === null) return extra;
@@ -946,6 +974,14 @@ function libraryTagLines(node: ComponentCall, em: Emitter, level: number, parent
     em.libImports.add(imp.startsWith('import ') ? imp : `import ${imp}`);
   }
 
+  // `<Shimmer>` is a modifier wrapper: it renders its children inside a Box
+  // whose modifier applies the library's shimmer effect. This is the
+  // markup-native surface for the valentinilk shimmer lib — its Shimmer value
+  // can't be constructed from JS (the @Composable rememberShimmer factory is
+  // the supported entry point), so the binding wraps children in the same way
+  // a user would write `Modifier.shimmer(rememberShimmer(...))`.
+  if (binding.shimmer) return shimmerWrapperLines(node, em, level, parentAxis, flowParent, boxScope);
+
   const pad = '\t'.repeat(level);
   const padIn = '\t'.repeat(level + 1);
   const argLines: string[] = [];
@@ -991,6 +1027,35 @@ function libraryTagLines(node: ComponentCall, em: Emitter, level: number, parent
   } else {
     out.push(pad + `)`);
   }
+  return out;
+}
+
+function shimmerWrapperLines(node: ComponentCall, em: Emitter, level: number, parentAxis: 'column' | 'row' | null = null, flowParent = false, boxScope = false): string[] {
+  const pad = '\t'.repeat(level);
+  const padIn = '\t'.repeat(level + 1);
+  const varName = `__shimmer${++em.shimmerCount}`;
+  const shimmerMod = `Modifier.shimmer(${varName})`;
+  let classMod: string | null = null;
+  for (const p of node.props) {
+    if (p.name === 'class' || p.name === 'className') {
+      const raw = (p.value.raw ?? '').trim();
+      const cls = raw.length >= 2 && (raw[0] === '"' || raw[0] === "'") && raw[raw.length - 1] === raw[0]
+        ? raw.slice(1, -1)
+        : raw;
+      classMod = modifierFor(cls.split(/\s+/).filter(Boolean), em, parentAxis, true, shimmerMod, boxScope);
+      continue;
+    }
+    em.err.warn(null, `<Shimmer> does not support attribute "${p.name}"`);
+  }
+  const out: string[] = [];
+  out.push(pad + `val ${varName} = rememberShimmer(ShimmerBounds.View, defaultShimmerTheme)`);
+  out.push(pad + `Box(`);
+  out.push(padIn + `modifier = ${classMod ?? shimmerMod},`);
+  out.push(pad + `) {`);
+  for (const child of node.children) {
+    out.push(...emitChild(child, em, level + 1, parentAxis, null, flowParent, boxScope));
+  }
+  out.push(pad + `}`);
   return out;
 }
 
@@ -1144,7 +1209,7 @@ function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: '
   if (layout.verticalArrangement) layoutArgsLines.push(`${padIn}verticalArrangement = ${layout.verticalArrangement},`);
 
   const argLines: string[] = [];
-  const containerParts = classify(classes, em.customClasses, axis);
+  const containerParts = classify(classes, em.customClasses, axis, containsSlot(node));
   const flow = containerParts.flow === true;
   if (parentAxis === null || flow || flowParent) stripScopeMods(containerParts); // Flow layouts have no align/weight scope
   if (!boxScope) containerParts.posMod = [];

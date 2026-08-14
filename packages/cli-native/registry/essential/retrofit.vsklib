@@ -14,10 +14,32 @@
       "android.permission.INTERNET"
     ],
     "exports": [
-      "Retrofit"
+      "Retrofit",
+      "Builder"
     ],
     "tags": {},
-    "signatures": {},
+    "signatures": {
+      "Retrofit": {
+        "name": "Retrofit",
+        "target": "Retrofit",
+        "qualified": "retrofit2.Retrofit",
+        "jsdoc": "Retrofit REST client. Retrofit.Builder().baseUrl(url).build() constructs the client; Retrofit.baseUrl() / callAdapterFactories() read it back.",
+        "isConstructor": false,
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "other"
+      },
+      "Builder": {
+        "name": "Builder",
+        "target": "Retrofit.Builder",
+        "qualified": "retrofit2.Retrofit.Builder",
+        "jsdoc": "Retrofit.Builder() \u2014 builder (public ctor); baseUrl(String), build().",
+        "isConstructor": true,
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "other"
+      }
+    },
     "essential": true,
     "curated": true,
     "libType": "utility"

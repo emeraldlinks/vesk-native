@@ -1,21 +1,33 @@
 import { existsSync, readdirSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 
-const MONOREPO = resolve(import.meta.dirname ?? process.cwd(), '..', '..', '..');
+export const MONOREPO = resolve(import.meta.dirname ?? process.cwd(), '..', '..', '..');
 export const TEMPLATE_DIR = join(MONOREPO, 'runtime', 'vesk-native-template');
 export const SAMPLE_VSK = join(MONOREPO, 'test-app', 'app');
 export const CONFIG_TS = 'veskconfig.ts';
 export const CONFIG_JSON = 'veskconfig.json';
-export const TERMUX_BIN = '/data/data/com.termux/files/usr/bin';
-export const TERMUX_HOME = '/data/data/com.termux/files/home';
+// Termux prefix comes from the environment when present ($PREFIX, $HOME,
+// $TERMUX_VERSION are always exported by real Termux); the /data/data defaults
+// back up the rare case where env vars are missing on a Termux host.
+export const TERMUX_PREFIX = process.env.PREFIX ?? '/data/data/com.termux/files/usr';
+export const TERMUX_BIN = join(TERMUX_PREFIX, 'bin');
+// Termux home is the sibling of $PREFIX's parent dir
+// (/data/data/com.termux/files/usr -> /data/data/com.termux/files/home) — the
+// layout, not $HOME, decides: containers can export a foreign HOME (this
+// repo's dev box has HOME=/root) while still exposing the Termux filesystem.
+export const TERMUX_HOME = process.env.PREFIX
+  ? join(dirname(TERMUX_PREFIX), 'home')
+  : existsSync('/data/data/com.termux/files/usr/bin')
+    ? '/data/data/com.termux/files/home'
+    : process.env.HOME ?? '/data/data/com.termux/files/home';
 
 export const GRADLE_VERSION = '9.7.0';
 export const GRADLE_URL = `https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip`;
 export const CMDLINE_TOOLS_REV = '11076708';
 export const SDK_PACKAGES = ['platform-tools', 'build-tools;34.0.0', 'platforms;android-34', 'platforms;android-36'];
-export const TERMUX_LIB = '/data/data/com.termux/files/usr/lib';
-export const TERMUX_AAPT2 = '/data/data/com.termux/files/usr/bin/aapt2';
+export const TERMUX_LIB = join(TERMUX_PREFIX, 'lib');
+export const TERMUX_AAPT2 = join(TERMUX_BIN, 'aapt2');
 
 export interface HostInfo {
   os: 'linux' | 'darwin' | 'windows';
@@ -24,7 +36,7 @@ export interface HostInfo {
 }
 
 export function hostInfo(): HostInfo {
-  const termux = existsSync('/data/data/com.termux/files/usr/bin');
+  const termux = !!process.env.TERMUX_VERSION || !!process.env.PREFIX || existsSync('/data/data/com.termux/files/usr/bin');
   const os = process.platform === 'win32' ? 'windows' : process.platform === 'darwin' ? 'darwin' : 'linux';
   const arch = process.arch === 'arm64' ? 'aarch64' : process.arch === 'x64' ? 'x86_64' : process.arch;
   return { os, arch, termux };
@@ -64,16 +76,23 @@ export function collectVskFiles(dir: string): string[] {
 export function usage(): void {
   console.log(`vesk-native — compile .vsk to Kotlin + Compose, build & install natively
 
+Run from inside your vesk project (the CLI lives in its node_modules), so
+every command operates on the current directory — no project name is ever
+appended.
+
 Usage:
-  vesk-native init <dir>       Scaffold a native app in <dir> (from veskconfig.ts + .vsk sources)
-  vesk-native build [dir]      Regenerate everything from source + gradle assembleDebug (default: .)
-  vesk-native install [dir]    Regenerate .vsklib from libraries.json, build + install the APK (default: .)
-  vesk-native run [dir]        Build, stage APK, open the on-device installer, launch (default: .)
-  vesk-native setup            Install the toolchain (JDK check, Android SDK, Gradle) for this OS/arch
-  vesk-native add <pkg> [dir]  Add a Kotlin library to libraries.json (id | id@version | group:artifact) — the single committed source of truth
-  vesk-native update [pkg] [dir]  Bump installed library version(s) to the latest builtin registry version
-  vesk-native remove <pkg> [dir]  Uninstall a Kotlin library (gradle dep + permissions drop on next build)
-  vesk-native dev [dir]        (not yet implemented — Phase 7)
+  vesk-native init               Scaffold a native app in the current (empty) directory
+  vesk-native build              Regenerate everything from source + gradle assembleDebug
+  vesk-native bundle [ios|android]  Release packaging: AAB + signed APK (android, default), or the iOS app archive + .ipa (ios, macOS/Xcode 26+). Signing from veskconfig.signing
+  vesk-native install [release]  Regenerate .vsklib from libraries.json, build + install the APK (release: install the pre-built app-release.apk, erroring when missing)
+  vesk-native run                Build, stage APK, open the on-device installer, launch
+  vesk-native verify [pkg]       Check pinned libraries resolve (no arg: libraries; bundle: bundling/signing setup probe)
+  vesk-native verify bundle [android|ios]  Probe signing + bundling setup (keys, env vars, macOS/Xcode) without building
+  vesk-native setup              Install the toolchain (JDK check, Android SDK, Gradle) for this OS/arch
+  vesk-native add <pkg>          Add a Kotlin library to libraries.json (id | id@version | group:artifact) — the single committed source of truth
+  vesk-native update [pkg]       Bump installed library version(s) to the latest builtin registry version
+  vesk-native remove <pkg>       Uninstall a Kotlin library (gradle dep + permissions drop on next build)
+  vesk-native dev                (not yet implemented — Phase 7)
 `);
 }
 

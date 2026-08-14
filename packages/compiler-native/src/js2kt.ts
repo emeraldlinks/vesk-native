@@ -469,6 +469,13 @@ export class Js2Kt {
     switch (node.type) {
       case 'Identifier': {
         const name = node.name as string;
+        // JS builtin type constructors used as values are the type's class
+        // literal (`String` -> `String::class.java`), so libraries like moshi
+        // (`Moshi.adapter(String)`) and reflection-based APIs get the Kotlin
+        // Class value the JS String constructor stands for.
+        if (name === 'String' || name === 'Number' || name === 'Boolean') {
+          return `${name}::class.java`;
+        }
         if (this.paramAliases && this.paramAliases.has(name)) {
           return this.id(this.paramAliases.get(name)!);
         }
@@ -1733,7 +1740,7 @@ export class Js2Kt {
     }
     const elems = ((arg as { elements?: (JsNode | null)[] }).elements ?? []).filter((e): e is JsNode => e !== null);
     if (elems.length === 0) {
-      const elemType =
+      const rawType =
         elem.shape === 'object' || elem.shape === 'enum'
           ? (elem.typeName ?? 'Any?')
           : elem.shape === 'number'
@@ -1742,7 +1749,12 @@ export class Js2Kt {
               ? 'String'
               : elem.shape === 'boolean'
                 ? 'Boolean'
-                : 'Any?';
+                : (elem.typeName ?? 'Any?');
+      const elemType = rawType.startsWith('kotlin.')
+        ? rawType.slice('kotlin.'.length)
+        : rawType.includes('.')
+          ? (this.libImports.add(`import ${rawType}`), rawType.split('.').pop() ?? 'Any?')
+          : rawType;
       return `emptyList<${elemType}>()`;
     }
     return `listOf(${elems.map((e) => this.libArg(elem, e)).join(', ')})`;

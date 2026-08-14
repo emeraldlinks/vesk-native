@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.Arrangement
@@ -25,7 +26,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -95,7 +95,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				Button(
-					onClick = { filter.value = "All" },
+					onClick = jsSafe({ filter.value = "All" }),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
@@ -114,7 +114,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				}
 				}
 				Button(
-					onClick = { filter.value = "Parkas" },
+					onClick = jsSafe({ filter.value = "Parkas" }),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
@@ -133,7 +133,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				}
 				}
 				Button(
-					onClick = { filter.value = "Hoodies" },
+					onClick = jsSafe({ filter.value = "Hoodies" }),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
@@ -152,7 +152,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				}
 				}
 				Button(
-					onClick = { filter.value = "Shells" },
+					onClick = jsSafe({ filter.value = "Shells" }),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
@@ -171,7 +171,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				}
 				}
 				Button(
-					onClick = { filter.value = "Base layers" },
+					onClick = jsSafe({ filter.value = "Base layers" }),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
@@ -190,7 +190,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				}
 				}
 				Button(
-					onClick = { filter.value = "Accessories" },
+					onClick = jsSafe({ filter.value = "Accessories" }),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {

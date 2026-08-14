@@ -15,7 +15,7 @@ import { compileProjectModule } from '@compiler-native/kotlin-codegen';
 import { KtErrors } from '@compiler-native/js2kt';
 import type { JsNode } from '@compiler-native/js2kt';
 import type { VeskConfig } from 'vesk-native';
-import { AAPT2_OVERRIDE, DEFAULT_SDK, TEMPLATE_DIR, collectVskFiles, colorLiteral, log, slugify } from '@cli-native/constants';
+import { AAPT2_OVERRIDE, DEFAULT_SDK, MONOREPO, TEMPLATE_DIR, collectVskFiles, colorLiteral, log, slugify } from '@cli-native/constants';
 import { API_PERMISSIONS, MAX_SDK_PERMS, collectBrowserApiUsage, collectDeviceApiUsage, collectRuntimeUsage } from '@cli-native/usage';
 import { BIOMETRIC_AUTH_BODY, BIOMETRIC_CHECK_BODY, QRGEN_BODY, QR_OVERLAY_BLOCK, RUNTIME_CORE, RUNTIME_HELPERS, RUNTIME_ORDER, runtimeImports } from '@cli-native/runtime-templates';
 import { installedLibraries } from '@cli-native/vsklib';
@@ -55,6 +55,19 @@ include(":app")
 // referenced by the generated pages; hasMedia covers media elements.
 // libs are the installed .vsklib libraries — registered verbatim (their
 // permissions are wired into the manifest by generateManifest).
+// A signing password may be given inline or as `env:NAME` to read the value
+// from the environment at build time (secrets never land in generated files).
+// The env lookup is lenient (empty string) so plain debug builds configure
+// fine without release secrets; the CLI validates env: values up front in the
+// bundle flow, where missing secrets fail with a clear message before gradle.
+function signingValue(value: string): string {
+  if (value.startsWith('env:')) {
+    const name = value.slice(4);
+    return `System.getenv("${name}") ?: ""`;
+  }
+  return `"${value.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}"`;
+}
+
 export function generateAppBuildGradleKts(target: string, config: VeskConfig, deviceApis: Set<string>, hasMedia: boolean, used: Set<string>, libs: VskLibRecord[]): void {
   const deps = [
     'implementation(platform("androidx.compose:compose-bom:2026.06.01"))',
@@ -90,6 +103,32 @@ export function generateAppBuildGradleKts(target: string, config: VeskConfig, de
   for (const lib of libs) {
     for (const coord of lib.gradle) deps.push(`implementation("${coord}")`);
   }
+  // Release signing is driven by veskconfig.signing.android (upload key for
+  // Play App Signing). Passwords may reference environment variables with
+  // `env:NAME` so secrets never land in generated files. When the config is
+  // absent or incomplete, release artifacts fall back to the debug keystore
+  // (dev flow).
+  const androidSigning = config.signing?.android;
+  const signingReady = Boolean(
+    androidSigning?.storeFile && (androidSigning.storePassword ?? '') !== '' && (androidSigning.keyAlias ?? '') !== '' && (androidSigning.keyPassword ?? '') !== '',
+  );
+  const signingBlock = signingReady
+    ? `signingConfigs {
+        create("release") {
+            storeFile = file("${resolve(target, androidSigning!.storeFile!).replaceAll('\\', '/')}")
+            storePassword = ${signingValue(androidSigning!.storePassword!)}
+            keyAlias = "${androidSigning!.keyAlias}"
+            keyPassword = ${signingValue(androidSigning!.keyPassword!)}
+        }
+    }
+`
+    : '';
+  const releaseSigning = signingReady
+    ? `            // Upload-key signing from veskconfig.signing.android (Play App
+            // Signing upload key).
+            signingConfig = signingConfigs.getByName("release")`
+    : `            // No veskconfig.signing.android — release artifacts sign with the
+            // debug keystore (dev flow; never upload these to a store).`;
   writeFileSync(
     join(target, 'app', 'build.gradle.kts'),
     `plugins {
@@ -112,9 +151,10 @@ android {
         versionName = "${config.versionName}"
     }
 
-    buildTypes {
+${signingBlock}    buildTypes {
         release {
             isMinifyEnabled = false
+${releaseSigning}
         }
     }
 
@@ -358,7 +398,7 @@ import androidx.activity.result.contract.ActivityResultContracts
         if (Thread.getDefaultUncaughtExceptionHandler() !is DebugCrashLog) {
             Thread.setDefaultUncaughtExceptionHandler(DebugCrashLog(Thread.getDefaultUncaughtExceptionHandler()))
         }
-${e2eCall}        if (intent.getBooleanExtra("vesk_notify_tap", false)) VeskDeviceSession.notifyTap?.invoke()
+${e2eCall}        if (intent.getBooleanExtra("vesk_notify_tap", false)) jsSafe({ VeskDeviceSession.notifyTap?.invoke() })
         if (Build.VERSION.SDK_INT >= 33) {
             mediaPermLauncher.launch(arrayOf(
                 ${[
@@ -381,7 +421,7 @@ ${e2eCall}        if (intent.getBooleanExtra("vesk_notify_tap", false)) VeskDevi
         if (Thread.getDefaultUncaughtExceptionHandler() !is DebugCrashLog) {
             Thread.setDefaultUncaughtExceptionHandler(DebugCrashLog(Thread.getDefaultUncaughtExceptionHandler()))
         }
-${e2eCall}        if (intent.getBooleanExtra("vesk_notify_tap", false)) VeskDeviceSession.notifyTap?.invoke()
+${e2eCall}        if (intent.getBooleanExtra("vesk_notify_tap", false)) jsSafe({ VeskDeviceSession.notifyTap?.invoke() })
         setContent {`;
   writeFileSync(
     join(outDir, 'DebugCrashLog.kt'),
@@ -427,6 +467,7 @@ import androidx.fragment.app.FragmentActivity
 import app.App
 import app.VeskDeviceSession
 import app.VeskTheme
+import app.jsSafe
 
 class MainActivity : FragmentActivity() {${permLaunch}
             VeskTheme {
@@ -439,7 +480,7 @@ class MainActivity : FragmentActivity() {${permLaunch}
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        if (intent.getBooleanExtra("vesk_notify_tap", false)) VeskDeviceSession.notifyTap?.invoke()
+        if (intent.getBooleanExtra("vesk_notify_tap", false)) jsSafe({ VeskDeviceSession.notifyTap?.invoke() })
     }
 }
 `,
@@ -598,7 +639,10 @@ export function generateRuntimeKt(appDir: string, config: VeskConfig): Set<strin
 export function generateRouterKt(appDir: string): void {
   const outDir = join(appDir, 'src', 'main', 'kotlin', 'app');
   mkdirSync(outDir, { recursive: true });
-  const src = join(process.cwd(), 'packages', 'navigation-native', 'src', 'Router.kt');
+  // Resolved from the CLI's own package location (not cwd) so it works from
+  // inside the user's project, where `packages/navigation-native` does not
+  // exist relative to the working directory.
+  const src = join(MONOREPO, 'packages', 'navigation-native', 'src', 'Router.kt');
   if (existsSync(src)) {
     const navDir = join(outDir, 'navigation');
     mkdirSync(navDir, { recursive: true });

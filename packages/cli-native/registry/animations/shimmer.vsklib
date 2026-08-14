@@ -101,7 +101,21 @@
         "returnShape": "object"
       }
     },
-    "tags": {},
+    "tags": {
+      "Shimmer": {
+        "composable": "Shimmer",
+        "imports": [
+          "androidx.compose.foundation.layout.Box",
+          "com.valentinilk.shimmer.defaultShimmerTheme",
+          "com.valentinilk.shimmer.ShimmerBounds",
+          "com.valentinilk.shimmer.rememberShimmer",
+          "com.valentinilk.shimmer.shimmer"
+        ],
+        "shimmer": true,
+        "attrs": {},
+        "container": true
+      }
+    },
     "curated": true,
     "essential": false,
     "libType": "utility"

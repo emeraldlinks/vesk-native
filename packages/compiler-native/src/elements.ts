@@ -31,6 +31,9 @@ export interface VskLibTag {
   attrShapes?: Record<string, LibParamSig>;
   /** Children render into a trailing content lambda (default false). */
   container?: boolean;
+  /** The tag is a modifier wrapper (e.g. <Shimmer>): children render inside a
+   *  Box whose modifier applies the library's effect. */
+  shimmer?: boolean;
   /** Fully-qualified `@RequiresOptIn` markers the composable is annotated
    *  with; generated files that use this tag get a `@file:OptIn(...)` line. */
   optIn?: string[];

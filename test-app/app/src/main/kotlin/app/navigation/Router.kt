@@ -34,23 +34,41 @@ data class BackBehavior(
 class NavController {
     private val _history = mutableStateOf(listOf<String>("/"))
     private val _currentRoute = mutableStateOf("/")
+    // Scroll state per route currently reachable on the stack. A page's offset
+    // lives in its own ScrollState instance, so back-navigation restores it
+    // while forward navigation to a never-visited route starts at the top.
+    private val _scrollStates = mutableMapOf<String, androidx.compose.foundation.ScrollState>()
     val history: List<String> get() = _history.value
     val currentRoute: androidx.compose.runtime.State<String> = _currentRoute
 
+    // Scroll state for a route: created fresh on first visit, retained (with
+    // its offset) while the route stays on the stack, pruned when the route
+    // is popped or truncated away.
+    fun scrollStateFor(route: String, initial: Int = 0): androidx.compose.foundation.ScrollState =
+        _scrollStates.getOrPut(route) { androidx.compose.foundation.ScrollState(initial) }
+
+    private fun pruneRoutes(removed: List<String>) {
+        for (r in removed) _scrollStates.remove(r)
+    }
+
     // Reset the navigation stack to a single route (startup, deep links).
     fun start(path: String) {
+        _scrollStates.clear()
         _history.value = listOf(path)
         _currentRoute.value = path
     }
 
     // Navigate like a browser: routes already on the stack pop back to them
     // instead of pushing duplicates, tapping the current route is a no-op.
+    // The routes popped away lose their scroll state; the revisited route
+    // restores the offset it had when it was left.
     fun navigate(path: String) {
         if (path == _currentRoute.value) return
         val stack = _history.value.toMutableList()
         val idx = stack.indexOf(path)
         if (idx >= 0) {
             while (stack.size > idx + 1) stack.removeAt(stack.size - 1)
+            pruneRoutes(stack.drop(idx + 1))
             _history.value = stack
             _currentRoute.value = path
         } else {
@@ -62,10 +80,13 @@ class NavController {
     fun canPop(): Boolean = _history.value.size > 1
 
     // Pop back to the previous route; returns false when already at the root.
+    // The popped route's scroll state is discarded; the restored route keeps
+    // the offset it had when it was navigated away from.
     fun pop(): Boolean {
         if (!canPop()) return false
         val stack = _history.value.toMutableList()
-        stack.removeAt(stack.size - 1)
+        val popped = stack.removeAt(stack.size - 1)
+        pruneRoutes(listOf(popped))
         _history.value = stack
         _currentRoute.value = stack.last()
         return true

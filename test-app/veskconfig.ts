@@ -58,4 +58,24 @@ export default defineConfig({
     navigationBarStyle: 'light',
   },
   device: 'phone',
+  signing: {
+    android: {
+      storeFile: 'upload-keystore.jks',
+      storePassword: 'env:VESK_STORE_PASSWORD',
+      keyAlias: 'upload',
+      keyPassword: 'env:VESK_KEY_PASSWORD',
+    },
+    ios: {
+      teamId: 'ABCDE12345',
+      style: 'automatic',
+    },
+  },
+  bundle: {
+    android: ['aab', 'apk'],
+    ios: {
+      method: 'app-store-connect',
+      destination: 'export',
+      scheme: 'VeskApp',
+    },
+  },
 })

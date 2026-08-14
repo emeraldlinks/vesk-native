@@ -86,6 +86,9 @@ get real compiler/JVM mappings, never workarounds in the demo app.
 - Build commands: `npx tsx packages/cli-native/src/index.ts build test-app`
   (slow, ~5 min), direct Kotlin diagnostics via
   `/opt/vesk-native-toolchain/gradle-9.7.0/bin/gradle -p test-app/app compileDebugKotlin --rerun-tasks`.
+  The CLI is cwd-based (it runs from a project's node_modules): from inside
+  `test-app/` the equivalent is `npx tsx ../packages/cli-native/src/index.ts build`,
+  and `bundle [android|ios]` takes the platform as its only positional.
 - `npx tsc --noEmit -p tsconfig.json` after any compiler change.
 - **Tracked state is vesk cells, not React state.** Verification source:
   `/root/vesk/packages/runtime/src/track.ts` (web runtime), the `&[...]`

@@ -86,14 +86,22 @@ component Labs() {
                 <input ref={bindValue(authPass)} placeholder="password" />
                 <div class="flex gap-2 flex-wrap mt-1">
                     <button class="bg-emerald-600 text-white text-sm font-semibold px-4 py-2 rounded-full" onClick={() => {
-                        const u = signUp(authUser, authPass)
-                        session = u ? String(u.username) : ''
-                        authOut = u ? 'Created "' + u.username + '" and signed in' : 'Sign up failed (taken or invalid)'
+                        try {
+                            const u = signUp(authUser, authPass)
+                            session = u ? String(u.username) : ''
+                            authOut = u ? 'Created "' + u.username + '" and signed in' : 'Sign up failed (taken or invalid)'
+                        } catch (e) {
+                            authOut = 'Sign up error: ' + (e as Error).message
+                        }
                     }}>Sign up</button>
                     <button class="bg-gray-900 text-white text-sm font-semibold px-4 py-2 rounded-full" onClick={() => {
-                        const u = signIn(authUser, authPass)
-                        session = u ? String(u.username) : ''
-                        authOut = u ? 'Signed in as ' + u.username : 'Invalid credentials'
+                        try {
+                            const u = signIn(authUser, authPass)
+                            session = u ? String(u.username) : ''
+                            authOut = u ? 'Signed in as ' + u.username : 'Invalid credentials'
+                        } catch (e) {
+                            authOut = 'Sign in error: ' + (e as Error).message
+                        }
                     }}>Sign in</button>
                     <button class="bg-gray-100 text-gray-700 text-sm font-medium px-4 py-2 rounded-full" onClick={() => {
                         signOut()
@@ -119,10 +127,20 @@ component Labs() {
                 <input ref={bindValue(fetchUrl)} placeholder="https://..." />
                 <div class="flex gap-2 flex-wrap mt-1">
                     <button class="bg-sky-600 text-white text-sm font-semibold px-4 py-2 rounded-full" onClick={() => {
-                        const res = fetch(fetchUrl)
-                        fetchOut = 'HTTP ' + res.status + (res.ok ? ' OK' : ' failed')
-                        const data = res.ok ? res.json() : null
-                        fetchBody = data ? String(data.title) : '(no title)'
+                        try {
+                            const res = fetch(fetchUrl)
+                            if (res.status === 0) {
+                                fetchOut = 'Network error: ' + res.statusText
+                                fetchBody = '(no response)'
+                            } else {
+                                fetchOut = 'HTTP ' + res.status + (res.ok ? ' OK' : ' failed')
+                                const data = res.ok ? res.json() : null
+                                fetchBody = data ? String(data.title) : '(no title)'
+                            }
+                        } catch (e) {
+                            fetchOut = 'Fetch error: ' + (e as Error).message
+                            fetchBody = ''
+                        }
                     }}>Fetch</button>
                 </div>
                 <p class="labs-note">{fetchOut}</p>
@@ -138,21 +156,33 @@ component Labs() {
                 <input ref={bindValue(sqlItem)} placeholder="item name" />
                 <div class="flex gap-2 flex-wrap mt-1">
                     <button class="bg-amber-600 text-white text-sm font-semibold px-4 py-2 rounded-full" onClick={() => {
-                        const db = openSqlite('labs')
-                        db.exec('CREATE TABLE IF NOT EXISTS items (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, qty INTEGER NOT NULL)')
-                        db.run('INSERT INTO items (name, qty) VALUES (?, ?)', [sqlItem, 1])
-                        const rows = db.all('SELECT id, name, qty FROM items ORDER BY id')
-                        sqlOut = 'rows: ' + rows.length + ' → ' + rows.map((row) => '#' + row['id'] + ' ' + row['name'] + ' x' + row['qty']).toString()
+                        try {
+                            const db = openSqlite('labs')
+                            db.exec('CREATE TABLE IF NOT EXISTS items (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, qty INTEGER NOT NULL)')
+                            db.run('INSERT INTO items (name, qty) VALUES (?, ?)', [sqlItem, 1])
+                            const rows = db.all('SELECT id, name, qty FROM items ORDER BY id')
+                            sqlOut = 'rows: ' + rows.length + ' → ' + rows.map((row) => '#' + row['id'] + ' ' + row['name'] + ' x' + row['qty']).toString()
+                        } catch (e) {
+                            sqlOut = 'Error: ' + (e as Error).message
+                        }
                     }}>Insert &amp; list</button>
                     <button class="bg-gray-900 text-white text-sm font-semibold px-4 py-2 rounded-full" onClick={() => {
-                        const db = openSqlite('labs')
-                        const rows = db.all('SELECT id, name, qty FROM items ORDER BY id')
-                        sqlOut = 'rows: ' + rows.length + ' → ' + rows.map((row) => '#' + row['id'] + ' ' + row['name'] + ' x' + row['qty']).toString()
+                        try {
+                            const db = openSqlite('labs')
+                            const rows = db.all('SELECT id, name, qty FROM items ORDER BY id')
+                            sqlOut = 'rows: ' + rows.length + ' → ' + rows.map((row) => '#' + row['id'] + ' ' + row['name'] + ' x' + row['qty']).toString()
+                        } catch (e) {
+                            sqlOut = 'Error: ' + (e as Error).message
+                        }
                     }}>List rows</button>
                     <button class="bg-gray-100 text-gray-700 text-sm font-medium px-4 py-2 rounded-full" onClick={() => {
-                        const db = openSqlite('labs')
-                        db.exec('DROP TABLE IF EXISTS items')
-                        sqlOut = 'Table dropped'
+                        try {
+                            const db = openSqlite('labs')
+                            db.exec('DROP TABLE IF EXISTS items')
+                            sqlOut = 'Table dropped'
+                        } catch (e) {
+                            sqlOut = 'Error: ' + (e as Error).message
+                        }
                     }}>Drop table</button>
                 </div>
                 <p class="labs-note">{sqlOut}</p>

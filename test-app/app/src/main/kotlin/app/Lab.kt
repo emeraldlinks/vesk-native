@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.Arrangement
@@ -25,7 +26,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -169,7 +169,7 @@ fun Lab(content: @Composable () -> Unit = {}) {
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				Button(
-					onClick = { count.value = count.value + 1 },
+					onClick = jsSafe({ count.value = count.value + 1 }),
 					modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(Color(0xFF3B82F6)),
 					shape = RoundedCornerShape(8.dp),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -183,7 +183,7 @@ fun Lab(content: @Composable () -> Unit = {}) {
 				)
 				}
 				Button(
-					onClick = { count.value = 0 },
+					onClick = jsSafe({ count.value = 0 }),
 					modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.11f)),
 					shape = RoundedCornerShape(8.dp),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -222,8 +222,8 @@ fun Lab(content: @Composable () -> Unit = {}) {
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				Button(
-					onClick = { run __veskret0@ { if (truthy(timerId.value == 0)) {
-	timerId.value = VeskTimers.setInterval( { tick.value = tick.value + 1 }, 1000); } } },
+					onClick = jsSafe({ run __veskret0@ { if (truthy(timerId.value == 0)) {
+	timerId.value = VeskTimers.setInterval( { tick.value = tick.value + 1 }, 1000); } } }),
 					modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(Color(0xFF06B6D4)),
 					shape = RoundedCornerShape(8.dp),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -237,7 +237,7 @@ fun Lab(content: @Composable () -> Unit = {}) {
 				)
 				}
 				Button(
-					onClick = { VeskTimers.clearTimeout(timerId.value) },
+					onClick = jsSafe({ VeskTimers.clearTimeout(timerId.value) }),
 					modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.11f)),
 					shape = RoundedCornerShape(8.dp),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -251,7 +251,7 @@ fun Lab(content: @Composable () -> Unit = {}) {
 				)
 				}
 				Button(
-					onClick = { VeskTimers.setTimeout( { tick.value = tick.value + 1 }, 500) },
+					onClick = jsSafe({ VeskTimers.setTimeout( { tick.value = tick.value + 1 }, 500) }),
 					modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.11f)),
 					shape = RoundedCornerShape(8.dp),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -280,7 +280,7 @@ fun Lab(content: @Composable () -> Unit = {}) {
 				style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant),
 			)
 			Button(
-				onClick = { jsAlert("Hello from vesk-native — count is " + count.value) },
+				onClick = jsSafe({ jsAlert("Hello from vesk-native — count is " + count.value) }),
 				modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(Color(0xFFEF4444)),
 				shape = RoundedCornerShape(8.dp),
 				colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -880,7 +880,7 @@ fun ErrorBoundaryCard(content: @Composable () -> Unit = {}) {
 		horizontalArrangement = Arrangement.spacedBy(8.dp),
 	) {
 		Button(
-			onClick = { boomCount.value = boomCount.value + 1 },
+			onClick = jsSafe({ boomCount.value = boomCount.value + 1 }),
 			modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(Color(0xFFEF4444)),
 			shape = RoundedCornerShape(8.dp),
 			colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -894,7 +894,7 @@ fun ErrorBoundaryCard(content: @Composable () -> Unit = {}) {
 		)
 		}
 		Button(
-			onClick = { boomCount.value = 0 },
+			onClick = jsSafe({ boomCount.value = 0 }),
 			modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.11f)),
 			shape = RoundedCornerShape(8.dp),
 			colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),

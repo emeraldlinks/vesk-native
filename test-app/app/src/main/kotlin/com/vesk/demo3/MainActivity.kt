@@ -13,6 +13,7 @@ import androidx.fragment.app.FragmentActivity
 import app.App
 import app.VeskDeviceSession
 import app.VeskTheme
+import app.jsSafe
 
 class MainActivity : FragmentActivity() {
     private val mediaPermLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { }
@@ -26,7 +27,7 @@ class MainActivity : FragmentActivity() {
             statusBarStyle = SystemBarStyle.light(android.graphics.Color.parseColor("#FFFFFF"), android.graphics.Color.parseColor("#0F172A")),
             navigationBarStyle = SystemBarStyle.light(android.graphics.Color.parseColor("#FFFFFF"), android.graphics.Color.parseColor("#0F172A")),
         )
-        if (intent.getBooleanExtra("vesk_notify_tap", false)) VeskDeviceSession.notifyTap?.invoke()
+        if (intent.getBooleanExtra("vesk_notify_tap", false)) jsSafe({ VeskDeviceSession.notifyTap?.invoke() })
         if (Build.VERSION.SDK_INT >= 33) {
             mediaPermLauncher.launch(arrayOf(
                                 android.Manifest.permission.READ_MEDIA_IMAGES,
@@ -48,6 +49,6 @@ class MainActivity : FragmentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        if (intent.getBooleanExtra("vesk_notify_tap", false)) VeskDeviceSession.notifyTap?.invoke()
+        if (intent.getBooleanExtra("vesk_notify_tap", false)) jsSafe({ VeskDeviceSession.notifyTap?.invoke() })
     }
 }

@@ -82,6 +82,7 @@ const HELPER_FN_NAMES: Record<string, string> = {
   sessionKey: 'VeskWebStorage',
   sessionLength: 'VeskWebStorage',
   openDatabase: 'VeskSqlite',
+  jsSafe: 'jsSafe',
   signUp: 'VeskAuth',
   signIn: 'VeskAuth',
   signOut: 'VeskAuth',

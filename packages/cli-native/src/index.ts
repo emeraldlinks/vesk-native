@@ -1,65 +1,66 @@
 import { realpathSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { addLibrary, buildApp, initApp, installApp, parseLibraryArgs, removeLibrary, runApp, setupToolchain, updateLibraries, verifyApp } from '@cli-native/commands';
+import { addLibrary, buildApp, bundleApp, initApp, installApp, removeLibrary, runApp, setupToolchain, updateLibraries, verifyApp, verifyBundle } from '@cli-native/commands';
 import { TOOLCHAIN_ROOT, usage } from '@cli-native/constants';
 
 // Programmatic surface for tooling, scripts, and tests (the CLI entry point
 // is main() below; importing this module never runs the CLI).
 export { loadConfig, writeDefaultConfig } from '@cli-native/config';
 export { generateAppKt, generateAppBuildGradleKts, generateMainActivity, generateManifest, generateProject, generateRouterKt, generateRuntimeKt, generateSettingsGradleKts, generateThemeKt, generateThemes, syncAapt2Override } from '@cli-native/generators';
-export { addLibrary, installApp, removeLibrary, updateLibraries, verifyApp } from '@cli-native/commands';
+export { addLibrary, installApp, removeLibrary, updateLibraries, verifyApp, verifyBundle } from '@cli-native/commands';
 export { collectBrowserApiUsage, collectDeviceApiUsage, collectRuntimeUsage } from '@cli-native/usage';
 export { API_PERMISSIONS } from '@cli-native/usage';
 export { RUNTIME_ORDER } from '@cli-native/runtime-templates';
 export { LIBRARY_REGISTRY, installedLibraries, loadLibraries, parseLibrarySpec, resolveLibrary, saveLibraries, verifyLibraries, verifyLibrary, writeVsklibCache } from '@cli-native/vsklib';
 
 async function main(): Promise<void> {
+  // The CLI runs from inside the user's project (installed in its node_modules),
+  // so every command operates on the current working directory — there is no
+  // project-name positional (vesk build / vesk bundle ios, not vesk build myapp).
+  const cwd = process.cwd();
   const [cmd] = process.argv.slice(2);
   switch (cmd) {
     case 'init':
-      if (!process.argv[3]) {
-        usage();
-        process.exit(1);
-      }
-      await initApp(process.argv[3]!);
+      await initApp(cwd);
       break;
     case 'build':
-      await buildApp(process.argv[3] ? resolve(process.argv[3]) : process.cwd());
+      await buildApp(cwd);
       break;
     case 'run':
-      await runApp(process.argv[3] ? resolve(process.argv[3]) : process.cwd());
+      await runApp(cwd, process.argv[3] === 'release' ? 'release' : 'debug');
+      break;
+    case 'bundle':
+      await bundleApp(cwd, (process.argv[3] as 'android' | 'ios') ?? 'android');
       break;
     case 'install':
-      await installApp(process.argv[3] ? resolve(process.argv[3]) : process.cwd());
+      await installApp(cwd, process.argv[3] === 'release' ? 'release' : 'debug');
       break;
     case 'verify':
-      await verifyApp(process.argv[3] ? resolve(process.argv[3]) : process.cwd());
+      if (process.argv[3] === 'bundle') await verifyBundle(cwd, process.argv[4]);
+      else await verifyApp(cwd);
       break;
     case 'setup':
       setupToolchain(TOOLCHAIN_ROOT);
       break;
     case 'add': {
-      const { spec, dir } = parseLibraryArgs(process.argv.slice(3));
+      const spec = process.argv[3];
       if (!spec) {
         usage();
         process.exit(1);
       }
-      await addLibrary(dir, spec);
+      await addLibrary(cwd, spec);
       break;
     }
-    case 'update': {
-      const { spec, dir } = parseLibraryArgs(process.argv.slice(3));
-      await updateLibraries(dir, spec);
+    case 'update':
+      await updateLibraries(cwd, process.argv[3]);
       break;
-    }
     case 'remove': {
-      const { spec, dir } = parseLibraryArgs(process.argv.slice(3));
+      const spec = process.argv[3];
       if (!spec) {
         usage();
         process.exit(1);
       }
-      await removeLibrary(dir, spec);
+      await removeLibrary(cwd, spec);
       break;
     }
     case 'dev':

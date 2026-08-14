@@ -12,10 +12,33 @@
     ],
     "permissions": [],
     "exports": [
-      "Timber"
+      "Timber",
+      "DebugTree"
     ],
     "tags": {},
     "curated": true,
-    "libType": "utility"
+    "libType": "utility",
+    "signatures": {
+      "Timber": {
+        "name": "Timber",
+        "target": "Timber",
+        "qualified": "timber.log.Timber",
+        "jsdoc": "Timber logging. Static surface: Timber.plant(Timber.DebugTree()), Timber.tag('x'), Timber.d/i/w/e('msg', ...), Timber.treeCount(). Writes to Android logcat.",
+        "isConstructor": false,
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "other"
+      },
+      "DebugTree": {
+        "name": "DebugTree",
+        "target": "Timber.DebugTree",
+        "qualified": "timber.log.Timber.DebugTree",
+        "jsdoc": "Timber.DebugTree() \u2014 the debug tree to plant for logcat output.",
+        "isConstructor": true,
+        "params": [],
+        "defaultParams": [],
+        "returnShape": "other"
+      }
+    }
   }
 }

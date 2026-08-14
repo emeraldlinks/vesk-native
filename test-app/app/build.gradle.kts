@@ -18,9 +18,20 @@ android {
         versionName = "0.4.0"
     }
 
+signingConfigs {
+        create("release") {
+            storeFile = file("/root/vesk-native/test-app/upload-keystore.jks")
+            storePassword = System.getenv("VESK_STORE_PASSWORD") ?: ""
+            keyAlias = "upload"
+            keyPassword = System.getenv("VESK_KEY_PASSWORD") ?: ""
+        }
+    }
     buildTypes {
         release {
             isMinifyEnabled = false
+            // Upload-key signing from veskconfig.signing.android (Play App
+            // Signing upload key).
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 
