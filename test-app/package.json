@@ -1,8 +1,9 @@
 {
   "name": "test-app",
   "private": true,
+  "type": "module",
   "scripts": {
-    "demo": "npx tsx ../packages/cli-native/src/index.ts install",
-    "release": "npx tsx ../packages/cli-native/src/index.ts install release"
+    "demo": "bash scripts/demo.sh",
+    "release": "bash scripts/release.sh"
   }
 }

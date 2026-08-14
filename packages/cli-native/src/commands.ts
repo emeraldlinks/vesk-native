@@ -2,7 +2,7 @@ import { chmodSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, re
 import { isAbsolute, join, resolve, relative, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
-import { AAPT2_OVERRIDE, CONFIG_JSON, CONFIG_TS, DEFAULT_GRADLE, GRADLE_VERSION, SAMPLE_VSK, DEFAULT_SDK, GRADLE_URL, SDK_PACKAGES, TEMPLATE_DIR, TERMUX_AAPT2, TERMUX_BIN, TERMUX_HOME, TERMUX_LIB, cmdlineToolsUrl, collectVskFiles, hostInfo, log } from '@cli-native/constants';
+import { AAPT2_OVERRIDE, CONFIG_JSON, CONFIG_TS, DEFAULT_GRADLE, GRADLE_VERSION, SAMPLE_VSK, DEFAULT_SDK, GRADLE_URL, SDK_PACKAGES, TEMPLATE_DIR, TERMUX_AAPT2, TERMUX_LIB, cmdlineToolsUrl, collectVskFiles, hostInfo, log } from '@cli-native/constants';
 import { loadConfig, writeDefaultConfig } from '@cli-native/config';
 import { generateProject, generateVskLibDeclarations } from '@cli-native/generators';
 import { generateIosProject, iosBuildDir, iosExportOptions, requireIosSigning } from '@cli-native/ios';
@@ -40,7 +40,7 @@ export async function initApp(dir: string): Promise<void> {
   log('init', `sample .vsk files copied (${collectVskFiles(SAMPLE_VSK).length})`);
 
   generateProject(target, config);
-  console.log(`\n  done. next: vesk-native build && vesk-native run`);
+  console.log(`\n  done. next: vesk-native build`);
 }
 
 function findJava(): string {
@@ -558,19 +558,6 @@ async function bundleIos(target: string, config: VeskConfig): Promise<void> {
   }
 }
 
-function stageApk(apk: string, name: string): string | null {
-  // Staging hands the APK to the Android system installer via Termux's
-  // TermuxOpenReceiver provider — meaningful only on a Termux host.
-  if (!hostInfo().termux || !existsSync(TERMUX_HOME)) {
-    log('run', 'not a Termux host — skipping APK stage');
-    return null;
-  }
-  const dest = join(TERMUX_HOME, name);
-  writeFileSync(dest, readFileSync(apk));
-  log('run', `APK staged at ${dest}`);
-  return dest;
-}
-
 function isAppDir(dir: string): boolean {
   return existsSync(join(dir, CONFIG_TS)) || existsSync(join(dir, CONFIG_JSON));
 }
@@ -864,15 +851,6 @@ export async function removeLibrary(dir: string, spec: string): Promise<void> {
   log('remove', `${parsed.id} removed — the next build drops its gradle dep${rec.permissions.length > 0 ? ' + permissions' : ''}`);
 }
 
-// `vesk install` = build + install the APK on the device. Resolution needs
-// no pre-build step: the compiler reads the committed manifest directly and
-// gradle fetches the pinned artifacts at build time.
-export async function installApp(dir: string, variant: 'debug' | 'release' = 'debug'): Promise<void> {
-  const target = resolve(dir);
-  requireApp(target);
-  await runApp(target, variant);
-}
-
 // `vesk verify` — read-only check that every pinned coordinate in the
 // manifest resolves on its real repository (Google Maven for androidx,
 // Maven Central otherwise). Exits non-zero when any pin is bad, so it can
@@ -899,57 +877,5 @@ export async function verifyApp(dir: string): Promise<void> {
     process.exit(1);
   }
   log('verify', `all ${results.length} pinned libraries resolve`);
-}
-
-export async function runApp(dir: string, variant: 'debug' | 'release' = 'debug'): Promise<void> {
-  const target = resolve(dir);
-  const config = await loadConfig(target);
-  const apk = variant === 'release'
-    ? join(target, 'app', 'build', 'outputs', 'apk', 'release', 'app-release.apk')
-    : join(target, 'app', 'build', 'outputs', 'apk', 'debug', 'app-debug.apk');
-  if (!existsSync(apk)) {
-    if (variant === 'release') {
-      // `run/install release` never builds — it installs the artifact the
-      // release pipeline produced. Fail loudly instead of silently switching
-      // to a debug build (or signing release with the wrong keystore).
-      console.error('  [run] release APK not found at ' + apk);
-      console.error('  [run] build it first with: vesk bundle (or: vesk-native bundle)');
-      process.exit(1);
-    }
-    log('run', 'apk missing — building first');
-    buildApp(target);
-  }
-  if (!existsSync(apk)) {
-    console.error('  [run] build did not produce an apk');
-    process.exit(1);
-  }
-
-  const staged = stageApk(apk, variant === 'release' ? 'app-release.apk' : 'app-debug.apk');
-
-  console.log(`\n  [run] launching the system package installer...`);
-  const am = join(TERMUX_BIN, 'am');
-  if (existsSync(am)) {
-    if (staged) {
-      // The system installer cannot read Termux's private storage directly, so we
-      // hand it a content:// URI served by Termux's TermuxOpenReceiver provider
-      // (authority com.termux.files) and grant read permission on the intent.
-      const apkUri = `content://com.termux.files${staged}`;
-      spawnSync(am, [
-        'start', '--user', '0',
-        '-a', 'android.intent.action.VIEW',
-        '-d', apkUri,
-        '-t', 'application/vnd.android.package-archive',
-        '--grant-read-uri-permission',
-      ], { stdio: 'inherit' });
-    } else {
-      log('run', 'termux am not usable — copy the APK to shared storage first');
-    }
-  } else {
-    console.log(`  [run] termux am missing — open the APK from shared storage manually`);
-  }
-
-  console.log(`\n  [run] after installing, launch the app with:`);
-  console.log(`        ${TERMUX_BIN}/am start --user 0 -n ${config.appId}/.MainActivity`);
-  console.log(`  or re-run this CLI with: vesk-native run ${target}`);
 }
 

@@ -84,8 +84,6 @@ Usage:
   vesk-native init               Scaffold a native app in the current (empty) directory
   vesk-native build              Regenerate everything from source + gradle assembleDebug
   vesk-native bundle [ios|android]  Release packaging: AAB + signed APK (android, default), or the iOS app archive + .ipa (ios, macOS/Xcode 26+). Signing from veskconfig.signing
-  vesk-native install [release]  Regenerate .vsklib from libraries.json, build + install the APK (release: install the pre-built app-release.apk, erroring when missing)
-  vesk-native run                Build, stage APK, open the on-device installer, launch
   vesk-native verify [pkg]       Check pinned libraries resolve (no arg: libraries; bundle: bundling/signing setup probe)
   vesk-native verify bundle [android|ios]  Probe signing + bundling setup (keys, env vars, macOS/Xcode) without building
   vesk-native setup              Install the toolchain (JDK check, Android SDK, Gradle) for this OS/arch

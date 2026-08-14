@@ -5,7 +5,7 @@ import { loadRegistry, writeVsklibRecordFile } from '@cli-native/vsklib-registry
 
 // Installed Kotlin libraries are tracked in the app's root `libraries.json` —
 // the single source of truth, committed to git like package.json, and written
-// only by the CLI (`vesk add/remove/update`, plus the install/build flows that
+// only by the CLI (`vesk add/remove/update`, plus the build/bundle flows that
 // read it). Users never hand-edit it and never touch gradle files or the
 // manifest. `.vsklib/` is a gitignored, disposable scratch directory that
 // holds the per-library `.vsklib` record files (metadata + exports + typed
