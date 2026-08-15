@@ -1,12 +1,18 @@
 {
-  "name": "vesk-native",
+  "name": "@vesk/native",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "description": "vesk-native app-facing API — defineConfig and config types for .vsk native apps",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --format=esm --platform=node --outfile=dist/index.js --tsconfig=../../tsconfig.json && tsc src/index.ts --declaration --emitDeclarationOnly --outDir dist --module NodeNext --moduleResolution NodeNext --target ES2022 --skipLibCheck --allowImportingTsExtensions"
   }
 }

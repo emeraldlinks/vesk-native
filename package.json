@@ -1,5 +1,5 @@
 {
-  "name": "vesk-native-monorepo",
+  "name": "vesk-native",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -12,7 +12,12 @@
   ],
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "spike": "tsx packages/compiler-native/src/spike.ts"
+    "spike": "tsx packages/compiler-native/src/spike.ts",
+    "build:assets": "node scripts/sync-assets.mjs",
+    "build:native": "npm run build -w @vesk/native",
+    "build:compiler": "npm run build -w @vesk/native-compiler",
+    "build:cli": "npm run build -w @vesk/native-cli",
+    "build": "npm run build:assets && npm run build:native && npm run build:compiler && npm run build:cli"
   },
   "devDependencies": {
     "@types/node": "^26.1.2",

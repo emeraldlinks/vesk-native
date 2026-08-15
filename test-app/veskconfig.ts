@@ -1,4 +1,4 @@
-import { defineConfig } from 'vesk-native'
+import { defineConfig } from '@vesk/native'
 
 export default defineConfig({
   appId: 'com.vesk.demo3',

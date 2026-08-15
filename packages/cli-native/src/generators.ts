@@ -12,10 +12,11 @@ import type { ComponentDecl } from '@compiler-native/props';
 import { buildModuleRegistry, slugFor, toPosix } from '@compiler-native/modules';
 import type { ModuleExport } from '@compiler-native/modules';
 import { compileProjectModule } from '@compiler-native/kotlin-codegen';
+import { compileNpmModules } from '@cli-native/npm';
 import { KtErrors } from '@compiler-native/js2kt';
 import type { JsNode } from '@compiler-native/js2kt';
-import type { VeskConfig } from 'vesk-native';
-import { AAPT2_OVERRIDE, DEFAULT_SDK, MONOREPO, TEMPLATE_DIR, collectVskFiles, colorLiteral, log, slugify } from '@cli-native/constants';
+import type { VeskConfig } from '@vesk/native';
+import { AAPT2_OVERRIDE, DEFAULT_SDK, NAVIGATION_KT, TEMPLATE_DIR, collectVskFiles, colorLiteral, log, slugify } from '@cli-native/constants';
 import { API_PERMISSIONS, MAX_SDK_PERMS, collectBrowserApiUsage, collectDeviceApiUsage, collectRuntimeUsage } from '@cli-native/usage';
 import { BIOMETRIC_AUTH_BODY, BIOMETRIC_CHECK_BODY, QRGEN_BODY, QR_OVERLAY_BLOCK, RUNTIME_CORE, RUNTIME_HELPERS, RUNTIME_ORDER, runtimeImports } from '@cli-native/runtime-templates';
 import { installedLibraries } from '@cli-native/vsklib';
@@ -642,7 +643,7 @@ export function generateRouterKt(appDir: string): void {
   // Resolved from the CLI's own package location (not cwd) so it works from
   // inside the user's project, where `packages/navigation-native` does not
   // exist relative to the working directory.
-  const src = join(MONOREPO, 'packages', 'navigation-native', 'src', 'Router.kt');
+  const src = NAVIGATION_KT;
   if (existsSync(src)) {
     const navDir = join(outDir, 'navigation');
     mkdirSync(navDir, { recursive: true });
@@ -749,10 +750,19 @@ export function compileVskFiles(appDir: string, config: VeskConfig, target: stri
     log('module', `project JS/TS modules -> app/Modules.kt`);
   }
 
-  // npm specifier -> exported name -> { pkg, name }. Populated by the npm
-  // module compiler (packages/cli-native/src/npm.ts) once a bare import is
-  // seen; empty for apps that only import .vsk files.
-  const npmRegistry = new Map<string, Map<string, { pkg: string; name: string }>>();
+  // npm specifier -> exported name -> { pkg, name }. Translated at build time
+  // by the npm module compiler (packages/cli-native/src/npm.ts); the reachable
+  // subgraph of installed npm packages becomes Kotlin files in app/vmod/.
+  const { registry: npmRegistry, files: npmFiles, errors: npmErrors } = compileNpmModules(appDir);
+  for (const e of npmErrors) console.error(`  [compile] error in npm module: ${e}`);
+  if (npmErrors.length > 0) process.exit(1);
+  const vmodDir = join(outDir, 'vmod');
+  if (existsSync(vmodDir)) rmSync(vmodDir, { recursive: true, force: true });
+  for (const f of npmFiles) {
+    const target = join(outDir, f.rel);
+    writeFileSync(target, f.kt);
+    log('module', `npm module -> ${f.rel}`);
+  }
 
   const { scoped: scopedClasses, skipped: cssSkipped } = collectCustomCss(
     vskFiles.map((f) => ({ source: readFileSync(f, 'utf8'), filename: relative(appDir, f) })),

@@ -148,7 +148,7 @@ fun SnowParka(content: @Composable () -> Unit = {}) {
 				horizontalArrangement = Arrangement.spacedBy(4.dp),
 			) {
 				Button(
-					onClick = jsSafe({ run __veskret0@ { if (truthy(num(qty.value) > num(1))) qty.value = qty.value + -1 } }),
+					onClick = jsSafe({ run __veskret0@ { if (truthy(num(qty.value) > num(1))) qty.value = num(qty.value + -1).toInt() } }),
 					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(36.dp).height(36.dp),
 					shape = RoundedCornerShape(9999.dp),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -166,7 +166,7 @@ fun SnowParka(content: @Composable () -> Unit = {}) {
 					style = TextStyle(textAlign = TextAlign.Center, fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
 				)
 				Button(
-					onClick = jsSafe({ qty.value = qty.value + 1 }),
+					onClick = jsSafe({ qty.value = num(qty.value + 1).toInt() }),
 					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)).width(36.dp).height(36.dp),
 					shape = RoundedCornerShape(9999.dp),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),

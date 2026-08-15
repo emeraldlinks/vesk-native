@@ -125,7 +125,7 @@ fun Cart(content: @Composable () -> Unit = {}) {
 							horizontalArrangement = Arrangement.spacedBy(4.dp),
 						) {
 							Button(
-								onClick = jsSafe({ run __veskret0@ { if (truthy(num(qty1.value) > num(1))) qty1.value = qty1.value + -1 } }),
+								onClick = jsSafe({ run __veskret0@ { if (truthy(num(qty1.value) > num(1))) qty1.value = num(qty1.value + -1).toInt() } }),
 								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(28.dp).height(28.dp),
 								shape = RoundedCornerShape(9999.dp),
 								colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -143,7 +143,7 @@ fun Cart(content: @Composable () -> Unit = {}) {
 								style = TextStyle(textAlign = TextAlign.Center, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
 							)
 							Button(
-								onClick = jsSafe({ qty1.value = qty1.value + 1 }),
+								onClick = jsSafe({ qty1.value = num(qty1.value + 1).toInt() }),
 								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)).width(28.dp).height(28.dp),
 								shape = RoundedCornerShape(9999.dp),
 								colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -196,7 +196,7 @@ fun Cart(content: @Composable () -> Unit = {}) {
 							horizontalArrangement = Arrangement.spacedBy(4.dp),
 						) {
 							Button(
-								onClick = jsSafe({ run __veskret1@ { if (truthy(num(qty2.value) > num(1))) qty2.value = qty2.value + -1 } }),
+								onClick = jsSafe({ run __veskret1@ { if (truthy(num(qty2.value) > num(1))) qty2.value = num(qty2.value + -1).toInt() } }),
 								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(28.dp).height(28.dp),
 								shape = RoundedCornerShape(9999.dp),
 								colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -214,7 +214,7 @@ fun Cart(content: @Composable () -> Unit = {}) {
 								style = TextStyle(textAlign = TextAlign.Center, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
 							)
 							Button(
-								onClick = jsSafe({ qty2.value = qty2.value + 1 }),
+								onClick = jsSafe({ qty2.value = num(qty2.value + 1).toInt() }),
 								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)).width(28.dp).height(28.dp),
 								shape = RoundedCornerShape(9999.dp),
 								colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -267,7 +267,7 @@ fun Cart(content: @Composable () -> Unit = {}) {
 							horizontalArrangement = Arrangement.spacedBy(4.dp),
 						) {
 							Button(
-								onClick = jsSafe({ run __veskret2@ { if (truthy(num(qty3.value) > num(1))) qty3.value = qty3.value + -1 } }),
+								onClick = jsSafe({ run __veskret2@ { if (truthy(num(qty3.value) > num(1))) qty3.value = num(qty3.value + -1).toInt() } }),
 								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(28.dp).height(28.dp),
 								shape = RoundedCornerShape(9999.dp),
 								colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -285,7 +285,7 @@ fun Cart(content: @Composable () -> Unit = {}) {
 								style = TextStyle(textAlign = TextAlign.Center, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
 							)
 							Button(
-								onClick = jsSafe({ qty3.value = qty3.value + 1 }),
+								onClick = jsSafe({ qty3.value = num(qty3.value + 1).toInt() }),
 								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)).width(28.dp).height(28.dp),
 								shape = RoundedCornerShape(9999.dp),
 								colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),

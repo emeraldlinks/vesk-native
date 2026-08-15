@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import type { VeskConfig } from 'vesk-native';
+import type { VeskConfig } from '@vesk/native';
 
 const pbxUuid = (() => {
   let n = 0;

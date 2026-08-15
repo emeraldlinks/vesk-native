@@ -6,7 +6,7 @@ import { AAPT2_OVERRIDE, CONFIG_JSON, CONFIG_TS, DEFAULT_GRADLE, GRADLE_VERSION,
 import { loadConfig, writeDefaultConfig } from '@cli-native/config';
 import { generateProject, generateVskLibDeclarations } from '@cli-native/generators';
 import { generateIosProject, iosBuildDir, iosExportOptions, requireIosSigning } from '@cli-native/ios';
-import type { VeskConfig } from 'vesk-native';
+import type { VeskConfig } from '@vesk/native';
 import type { HostInfo } from '@cli-native/constants';
 import { deriveLibraryPermissions, installedLibraries, loadLibraries, mavenMetadata, parseLibrarySpec, resolveLibrary, saveLibraries, verifyLibraries, verifyLibrary, withVersion, writeVsklibCache } from '@cli-native/vsklib';
 import type { VskLibRecord } from '@cli-native/vsklib';
@@ -31,13 +31,17 @@ export async function initApp(dir: string): Promise<void> {
 
   const appDir = join(target, 'app');
   mkdirSync(appDir, { recursive: true });
-  for (const f of collectVskFiles(SAMPLE_VSK)) {
-    const rel = relative(SAMPLE_VSK, f);
-    const dest = join(appDir, rel);
-    mkdirSync(resolve(dest, '..'), { recursive: true });
-    writeFileSync(dest, readFileSync(f, 'utf8'));
+  if (existsSync(SAMPLE_VSK)) {
+    for (const f of collectVskFiles(SAMPLE_VSK)) {
+      const rel = relative(SAMPLE_VSK, f);
+      const dest = join(appDir, rel);
+      mkdirSync(resolve(dest, '..'), { recursive: true });
+      writeFileSync(dest, readFileSync(f, 'utf8'));
+    }
+    log('init', `sample .vsk files copied (${collectVskFiles(SAMPLE_VSK).length})`);
+  } else {
+    log('init', 'no sample .vsk files packaged with this cli-native — skipping samples');
   }
-  log('init', `sample .vsk files copied (${collectVskFiles(SAMPLE_VSK).length})`);
 
   generateProject(target, config);
   console.log(`\n  done. next: vesk-native build`);

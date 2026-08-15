@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import type { VeskConfig } from 'vesk-native';
+import type { VeskConfig } from '@vesk/native';
 import { CONFIG_JSON, CONFIG_TS, log } from '@cli-native/constants';
 
 const DEFAULT_CONFIG: VeskConfig = {
@@ -82,7 +82,7 @@ export function writeDefaultConfig(target: string): void {
   const c = DEFAULT_CONFIG;
   writeFileSync(
     tsPath,
-    `import { defineConfig } from 'vesk-native'
+    `import { defineConfig } from '@vesk/native'
 
 export default defineConfig({
   appId: '${c.appId}',

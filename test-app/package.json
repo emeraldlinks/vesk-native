@@ -5,5 +5,10 @@
   "scripts": {
     "demo": "bash scripts/demo.sh",
     "release": "bash scripts/release.sh"
+  },
+  "dependencies": {
+    "@vesk/native": "file:../tarballs/vesk-native-0.1.0.tgz",
+    "@vesk/native-compiler": "file:../tarballs/vesk-native-compiler-0.1.0.tgz",
+    "@vesk/native-cli": "file:../tarballs/vesk-native-cli-0.1.0.tgz"
   }
 }

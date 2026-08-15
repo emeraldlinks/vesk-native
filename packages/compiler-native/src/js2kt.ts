@@ -222,6 +222,26 @@ const UNSUPPORTED_BROWSER_FNS = new Set([
   'atob', 'btoa', 'queueMicrotask', 'structuredClone', 'eval',
 ]);
 
+// motion.dev JS calls that map to runtime motion* helpers (the ease names are
+// values, handled separately in `expr`).
+const MOTION_FN_MAP: Record<string, string> = {
+  animate: 'motionAnimate',
+  spring: 'motionSpring',
+  inView: 'motionInView',
+  scroll: 'motionScroll',
+  delay: 'motionDelay',
+  cubicBezier: 'motionCubicBezier',
+  steps: 'motionSteps',
+  mirrorEasing: 'motionMirrorEasing',
+  reverseEasing: 'motionReverseEasing',
+};
+// Easing values emitted through motionEase(name) so usage pruning sees the
+// call and pulls the motionCore runtime unit.
+const MOTION_EASE_NAMES = new Set([
+  'easeIn', 'easeOut', 'easeInOut', 'circIn', 'circOut', 'circInOut',
+  'backIn', 'backOut', 'backInOut', 'anticipate',
+]);
+
 // Web Storage member surface: `localStorage.length` etc. map to these
 // VeskWebStorage method names (methods, not properties, so usage pruning can
 // see them in generated Kotlin).
@@ -271,12 +291,20 @@ export class Js2Kt {
   /** JS-visible library exports (`import { X } from '@vesk/...'`): constructors
    *  and enums with typed signatures, resolved by the JS name. */
   libraryExports = new Map<string, LibExportSig>();
+  /** Names imported from 'motion' (motion.dev) that map to the app runtime's
+   *  motion* helpers / easing values. */
+  motionExports = new Set<string>();
   /** Extra Kotlin import lines discovered while translating (enum members
    *  referenced through string literals); spliced into the generated file. */
   libImports = new Set<string>();
+  /** Kotlin storage types of tracked cells (cellName -> 'Int' | 'Double').
+   *  `set(cell, rhs)` coercions key off this so an Any? RHS (e.g. a motion
+   *  onUpdate callback param) compiles against the typed MutableState. */
+  cellTypes = new Map<string, string>();
 
-  constructor(err: KtErrors) {
+  constructor(err: KtErrors, cellTypes?: Map<string, string>) {
     this.err = err;
+    if (cellTypes) this.cellTypes = cellTypes;
   }
 
   private id(name: string): string {
@@ -476,6 +504,11 @@ export class Js2Kt {
         if (name === 'String' || name === 'Number' || name === 'Boolean') {
           return `${name}::class.java`;
         }
+        // motion easing values (`easeInOut`, `backOut`, ...) resolve through
+        // motionEase so the runtime call is visible to usage pruning.
+        if (this.motionExports.has(name) && MOTION_EASE_NAMES.has(name)) {
+          return `motionEase(${this.ktString(name)})`;
+        }
         if (this.paramAliases && this.paramAliases.has(name)) {
           return this.id(this.paramAliases.get(name)!);
         }
@@ -657,10 +690,16 @@ export class Js2Kt {
     return `${obj}${optional ? '?.' : '.'}${this.id(prop.type === 'Identifier' ? (prop.name as string) : this.expr(prop))}`;
   }
 
-  private argList(args: JsNode[]): string {
+  // Emits call arguments. Function literals passed to helper/member calls get
+  // forceAny=true: the helper's parameter is usually Any?, so an untyped
+  // lambda param would fail inference. The ambiguous paths that DO have a
+  // typed function value (fn(...) calls, optional invoke) pass false so the
+  // body's member calls keep their inferred types.
+  private argList(args: JsNode[], forceLambdaAny = true): string {
     return args.map((a) => {
       const jsNode = a as JsNode & { type?: string; argument?: JsNode };
       if (jsNode.type === 'SpreadElement') return `*${this.expr(jsNode.argument as JsNode)}`;
+      if (forceLambdaAny && (jsNode.type === 'FunctionExpression' || jsNode.type === 'ArrowFunctionExpression')) return this.arrowLambda(jsNode, true);
       return this.expr(jsNode);
     }).join(', ');
   }
@@ -678,7 +717,12 @@ export class Js2Kt {
         return `${this.expr(a0)}.value`;
       }
       if (name === 'set' && args.length === 2 && a0 && a1) {
-        return `${this.expr(a0)}.value = ${this.expr(a1)}`;
+        const aStr = this.expr(a0);
+        const bStr = this.expr(a1);
+        const ct = a0.type === 'Identifier' ? this.cellTypes.get(a0.name as string) : undefined;
+        if (ct === 'Int') return `${aStr}.value = num(${bStr}).toInt()`;
+        if (ct === 'Double') return `${aStr}.value = num(${bStr})`;
+        return `${aStr}.value = ${bStr}`;
       }
       if (name === 'String') return args.length ? `jsString(${this.expr(a0!)})` : '""';
       if (name === 'Number') return args.length ? `num(${this.expr(a0!)})` : '0.0';
@@ -720,6 +764,19 @@ export class Js2Kt {
         this.err.warn(callee, `'${name}' is a ${libExport.isEnum ? 'enum' : 'value'}, not a function`);
         return `error("vesk: '${name}' is not a function")`;
       }
+      if (this.motionExports.has(name) && name === 'stagger') {
+        // `stagger(d, opts)` returns a per-index delay function; standalone it
+        // binds index 0 (the idiomatic `stagger(d)(i)` form is handled on the
+        // outer call in the generic fallback below).
+        return `motionStagger(0, ${this.argList(args)})`;
+      }
+      if (this.motionExports.has(name) && MOTION_FN_MAP[name]) {
+        return `${MOTION_FN_MAP[name]}(${this.argList(args)})`;
+      }
+      if (this.motionExports.has(name)) {
+        this.err.warn(callee, `'${name}' from 'motion' has no native Kotlin mapping yet (available: animate, spring, stagger, inView, scroll, delay, cubicBezier, steps, mirrorEasing, reverseEasing)`);
+        return `error("vesk: '${name}' has no native motion mapping yet")`;
+      }
       if (name === 'fetch') return `VeskFetch.fetch(${this.argList(args)})`;
       if (name === 'openSqlite') return `VeskSqlite.openDatabase(${a0 ? this.expr(a0) : this.ktString('')}${a1 ? `, ${this.expr(a1)}` : ''})`;
       if (name === 'signUp' || name === 'signIn') return `VeskAuth.${name}(${a0 ? this.expr(a0) : 'null'}, ${a1 ? this.expr(a1) : 'null'})`;
@@ -750,7 +807,7 @@ export class Js2Kt {
           this.err.warn(callee, `optional call on a built-in ${method ?? '?'}() is not supported`);
           return `error("vesk: optional call on a built-in is not supported")`;
         }
-        return `(${this.expr(callee)})?.invoke(${this.argList(args)})`;
+        return `(${this.expr(callee)})?.invoke(${this.argList(args, false)})`;
       }
 
       if (member.object.type === 'Identifier') {
@@ -988,7 +1045,7 @@ export class Js2Kt {
     }
 
     const calleeStr = this.expr(callee);
-    const argsStr = this.argList(args);
+    const argsStr = this.argList(args, false);
     if (callOptional) {
       return `(${calleeStr})?.invoke(${argsStr})`;
     }
@@ -997,10 +1054,25 @@ export class Js2Kt {
       // called, so the member must be forced non-null before invoking.
       return `(${calleeStr})!!.invoke(${argsStr})`;
     }
+    if (callee.type === 'CallExpression') {
+      // `stagger(d)(i)` (motion's per-index delay): the inner call is a
+      // partial application, not a value — emit the two-arg form directly.
+      const innerCallee = callee.callee as JsNode;
+      if (innerCallee.type === 'Identifier' && innerCallee.name === 'stagger' && this.motionExports.has('stagger')) {
+        const innerArgs = (callee.arguments as JsNode[]) ?? [];
+        const inner = innerArgs.map((a) => this.expr(a)).join(', ');
+        return `motionStagger(${argsStr}${inner ? `, ${inner}` : ''})`;
+      }
+    }
     return `${calleeStr}(${argsStr})`;
   }
 
-  private arrowLambda(node: JsNode): string {
+  // `forceAny` is true when the lambda sits where no expected function type
+  // exists (object-literal values, array elements, function-valued variable
+  // declarations): untyped params would fail inference, so they get an
+  // explicit Any?. At typed call sites (forEach/map/etc.) params stay untyped
+  // so Kotlin infers the element type and the body's member calls compile.
+  private arrowLambda(node: JsNode, forceAny = false): string {
     if ((node as { async?: boolean }).async) {
       this.err.warn(node, 'async functions are not supported yet (no coroutine/promise support)');
       return `error("vesk: async functions are not supported yet")`;
@@ -1014,6 +1086,7 @@ export class Js2Kt {
         const ty = optional ? makeNullable(tsTypeToKotlin(ann)) : tsTypeToKotlin(ann);
         return `${this.pattern(p)}: ${ty}`;
       }
+      if (forceAny && p.type === 'Identifier') return `${this.pattern(p)}: Any?`;
       return this.pattern(p);
     }).join(', ')} -> `;
     if (body.type === 'BlockStatement') {
@@ -1386,6 +1459,7 @@ export class Js2Kt {
         const arg = e.argument as JsNode;
         return `*(${this.expr(arg)} as List<*>).toTypedArray()`;
       }
+      if (e.type === 'FunctionExpression' || e.type === 'ArrowFunctionExpression') return this.arrowLambda(e, true);
       return this.expr(e);
     });
     return `listOf(${parts.join(', ')})`;
@@ -1398,7 +1472,7 @@ export class Js2Kt {
         const key = p.key as JsNode;
         const keyStr = key.type === 'Identifier' ? (key.name as string) : key.type === 'Literal' ? String((key.value as string | number) ?? '') : this.expr(key);
         const value = p.value as JsNode;
-        const valueStr = value.type === 'FunctionExpression' || value.type === 'ArrowFunctionExpression' ? this.arrowLambda(value) : this.expr(value);
+        const valueStr = value.type === 'FunctionExpression' || value.type === 'ArrowFunctionExpression' ? this.arrowLambda(value, true) : this.expr(value);
         return `${this.ktString(keyStr)} to ${valueStr}`;
       }
       if (p.type === 'SpreadElement') {
@@ -1982,15 +2056,13 @@ export class Js2Kt {
         for (const d of decls) {
           const id = d.id as JsNode;
           const ann = id.type === 'Identifier' ? (id as { typeAnnotation?: string | null }).typeAnnotation : null;
-          let init = d.init ? ` = ${this.expr(d.init as JsNode)}` : '';
+          const initNode = d.init as { type?: string; params?: JsNode[]; callee?: JsNode } | null;
+          let init = d.init ? (initNode && (initNode.type === 'ArrowFunctionExpression' || initNode.type === 'FunctionExpression') ? ` = ${this.arrowLambda(d.init as JsNode, true)}` : ` = ${this.expr(d.init as JsNode)}`) : '';
           if (ann && d.init) {
             const ty = tsTypeToKotlin(ann);
             const coerced = this.coerceArg(ty, d.init as JsNode);
             init = `: ${ty} = ${coerced}`;
-          } else if (d.init) {
-            init = ` = ${this.expr(d.init as JsNode)}`;
           }
-          const initNode = d.init as { type?: string; params?: JsNode[]; callee?: JsNode } | null;
           if (id.type === 'Identifier' && initNode && (initNode.type === 'ArrowFunctionExpression' || initNode.type === 'FunctionExpression')) {
             this.registerParamTypes(id.name as string, (initNode.params ?? []) as JsNode[]);
           }

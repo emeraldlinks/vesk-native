@@ -1,0 +1,60 @@
+import { animate, spring, stagger, inView, scroll, easeInOut, backOut } from 'motion'
+
+component Anim() {
+    const &[box, boxCell] = track(null)
+    const &[count] = track(0)
+    const &[shown] = track(false)
+    const &[scrollP] = track(0.0)
+
+    <div class="p-4 flex-col gap-4">
+        <div class="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 rounded-xl p-6">
+            <h1 class="text-white text-2xl font-bold">Motion — vesk-native animation lab</h1>
+            <p class="text-white text-sm mt-1">motion.dev primitives (animate/spring/stagger/inView/scroll) mapped to native Compose animations.</p>
+        </div>
+
+        <div class="bg-white rounded-xl p-4 border-2 border-amber-100">
+            <h3 class="font-semibold mb-1">animate() on a ref'd element</h3>
+            <p class="text-xs text-gray-500 mb-2">The ref attribute binds a MotionRef; animate(box, ...) drives graphicsLayer scale/opacity through a Compose spring.</p>
+            <div ref={box} class="bg-rose-500 rounded-xl w-56 h-56 flex items-center justify-center">
+                <span class="text-white font-semibold">box</span>
+            </div>
+            <div class="flex gap-2 mt-3">
+                <button class="bg-rose-500 text-white rounded-lg px-4 py-2 text-sm" onClick={() => { animate(box, { scale: 1.2, opacity: 0.6 }, { spring: spring({ stiffness: 220, damping: 18 }) }); animate(box, { scale: 1, opacity: 1 }, { spring: spring({ stiffness: 220, damping: 18 }) }) }}>Pulse</button>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl p-4 border-2 border-orange-100">
+            <h3 class="font-semibold mb-1">animate() numeric tween + onUpdate</h3>
+            <p class="text-xs text-gray-500 mb-2">animate(0, 100, options) with duration 0.8, ease easeInOut and an onUpdate callback counts up; the ease string maps to the real motion-utils cubic-bezier constants.</p>
+            <p class="text-sm mb-2">count = {Math.round(count)}</p>
+            <button class="bg-orange-500 text-white rounded-lg px-4 py-2 text-sm" onClick={() => animate(0, 100, { duration: 0.8, ease: 'easeInOut', onUpdate: (v) => { count = v } })}>Animate count</button>
+            <p class="text-sm mt-2">ease: {easeInOut === backOut ? 'same' : 'diff'}</p>
+        </div>
+
+        <div class="bg-white rounded-xl p-4 border-2 border-yellow-100">
+            <h3 class="font-semibold mb-1">stagger()</h3>
+            <p class="text-xs text-gray-500 mb-2">motion-utils stagger(duration)(index) — the curried call maps to motionStagger(index, duration).</p>
+            <p class="text-sm mb-2">stagger(0.15)(0) = {stagger(0.15)(0)}s · (1) = {stagger(0.15)(1)}s · (2) = {stagger(0.15)(2)}s</p>
+            <div class="flex gap-3">
+                <div class="w-16 h-16 rounded bg-emerald-500 flex items-center justify-center"><span class="text-white text-xs font-bold">a</span></div>
+                <div class="w-16 h-16 rounded bg-emerald-500 flex items-center justify-center"><span class="text-white text-xs font-bold">b</span></div>
+                <div class="w-16 h-16 rounded bg-emerald-500 flex items-center justify-center"><span class="text-white text-xs font-bold">c</span></div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl p-4 border-2 border-lime-100">
+            <h3 class="font-semibold mb-1">inView()</h3>
+            <p class="text-xs text-gray-500 mb-2">inView(box, callback, once: true) fires once the ref'd element intersects the viewport — bounds from motionGraphics, viewport from the display.</p>
+            <p class="text-sm">box in view: {shown ? 'yes' : 'not yet'}</p>
+        </div>
+
+        <div class="bg-white rounded-xl p-4 border-2 border-green-100">
+            <h3 class="font-semibold mb-1">scroll()</h3>
+            <p class="text-xs text-gray-500 mb-2">scroll(onScroll) reports the route scroll container's progress (0..1), like motion's scrollY progress.</p>
+            <p class="text-sm">scroll progress = {Math.round(scrollP * 100)}%</p>
+        </div>
+
+        {inView(box, () => { shown = true }, { once: true })}
+        {scroll((p) => { scrollP = p })}
+    </div>
+}

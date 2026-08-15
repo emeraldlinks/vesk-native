@@ -15,6 +15,7 @@ component Layout(props) {
                 </NavLink>
                 <div class="flex-1"></div>
                 <NavLink href="/shop" class="text-sm font-semibold text-gray-600">Shop</NavLink>
+                <NavLink href="/anim" class="text-sm font-semibold text-gray-600">Anim</NavLink>
                 <NavLink href="/cart" class="text-lg leading-6">🛒</NavLink>
             </div>
         </nav>

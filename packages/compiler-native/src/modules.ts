@@ -4,6 +4,7 @@ import { Lexer, regexAllowedAfter, Tok } from './lexer.ts';
 import type { Token } from './lexer.ts';
 import { parse } from './parser.ts';
 import type { JsNode } from './js2kt.ts';
+import { ktIdent } from './js2kt.ts';
 
 // Module system support for vesk-native.
 //
@@ -696,6 +697,11 @@ function extnameOf(p: string): string {
 // friends are CommonJS — a hard error, never silently compiled.
 const ESM_EXTS = ['.mjs', '.js', '.ts', '.tsx', '.jsx'];
 
+// Bare specifiers handled by the framework (compiler + runtime mappings), never
+// by the npm module compiler. `motion`/`motion/mini` route to the app runtime's
+// motion helpers (see kotlin-codegen emitVskHeader's framework branch).
+export const FRAMEWORK_NPM_SPECIFIERS = new Set(['motion', 'motion/mini']);
+
 // An npm module resolution: the package directory, the entry file, and the
 // bare specifier's package slug (`@jridgewell/sourcemap-codec` ->
 // `jridgewell_sourcemap_codec`). `relInPkg` is the entry's path inside the
@@ -714,33 +720,44 @@ export interface NpmTarget {
 // imports resolve within the package). Returns null when the package or its
 // entry cannot be resolved; CJS-only entries are rejected by the caller via
 // the returned file extension.
-export function resolveNpmTarget(specifier: string, appDir: string): NpmTarget | null {
+// Locate the installed package directory for a bare specifier by walking
+// `node_modules` upward from the app directory. Returns null when the package
+// is not installed anywhere on the chain.
+export function findNpmPackageDir(specifier: string, appDir: string): string | null {
   if (specifier.startsWith('.') || specifier.startsWith('/')) return null;
   const segs = specifier.split('/');
   const scoped = specifier.startsWith('@');
   const pkgName = scoped ? `${segs[0]}/${segs[1]}` : segs[0];
-  const subpath = segs.slice(scoped ? 2 : 1).join('/');
   if (scoped && segs.length < 2) return null;
   if (!pkgName) return null;
-
   let dir = appDir;
   for (;;) {
     const pkgDir = join(dir, 'node_modules', pkgName);
-    if (existsSync(pkgDir)) {
-      const entry = resolveNpmEntry(pkgDir, subpath);
-      if (!entry) return null;
-      return {
-        specifier,
-        pkgDir,
-        file: entry,
-        relInPkg: toPosix(relative(pkgDir, entry)),
-        pkgSlug: slugFor(specifier),
-      };
-    }
+    if (existsSync(pkgDir)) return pkgDir;
     const parent = dirname(dir);
     if (parent === dir) return null;
     dir = parent;
   }
+}
+
+export function resolveNpmTarget(specifier: string, appDir: string): NpmTarget | null {
+  if (specifier.startsWith('.') || specifier.startsWith('/')) return null;
+  const segs = specifier.split('/');
+  const scoped = specifier.startsWith('@');
+  const subpath = segs.slice(scoped ? 2 : 1).join('/');
+  if (scoped && segs.length < 2) return null;
+  if (!scoped && !segs[0]) return null;
+  const pkgDir = findNpmPackageDir(specifier, appDir);
+  if (!pkgDir) return null;
+  const entry = resolveNpmEntry(pkgDir, subpath);
+  if (!entry) return null;
+  return {
+    specifier,
+    pkgDir,
+    file: entry,
+    relInPkg: toPosix(relative(pkgDir, entry)),
+    pkgSlug: slugFor(specifier),
+  };
 }
 
 function resolveNpmEntry(pkgDir: string, subpath: string): string | null {
@@ -786,10 +803,10 @@ function resolveNpmEntry(pkgDir: string, subpath: string): string | null {
 }
 
 // Resolve a package.json `exports` entry for a subpath. Handles strings,
-// condition arrays, and nested condition objects, preferring the `import`
-// (and then `default`) conditions and skipping type-only branches. A bare
-// `./index.js`-style string result still gets extension probing via
-// resolveFile.
+// condition arrays, and nested condition objects, preferring the `browser`
+// semantics conditions (then `import`/`default`) and skipping type-only and
+// node-only branches. A bare `./index.js`-style string result still gets
+// extension probing via resolveFile.
 function pickExportsTarget(exportsField: unknown, key: string): string | null {
   if (!exportsField) return null;
   const direct = exportsField;
@@ -809,14 +826,18 @@ function pickConditionTarget(value: unknown): string | null {
   }
   if (value && typeof value === 'object') {
     const obj = value as Record<string, unknown>;
-    for (const k of ['import', 'node', 'default']) {
-      if (obj[k] !== undefined) {
-        const r = pickConditionTarget(obj[k]);
-        if (r) return r;
-      }
+    // Android apps run a browser-grade JS environment, not Node: prefer the
+    // `browser` entry (uses browser APIs), fall to `import`, and never pick a
+    // `node` entry (Buffer/fs/crypto-hash surfaces have no Android mapping).
+    // `node` is only skipped — a package whose only viable condition is
+    // `node` (no browser/import/default) resolves to nothing.
+    for (const k of ['browser', 'import', 'node', 'default']) {
+      if (obj[k] === undefined || k === 'node') continue;
+      const r = pickConditionTarget(obj[k]);
+      if (r) return r;
     }
     for (const [k, v] of Object.entries(obj)) {
-      if (k === 'types' || k === 'typescript' || k === 'require') continue;
+      if (k === 'types' || k === 'typescript' || k === 'require' || k === 'node') continue;
       const r = pickConditionTarget(v);
       if (r) return r;
     }
@@ -882,8 +903,9 @@ export function pkgImportLines(
       errors.push(`import '${source}': module does not export '${spec.name}'`);
       continue;
     }
-    if (spec.local === entry.name) lines.push(`import ${entry.pkg}.${entry.name}`);
-    else lines.push(`import ${entry.pkg}.${entry.name} as ${spec.local}`);
+    const localKt = ktIdent(spec.local);
+    if (localKt === entry.name) lines.push(`import ${entry.pkg}.${entry.name}`);
+    else lines.push(`import ${entry.pkg}.${entry.name} as ${localKt}`);
   }
   return { lines, errors };
 }
@@ -947,7 +969,7 @@ export function vskImportLines(
       continue;
     }
     if (spec.local === kotlinName) lines.push(`import app.${kotlinName}`);
-    else lines.push(`import app.${kotlinName} as ${spec.local}`);
+    else lines.push(`import app.${kotlinName} as ${ktIdent(spec.local)}`);
   }
   return { lines, errors };
 }
@@ -964,6 +986,12 @@ export function npmImportLines(
   const specifiers = importSpecifiers(node);
   if (specifiers.length === 0) {
     return { lines: [], errors: [`import '${source}': side-effect imports of npm packages are not supported`] };
+  }
+  // The registry only carries packages the npm module compiler resolved; a
+  // bare specifier that is not a key never resolved to an installed package,
+  // so report that instead of the misleading "module does not export X".
+  if (!npmRegistry.has(source)) {
+    return { lines: [], errors: [`import '${source}': could not resolve npm package (not installed in node_modules)`] };
   }
   const exports = npmRegistry.get(source) ?? new Map<string, ModuleExport>();
   return pkgImportLines(node, source, exports);

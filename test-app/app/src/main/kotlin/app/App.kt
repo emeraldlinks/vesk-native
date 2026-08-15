@@ -28,6 +28,7 @@ fun App() {
             Layout {
                 AppRouter(start = "/", routes = listOf(
                     Route("/about") { About() },
+        Route("/anim") { Anim() },
         Route("/blog/hello-world") { BlogPost() },
         Route("/blog") { Blog() },
         Route("/blog/vesk-native") { VeskNativePost() },

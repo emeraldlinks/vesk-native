@@ -191,8 +191,40 @@ export function runtimeImports(deviceApis: Set<string>, used: Set<string>): stri
       'import co.yml.charts.ui.linechart.model.LineStyle',
     );
   }
+  if (MOTION_HELPERS.some((h) => used.has(h))) {
+    cond.push(
+      'import androidx.compose.animation.core.Animatable',
+      'import androidx.compose.animation.core.AnimationSpec',
+      'import androidx.compose.animation.core.Easing',
+      'import androidx.compose.animation.core.LinearEasing',
+      'import androidx.compose.animation.core.SpringSpec',
+      'import androidx.compose.animation.core.TweenSpec',
+      'import androidx.compose.runtime.LaunchedEffect',
+      'import androidx.compose.runtime.snapshotFlow',
+      'import androidx.compose.animation.core.CubicBezierEasing',
+      'import androidx.compose.ui.composed',
+      'import androidx.compose.ui.platform.AndroidUiDispatcher',
+      'import androidx.compose.ui.focus.onFocusChanged',
+      'import androidx.compose.ui.graphics.graphicsLayer',
+      'import androidx.compose.ui.input.pointer.PointerEventType',
+      'import androidx.compose.ui.input.pointer.pointerInput',
+      'import androidx.compose.ui.layout.boundsInRoot',
+      'import androidx.compose.ui.layout.onGloballyPositioned',
+      'import androidx.compose.foundation.gestures.detectDragGestures',
+      'import androidx.compose.foundation.gestures.detectTapGestures',
+      'import kotlinx.coroutines.async',
+      'import kotlinx.coroutines.flow.collect',
+      'import kotlinx.coroutines.flow.filter',
+      'import kotlinx.coroutines.flow.take',
+    );
+  }
   return `${RUNTIME_IMPORTS_CORE}${cond.length ? `${cond.join('\n')}\n` : ''}`;
 }
+// Runtime units for motion (motion.dev) mappings; gates the motion import
+// block in `runtimeImports` so no animation dependency is ever pulled for an
+// app that does not animate.
+export const MOTION_HELPERS = ['motionCore', 'motionStagger', 'motionInView', 'motionScroll', 'motionDrag', 'motionHover', 'motionPress', 'motionFocus'];
+
 export const RUNTIME_CORE = `
 // Native counterparts of @vesk/runtime exports referenced by copied .vsk files.
 
@@ -3321,9 +3353,376 @@ fun veskYchartsLineChart(values: List<*>, labels: List<String>, modifier: Modifi
     )
 }
 ` },
+  'motionCore': { deps: ['VeskTimers', 'jsString', 'jsMapGet'], src: `
+// motion (motion.dev) native mappings. The easing constants are the real
+// motion-utils values verified against the installed motion@13 source: easeIn
+// = cubicBezier(0.42,0,1,1), easeOut = cubicBezier(0,0,0.58,1), easeInOut =
+// cubicBezier(0.42,0,0.58,1), backOut = cubicBezier(0.33,1.53,0.69,0.99),
+// and backIn/circIn* come from motion-utils' reverseEasing/mirrorEasing
+// modifiers. motion's spring stiffness/damping/mass map onto Compose
+// SpringSpec through the critical damping ratio (damping / 2*sqrt(mass*
+// stiffness)); tuning scales differ between the engines, so springs are
+// approximate by design.
+class MotionRef {
+    var alpha: Float by mutableStateOf(1f)
+    var scaleX: Float by mutableStateOf(1f)
+    var scaleY: Float by mutableStateOf(1f)
+    var translateX: Float by mutableStateOf(0f)
+    var translateY: Float by mutableStateOf(0f)
+    var rotate: Float by mutableStateOf(0f)
+    var bounds: Rect? = null
+    var visible: Boolean by mutableStateOf(false)
+    var entered: Boolean by mutableStateOf(false)
+    internal var viewportW: Int = 0
+    internal var viewportH: Int = 0
+    fun onPositioned(b: Rect) {
+        bounds = b
+        updateVisibility()
+    }
+    fun updateViewport(w: Int, h: Int) {
+        viewportW = w
+        viewportH = h
+        updateVisibility()
+    }
+    private fun updateVisibility() {
+        val b = bounds ?: return
+        val overlaps = b.left < viewportW && b.top < viewportH && b.right > 0f && b.bottom > 0f
+        visible = overlaps
+        if (overlaps) entered = true
+    }
+}
+
+@Composable
+fun rememberMotionRef(): MotionRef = remember { MotionRef() }
+
+// Markup hook: the compiler appends this modifier when an element has
+// ref={cell}. graphicsLayer drives alpha/scale/translation/rotation from the
+// ref's state (Compose re-layers on state reads), and onGloballyPositioned
+// feeds the ref the viewport-relative bounds for inView checks.
+fun Modifier.motionGraphics(ref: MotionRef): Modifier = composed {
+    val dm = LocalContext.current.resources.displayMetrics
+    ref.updateViewport(dm.widthPixels, dm.heightPixels)
+    graphicsLayer {
+        alpha = ref.alpha
+        scaleX = ref.scaleX
+        scaleY = ref.scaleY
+        translationX = ref.translateX
+        translationY = ref.translateY
+        rotationZ = ref.rotate
+    }.onGloballyPositioned { ref.onPositioned(it.boundsInRoot()) }
+}
+
+val easeIn: Easing = CubicBezierEasing(0.42f, 0f, 1f, 1f)
+val easeOut: Easing = CubicBezierEasing(0f, 0f, 0.58f, 1f)
+val easeInOut: Easing = CubicBezierEasing(0.42f, 0f, 0.58f, 1f)
+val backOut: Easing = CubicBezierEasing(0.33f, 1.53f, 0.69f, 0.99f)
+val backIn: Easing = Easing { p -> 1f - backOut.transform(1f - p) }
+val backInOut: Easing = Easing { p -> if (p <= 0.5f) backIn.transform(p * 2f) / 2f else (2f - backIn.transform(2f * (1f - p))) / 2f }
+val circIn: Easing = Easing { p -> (1.0 - kotlin.math.sin(kotlin.math.acos(p.toDouble()))).toFloat() }
+val circOut: Easing = Easing { p -> (1.0 - kotlin.math.sin(kotlin.math.acos((1f - p).toDouble()))).toFloat() }
+val circInOut: Easing = Easing { p -> if (p <= 0.5f) circIn.transform(p * 2f) / 2f else (2f - circIn.transform(2f * (1f - p))) / 2f }
+val anticipate: Easing = Easing { p ->
+    if (p >= 1f) 1f
+    else {
+        val q = p * 2f
+        if (q < 1f) 0.5f * backIn.transform(q)
+        else 0.5f * (2f - java.lang.Math.pow(2.0, (-10f * (q - 1f)).toDouble()).toFloat())
+    }
+}
+
+fun motionEase(v: Any?): Easing = when {
+    v is Easing -> v
+    v is String -> when (v) {
+        "linear" -> LinearEasing
+        "easeIn" -> easeIn
+        "easeOut" -> easeOut
+        "easeInOut" -> easeInOut
+        "circIn" -> circIn
+        "circOut" -> circOut
+        "circInOut" -> circInOut
+        "backIn" -> backIn
+        "backOut" -> backOut
+        "backInOut" -> backInOut
+        "anticipate" -> anticipate
+        else -> easeOut
+    }
+    v is List<*> && v.size == 4 -> CubicBezierEasing(num(v[0]).toFloat(), num(v[1]).toFloat(), num(v[2]).toFloat(), num(v[3]).toFloat())
+    else -> easeOut
+}
+
+fun motionCubicBezier(x1: Any?, y1: Any?, x2: Any?, y2: Any?): Easing =
+    CubicBezierEasing(num(x1).toFloat(), num(y1).toFloat(), num(x2).toFloat(), num(y2).toFloat())
+
+fun motionReverseEasing(easing: Any?): Easing {
+    val e = easing as? Easing ?: easeInOut
+    return Easing { p -> 1f - e.transform(1f - p) }
+}
+
+fun motionMirrorEasing(easing: Any?): Easing {
+    val e = easing as? Easing ?: easeInOut
+    return Easing { p -> if (p <= 0.5f) e.transform(p * 2f) / 2f else (2f - e.transform(2f * (1f - p))) / 2f }
+}
+
+fun motionSteps(numSteps: Any?, direction: Any? = "end"): Easing {
+    val steps = kotlin.math.max(1, num(numSteps).toInt())
+    val dir = direction as? String ?: "end"
+    return Easing { p ->
+        val progress = if (dir == "end") kotlin.math.min(p, 0.999f) else kotlin.math.max(p, 0.001f)
+        val expanded = progress * steps
+        val rounded = if (dir == "end") kotlin.math.floor(expanded.toDouble()) else kotlin.math.ceil(expanded.toDouble())
+        (kotlin.math.max(0.0, kotlin.math.min(1.0, rounded / steps))).toFloat()
+    }
+}
+
+fun motionSpring(options: Any? = null): SpringSpec<Float> {
+    val opts = options as? Map<*, *> ?: emptyMap<Any, Any>()
+    val stiffness = num(jsMapGet(opts, "stiffness")).let { if (it > 0.0) it.toFloat() else 100f }
+    val damping = num(jsMapGet(opts, "damping")).let { if (it > 0.0) it.toFloat() else 10f }
+    val mass = num(jsMapGet(opts, "mass")).let { if (it > 0.0) it.toFloat() else 1f }
+    val restDelta = num(jsMapGet(opts, "restDelta")).let { if (it > 0.0) it.toFloat() else 0.01f }
+    val dampingRatio = damping / (2f * kotlin.math.sqrt((mass * stiffness).toDouble()).toFloat())
+    return SpringSpec(dampingRatio = dampingRatio, stiffness = stiffness, visibilityThreshold = restDelta)
+}
+
+fun motionTween(options: Any? = null): TweenSpec<Float> {
+    val opts = options as? Map<*, *> ?: emptyMap<Any, Any>()
+    val duration = (num(jsMapGet(opts, "duration")) * 1000.0).toInt().let { if (it > 0) it else 300 }
+    val delayMs = (num(jsMapGet(opts, "delay")) * 1000.0).toInt().coerceAtLeast(0)
+    val ease = motionEase(jsMapGet(opts, "ease"))
+    return TweenSpec(durationMillis = duration, delay = delayMs, easing = ease)
+}
+
+private fun motionSpecFor(opts: Map<*, *>): AnimationSpec<Float> {
+    val spring = jsMapGet(opts, "spring")
+    if (spring is SpringSpec<*>) return spring as SpringSpec<Float>
+    val tween = jsMapGet(opts, "tween")
+    if (tween is TweenSpec<*>) return tween as TweenSpec<Float>
+    return if (jsString(jsMapGet(opts, "type")) == "spring") motionSpring(opts) else motionTween(opts)
+}
+
+private fun optFn(opts: Map<*, *>, key: String): ((Any?) -> Unit)? {
+    val v = jsMapGet(opts, key) ?: return null
+    if (v is Function1<*, *>) {
+        @Suppress("UNCHECKED_CAST")
+        return v as (Any?) -> Unit
+    }
+    if (v is Function0<*>) {
+        @Suppress("UNCHECKED_CAST")
+        val f = v as () -> Unit
+        return { f() }
+    }
+    return null
+}
+
+class MotionControls {
+    internal var job: Job? = null
+    var time: Double = 0.0
+    var speed: Double = 1.0
+    var finished: kotlinx.coroutines.Deferred<Boolean>? = null
+    fun bind(j: Job, f: kotlinx.coroutines.Deferred<Boolean>) { job = j; finished = f }
+    fun stop() { job?.cancel() }
+    fun pause() { job?.cancel() }
+    fun play() { }
+    fun complete() { job?.cancel() }
+    fun cancel() { job?.cancel() }
+}
+
+fun motionAnimate(from: Any?, to: Any?, options: Any? = null): MotionControls {
+    if (from is MotionRef) return motionAnimateElement(from, to, options)
+    return motionAnimateNumber(from, to, options)
+}
+
+private fun motionAnimateNumber(from: Any?, to: Any?, options: Any?): MotionControls {
+    val opts = options as? Map<*, *> ?: emptyMap<Any, Any>()
+    val onUpdate = optFn(opts, "onUpdate")
+    val onComplete = optFn(opts, "onComplete")
+    val onStop = optFn(opts, "onStop")
+    val delaySec = num(jsMapGet(opts, "delay"))
+    val repeat = (jsMapGet(opts, "repeat") as? Number)?.toDouble() ?: 0.0
+    val repeatType = jsString(jsMapGet(opts, "repeatType")).let { if (it == "reverse" || it == "mirror") it else "loop" }
+    val repeatDelay = num(jsMapGet(opts, "repeatDelay"))
+    val spec = motionSpecFor(opts)
+    val scope = CoroutineScope(SupervisorJob() + AndroidUiDispatcher.Main)
+    val controls = MotionControls()
+    val job = scope.launch {
+        if (delaySec > 0) delay((delaySec * 1000.0).toLong())
+        val start = num(from).toFloat()
+        val target = num(to).toFloat()
+        val t0 = System.nanoTime()
+        var iteration = 0
+        while (isActive && (repeat == Double.POSITIVE_INFINITY || iteration <= repeat)) {
+            val isReversed = repeatType != "loop" && iteration % 2 == 1
+            val cur = if (isReversed) target else start
+            val dst = if (isReversed) start else target
+            val anim = Animatable(cur)
+            anim.animateTo(dst, spec) {
+                controls.time = (System.nanoTime() - t0) / 1_000_000_000.0
+                onUpdate?.invoke(this.value)
+            }
+            if (repeat > 0.0 && iteration < repeat) {
+                if (repeatDelay > 0) delay((repeatDelay * 1000.0).toLong())
+                iteration++
+            } else {
+                break
+            }
+        }
+        onComplete?.invoke(null)
+    }
+    val finished = scope.async { job.join(); true }
+    controls.bind(job, finished)
+    controls.job = job
+    return controls
+}
+
+private fun motionAnimateElement(ref: MotionRef, props: Any?, options: Any?): MotionControls {
+    val opts = options as? Map<*, *> ?: emptyMap<Any, Any>()
+    val target = props as? Map<*, *> ?: emptyMap<Any, Any>()
+    val onComplete = optFn(opts, "onComplete")
+    val spec = motionSpecFor(opts)
+    val scope = CoroutineScope(SupervisorJob() + AndroidUiDispatcher.Main)
+    val controls = MotionControls()
+    val job = scope.launch {
+        val running = target.mapNotNull { (k, v) ->
+            val value = (v as? List<*>)?.lastOrNull() ?: v
+            val dst = num(value).toFloat()
+            var get: (() -> Float)? = null
+            var set: ((Float) -> Unit)? = null
+            when (k.toString()) {
+                "opacity" -> { get = { ref.alpha }; set = { ref.alpha = it } }
+                "scale", "scaleX" -> { get = { ref.scaleX }; set = { ref.scaleX = it } }
+                "scaleY" -> { get = { ref.scaleY }; set = { ref.scaleY = it } }
+                "translateX", "x" -> { get = { ref.translateX }; set = { ref.translateX = it } }
+                "translateY", "y" -> { get = { ref.translateY }; set = { ref.translateY = it } }
+                "rotate" -> { get = { ref.rotate }; set = { ref.rotate = it } }
+            }
+            if (get != null && set != null) Triple(get, set, dst) else null
+        }
+        running.map { (get, set, dst) ->
+            launch {
+                val anim = Animatable(get())
+                anim.animateTo(dst, spec) { set(this.value) }
+            }
+        }.forEach { it.join() }
+        onComplete?.invoke(null)
+    }
+    val finished = scope.async { job.join(); true }
+    controls.bind(job, finished)
+    return controls
+}
+
+// motion-utils delay(callback, ms) -> setTimeout with a cancel cleanup.
+fun motionDelay(callback: Any?, timeout: Any?): () -> Unit {
+    val id = VeskTimers.setTimeout(callback as? () -> Unit ?: {}, timeout)
+    return { VeskTimers.clearTimeout(id) }
+}
+` },
+  'motionStagger': { deps: ['jsMapGet'], src: `
+// motion-utils stagger(duration, { startDelay, from }): per-index delay.
+// The callback form carries a total that vesk scripts rarely know, so the
+// from-index default of 0 is assumed (distance = index). The ease option is
+// not applied for the same reason (it needs the total).
+fun motionStagger(i: Any?, duration: Any?, options: Any? = null): Double {
+    val d = num(duration).let { if (it > 0.0) it else 0.1 }
+    val opts = options as? Map<*, *> ?: emptyMap<Any, Any>()
+    val startDelay = num(jsMapGet(opts, "startDelay"))
+    val from = num(jsMapGet(opts, "from"))
+    return startDelay + d * kotlin.math.abs(from - num(i))
+}
+` },
+  'motionInView': { deps: ['motionCore'], src: `
+// inView(ref, onStart, { once }): fires when the ref'd element intersects the
+// viewport (the element's bounds come from the motionGraphics
+// onGloballyPositioned hook; the viewport is the display size).
+@Composable
+fun motionInView(ref: Any?, onEnter: Any?, options: Any? = null) {
+    val target = ref as? MotionRef ?: return
+    val cb = onEnter as? () -> Unit ?: return
+    val opts = options as? Map<*, *> ?: emptyMap<Any, Any>()
+    val once = jsMapGet(opts, "once")?.let { truthy(it) } ?: true
+    LaunchedEffect(target, once) {
+        val flow = snapshotFlow { target.entered }
+        if (once) {
+            flow.filter { it }.take(1).collect { cb() }
+        } else {
+            flow.filter { it }.collect { cb() }
+        }
+    }
+}
+` },
+  'motionScroll': { deps: ['jsMapGet'], src: `
+// scroll(onScroll, { axis }): reports scroll progress (0..1) of the current
+// route's scroll container — the same ScrollState the layout shell uses, so
+// progress follows the page content.
+@Composable
+fun motionScroll(onScroll: Any?, options: Any? = null) {
+    val opts = options as? Map<*, *> ?: emptyMap<Any, Any>()
+    val axis = opts["axis"] as? String ?: "y"
+    val nav = LocalNavController.current
+    val route = nav.currentRoute.value
+    val state = remember(route) { nav.scrollStateFor(route, 0) }
+    val cb = onScroll as? (Any?) -> Unit ?: return
+    LaunchedEffect(state, axis, cb) {
+        snapshotFlow { state.value }.collect { v ->
+            val max = state.maxValue.toFloat().coerceAtLeast(1f)
+            cb(num(v) / max)
+        }
+    }
+}
+` },
+  'motionDrag': { deps: [], src: `
+// Modifier-producing drag gestures (detectDragGestures). The drag offset is
+// passed to the JS handler as an Offset {x, y}.
+fun Modifier.motionDrag(
+    onDragStart: (() -> Unit)? = null,
+    onDrag: ((Any?) -> Unit)? = null,
+    onDragEnd: (() -> Unit)? = null,
+): Modifier = pointerInput(Unit) {
+    detectDragGestures(
+        onDragStart = { onDragStart?.invoke() },
+        onDrag = { change, amount -> change.consume(); onDrag?.invoke(amount) },
+        onDragEnd = { onDragEnd?.invoke() },
+        onDragCancel = { onDragEnd?.invoke() },
+    )
+}
+` },
+  'motionHover': { deps: [], src: `
+// Modifier-producing hover enter/exit events (awaitPointerEventScope).
+fun Modifier.motionHover(
+    onHoverStart: (() -> Unit)? = null,
+    onHoverEnd: (() -> Unit)? = null,
+): Modifier = pointerInput(Unit) {
+    awaitPointerEventScope {
+        while (true) {
+            val event = awaitPointerEvent()
+            val t = event.type
+            if (t == PointerEventType.Enter) onHoverStart?.invoke()
+            else if (t == PointerEventType.Exit) onHoverEnd?.invoke()
+        }
+    }
+}
+` },
+  'motionPress': { deps: [], src: `
+// Modifier-producing press start/end (detectTapGestures onPress/onTap).
+fun Modifier.motionPress(
+    onPress: (() -> Unit)? = null,
+    onPressEnd: (() -> Unit)? = null,
+): Modifier = pointerInput(Unit) {
+    detectTapGestures(
+        onPress = { onPress?.invoke() },
+        onTap = { onPressEnd?.invoke() },
+    )
+}
+` },
+  'motionFocus': { deps: [], src: `
+// Modifier-producing focus/blur events (onFocusChanged).
+fun Modifier.motionFocus(
+    onFocus: (() -> Unit)? = null,
+    onBlur: (() -> Unit)? = null,
+): Modifier = onFocusChanged { if (it.isFocused) onFocus?.invoke() else onBlur?.invoke() }
+` },
 };
 
-export const RUNTIME_ORDER = ['veskVideo', 'veskAudio', 'veskFileImage', 'veskDeviceCore', 'veskDeviceApi', 'veskQr', 'veskYchartsLineChart', 'veskDragDrop', 'veskColorFilter', 'veskBrightness', 'veskContrast', 'veskGrayscale', 'veskSaturate', 'veskInvert', 'veskSepia', 'veskHueRotate', 'veskDashedBorder', 'veskSideBorder', 'veskDivideLine', 'veskSkew', 'rememberRouteScrollState', 'Link', 'NavLink', 'Outlet', 'jsString', 'jsHandleError', 'jsSafe', 'jsTypeof', 'jsGlobalIsNaN', 'jsGlobalIsFinite', 'jsStrictIsNaN', 'jsStrictIsFinite', 'jsIsInteger', 'jsParseInt', 'jsParseFloat', 'jsEncodeURIComponent', 'jsDecodeURIComponent', 'jsEncodeURI', 'jsDecodeURI', 'jsRegexExec', 'jsRegexSearch', 'jsStringify', 'jsParseJson', 'jsMapOf', 'jsSetOf', 'jsMapIterable', 'jsMapGet', 'jsMapSet', 'jsHas', 'jsDelete', 'jsClear', 'jsMapKeys', 'jsMapValues', 'jsMapEntries', 'jsSize', 'jsLength', 'jsForEach', 'jsDateValue', 'jsTagged', 'JsConsole', 'VeskTimers', 'VeskAppContext', 'jsAlert', 'VeskWebStorage', 'VeskFetch', 'VeskSqlite', 'VeskAuth'];
+export const RUNTIME_ORDER = ['veskVideo', 'veskAudio', 'veskFileImage', 'veskDeviceCore', 'veskDeviceApi', 'veskQr', 'veskYchartsLineChart', 'veskDragDrop', 'veskColorFilter', 'veskBrightness', 'veskContrast', 'veskGrayscale', 'veskSaturate', 'veskInvert', 'veskSepia', 'veskHueRotate', 'veskDashedBorder', 'veskSideBorder', 'veskDivideLine', 'veskSkew', 'rememberRouteScrollState', 'Link', 'NavLink', 'Outlet', 'jsString', 'jsHandleError', 'jsSafe', 'jsTypeof', 'jsGlobalIsNaN', 'jsGlobalIsFinite', 'jsStrictIsNaN', 'jsStrictIsFinite', 'jsIsInteger', 'jsParseInt', 'jsParseFloat', 'jsEncodeURIComponent', 'jsDecodeURIComponent', 'jsEncodeURI', 'jsDecodeURI', 'jsRegexExec', 'jsRegexSearch', 'jsStringify', 'jsParseJson', 'jsMapOf', 'jsSetOf', 'jsMapIterable', 'jsMapGet', 'jsMapSet', 'jsHas', 'jsDelete', 'jsClear', 'jsMapKeys', 'jsMapValues', 'jsMapEntries', 'jsSize', 'jsLength', 'jsForEach', 'jsDateValue', 'jsTagged', 'JsConsole', 'VeskTimers', 'VeskAppContext', 'jsAlert', 'VeskWebStorage', 'VeskFetch', 'VeskSqlite', 'VeskAuth', 'motionFocus', 'motionPress', 'motionHover', 'motionDrag', 'motionScroll', 'motionInView', 'motionStagger', 'motionCore'];
 
 // Function/composable names that come from a differently-named helper unit.
 export const BIOMETRIC_CHECK_BODY = `val pm = context.packageManager

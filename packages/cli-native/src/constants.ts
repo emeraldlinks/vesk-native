@@ -1,10 +1,17 @@
 import { existsSync, readdirSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-export const MONOREPO = resolve(import.meta.dirname ?? process.cwd(), '..', '..', '..');
-export const TEMPLATE_DIR = join(MONOREPO, 'runtime', 'vesk-native-template');
-export const SAMPLE_VSK = join(MONOREPO, 'test-app', 'app');
+// The CLI resolves its shipped assets from its own package location (dist/ or
+// src/ depending on how it runs), never from the working directory — so a
+// packed `cli-native` tarball is self-contained: template files, the nav
+// Router.kt, sample .vsk sources, and the .vsklib registry all travel inside
+// the package.
+const PKG_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+export const TEMPLATE_DIR = join(PKG_ROOT, 'assets', 'template');
+export const SAMPLE_VSK = join(PKG_ROOT, 'assets', 'sample');
+export const NAVIGATION_KT = join(PKG_ROOT, 'assets', 'navigation', 'Router.kt');
 export const CONFIG_TS = 'veskconfig.ts';
 export const CONFIG_JSON = 'veskconfig.json';
 // Termux prefix comes from the environment when present ($PREFIX, $HOME,

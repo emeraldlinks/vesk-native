@@ -119,6 +119,12 @@ fun Layout(props: LayoutProps = LayoutProps(), content: @Composable () -> Unit =
 								text = "Shop",
 							)
 						}
+					NavLink(props = NavLinkProps(href = "/anim", `class` = "text-sm font-semibold text-gray-600"))
+						{
+							Text(
+								text = "Anim",
+							)
+						}
 					NavLink(props = NavLinkProps(href = "/cart", `class` = "text-lg leading-6"))
 						{
 							Text(

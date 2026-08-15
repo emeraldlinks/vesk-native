@@ -1,10 +1,19 @@
 {
-  "name": "compiler-native",
+  "name": "@vesk/native-compiler",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "description": "vesk-native compiler — walks @vesk/compiler IR and emits Kotlin .kt source",
-  "main": "./src/index.ts",
+  "main": "./dist/index.js",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --format=esm --platform=node --outfile=dist/index.js --tsconfig=../../tsconfig.json"
+  },
   "devDependencies": {
     "typescript": "^5.8.0"
   }

@@ -36,7 +36,7 @@ import type { ModifierParts } from '@compiler-native/tailwind';
 import { parseCssClasses } from '@compiler-native/css';
 import { walkIR } from '@compiler-native/walk-ir';
 import { relative } from 'node:path';
-import { collectHeaderSymbols, declarationName, importSource, importSpecifiers, npmImportLines, pkgImportLines, resolveJsTsTarget, resolveVskTarget, sanitizeIdent, slugFor, splitVskHeader, toPosix, transformModuleStatements, vskImportLines } from '@compiler-native/modules';
+import { FRAMEWORK_NPM_SPECIFIERS, collectHeaderSymbols, declarationName, importSource, importSpecifiers, npmImportLines, pkgImportLines, resolveJsTsTarget, resolveVskTarget, sanitizeIdent, slugFor, splitVskHeader, toPosix, transformModuleStatements, vskImportLines } from '@compiler-native/modules';
 import type { ModuleExport, ModuleRegistry } from '@compiler-native/modules';
 
 // The runtime's router components are the only non-`.vsk` callables emitted
@@ -81,6 +81,32 @@ const CLASS_ATTRS = new Set(['class', 'className']);
 // contentPadding so the pill surface keeps its shape (a modifier padding on a
 // Button would inset the surface and leave a bare background ring).
 const BTN_PAD_RE = /^p(?:[trblxy])?-(\d+)$/;
+
+// Kotlin storage type for a track() cell from its init source text (no
+// regex): plain decimal ints stay Int, float/exponent literals become Double
+// so fractional writes (scroll progress, tween values) keep their value.
+// Non-numeric inits return null and keep the plain `.value = rhs` write path.
+function inferTrackCellType(init: string): string | null {
+  let inner = init.trim();
+  if (inner.startsWith('track(') && inner.endsWith(')')) inner = inner.slice(6, -1).trim();
+  if (inner.length === 0) return null;
+  let digit = false;
+  let float = false;
+  for (let i = 0; i < inner.length; i++) {
+    const c = inner[i]!;
+    if (c >= '0' && c <= '9') {
+      digit = true;
+    } else if ((c === '-' || c === '+') && i === 0) {
+      // leading sign
+    } else if (c === '.' || c === 'e' || c === 'E') {
+      float = true;
+    } else {
+      return null;
+    }
+  }
+  if (!digit) return null;
+  return float ? 'Double' : 'Int';
+}
 
 function buttonPadding(classes: string[]): { h: number; v: number } | null {
   let h = 0;
@@ -582,11 +608,14 @@ class Emitter {
   libImports: Set<string>;
   vsklibRegistry?: Map<string, VskLibSurface>;
   libraryExports: Map<string, LibExportSig>;
+  motionExports: Set<string>;
+  refCells: Set<string>;
 
-  constructor(err: KtErrors, tracked: Map<string, TrackedInfo>, componentsWithoutProps?: Set<string>, customClasses?: Map<string, ModifierParts>, imageResources?: Map<string, string>, mediaResources?: Map<string, string>, rClass = 'app.R', libraryTags?: Map<string, VskLibTag>, libImports: Set<string> = new Set(), componentNames?: Set<string>, vsklibRegistry?: Map<string, VskLibSurface>, libraryExports: Map<string, LibExportSig> = new Map()) {
+  constructor(err: KtErrors, tracked: Map<string, TrackedInfo>, componentsWithoutProps?: Set<string>, customClasses?: Map<string, ModifierParts>, imageResources?: Map<string, string>, mediaResources?: Map<string, string>, rClass = 'app.R', libraryTags?: Map<string, VskLibTag>, libImports: Set<string> = new Set(), componentNames?: Set<string>, vsklibRegistry?: Map<string, VskLibSurface>, libraryExports: Map<string, LibExportSig> = new Map(), motionExports: Set<string> = new Set(), refCells: Set<string> = new Set(), cellTypes: Map<string, string> = new Map()) {
     this.err = err;
-    this.j2k = new Js2Kt(err);
+    this.j2k = new Js2Kt(err, cellTypes);
     this.j2k.libraryExports = libraryExports;
+    this.j2k.motionExports = motionExports;
     this.j2k.libImports = libImports;
     this.tracked = tracked;
     this.componentsWithoutProps = componentsWithoutProps;
@@ -599,6 +628,8 @@ class Emitter {
     this.libImports = libImports;
     this.vsklibRegistry = vsklibRegistry;
     this.libraryExports = libraryExports;
+    this.motionExports = motionExports;
+    this.refCells = refCells;
   }
 
   private guardCount = 0;
@@ -822,13 +853,41 @@ class Emitter {
     return out;
   }
 
+  // A tracked cell that an element `ref={name}` binds can hold a MotionRef
+  // (the element animates via `animate(ref, ...)`); a plain `mutableStateOf`
+  // cell is typed by its initializer so `null` stays String?-like. Ref-bound
+  // null-initialized cells widen to Any? so the MotionRef assignment compiles.
   trackDecl(node: TrackDecl): string {
     const init = this.parseTrackInit(node.init);
-    const typed = init.trim() === 'null' ? 'mutableStateOf<String?>(null)' : `mutableStateOf(${init})`;
+    let typed: string;
+    if (init.trim() === 'null') {
+      typed = this.refCells.has(node.name) ? 'mutableStateOf<Any?>(null)' : 'mutableStateOf<String?>(null)';
+    } else {
+      typed = `mutableStateOf(${init})`;
+    }
     if (node.rawName) {
       return `val ${node.name} = remember { ${typed} }\n\tval ${node.rawName} = ${node.name}`;
     }
     return `val ${node.name} = remember { ${typed} }`;
+  }
+
+  // motion element refs: `ref={name}` where `name` is a tracked cell. The
+  // value is replaced at runtime by rememberMotionRef(), and the element's
+  // modifier gains `.motionGraphics(ref)` so animate()/inView()/scroll() can
+  // drive it. Returns the raw cell Kotlin name (cellName) or null when the
+  // ref is not a motion ref (form `ref={bindValue(x)}` keeps its input
+  // binding).
+  refCount = 0;
+  motionRefBinding(node: StaticNode): string | null {
+    const ref = node.children.find(
+      (c) => c instanceof DynamicBinding && c.kind === 'attribute' && c.target === 'ref'
+    ) as DynamicBinding | undefined;
+    if (!ref) return null;
+    const ast = this.ensureAst(ref.expression);
+    if (!ast || ast.type !== 'Identifier') return null;
+    const info = this.tracked.get((ast as { name?: string }).name as string);
+    if (!info) return null;
+    return info.cellName;
   }
 
   emitTopLevel(node: IRNode, level: number, parentAxis: 'column' | 'row' | null = null): string[] {
@@ -1130,15 +1189,25 @@ function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: '
   const attrs = em.dynamicAttrs(node);
   const pad = '\t'.repeat(level);
   const padIn = '\t'.repeat(level + 1);
+  // motion element refs: `ref={tracked}` replaces the cell value with a
+  // MotionRef and chains `.motionGraphics(ref)` onto the element modifier.
+  // Form inputs keep their bindValue/bindChecked ref semantics instead.
+  let prologue: string[] = [];
+  const refCell = info.kind === 'input' ? null : em.motionRefBinding(node);
+  if (refCell) {
+    const refName = `__veskRef${++em.refCount}`;
+    prologue = [pad + `val ${refName} = rememberMotionRef()`, pad + `${refCell}.value = ${refName}`];
+    extraModifier = prependModifier(extraModifier, `Modifier.motionGraphics(${refName})`);
+  }
   // absolute/fixed elements are out of flow: shrink-to-fit, never block-fill
   const fillWidth = fillMaxWidth(classes, node.tag, parentAxis) && !isAbsolute(classes);
 
   if (info.kind === 'image') {
-    return imageLines(node, em, level, parentAxis, extraModifier, boxScope);
+    return [...prologue, ...imageLines(node, em, level, parentAxis, extraModifier, boxScope)];
   }
 
   if (info.kind === 'video' || info.kind === 'audio') {
-    return mediaLines(node, em, level, parentAxis, extraModifier, boxScope);
+    return [...prologue, ...mediaLines(node, em, level, parentAxis, extraModifier, boxScope)];
   }
 
   if (info.kind === 'text') {
@@ -1147,7 +1216,7 @@ function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: '
       (c) => !(c instanceof TextNode) && !(c instanceof DynamicBinding)
     );
     if (nonText.length === 0) {
-      return splitLines(makeTextCall(content, classes, level, em, fillWidth, parentAxis, extraModifier, null, flowParent, boxScope));
+      return [...prologue, ...splitLines(makeTextCall(content, classes, level, em, fillWidth, parentAxis, extraModifier, null, flowParent, boxScope))];
     }
     const lines: string[] = [];
     const modifier = modifierFor(classes, em, parentAxis, fillWidth, extraModifier, boxScope);
@@ -1161,11 +1230,11 @@ function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: '
       lines.push(...emitChild(child, em, level + 1, 'column', null, false, false));
     }
     lines.push(pad + '}');
-    return lines;
+    return [...prologue, ...lines];
   }
 
   if (info.kind === 'button') {
-    return emitButton(node, classes, attrs, em, level, parentAxis, extraModifier, boxScope);
+    return [...prologue, ...emitButton(node, classes, attrs, em, level, parentAxis, extraModifier, boxScope)];
   }
 
   if (info.kind === 'input') {
@@ -1225,7 +1294,7 @@ function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: '
   const divide = containerParts.divide;
 
   if (gridInfo) {
-    return gridLines(node, em, level, pad, padIn, modifier, gridInfo, divide);
+    return [...prologue, ...gridLines(node, em, level, pad, padIn, modifier, gridInfo, divide)];
   }
 
   const composable = boxParent
@@ -1264,20 +1333,20 @@ function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: '
   const callPad = flow ? `${pad}@OptIn(ExperimentalLayoutApi::class)\n${pad}` : pad;
   if (argLines.length === 0 && childrenLines.length === 0) {
     lines.push(callPad + `${composable} {}`);
-    return lines;
+    return [...prologue, ...lines];
   }
   if (argLines.length === 0) {
     lines.push(callPad + `${composable} {`);
     lines.push(...childrenLines);
     lines.push(pad + '}');
-    return lines;
+    return [...prologue, ...lines];
   }
   lines.push(callPad + `${composable}(`);
   lines.push(...argLines);
   lines.push(pad + ') {');
   lines.push(...childrenLines);
   lines.push(pad + '}');
-  return lines;
+  return [...prologue, ...lines];
 }
 
 // Grid containers emit as a Column of weighted rows: each child is
@@ -1603,6 +1672,16 @@ function renameDeclared(node: JsNode, kotlinName: string): JsNode {
   return { ...node, id } as JsNode;
 }
 
+// `import { ... } from 'motion'` (motion.dev): the JS names that have native
+// Kotlin/Compose mappings in the app runtime. Anything else is a hard error so
+// a script never silently miscompiles a motion API we have not mapped yet.
+const KNOWN_MOTION = new Set([
+  'animate', 'spring', 'stagger', 'inView', 'scroll', 'delay',
+  'cubicBezier', 'steps', 'mirrorEasing', 'reverseEasing',
+  'easeIn', 'easeOut', 'easeInOut', 'circIn', 'circOut', 'circInOut',
+  'backIn', 'backOut', 'backInOut', 'anticipate',
+]);
+
 function emitVskHeader(
   source: string,
   fileRel: string,
@@ -1614,19 +1693,20 @@ function emitVskHeader(
   vsklibRegistry: Map<string, VskLibSurface> | undefined,
   err: KtErrors,
   libExportImports: Set<string> = new Set(),
-): { imports: string[]; decls: string[]; libraryTags: Map<string, VskLibTag>; libraryExports: Map<string, LibExportSig> } {
+): { imports: string[]; decls: string[]; libraryTags: Map<string, VskLibTag>; libraryExports: Map<string, LibExportSig>; motionExports: Set<string> } {
   const imports: string[] = [];
   const decls: string[] = [];
   const aliases: string[] = [];
   const libraryTags = new Map<string, VskLibTag>();
   const libraryExports = new Map<string, LibExportSig>();
+  const motionExports = new Set<string>();
   const { header } = splitVskHeader(source);
-  if (!header.trim()) return { imports, decls, libraryTags, libraryExports };
+  if (!header.trim()) return { imports, decls, libraryTags, libraryExports, motionExports };
 
   const { symbols, error } = collectHeaderSymbols(header);
   if (error) {
     err.warn(null, error);
-    return { imports, decls, libraryTags, libraryExports };
+    return { imports, decls, libraryTags, libraryExports, motionExports };
   }
   for (const e of symbols.expressions) err.warn(e, `top-level expression statements are not supported in a .vsk script header`);
   const slug = slugs?.get(fileRel) ?? slugFor(fileRel);
@@ -1638,7 +1718,24 @@ function emitVskHeader(
     const spec = importSource(imp);
     let lines: string[] = [];
     let errors: string[] = [];
-    if (spec === '@vesk/browser') {
+    if (FRAMEWORK_NPM_SPECIFIERS.has(spec)) {
+      // motion.dev animations compile to the app runtime's motion helpers
+      // (motionAnimate/motionSpring/motionTween/motionEase/motionStagger/
+      // motionInView/motionScroll + rememberMotionRef/Modifier.motionGraphics).
+      // Names are validated here so an unmapped motion export fails the build.
+      for (const s of (imp.specifiers as JsNode[]) ?? []) {
+        if (s.type !== 'ImportSpecifier') {
+          errors.push(`import '${spec}': only named imports are supported`);
+          continue;
+        }
+        const imported = (s.imported as JsNode).name as string;
+        if (!KNOWN_MOTION.has(imported)) {
+          errors.push(`import '${imported}' from '${spec}': no native Kotlin mapping yet (available: ${[...KNOWN_MOTION].sort().join(', ')})`);
+        } else {
+          motionExports.add(imported);
+        }
+      }
+    } else if (spec === '@vesk/browser') {
       // Built-in browser-API surface (sqlite, web storage, auth, fetch,
       // timers, alert, console, JSON). These names compile to Vesk* runtime
       // helpers by name, so importing is purely for IDE/tooling; validation
@@ -1712,6 +1809,7 @@ function emitVskHeader(
     for (const e of errors) err.warn(null, e);
   }
   j2k.libraryExports = libraryExports;
+  j2k.motionExports = motionExports;
 
   const emitDecl = (name: string, node: JsNode, kotlinName: string, isDefaultExpr: boolean): void => {
     let kt: string;
@@ -1734,7 +1832,7 @@ function emitVskHeader(
   }
 
   imports.push(...aliases);
-  return { imports, decls, libraryTags, libraryExports };
+  return { imports, decls, libraryTags, libraryExports, motionExports };
 }
 
 export interface ProjectModuleCompile {
@@ -1899,6 +1997,7 @@ function runCompile(source: string, filename: string, options: CompileOptions): 
   const libImports = new Set<string>();
   let fileLibraryTags: Map<string, VskLibTag> | undefined;
   const fileLibraryExports = new Map<string, LibExportSig>();
+  const fileMotionExports = new Set<string>();
   // Experimental-API opt-in markers required by the library tags this file
   // uses; emitted as `@file:OptIn(...)` before the package declaration.
   const fileOptIns = new Set<string>();
@@ -1918,6 +2017,7 @@ function runCompile(source: string, filename: string, options: CompileOptions): 
       }
     }
     for (const [name, sig] of headerOut.libraryExports) fileLibraryExports.set(name, sig);
+    for (const name of headerOut.motionExports) fileMotionExports.add(name);
   }
   out.unshift(`package ${pkg}`, '', IMPORTS, '');
   // `@file:` annotations must precede the package statement, so these are
@@ -1945,13 +2045,38 @@ function runCompile(source: string, filename: string, options: CompileOptions): 
     if (propsClass) out.push(propsClass);
 
     const tracked = collectTrackedNames(comp.body);
+    // Kotlin storage type per tracked cell, from the init source text (no
+    // regex): decimal ints stay Int, float/exponent literals become Double so
+    // fractional writes (e.g. a scroll progress) keep their value. Everything
+    // else stays untyped and keeps the plain `.value = rhs` write path.
+    const cellTypes = new Map<string, string>();
+    for (const node of comp.body) {
+      if (node instanceof TrackDecl) {
+        const t = inferTrackCellType(node.init);
+        if (t) cellTypes.set(node.name, t);
+      }
+    }
+    // Tracked cells referenced by element `ref={name}` bindings: these widen
+    // to Any? (they hold a MotionRef at runtime) and their elements get the
+    // rememberMotionRef/motionGraphics pipeline.
+    const refCells = new Set<string>();
+    walkIR(comp.body, (node) => {
+      if (node instanceof StaticNode) {
+        for (const c of node.children) {
+          if (c instanceof DynamicBinding && c.kind === 'attribute' && c.target === 'ref' && c.expression.raw) {
+            const name = c.expression.raw.trim();
+            if (tracked.has(name)) refCells.add(name);
+          }
+        }
+      }
+    });
     let resolvedClasses = customClasses;
     const own = scoped.get(comp.name);
     if (own) {
       resolvedClasses = new Map(customClasses);
       for (const [k, v] of own) resolvedClasses.set(k, v); // scoped wins over global
     }
-    const em = new Emitter(err, tracked, options.componentsWithoutProps, resolvedClasses, options.imageResources, options.mediaResources, options.rClass, fileLibraryTags, libImports, options.componentNames, options.vsklibRegistry, fileLibraryExports);
+    const em = new Emitter(err, tracked, options.componentsWithoutProps, resolvedClasses, options.imageResources, options.mediaResources, options.rClass, fileLibraryTags, libImports, options.componentNames, options.vsklibRegistry, fileLibraryExports, fileMotionExports, refCells, cellTypes);
 
     const propsArg = propsClass ? `props: ${comp.name}Props${propsParamDefault ? ` = ${comp.name}Props()` : ''}` : '';
     const params = [propsArg, 'content: @Composable () -> Unit = {}'].filter(Boolean).join(', ');
