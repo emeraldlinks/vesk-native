@@ -760,14 +760,14 @@
     },
     "tags": {
       "ConstraintLayout": {
-"composable": "ConstraintLayout",
- "imports": [
-  "androidx.constraintlayout.compose.ConstraintLayout"
- ],
- "container": true,
- "attrs": {
-  "optimizationLevel": "optimizationLevel"
- },
+        "composable": "ConstraintLayout",
+        "imports": [
+          "androidx.constraintlayout.compose.ConstraintLayout"
+        ],
+        "container": true,
+        "attrs": {
+          "optimizationLevel": "optimizationLevel"
+        },
         "attrShapes": {
           "optimizationLevel": {
             "name": "optimizationLevel",
@@ -884,6 +884,7 @@
     },
     "curated": true,
     "essential": false,
-    "libType": "component"
+    "libType": "component",
+    "multiplatform": true
   }
 }

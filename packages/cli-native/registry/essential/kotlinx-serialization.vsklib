@@ -69,6 +69,7 @@
     },
     "essential": true,
     "curated": true,
-    "libType": "utility"
+    "libType": "utility",
+    "multiplatform": true
   }
 }

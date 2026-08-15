@@ -2123,6 +2123,7 @@
       }
     },
     "curated": true,
-    "libType": "component"
+    "libType": "component",
+    "multiplatform": false
   }
 }

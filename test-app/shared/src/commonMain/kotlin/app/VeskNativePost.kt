@@ -51,7 +51,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
@@ -65,14 +64,14 @@ import androidx.compose.ui.zIndex
 
 
 @Composable
-fun BlogPost(content: @Composable () -> Unit = {}) {
+fun VeskNativePost(content: @Composable () -> Unit = {}) {
 	Text(
-		text = "Hello World",
+		text = "Vesk Native",
 		modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
 		style = TextStyle(fontSize = 36.sp, lineHeight = 40.sp, fontWeight = FontWeight.Bold),
 	)
 	Text(
-		text = "This is the hello world post.",
+		text = "This is a post about vesk-native.",
 		modifier = Modifier.fillMaxWidth(),
 		style = TextStyle(color = MaterialTheme.colorScheme.onSurfaceVariant),
 	)

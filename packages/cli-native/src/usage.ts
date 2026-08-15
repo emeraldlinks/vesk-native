@@ -138,24 +138,30 @@ function scanKtCalls(src: string): Set<string> {
 
 export function collectRuntimeUsage(appDir: string): Set<string> {
   const used = new Set<string>();
-  // Generated page Kotlin lives in the :shared module (androidMain) — the
-  // usage scan follows it there.
-  const scanDir = join(dirname(appDir), 'shared', 'src', 'androidMain', 'kotlin', 'app');
-  if (!existsSync(scanDir)) return used;
-  const files: string[] = [];
-  const walk = (d: string): void => {
-    for (const e of readdirSync(d, { withFileTypes: true })) {
-      const p = join(d, e.name);
-      if (e.isDirectory()) walk(p);
-      else if (e.name.endsWith('.kt') && e.name !== 'Runtime.kt') files.push(p);
-    }
-  };
-  walk(scanDir);
-  for (const f of files) {
-    const src = readFileSync(f, 'utf8');
-    for (const call of scanKtCalls(src)) {
-      const unit = HELPER_FN_NAMES[call] ?? call;
-      if (RUNTIME_HELPERS[unit]) used.add(unit);
+  // Generated page Kotlin lives in the :shared module — portable pages land in
+  // commonMain, android-only pages (and the runtime actuals) in androidMain.
+  // The usage scan follows them both.
+  const scanDirs = [
+    join(dirname(appDir), 'shared', 'src', 'androidMain', 'kotlin', 'app'),
+    join(dirname(appDir), 'shared', 'src', 'commonMain', 'kotlin', 'app'),
+  ];
+  for (const scanDir of scanDirs) {
+    if (!existsSync(scanDir)) continue;
+    const files: string[] = [];
+    const walk = (d: string): void => {
+      for (const e of readdirSync(d, { withFileTypes: true })) {
+        const p = join(d, e.name);
+        if (e.isDirectory()) walk(p);
+        else if (e.name.endsWith('.kt') && e.name !== 'Runtime.kt') files.push(p);
+      }
+    };
+    walk(scanDir);
+    for (const f of files) {
+      const src = readFileSync(f, 'utf8');
+      for (const call of scanKtCalls(src)) {
+        const unit = HELPER_FN_NAMES[call] ?? call;
+        if (RUNTIME_HELPERS[unit]) used.add(unit);
+      }
     }
   }
   return used;

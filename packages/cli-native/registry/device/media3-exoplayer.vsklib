@@ -19,6 +19,7 @@
     "tags": {},
     "curated": true,
     "essential": false,
-    "libType": "utility"
+    "libType": "utility",
+    "multiplatform": false
   }
 }

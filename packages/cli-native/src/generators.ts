@@ -153,14 +153,16 @@ kotlin {
         // The portable core (RuntimeCore.kt) + navigation Router.kt are plain
         // Kotlin + compose ui/foundation/runtime/animation-core + coroutines
         // only — no LocalContext, no platform APIs. The versions match what
-        // the android source set resolves (ui/foundation 1.11.4 from the app
-        // BOM, kotlinx-coroutines-core 1.9.0 transitively).
+        // the android source set resolves (ui/foundation 1.11.4, material3
+        // 1.4.0 from the app BOM, kotlinx-coroutines-core 1.9.0 transitively).
+        // material3 carries a common variant, so portable pages compile here.
         commonMain.dependencies {
             implementation("androidx.compose.runtime:runtime:1.11.4")
             implementation("androidx.compose.ui:ui:1.11.4")
             implementation("androidx.compose.foundation:foundation:1.11.4")
             implementation("androidx.compose.foundation:foundation-layout:1.11.4")
             implementation("androidx.compose.animation:animation-core:1.11.4")
+            implementation("androidx.compose.material3:material3:1.4.0")
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
         }
         androidMain.dependencies {
@@ -699,10 +701,24 @@ fun VeskTheme(content: @Composable () -> Unit) {
 // android.* reference stays in the androidMain Runtime.kt together with the
 // seam actuals. Each half carries only the imports it needs.
 
-export function generateRuntimeKt(appDir: string, config: VeskConfig): Set<string> {
+export function generateRuntimeKt(
+  appDir: string,
+  config: VeskConfig,
+  bundledResources?: { imageResources: Map<string, string>; mediaResources: Map<string, string> },
+): Set<string> {
   const used = collectRuntimeUsage(appDir);
   const deviceApis = collectDeviceApiUsage(appDir);
   const broadcast = config.media?.broadcast ?? true;
+  // The bundled-asset seams (veskBundledImage / veskBundledMediaUrl) map each
+  // resource name the compiler embedded in page code to the app's own R class
+  // constants — the android actuals are generated with those mappings baked
+  // in, so commonMain pages never reference the R class directly.
+  const imageCases = bundledResources
+    ? [...bundledResources.imageResources.values()].map((res) => `        "${res}" -> painterResource(__R_CLASS__.drawable.${res})`).join('\n')
+    : '';
+  const mediaCases = bundledResources
+    ? [...bundledResources.mediaResources.values()].map((res) => `        "${res}" -> "android.resource://__RESOURCE_AUTHORITY__/" + __R_CLASS__.raw.${res}`).join('\n')
+    : '';
   const commonBody: string[] = [];
   const androidBody: string[] = [];
   const emitted = new Set<string>();
@@ -723,6 +739,19 @@ export function generateRuntimeKt(appDir: string, config: VeskConfig): Set<strin
       if (unit.expect != null) {
         unit.expect = unit.expect.split('__BROADCAST__').join(String(broadcast));
       }
+    }
+    if (name === 'veskBundledImage') {
+      src = unit.src.split('__BUNDLED_IMAGE_CASES__').join(imageCases);
+    }
+    if (name === 'veskBundledMediaUrl') {
+      src = unit.src.split('__BUNDLED_MEDIA_CASES__').join(mediaCases);
+    }
+    // Resolve the app's R class / resource authority inside the seam actuals.
+    if (src.includes('__R_CLASS__')) {
+      src = src.split('__R_CLASS__').join(`${config.appId}.shared.R`);
+    }
+    if (src.includes('__RESOURCE_AUTHORITY__')) {
+      src = src.split('__RESOURCE_AUTHORITY__').join(config.appId);
     }
     if (name === 'veskDeviceApi') {
       src = src
@@ -846,15 +875,25 @@ function compileProjectModules(appDir: string): { registry: Map<string, Map<stri
   return { registry, kt: blocks.join('\n\n'), errors };
 }
 
-export function compileVskFiles(appDir: string, config: VeskConfig, target: string): void {
+export function compileVskFiles(appDir: string, config: VeskConfig, target: string): { imageResources: Map<string, string>; mediaResources: Map<string, string> } {
   const outDir = sharedKotlinDir(target);
+  const commonOutDir = sharedCommonKotlinDir(target);
   mkdirSync(outDir, { recursive: true });
+  mkdirSync(commonOutDir, { recursive: true });
 
   const KEEP = new Set(['App.kt', 'Runtime.kt', 'Router.kt', 'Theme.kt']);
   for (const f of readdirSync(outDir)) {
     if (f.endsWith('.kt') && !KEEP.has(f)) unlinkSync(join(outDir, f));
   }
+  // The commonMain dir hosts the runtime core + router (KEEP), any stale page
+  // files from a previous placement, and project/npm module output that a
+  // portable page imports (written after the page pass below).
+  const COMMON_KEEP = new Set(['RuntimeCore.kt', 'Router.kt', 'Modules.kt']);
+  for (const f of readdirSync(commonOutDir)) {
+    if (f.endsWith('.kt') && !COMMON_KEEP.has(f)) unlinkSync(join(commonOutDir, f));
+  }
   if (!existsSync(join(outDir, 'navigation'))) mkdirSync(join(outDir, 'navigation'), { recursive: true });
+  if (!existsSync(join(commonOutDir, 'navigation'))) mkdirSync(join(commonOutDir, 'navigation'), { recursive: true });
 
   const vskFiles = collectVskFiles(appDir);
   if (vskFiles.length === 0) {
@@ -883,28 +922,21 @@ export function compileVskFiles(appDir: string, config: VeskConfig, target: stri
   // Project JS/TS modules (imported from .vsk headers with relative paths)
   // compile to Kotlin declarations in Modules.kt; the registry maps each
   // module's rel path to its compiled exports so headers can import them.
+  // The file itself is written after the page pass, to the source set that
+  // actually imports it (commonMain when a portable page does).
   const projectModules = compileProjectModules(appDir);
   for (const e of projectModules.errors) console.error(`  [compile] error in project module: ${e}`);
   if (projectModules.errors.length > 0) process.exit(1);
   const projectModuleRegistry = projectModules.registry;
-  if (projectModules.kt.trim()) {
-    writeFileSync(join(outDir, 'Modules.kt'), `package app\n\n${projectModules.kt.trimEnd()}\n`);
-    log('module', `project JS/TS modules -> app/Modules.kt`);
-  }
 
   // npm specifier -> exported name -> { pkg, name }. Translated at build time
   // by the npm module compiler (packages/cli-native/src/npm.ts); the reachable
   // subgraph of installed npm packages becomes Kotlin files in app/vmod/.
+  // Like Modules.kt, the files land after the page pass based on which source
+  // set imports them.
   const { registry: npmRegistry, files: npmFiles, errors: npmErrors } = compileNpmModules(appDir);
   for (const e of npmErrors) console.error(`  [compile] error in npm module: ${e}`);
   if (npmErrors.length > 0) process.exit(1);
-  const vmodDir = join(outDir, 'vmod');
-  if (existsSync(vmodDir)) rmSync(vmodDir, { recursive: true, force: true });
-  for (const f of npmFiles) {
-    const target = join(outDir, f.rel);
-    writeFileSync(target, f.kt);
-    log('module', `npm module -> ${f.rel}`);
-  }
 
   const { scoped: scopedClasses, skipped: cssSkipped } = collectCustomCss(
     vskFiles.map((f) => ({ source: readFileSync(f, 'utf8'), filename: relative(appDir, f) })),
@@ -981,8 +1013,9 @@ export function compileVskFiles(appDir: string, config: VeskConfig, target: stri
   // Installed .vsklib libraries resolve only through explicit header imports
   // (`import { CoilImage } from '@vesk/coil'`), so a library's tags are never
   // implicitly in scope for files that don't import them.
+  const installedLibs = installedLibraries(target);
   const vsklibRegistry = new Map<string, VskLibSurface>();
-  for (const lib of installedLibraries(target)) {
+  for (const lib of installedLibs) {
     const exports = new Map<string, import('@compiler-native/elements').LibExportSig>();
     for (const sig of Object.values(lib.signatures ?? {})) exports.set(sig.name, sig);
     for (const name of lib.exports ?? []) {
@@ -990,24 +1023,91 @@ export function compileVskFiles(appDir: string, config: VeskConfig, target: stri
     }
     vsklibRegistry.set(lib.id, { exports, tags: lib.tags ?? {} });
   }
+
+  // Usage-based page placement: a page (and the components it imports) compiles
+  // to commonMain iff none of its `@vesk/<libId>` imports resolve to a library
+  // that is android-only. Portability is transitive over `.vsk` component
+  // imports (a page importing a non-portable component cannot be commonMain),
+  // so a first pass compiles every file, then a fixed-point pass marks
+  // portability, then the files are written to their source set.
+  interface PageResult {
+    file: string;
+    rel: string;
+    kt: string;
+    outName: string;
+    result: import('@compiler-native/kotlin-codegen').CompileResult;
+  }
+  const pageResults: PageResult[] = [];
   for (const file of vskFiles) {
     const source = readFileSync(file, 'utf8');
-    const result = compileVskResult(source, file, { componentsWithoutProps, componentNames, customClasses, scopedCustomClasses: scopedClasses, imageResources, mediaResources, rClass: `${config.appId}.shared.R`, resourceAuthority: config.appId, rootName: config.root ?? '', fileRel: relative(appDir, file), appDir, moduleRegistry, moduleSlugs, projectModuleRegistry, npmRegistry, vsklibRegistry });
+    const result = compileVskResult(source, file, { componentsWithoutProps, componentNames, customClasses, scopedCustomClasses: scopedClasses, imageResources, mediaResources, rootName: config.root ?? '', fileRel: relative(appDir, file), appDir, moduleRegistry, moduleSlugs, projectModuleRegistry, npmRegistry, vsklibRegistry });
     if (result.errors.length > 0) {
       console.error(`  [compile] errors in ${relative(appDir, file)}:`);
       for (const e of result.errors) console.error(`    ! ${e}`);
       process.exit(1);
     }
     for (const n of result.notes) console.error(`  [compile] warning: ${n} (in ${relative(appDir, file)})`);
-    const kt = result.kt;
     const decls = findComponentDecls(parse(source) as unknown as JsNode);
     const name = decls[0]?.name ?? `s_${slugFor(toPosix(relative(appDir, file)))}`;
     const count = seen.get(name) ?? 0;
     seen.set(name, count + 1);
-    const outName = count === 0 ? name : `${name}_${count}`;
-    writeFileSync(join(outDir, `${outName}.kt`), kt);
-    log('compile', `${relative(appDir, file)} -> app/${outName}.kt`);
+    pageResults.push({ file, rel: toPosix(relative(appDir, file)), kt: result.kt, outName: count === 0 ? name : `${name}_${count}`, result });
   }
+
+  // Fixed-point: a page is portable iff every library it imports is installed
+  // and multiplatform, and every `.vsk` component it imports is portable.
+  const multiPlatformIds = new Set(installedLibs.filter((l) => l.multiplatform === true).map((l) => l.id));
+  const portableByRel = new Map<string, boolean>();
+  const markPortable = (rel: string): boolean => {
+    const cached = portableByRel.get(rel);
+    if (cached !== undefined) return cached;
+    const page = pageResults.find((p) => p.rel === rel);
+    if (!page) {
+      portableByRel.set(rel, false);
+      return false;
+    }
+    // Guard against import cycles while the closure is computed.
+    portableByRel.set(rel, false);
+    const portable = page.result.libraryIds.every((id) => multiPlatformIds.has(id)) && page.result.vskTargets.every((t) => markPortable(t));
+    portableByRel.set(rel, portable);
+    return portable;
+  };
+  for (const p of pageResults) markPortable(p.rel);
+
+  // Project JS/TS modules land in the source set that imports them. If any
+  // commonMain page imports a project module, Modules.kt must be commonMain
+  // too (commonMain cannot depend on androidMain). npm modules likewise.
+  let modulesInCommon = false;
+  let npmInCommon = false;
+  for (const p of pageResults) {
+    if (!portableByRel.get(p.rel)) continue;
+    if (p.result.jsTsTargets.length > 0) modulesInCommon = true;
+    if (p.result.npmTargets.length > 0) npmInCommon = true;
+  }
+  if (projectModules.kt.trim()) {
+    const kt = `package app\n\n${projectModules.kt.trimEnd()}\n`;
+    writeFileSync(join(modulesInCommon ? commonOutDir : outDir, 'Modules.kt'), kt);
+    log('module', `project JS/TS modules -> ${modulesInCommon ? 'commonMain' : 'androidMain'}/app/Modules.kt`);
+  }
+  const vmodOutDir = join(npmInCommon ? commonOutDir : outDir, 'vmod');
+  if (existsSync(vmodOutDir)) rmSync(vmodOutDir, { recursive: true, force: true });
+  if (npmInCommon) {
+    const stale = join(outDir, 'vmod');
+    if (existsSync(stale)) rmSync(stale, { recursive: true, force: true });
+  }
+  for (const f of npmFiles) {
+    const t = join(vmodOutDir, f.rel);
+    writeFileSync(t, f.kt);
+    log('module', `npm module -> ${npmInCommon ? 'commonMain' : 'androidMain'}/app/${f.rel}`);
+  }
+
+  for (const p of pageResults) {
+    const portable = portableByRel.get(p.rel) === true;
+    const dir = portable ? commonOutDir : outDir;
+    writeFileSync(join(dir, `${p.outName}.kt`), p.kt);
+    log('compile', `${p.rel} -> ${portable ? 'commonMain' : 'androidMain'}/app/${p.outName}.kt`);
+  }
+  return { imageResources, mediaResources };
 }
 
 function ktString(s: string): string {
@@ -1547,12 +1647,12 @@ export function generateProject(target: string, config: VeskConfig): void {
   generateMainActivity(target, config, deviceMedia, hasMedia || deviceNotify);
   generateThemeKt(target, config);
   generateRouterKt(appDir);
-  compileVskFiles(appDir, config, target);
+  const bundledResources = compileVskFiles(appDir, config, target);
   generateAppKt(appDir, config);
   // Last: Runtime.kt is pruned to the helpers the generated pages actually use.
   // Gradle dependencies are derived from the same usage so they stay in lock
   // step with the pruned imports and code.
-  const used = generateRuntimeKt(appDir, config);
+  const used = generateRuntimeKt(appDir, config, bundledResources);
   generateSharedBuildGradleKts(target, config, deviceApis, hasMedia, used, libs);
   generateAppBuildGradleKts(target, config, libs);
 }

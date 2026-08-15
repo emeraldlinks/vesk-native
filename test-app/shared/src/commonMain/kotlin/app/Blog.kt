@@ -51,7 +51,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
@@ -64,93 +63,35 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 
 
-data class LayoutProps(
-	val children: Any? = null,
-)
-
 @Composable
-fun Layout(props: LayoutProps = LayoutProps(), content: @Composable () -> Unit = {}) {
+fun Blog(content: @Composable () -> Unit = {}) {
+	Text(
+		text = "Blog",
+		modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+		style = TextStyle(fontSize = 36.sp, lineHeight = 40.sp, fontWeight = FontWeight.Bold),
+	)
 	Column(
-		modifier = Modifier.fillMaxSize(),
+		modifier = Modifier.fillMaxWidth().padding(start = 24.dp),
 	) {
-		Column {
-			Column {}
-		}
 		Column(
-			modifier = Modifier.fillMaxWidth().fillMaxHeight(),
+			modifier = Modifier.fillMaxWidth(),
 		) {
-			Column(
-				modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).veskSideBorder(top = 0.dp, end = 0.dp, bottom = 1.dp, start = 0.dp, MaterialTheme.colorScheme.outlineVariant).padding(horizontal = 16.dp).padding(vertical = 8.dp),
-			) {
-				Row(
-					modifier = Modifier.fillMaxWidth(),
-					verticalAlignment = Alignment.CenterVertically,
-					horizontalArrangement = Arrangement.spacedBy(12.dp),
-				) {
-					NavLink(props = NavLinkProps(href = "/"))
-						{
-							Row(
-								verticalAlignment = Alignment.CenterVertically,
-								horizontalArrangement = Arrangement.spacedBy(8.dp),
-							) {
-								Row(
-									modifier = Modifier.clip(RoundedCornerShape(6.dp)).background(Color(0xFF2563EB)).width(24.dp).height(24.dp),
-									verticalAlignment = Alignment.CenterVertically,
-									horizontalArrangement = Arrangement.Center,
-								) {
-									Text(
-										text = "N",
-										style = TextStyle(color = Color(0xFFFFFFFF), fontWeight = FontWeight.Bold, fontSize = 12.sp, lineHeight = 16.sp),
-									)
-								}
-								Text(
-									text = "Nordi",
-									style = TextStyle(fontSize = 16.sp, lineHeight = 24.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = -0.2.sp),
-								)
-							}
-						}
-					Column(
-						modifier = Modifier.weight(1f),
-					) {
-					}
-					NavLink(props = NavLinkProps(href = "/shop", `class` = "text-sm font-semibold text-gray-600"))
-						{
-							Text(
-								text = "Shop",
-							)
-						}
-					NavLink(props = NavLinkProps(href = "/anim", `class` = "text-sm font-semibold text-gray-600"))
-						{
-							Text(
-								text = "Anim",
-							)
-						}
-					NavLink(props = NavLinkProps(href = "/cart", `class` = "text-lg leading-6"))
-						{
-							Text(
-								text = "🛒",
-							)
-						}
-				}
-			}
-			Column(
-				modifier = Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberRouteScrollState()),
-			) {
-				Column(
-					modifier = Modifier.fillMaxWidth(),
-				) {
-					content()
-				}
-				Column(
-					modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).veskSideBorder(top = 1.dp, end = 0.dp, bottom = 0.dp, start = 0.dp, MaterialTheme.colorScheme.outlineVariant).padding(horizontal = 16.dp).padding(vertical = 16.dp),
-				) {
+			NavLink(props = NavLinkProps(href = "/blog/hello-world", `class` = "text-blue-600"))
+				{
 					Text(
-						text = "Nordi Clothing Co — built with vesk-native",
-						modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-						style = TextStyle(textAlign = TextAlign.Center, color = Color(0xFF6B7280), fontSize = 12.sp),
+						text = "Hello World",
 					)
 				}
-			}
+		}
+		Column(
+			modifier = Modifier.fillMaxWidth(),
+		) {
+			NavLink(props = NavLinkProps(href = "/blog/vesk-native", `class` = "text-blue-600"))
+				{
+					Text(
+						text = "Vesk Native",
+					)
+				}
 		}
 	}
 }

@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInRoot
@@ -101,6 +102,21 @@ expect fun veskAudio(
 
 @Composable
 expect fun veskFileImage(path: String?): ImageBitmap
+
+
+// Platform seam for bundled project images (<img src="/media/...">). Pages
+// compile against this name only — the android actual resolves the drawable
+// resource by name, so commonMain pages never reference the R class. The
+// generated when-cases map each bundled name to its R.drawable constant; an
+// unknown name is a compiler-config mismatch and fails loudly.
+@Composable
+expect fun veskBundledImage(name: String): Painter
+
+
+// Platform seam for bundled project media (<video>/<audio> src="/media/...").
+// commonMain pages call this to get the playable URL; the android actual
+// resolves the raw resource authority/id so commonMain never sees the R class.
+expect fun veskBundledMediaUrl(name: String): String
 
 
 // Platform seam (Phase 3 slice 1): the portable DeviceApi surface — the
@@ -431,6 +447,10 @@ fun jsStringify(v: Any?): String = when (v) {
 }
 
 
+// Platform seam: JSON.parse. Android actual = org.json (bundled with the
+// platform), unchanged; the iOS actual arrives with the CMP milestone.
+expect fun jsParseJson(s: Any?): Any?
+
 fun jsMapGet(map: Any?, key: Any?): Any? = (map as? Map<*, *>)?.get(key)
 
 
@@ -509,10 +529,6 @@ expect object VeskWebStorage {
     fun sessionLength(): Int
 }
 
-
-// Platform seam: JSON.parse. Android actual = org.json (bundled with the
-// platform), unchanged; the iOS actual arrives with the CMP milestone.
-expect fun jsParseJson(s: Any?): Any?
 
 expect class VeskResponse {
     val url: String

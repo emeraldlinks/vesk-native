@@ -27,14 +27,16 @@ kotlin {
         // The portable core (RuntimeCore.kt) + navigation Router.kt are plain
         // Kotlin + compose ui/foundation/runtime/animation-core + coroutines
         // only — no LocalContext, no platform APIs. The versions match what
-        // the android source set resolves (ui/foundation 1.11.4 from the app
-        // BOM, kotlinx-coroutines-core 1.9.0 transitively).
+        // the android source set resolves (ui/foundation 1.11.4, material3
+        // 1.4.0 from the app BOM, kotlinx-coroutines-core 1.9.0 transitively).
+        // material3 carries a common variant, so portable pages compile here.
         commonMain.dependencies {
             implementation("androidx.compose.runtime:runtime:1.11.4")
             implementation("androidx.compose.ui:ui:1.11.4")
             implementation("androidx.compose.foundation:foundation:1.11.4")
             implementation("androidx.compose.foundation:foundation-layout:1.11.4")
             implementation("androidx.compose.animation:animation-core:1.11.4")
+            implementation("androidx.compose.material3:material3:1.4.0")
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
         }
         androidMain.dependencies {

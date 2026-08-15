@@ -33,12 +33,13 @@
         "name": "DebugTree",
         "target": "Timber.DebugTree",
         "qualified": "timber.log.Timber.DebugTree",
-        "jsdoc": "Timber.DebugTree() \u2014 the debug tree to plant for logcat output.",
+        "jsdoc": "Timber.DebugTree() — the debug tree to plant for logcat output.",
         "isConstructor": true,
         "params": [],
         "defaultParams": [],
         "returnShape": "other"
       }
-    }
+    },
+    "multiplatform": false
   }
 }

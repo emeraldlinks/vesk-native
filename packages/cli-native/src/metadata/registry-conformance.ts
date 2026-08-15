@@ -74,6 +74,13 @@ async function verifyRecord(record: VskLibRecord): Promise<Failure[]> {
     if (simple) machineNames.add(simple);
   }
 
+  // The authored multiplatform flag must match the real artifact's published
+  // Gradle module metadata — a wrong value silently misplaces pages between
+  // commonMain and androidMain, so it fails the gate instead.
+  if (record.multiplatform !== undefined && record.multiplatform !== mach.multiplatform) {
+    failures.push({ id: record.id, detail: `multiplatform mismatch: record says ${record.multiplatform}, artifact metadata says ${mach.multiplatform}` });
+  }
+
   // A name that the primary artifact cannot show may be provided by a known
   // transitive artifact; verify it against that artifact's machine surface.
   const transitiveSurface = new Map<string, Set<string>>();

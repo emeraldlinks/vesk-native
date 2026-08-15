@@ -17,6 +17,7 @@
       "columnChart"
     ],
     "tags": {},
-    "libType": "utility"
+    "libType": "utility",
+    "multiplatform": false
   }
 }

@@ -130,6 +130,50 @@ export async function fetchTo(url: string, dest: string): Promise<boolean> {
   return false;
 }
 
+interface GradleVariant {
+  attributes?: Record<string, string>;
+  'available-at'?: MavenCoord & { module: string };
+}
+
+interface GradleModuleMetadata {
+  variants?: GradleVariant[];
+}
+
+/** Fetch the Gradle module metadata (`.module`) of an artifact from the given
+ *  repository. Returns null when the artifact ships no module metadata (a
+ *  POM-only publication — plain JVM/AAR libraries like gson or glide-compose). */
+export async function moduleMetadataOf(coord: MavenCoord, repo: MavenRepo = 'central'): Promise<GradleModuleMetadata | null> {
+  const url = `${repoBase(repo)}/${coord.group.replaceAll('.', '/')}/${coord.artifact}/${coord.version}/${coord.artifact}-${coord.version}.module`;
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(30_000), redirect: 'follow' });
+    if (!res.ok) return null;
+    return JSON.parse(await res.text()) as GradleModuleMetadata;
+  } catch {
+    return null;
+  }
+}
+
+/** Whether the artifact publishes Kotlin Multiplatform common metadata: its
+ *  real Gradle module metadata declares a `metadataApiElements` variant
+ *  (`org.jetbrains.kotlin.platform.type: common`). That is the exact signal
+ *  for "commonMain can depend on the same coordinate", verified from the
+ *  published artifact — never inferred from the name. */
+export async function isMultiplatform(coord: MavenCoord): Promise<boolean> {
+  for (const repo of ['central', 'google'] as MavenRepo[]) {
+    const meta = await moduleMetadataOf(coord, repo);
+    if (!meta) continue;
+    for (const variant of meta.variants ?? []) {
+      if ((variant.attributes?.['org.jetbrains.kotlin.platform.type'] ?? '') === 'common') return true;
+    }
+    // Module metadata exists but declares no common variant — a single-platform
+    // (android/jvm) publication; checked once.
+    return false;
+  }
+  // No module metadata on either repo: a POM-only publication. Never guess a
+  // platform the artifact does not publish.
+  return false;
+}
+
 /** True when a JAR carries no `.class` files — a KMP `commonMain` metadata jar
  *  (`.knm` tables only). The JVM/Android class surface then lives in the
  *  platform variant, reached by following the Gradle module metadata
@@ -420,6 +464,7 @@ function paramSigOf(
 
 export async function generateLibraryBinding(coord: MavenCoord, opts?: BindingGenOptions): Promise<GeneratedBinding> {
   const { kind, path } = await fetchArtifact(coord);
+  const multiplatform = await isMultiplatform(coord);
   const work = mkdtempSync(join(tmpdir(), 'vesk-lib-decode-'));
   try {
     let classesDir: string;
@@ -719,6 +764,7 @@ export async function generateLibraryBinding(coord: MavenCoord, opts?: BindingGe
       artifact: coord.artifact,
       version: coord.version,
       gradle: [`${coord.group}:${coord.artifact}:${coord.version}`],
+      multiplatform,
       minSdk,
       permissions,
       exports: [...exportsSet].sort(),

@@ -165,6 +165,7 @@ import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInRoot
@@ -250,6 +251,12 @@ export function runtimeImports(deviceApis: Set<string>, used: Set<string>): stri
       'import co.yml.charts.ui.linechart.model.LineChartData',
       'import co.yml.charts.ui.linechart.model.LinePlotData',
       'import co.yml.charts.ui.linechart.model.LineStyle',
+    );
+  }
+  if (used.has('veskBundledImage')) {
+    cond.push(
+      'import androidx.compose.ui.graphics.painter.Painter',
+      'import androidx.compose.ui.res.painterResource',
     );
   }
   return `${RUNTIME_IMPORTS_CORE}${cond.length ? `${cond.join('\n')}\n` : ''}`;
@@ -2900,6 +2907,42 @@ actual fun veskFileImage(path: String?): ImageBitmap {
     return remember(path) { ImageBitmap(1, 1) }
 }
 ` },
+  'veskBundledImage': { deps: [],
+    expect: `
+// Platform seam for bundled project images (<img src="/media/...">). Pages
+// compile against this name only — the android actual resolves the drawable
+// resource by name, so commonMain pages never reference the R class. The
+// generated when-cases map each bundled name to its R.drawable constant; an
+// unknown name is a compiler-config mismatch and fails loudly.
+@Composable
+expect fun veskBundledImage(name: String): Painter
+`,
+    src: `
+// <img src="/media/..."> bundled project asset -> R.drawable.<name>.
+@Composable
+actual fun veskBundledImage(name: String): Painter {
+    return when (name) {
+__BUNDLED_IMAGE_CASES__
+        else -> throw IllegalArgumentException("no bundled drawable: $name")
+    }
+}
+` },
+  'veskBundledMediaUrl': { deps: [],
+    expect: `
+// Platform seam for bundled project media (<video>/<audio> src="/media/...").
+// commonMain pages call this to get the playable URL; the android actual
+// resolves the raw resource authority/id so commonMain never sees the R class.
+expect fun veskBundledMediaUrl(name: String): String
+`,
+    src: `
+// <video>/<audio> src="/media/..."> bundled project media -> android.resource:// URI.
+actual fun veskBundledMediaUrl(name: String): String {
+    return when (name) {
+__BUNDLED_MEDIA_CASES__
+        else -> throw IllegalArgumentException("no bundled media: $name")
+    }
+}
+` },
   'veskColorFilter': { deps: [], platform: 'common', src: `
 // Tailwind color filter base: color-matrix saveLayer; works on all API levels.
 private fun Modifier.veskColorFilter(matrix: ColorMatrix): Modifier = drawWithContent {
@@ -4165,7 +4208,7 @@ fun Modifier.motionFocus(
 ` },
 };
 
-export const RUNTIME_ORDER = ['veskVideo', 'veskAudio', 'veskFileImage', 'veskDeviceCore', 'veskDeviceApi', 'veskQr', 'veskYchartsLineChart', 'veskDragDrop', 'veskColorFilter', 'veskBrightness', 'veskContrast', 'veskGrayscale', 'veskSaturate', 'veskInvert', 'veskSepia', 'veskHueRotate', 'veskDashedBorder', 'veskSideBorder', 'veskDivideLine', 'veskSkew', 'rememberRouteScrollState', 'Link', 'NavLink', 'Outlet', 'jsString', 'jsHandleError', 'jsSafe', 'jsTypeof', 'jsGlobalIsNaN', 'jsGlobalIsFinite', 'jsStrictIsNaN', 'jsStrictIsFinite', 'jsIsInteger', 'jsParseInt', 'jsParseFloat', 'jsEncodeURIComponent', 'jsDecodeURIComponent', 'jsEncodeURI', 'jsDecodeURI', 'jsRegexExec', 'jsRegexSearch', 'jsStringify', 'jsParseJson', 'jsMapOf', 'jsSetOf', 'jsMapIterable', 'jsMapGet', 'jsMapSet', 'jsHas', 'jsDelete', 'jsClear', 'jsMapKeys', 'jsMapValues', 'jsMapEntries', 'jsSize', 'jsLength', 'jsForEach', 'jsDateValue', 'jsTagged', 'JsConsole', 'VeskTimers', 'VeskAppContext', 'jsAlert', 'VeskWebStorage', 'VeskFetch', 'VeskSqlite', 'VeskAuth', 'motionFocus', 'motionPress', 'motionHover', 'motionDrag', 'motionScroll', 'motionInView', 'motionStagger', 'motionCore'];
+export const RUNTIME_ORDER = ['veskVideo', 'veskAudio', 'veskFileImage', 'veskBundledImage', 'veskBundledMediaUrl', 'veskDeviceCore', 'veskDeviceApi', 'veskQr', 'veskYchartsLineChart', 'veskDragDrop', 'veskColorFilter', 'veskBrightness', 'veskContrast', 'veskGrayscale', 'veskSaturate', 'veskInvert', 'veskSepia', 'veskHueRotate', 'veskDashedBorder', 'veskSideBorder', 'veskDivideLine', 'veskSkew', 'rememberRouteScrollState', 'Link', 'NavLink', 'Outlet', 'jsString', 'jsHandleError', 'jsSafe', 'jsTypeof', 'jsGlobalIsNaN', 'jsGlobalIsFinite', 'jsStrictIsNaN', 'jsStrictIsFinite', 'jsIsInteger', 'jsParseInt', 'jsParseFloat', 'jsEncodeURIComponent', 'jsDecodeURIComponent', 'jsEncodeURI', 'jsDecodeURI', 'jsRegexExec', 'jsRegexSearch', 'jsStringify', 'jsParseJson', 'jsMapOf', 'jsSetOf', 'jsMapIterable', 'jsMapGet', 'jsMapSet', 'jsHas', 'jsDelete', 'jsClear', 'jsMapKeys', 'jsMapValues', 'jsMapEntries', 'jsSize', 'jsLength', 'jsForEach', 'jsDateValue', 'jsTagged', 'JsConsole', 'VeskTimers', 'VeskAppContext', 'jsAlert', 'VeskWebStorage', 'VeskFetch', 'VeskSqlite', 'VeskAuth', 'motionFocus', 'motionPress', 'motionHover', 'motionDrag', 'motionScroll', 'motionInView', 'motionStagger', 'motionCore'];
 
 // Function/composable names that come from a differently-named helper unit.
 export const BIOMETRIC_CHECK_BODY = `val pm = context.packageManager

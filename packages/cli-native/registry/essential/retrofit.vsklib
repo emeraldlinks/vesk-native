@@ -33,7 +33,7 @@
         "name": "Builder",
         "target": "Retrofit.Builder",
         "qualified": "retrofit2.Retrofit.Builder",
-        "jsdoc": "Retrofit.Builder() \u2014 builder (public ctor); baseUrl(String), build().",
+        "jsdoc": "Retrofit.Builder() — builder (public ctor); baseUrl(String), build().",
         "isConstructor": true,
         "params": [],
         "defaultParams": [],
@@ -42,6 +42,7 @@
     },
     "essential": true,
     "curated": true,
-    "libType": "utility"
+    "libType": "utility",
+    "multiplatform": false
   }
 }

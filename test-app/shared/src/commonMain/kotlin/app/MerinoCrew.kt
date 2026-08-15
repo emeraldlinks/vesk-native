@@ -51,7 +51,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
@@ -65,7 +64,7 @@ import androidx.compose.ui.zIndex
 
 
 @Composable
-fun Beanie(content: @Composable () -> Unit = {}) {
+fun MerinoCrew(content: @Composable () -> Unit = {}) {
 	val qty = remember { mutableStateOf(1) }
 	val added = remember { mutableStateOf(false) }
 	Column(
@@ -73,18 +72,18 @@ fun Beanie(content: @Composable () -> Unit = {}) {
 		verticalArrangement = Arrangement.spacedBy(24.dp),
 	) {
 		Row(
-			modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFFFACC15), Color(0xFFD97706)), start = Offset(0f, 0f), end = Offset(1f, 1f))).height(288.dp),
+			modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFFFBBF24), Color(0xFFEA580C)), start = Offset(0f, 0f), end = Offset(1f, 1f))).height(288.dp),
 			verticalAlignment = Alignment.CenterVertically,
 			horizontalArrangement = Arrangement.Center,
 		) {
 			Text(
-				text = "Hand-knitted",
+				text = "100% merino · 18.5 micron",
 				modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0x33FFFFFF)).padding(horizontal = 12.dp).padding(vertical = 6.dp),
 				style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
 			)
 		}
 		Text(
-			text = "Yellowstone Beanie",
+			text = "Merino Crew",
 			modifier = Modifier.fillMaxWidth(),
 			style = TextStyle(fontSize = 24.sp, lineHeight = 28.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = -0.2.sp),
 		)
@@ -94,21 +93,31 @@ fun Beanie(content: @Composable () -> Unit = {}) {
 			horizontalArrangement = Arrangement.spacedBy(8.dp),
 		) {
 			Text(
-				text = "★★★★★",
+				text = "★★★★☆",
 				style = TextStyle(color = Color(0xFFF59E0B), letterSpacing = 0.4.sp, fontWeight = FontWeight.Medium),
 			)
 			Text(
-				text = "4.9 (57 reviews)",
+				text = "4.8 (340 reviews)",
 				style = TextStyle(color = MaterialTheme.colorScheme.onSurfaceVariant),
 			)
 		}
-		Text(
-			text = "${'$'}28",
+		Row(
 			modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-			style = TextStyle(fontSize = 24.sp, lineHeight = 32.sp, fontWeight = FontWeight.ExtraBold),
-		)
+			verticalAlignment = Alignment.Bottom,
+			horizontalArrangement = Arrangement.spacedBy(8.dp),
+		) {
+			Text(
+				text = "${'$'}75",
+				style = TextStyle(fontSize = 24.sp, lineHeight = 32.sp, fontWeight = FontWeight.ExtraBold),
+			)
+			Text(
+				text = "${'$'}95",
+				modifier = Modifier.padding(bottom = 4.dp),
+				style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
+			)
+		}
 		Text(
-			text = " Chunky wool-blend beanie with a folded cuff. One size fits most, doubles as the perfect cabin companion. ",
+			text = " Odor-resistant, temperature-regulating merino knit. Smooth neck, raglan sleeves and a relaxed fit that layers under any shell. ",
 			modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
 			style = TextStyle(fontSize = 14.sp, lineHeight = 24.sp, color = MaterialTheme.colorScheme.onSurfaceVariant),
 		)
@@ -156,7 +165,7 @@ fun Beanie(content: @Composable () -> Unit = {}) {
 			}
 			Button(
 				onClick = jsSafe({ added.value = !truthy(added.value) }),
-				modifier = Modifier.shadow(1.dp).clip(RoundedCornerShape(9999.dp)).background(Color(0xFFEAB308)).weight(1f).padding(vertical = 14.dp),
+				modifier = Modifier.shadow(1.dp).clip(RoundedCornerShape(9999.dp)).background(Color(0xFFD97706)).weight(1f).padding(vertical = 14.dp),
 				shape = RoundedCornerShape(9999.dp),
 				colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 				elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
@@ -167,7 +176,7 @@ fun Beanie(content: @Composable () -> Unit = {}) {
 				)
 			} else {
 				Text(
-					text = ("Add to cart · ${'$'}" + (28 * qty.value)).toString(),
+					text = ("Add to cart · ${'$'}" + (75 * qty.value)).toString(),
 				)
 			}
 			}

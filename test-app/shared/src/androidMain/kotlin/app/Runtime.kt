@@ -150,6 +150,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.res.painterResource
 
 // Shared media coordination: only one vesk player plays at a time (starting
 // one pauses the previous), and <audio> exposes its session so system media
@@ -624,6 +626,34 @@ actual fun veskFileImage(path: String?): ImageBitmap {
     }
     if (bmp != null) return bmp.asImageBitmap()
     return remember(path) { ImageBitmap(1, 1) }
+}
+
+
+// <img src="/media/..."> bundled project asset -> R.drawable.<name>.
+@Composable
+actual fun veskBundledImage(name: String): Painter {
+    return when (name) {
+        "lookbook" -> painterResource(com.vesk.demo3.shared.R.drawable.lookbook)
+        "crew" -> painterResource(com.vesk.demo3.shared.R.drawable.crew)
+        "coast" -> painterResource(com.vesk.demo3.shared.R.drawable.coast)
+        "hills" -> painterResource(com.vesk.demo3.shared.R.drawable.hills)
+        "beach_1" -> painterResource(com.vesk.demo3.shared.R.drawable.beach_1)
+        "beach_2" -> painterResource(com.vesk.demo3.shared.R.drawable.beach_2)
+        "water" -> painterResource(com.vesk.demo3.shared.R.drawable.water)
+        "sunset" -> painterResource(com.vesk.demo3.shared.R.drawable.sunset)
+        "beach_party" -> painterResource(com.vesk.demo3.shared.R.drawable.beach_party)
+        else -> throw IllegalArgumentException("no bundled drawable: $name")
+    }
+}
+
+
+// <video>/<audio> src="/media/..."> bundled project media -> android.resource:// URI.
+actual fun veskBundledMediaUrl(name: String): String {
+    return when (name) {
+        "demo_1" -> "android.resource://com.vesk.demo3/" + com.vesk.demo3.shared.R.raw.demo_1
+        "last_train" -> "android.resource://com.vesk.demo3/" + com.vesk.demo3.shared.R.raw.last_train
+        else -> throw IllegalArgumentException("no bundled media: $name")
+    }
 }
 
 
@@ -2637,6 +2667,20 @@ actual fun jsHandleError(e: Throwable) {
 }
 
 
+actual fun jsParseJson(s: Any?): Any? = jsJsonValue(org.json.JSONTokener(jsString(s)).nextValue())
+private fun jsJsonValue(v: Any?): Any? = when (v) {
+    org.json.JSONObject.NULL -> null
+    is org.json.JSONObject -> {
+        val m = LinkedHashMap<String, Any?>()
+        val it = v.keys()
+        while (it.hasNext()) { val k = it.next(); m[k] = jsJsonValue(v.opt(k)) }
+        m
+    }
+    is org.json.JSONArray -> List(v.length()) { i -> jsJsonValue(v.opt(i)) }
+    else -> v
+}
+
+
 // Activity anchor for browser-API dialogs. The generated App() composable
 // registers the current activity (main thread, once per composition).
 actual object VeskAppContext {
@@ -2693,20 +2737,6 @@ actual object VeskWebStorage {
 
     private fun localKeys(): List<String> = prefs?.all?.keys?.sorted() ?: emptyList()
     private fun storeString(v: Any?): String = if (v == null) "null" else v.toString()
-}
-
-
-actual fun jsParseJson(s: Any?): Any? = jsJsonValue(org.json.JSONTokener(jsString(s)).nextValue())
-private fun jsJsonValue(v: Any?): Any? = when (v) {
-    org.json.JSONObject.NULL -> null
-    is org.json.JSONObject -> {
-        val m = LinkedHashMap<String, Any?>()
-        val it = v.keys()
-        while (it.hasNext()) { val k = it.next(); m[k] = jsJsonValue(v.opt(k)) }
-        m
-    }
-    is org.json.JSONArray -> List(v.length()) { i -> jsJsonValue(v.opt(i)) }
-    else -> v
 }
 
 

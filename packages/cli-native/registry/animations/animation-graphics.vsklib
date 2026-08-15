@@ -38,12 +38,13 @@
         ],
         "defaultParams": [],
         "returnShape": "object",
-        "jsdoc": "AnimatedImageVector \u2014 public class, but its constructor and AnimatedVectorTarget are Kotlin-internal in animation-graphics 1.11.4 (verified via compiler metadata). Instances only come from XML resource parsing (loadAnimatedVectorResource(theme, resources, id) + rememberAnimatedVectorPainter), which needs Android Resources \u2014 not expressible in vesk JS; import fails closed by design."
+        "jsdoc": "AnimatedImageVector — public class, but its constructor and AnimatedVectorTarget are Kotlin-internal in animation-graphics 1.11.4 (verified via compiler metadata). Instances only come from XML resource parsing (loadAnimatedVectorResource(theme, resources, id) + rememberAnimatedVectorPainter), which needs Android Resources — not expressible in vesk JS; import fails closed by design."
       }
     },
     "tags": {},
     "curated": true,
     "essential": false,
-    "libType": "utility"
+    "libType": "utility",
+    "multiplatform": true
   }
 }

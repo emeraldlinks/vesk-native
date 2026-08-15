@@ -51,7 +51,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
@@ -200,55 +199,55 @@ fun Home(props: HomeProps = HomeProps(), content: @Composable () -> Unit = {}) {
 				horizontalArrangement = Arrangement.spacedBy(12.dp),
 			) {
 				Image(
-					painter = painterResource(com.vesk.demo3.shared.R.drawable.lookbook),
+					painter = veskBundledImage("lookbook"),
 					contentDescription = null,
 					modifier = Modifier.clip(RoundedCornerShape(16.dp)).width(176.dp).height(224.dp),
 					contentScale = ContentScale.Crop,
 				)
 				Image(
-					painter = painterResource(com.vesk.demo3.shared.R.drawable.crew),
+					painter = veskBundledImage("crew"),
 					contentDescription = null,
 					modifier = Modifier.clip(RoundedCornerShape(16.dp)).width(176.dp).height(224.dp),
 					contentScale = ContentScale.Crop,
 				)
 				Image(
-					painter = painterResource(com.vesk.demo3.shared.R.drawable.coast),
+					painter = veskBundledImage("coast"),
 					contentDescription = null,
 					modifier = Modifier.clip(RoundedCornerShape(16.dp)).width(176.dp).height(224.dp),
 					contentScale = ContentScale.Crop,
 				)
 				Image(
-					painter = painterResource(com.vesk.demo3.shared.R.drawable.hills),
+					painter = veskBundledImage("hills"),
 					contentDescription = null,
 					modifier = Modifier.clip(RoundedCornerShape(16.dp)).width(176.dp).height(224.dp),
 					contentScale = ContentScale.Crop,
 				)
 				Image(
-					painter = painterResource(com.vesk.demo3.shared.R.drawable.beach_1),
+					painter = veskBundledImage("beach_1"),
 					contentDescription = null,
 					modifier = Modifier.clip(RoundedCornerShape(16.dp)).width(176.dp).height(224.dp),
 					contentScale = ContentScale.Crop,
 				)
 				Image(
-					painter = painterResource(com.vesk.demo3.shared.R.drawable.beach_2),
+					painter = veskBundledImage("beach_2"),
 					contentDescription = null,
 					modifier = Modifier.clip(RoundedCornerShape(16.dp)).width(176.dp).height(224.dp),
 					contentScale = ContentScale.Crop,
 				)
 				Image(
-					painter = painterResource(com.vesk.demo3.shared.R.drawable.water),
+					painter = veskBundledImage("water"),
 					contentDescription = null,
 					modifier = Modifier.clip(RoundedCornerShape(16.dp)).width(176.dp).height(224.dp),
 					contentScale = ContentScale.Crop,
 				)
 				Image(
-					painter = painterResource(com.vesk.demo3.shared.R.drawable.sunset),
+					painter = veskBundledImage("sunset"),
 					contentDescription = null,
 					modifier = Modifier.clip(RoundedCornerShape(16.dp)).width(176.dp).height(224.dp),
 					contentScale = ContentScale.Crop,
 				)
 				Image(
-					painter = painterResource(com.vesk.demo3.shared.R.drawable.beach_party),
+					painter = veskBundledImage("beach_party"),
 					contentDescription = null,
 					modifier = Modifier.clip(RoundedCornerShape(16.dp)).width(176.dp).height(224.dp),
 					contentScale = ContentScale.Crop,

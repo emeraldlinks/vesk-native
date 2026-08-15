@@ -20,6 +20,7 @@ async function main(): Promise<void> {
   console.log('=== coil-compose-base 2.7.0 ===');
   console.log('stats', JSON.stringify(coil.stats));
   assert(coil.stats.facades >= 5, `coil should expose >= 5 file facades, got ${coil.stats.facades}`);
+  assert(coil.record.multiplatform === false, `coil 2.x (io.coil-kt) is android-only — multiplatform must be false, got ${coil.record.multiplatform}`);
   const coilTags = Object.keys(coil.record.tags ?? {});
   for (const t of ['AsyncImage', 'SubcomposeAsyncImage']) {
     assert(coilTags.includes(t), `coil binding missing tag <${t}> (got: ${coilTags.join(', ')})`);
@@ -44,6 +45,7 @@ async function main(): Promise<void> {
     assert(ycTags.includes(t), `ycharts binding missing tag <${t}> (got: ${ycTags.join(', ')})`);
   }
   assert(yc.record.minSdk === 26, `ycharts AAR manifest minSdk should be 26, got ${yc.record.minSdk}`);
+  assert(yc.record.multiplatform === false, `ycharts is JVM-only — multiplatform must be false, got ${yc.record.multiplatform}`);
   assert(yc.skipped.filter((s) => s.includes('no JVM method') && s.includes('.charts.')).length === 0, 'ycharts should not report unbound chart JVM methods');
 
   const ycSigs = yc.record.signatures ?? {};
@@ -88,7 +90,6 @@ async function main(): Promise<void> {
     lcdAttr.typeName === 'co.yml.charts.ui.linechart.model.LineChartData',
     `LineChart lineChartData typeName must be LineChartData, got ${lcdAttr.typeName}`,
   );
-
   const glide = await generateLibraryBinding({ group: 'com.github.bumptech.glide', artifact: 'compose', version: '1.0.0-beta01' });
   console.log('=== glide compose 1.0.0-beta01 ===');
   console.log('stats', JSON.stringify(glide.stats));
@@ -103,6 +104,15 @@ async function main(): Promise<void> {
     glideImage?.optIn?.includes('com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi') === true,
     'glide GlideImage must propagate its ExperimentalGlideComposeApi opt-in marker',
   );
+  assert(glide.record.multiplatform === false, `glide-compose is android-only — multiplatform must be false, got ${glide.record.multiplatform}`);
+
+  // coil3 publishes Kotlin Multiplatform metadata (commonMain-usable); coil 2.x
+  // does not. The demo's Lib page uses both — pages importing coil3 can go to
+  // commonMain, pages importing coil 2.x must stay in androidMain.
+  const coil3 = await generateLibraryBinding({ group: 'io.coil-kt.coil3', artifact: 'coil-compose', version: '3.0.4' });
+  console.log('=== coil3 coil-compose 3.0.4 ===');
+  console.log('stats', JSON.stringify(coil3.stats));
+  assert(coil3.record.multiplatform === true, `coil3 publishes common metadata — multiplatform must be true, got ${coil3.record.multiplatform}`);
 
   // Network clients ship without declaring INTERNET in their own AAR manifest;
   // the coordinate rules must derive it at add/update time so the manifest

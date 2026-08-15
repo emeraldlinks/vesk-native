@@ -18,6 +18,7 @@
     ],
     "tags": {},
     "curated": true,
-    "libType": "utility"
+    "libType": "utility",
+    "multiplatform": true
   }
 }

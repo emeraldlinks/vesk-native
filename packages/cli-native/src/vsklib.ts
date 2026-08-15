@@ -22,6 +22,14 @@ export interface VskLibRecord {
   version: string;
   // "group:artifact:version" coordinates emitted as implementation(...) deps.
   gradle: string[];
+  // Whether the artifact publishes Kotlin Multiplatform common metadata
+  // (the `metadataApiElements` variant in its real Gradle module metadata —
+  // `org.jetbrains.kotlin.platform.type: common`). True means commonMain can
+  // depend on the same coordinate, so a page importing this library can be
+  // emitted into src/commonMain; false (or absent) keeps the page in
+  // androidMain. Derived by binding-gen from the real published `.module`
+  // metadata and verified by the registry conformance gate — never guessed.
+  multiplatform?: boolean;
   // Minimum Android API level this library compiles/links against (ycharts
   // needs 26, most libs are 21–24). The generated app minSdk is raised to the
   // max across installed libraries — never an overrideLibrary workaround.

@@ -55,11 +55,6 @@ export interface CompileOptions {
   scopedCustomClasses?: Map<string, Map<string, ModifierParts>>;
   imageResources?: Map<string, string>;
   mediaResources?: Map<string, string>;
-  rClass?: string;
-  /** Package the OS resolves android.resource:// URIs against at runtime — the
-   *  app applicationId (library resource URIs must not leak the library's own
-   *  namespace, since bundled media is merged into the app's resources). */
-  resourceAuthority?: string;
   rootName?: string;
   /** Project-relative path of this .vsk file (enables header import/export support). */
   fileRel?: string;
@@ -143,7 +138,7 @@ function isFileImageSrc(src: string): boolean {
   return src.startsWith('/storage/') || src.startsWith('/data/') || src.startsWith('content://') || src.startsWith('file://');
 }
 
-// <img src="..."> -> Image(painter = painterResource(R.drawable.x)) for bundled
+// <img src="..."> -> Image(painter = veskBundledImage(name)) for bundled
 // assets, Image(bitmap = veskFileImage(path)) for runtime file paths.
 function imageLines(node: StaticNode, em: Emitter, level: number, parentAxis: 'column' | 'row' | null, extraModifier: string | null, boxScope = false): string[] {
   const classes = em.classList(node);
@@ -166,7 +161,7 @@ function imageLines(node: StaticNode, em: Emitter, level: number, parentAxis: 'c
     } else {
       const res = em.imageResources?.get(staticSrc);
       if (res) {
-        painterArg = `painterResource(${em.rClass}.drawable.${res})`;
+        painterArg = `veskBundledImage(${em.ktString(res)})`;
       } else {
         em.err.warn(null, `<img src="${staticSrc}">: project file not found (looked up ${em.imageResources ? 'bundled assets' : 'no image map'})`);
       }
@@ -220,7 +215,7 @@ export function extractMediaSources(source: string): Array<{ src: string; elemen
 
 // <video src controls autoplay loop muted> / <audio ...> -> veskVideo /
 // veskAudio runtime helpers. Project-relative srcs are bundled to res/raw and
-// referenced via android.resource:// URIs; device paths/content URIs stream at
+// referenced via the veskBundledMediaUrl seam; device paths/content URIs stream at
 // runtime. A video without explicit sizing gets a 16:9 default.
 function mediaLines(node: StaticNode, em: Emitter, level: number, parentAxis: 'column' | 'row' | null, extraModifier: string | null, boxScope = false): string[] {
   const classes = em.classList(node);
@@ -244,7 +239,7 @@ function mediaLines(node: StaticNode, em: Emitter, level: number, parentAxis: 'c
     } else {
       const res = em.mediaResources?.get(staticSrc);
       if (res) {
-        urlArg = `"android.resource://${em.resourceAuthority}/" + ${em.rClass}.raw.${res}`;
+        urlArg = `veskBundledMediaUrl(${em.ktString(res)})`;
       } else {
         em.err.warn(null, `<${node.tag} src="${staticSrc}">: project file not found (looked up ${em.mediaResources ? 'bundled media' : 'no media map'})`);
       }
@@ -586,7 +581,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
@@ -607,8 +601,6 @@ class Emitter {
   customClasses?: Map<string, ModifierParts>;
   imageResources?: Map<string, string>;
   mediaResources?: Map<string, string>;
-  rClass: string;
-  resourceAuthority: string;
   libraryTags?: Map<string, VskLibTag>;
   libImports: Set<string>;
   vsklibRegistry?: Map<string, VskLibSurface>;
@@ -616,7 +608,7 @@ class Emitter {
   motionExports: Set<string>;
   refCells: Set<string>;
 
-  constructor(err: KtErrors, tracked: Map<string, TrackedInfo>, componentsWithoutProps?: Set<string>, customClasses?: Map<string, ModifierParts>, imageResources?: Map<string, string>, mediaResources?: Map<string, string>, rClass = 'app.R', resourceAuthority = '', libraryTags?: Map<string, VskLibTag>, libImports: Set<string> = new Set(), componentNames?: Set<string>, vsklibRegistry?: Map<string, VskLibSurface>, libraryExports: Map<string, LibExportSig> = new Map(), motionExports: Set<string> = new Set(), refCells: Set<string> = new Set(), cellTypes: Map<string, string> = new Map()) {
+  constructor(err: KtErrors, tracked: Map<string, TrackedInfo>, componentsWithoutProps?: Set<string>, customClasses?: Map<string, ModifierParts>, imageResources?: Map<string, string>, mediaResources?: Map<string, string>, libraryTags?: Map<string, VskLibTag>, libImports: Set<string> = new Set(), componentNames?: Set<string>, vsklibRegistry?: Map<string, VskLibSurface>, libraryExports: Map<string, LibExportSig> = new Map(), motionExports: Set<string> = new Set(), refCells: Set<string> = new Set(), cellTypes: Map<string, string> = new Map()) {
     this.err = err;
     this.j2k = new Js2Kt(err, cellTypes);
     this.j2k.libraryExports = libraryExports;
@@ -628,8 +620,6 @@ class Emitter {
     this.customClasses = customClasses;
     this.imageResources = imageResources;
     this.mediaResources = mediaResources;
-    this.rClass = rClass;
-    this.resourceAuthority = resourceAuthority || rClass.replace(/\.R$/, '');
     this.libraryTags = libraryTags;
     this.libImports = libImports;
     this.vsklibRegistry = vsklibRegistry;
@@ -1603,6 +1593,18 @@ export interface CompileResult {
   kt: string;
   errors: string[];
   notes: string[];
+  /** `@vesk/<libId>` libraries this file imports (usage-based page placement
+   *  between commonMain and androidMain is decided from these). */
+  libraryIds: string[];
+  /** Project-relative targets of the `.vsk` components this file imports
+   *  (transitive portability: a page is portable only if the components it
+   *  imports are portable too). */
+  vskTargets: string[];
+  /** Project-relative targets of the JS/TS modules this file imports. */
+  jsTsTargets: string[];
+  /** Bare npm specifiers this file imports (their compiled `app.vmod` files
+   *  must land in the same source set as this page). */
+  npmTargets: string[];
 }
 
 // <head><link rel="stylesheet" href="..."> — CSS files are global; <style>
@@ -1699,20 +1701,24 @@ function emitVskHeader(
   vsklibRegistry: Map<string, VskLibSurface> | undefined,
   err: KtErrors,
   libExportImports: Set<string> = new Set(),
-): { imports: string[]; decls: string[]; libraryTags: Map<string, VskLibTag>; libraryExports: Map<string, LibExportSig>; motionExports: Set<string> } {
+): { imports: string[]; decls: string[]; libraryTags: Map<string, VskLibTag>; libraryExports: Map<string, LibExportSig>; motionExports: Set<string>; libraryIds: Set<string>; vskTargets: Set<string>; jsTsTargets: Set<string>; npmTargets: Set<string> } {
   const imports: string[] = [];
   const decls: string[] = [];
   const aliases: string[] = [];
   const libraryTags = new Map<string, VskLibTag>();
   const libraryExports = new Map<string, LibExportSig>();
   const motionExports = new Set<string>();
+  const libraryIds = new Set<string>();
+  const vskTargets = new Set<string>();
+  const jsTsTargets = new Set<string>();
+  const npmTargets = new Set<string>();
   const { header } = splitVskHeader(source);
-  if (!header.trim()) return { imports, decls, libraryTags, libraryExports, motionExports };
+  if (!header.trim()) return { imports, decls, libraryTags, libraryExports, motionExports, libraryIds, vskTargets, jsTsTargets, npmTargets };
 
   const { symbols, error } = collectHeaderSymbols(header);
   if (error) {
     err.warn(null, error);
-    return { imports, decls, libraryTags, libraryExports, motionExports };
+    return { imports, decls, libraryTags, libraryExports, motionExports, libraryIds, vskTargets, jsTsTargets, npmTargets };
   }
   for (const e of symbols.expressions) err.warn(e, `top-level expression statements are not supported in a .vsk script header`);
   const slug = slugs?.get(fileRel) ?? slugFor(fileRel);
@@ -1766,6 +1772,7 @@ function emitVskHeader(
       if (!lib) {
         errors.push(`import '${spec}': unknown .vsklib library — install it with: vesk add ${libId}`);
       } else {
+        libraryIds.add(libId);
         const tagNames = Object.keys(lib.tags);
         for (const s of (imp.specifiers as JsNode[]) ?? []) {
           if (s.type !== 'ImportSpecifier') {
@@ -1795,18 +1802,22 @@ function emitVskHeader(
       const r = vskImportLines(imp, fileRel, appDir, registry ?? new Map());
       lines = r.lines;
       errors = r.errors;
+      const target = resolveVskTarget(spec, fileRel, appDir);
+      if (target) vskTargets.add(target);
     } else {
       const jsTsTarget = resolveJsTsTarget(spec, fileRel, appDir);
       if (jsTsTarget && projectRegistry?.has(jsTsTarget)) {
         const r = pkgImportLines(imp, spec, projectRegistry.get(jsTsTarget) ?? new Map());
         lines = r.lines;
         errors = r.errors;
+        jsTsTargets.add(jsTsTarget);
       } else if (jsTsTarget) {
         errors.push(`import '${spec}': target ${jsTsTarget} was not compiled (no module registry)`);
       } else if (npmRegistry && npmRegistry.size > 0) {
         const r = npmImportLines(imp, npmRegistry);
         lines = r.lines;
         errors = r.errors;
+        if (npmRegistry.has(spec)) npmTargets.add(spec);
       } else {
         errors.push(`import '${spec}': could not resolve module (no registry)`);
       }
@@ -1838,7 +1849,7 @@ function emitVskHeader(
   }
 
   imports.push(...aliases);
-  return { imports, decls, libraryTags, libraryExports, motionExports };
+  return { imports, decls, libraryTags, libraryExports, motionExports, libraryIds, vskTargets, jsTsTargets, npmTargets };
 }
 
 export interface ProjectModuleCompile {
@@ -2004,6 +2015,10 @@ function runCompile(source: string, filename: string, options: CompileOptions): 
   let fileLibraryTags: Map<string, VskLibTag> | undefined;
   const fileLibraryExports = new Map<string, LibExportSig>();
   const fileMotionExports = new Set<string>();
+  const fileLibraryIds = new Set<string>();
+  const fileVskTargets = new Set<string>();
+  const fileJsTsTargets = new Set<string>();
+  const fileNpmTargets = new Set<string>();
   // Experimental-API opt-in markers required by the library tags this file
   // uses; emitted as `@file:OptIn(...)` before the package declaration.
   const fileOptIns = new Set<string>();
@@ -2024,6 +2039,10 @@ function runCompile(source: string, filename: string, options: CompileOptions): 
     }
     for (const [name, sig] of headerOut.libraryExports) fileLibraryExports.set(name, sig);
     for (const name of headerOut.motionExports) fileMotionExports.add(name);
+    for (const id of headerOut.libraryIds) fileLibraryIds.add(id);
+    for (const t of headerOut.vskTargets) fileVskTargets.add(t);
+    for (const t of headerOut.jsTsTargets) fileJsTsTargets.add(t);
+    for (const t of headerOut.npmTargets) fileNpmTargets.add(t);
   }
   out.unshift(`package ${pkg}`, '', IMPORTS, '');
   // `@file:` annotations must precede the package statement, so these are
@@ -2082,7 +2101,7 @@ function runCompile(source: string, filename: string, options: CompileOptions): 
       resolvedClasses = new Map(customClasses);
       for (const [k, v] of own) resolvedClasses.set(k, v); // scoped wins over global
     }
-    const em = new Emitter(err, tracked, options.componentsWithoutProps, resolvedClasses, options.imageResources, options.mediaResources, options.rClass, options.resourceAuthority ?? '', fileLibraryTags, libImports, options.componentNames, options.vsklibRegistry, fileLibraryExports, fileMotionExports, refCells, cellTypes);
+    const em = new Emitter(err, tracked, options.componentsWithoutProps, resolvedClasses, options.imageResources, options.mediaResources, fileLibraryTags, libImports, options.componentNames, options.vsklibRegistry, fileLibraryExports, fileMotionExports, refCells, cellTypes);
 
     const propsArg = propsClass ? `props: ${comp.name}Props${propsParamDefault ? ` = ${comp.name}Props()` : ''}` : '';
     const params = [propsArg, 'content: @Composable () -> Unit = {}'].filter(Boolean).join(', ');
@@ -2106,7 +2125,7 @@ function runCompile(source: string, filename: string, options: CompileOptions): 
     out.splice(4, 0, ...[...libImports].sort(), '');
   }
 
-  return { kt: out.join('\n').trimEnd() + '\n', errors: err.errors, notes: err.notes };
+  return { kt: out.join('\n').trimEnd() + '\n', errors: err.errors, notes: err.notes, libraryIds: [...fileLibraryIds], vskTargets: [...fileVskTargets], jsTsTargets: [...fileJsTsTargets], npmTargets: [...fileNpmTargets] };
 }
 
 export function compileVsk(source: string, filename: string, options: CompileOptions = {}): string {

@@ -51,7 +51,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
@@ -65,20 +64,22 @@ import androidx.compose.ui.zIndex
 
 
 @Composable
-fun SnowParka(content: @Composable () -> Unit = {}) {
+fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 	val qty = remember { mutableStateOf(1) }
+	val size = remember { mutableStateOf("M") }
+	val color = remember { mutableStateOf("Pine") }
 	val added = remember { mutableStateOf(false) }
 	Column(
 		modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(vertical = 8.dp),
 		verticalArrangement = Arrangement.spacedBy(24.dp),
 	) {
 		Row(
-			modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFF34D399), Color(0xFF0D9488)), start = Offset(0f, 0f), end = Offset(1f, 1f))).height(288.dp),
+			modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFF60A5FA), Color(0xFF4F46E5)), start = Offset(0f, 0f), end = Offset(1f, 1f))).height(288.dp),
 			verticalAlignment = Alignment.CenterVertically,
 			horizontalArrangement = Arrangement.Center,
 		) {
 			Text(
-				text = "Winter parka · 850 fill",
+				text = "Fleece · 330 gsm",
 				modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0x33FFFFFF)).padding(horizontal = 12.dp).padding(vertical = 6.dp),
 				style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
 			)
@@ -88,12 +89,12 @@ fun SnowParka(content: @Composable () -> Unit = {}) {
 			verticalArrangement = Arrangement.spacedBy(8.dp),
 		) {
 			Text(
-				text = ("Outerwear / Parkas").uppercase(),
+				text = ("Outerwear / Hoodies").uppercase(),
 				modifier = Modifier.fillMaxWidth(),
-				style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF047857), letterSpacing = 0.2.sp),
+				style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF1D4ED8), letterSpacing = 0.2.sp),
 			)
 			Text(
-				text = "Snowdrift Parka",
+				text = "Arctic Fleece Hoodie",
 				modifier = Modifier.fillMaxWidth(),
 				style = TextStyle(fontSize = 24.sp, lineHeight = 28.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = -0.2.sp),
 			)
@@ -107,7 +108,7 @@ fun SnowParka(content: @Composable () -> Unit = {}) {
 					style = TextStyle(color = Color(0xFFF59E0B), letterSpacing = 0.4.sp, fontWeight = FontWeight.Medium),
 				)
 				Text(
-					text = "4.8 (96 reviews)",
+					text = "4.5 (212 reviews)",
 					style = TextStyle(color = MaterialTheme.colorScheme.onSurfaceVariant),
 				)
 			}
@@ -117,25 +118,214 @@ fun SnowParka(content: @Composable () -> Unit = {}) {
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				Text(
-					text = "${'$'}219",
+					text = "${'$'}89",
 					style = TextStyle(fontSize = 24.sp, lineHeight = 32.sp, fontWeight = FontWeight.ExtraBold),
 				)
 				Text(
-					text = "${'$'}260",
+					text = "${'$'}120",
 					modifier = Modifier.padding(bottom = 4.dp),
 					style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
 				)
 				Text(
-					text = "save 16%",
+					text = "save 26%",
 					modifier = Modifier.padding(bottom = 6.dp),
 					style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF16A34A), fontWeight = FontWeight.SemiBold),
 				)
 			}
 			Text(
-				text = " Waterproof 2L shell with 850-fill power down. Taped seams, helmet-compatible hood, pit zips and a two-way front zipper. ",
+				text = " Brushed-back polar fleece with a storm hood and zippered chest pocket. The classic layer for everything from trail to town. ",
 				modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
 				style = TextStyle(fontSize = 14.sp, lineHeight = 24.sp, color = MaterialTheme.colorScheme.onSurfaceVariant),
 			)
+		}
+		Column(
+			modifier = Modifier.fillMaxWidth(),
+			verticalArrangement = Arrangement.spacedBy(8.dp),
+		) {
+			Text(
+				text = ("Color — " + (color.value).toString()).uppercase(),
+				modifier = Modifier.fillMaxWidth(),
+				style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, letterSpacing = 0.2.sp),
+			)
+			Row(
+				modifier = Modifier.fillMaxWidth(),
+				horizontalArrangement = Arrangement.spacedBy(8.dp),
+			) {
+				Button(
+					onClick = jsSafe({ color.value = "Pine" }),
+					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
+					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
+				) {
+				if (truthy(color.value == "Pine")) {
+					Column(
+						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF047857)).border(2.dp, Color(0xFF2563EB)).width(36.dp).height(36.dp),
+					) {
+					}
+				} else {
+					Column(
+						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF047857)).width(36.dp).height(36.dp),
+					) {
+					}
+				}
+				}
+				Button(
+					onClick = jsSafe({ color.value = "Storm" }),
+					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
+					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
+				) {
+				if (truthy(color.value == "Storm")) {
+					Column(
+						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF4B5563)).border(2.dp, Color(0xFF2563EB)).width(36.dp).height(36.dp),
+					) {
+					}
+				} else {
+					Column(
+						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF4B5563)).width(36.dp).height(36.dp),
+					) {
+					}
+				}
+				}
+				Button(
+					onClick = jsSafe({ color.value = "Oat" }),
+					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
+					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
+				) {
+				if (truthy(color.value == "Oat")) {
+					Column(
+						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFFEF3C7)).border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)).border(2.dp, Color(0xFF2563EB)).width(36.dp).height(36.dp),
+					) {
+					}
+				} else {
+					Column(
+						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFFEF3C7)).border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)).width(36.dp).height(36.dp),
+					) {
+					}
+				}
+				}
+			}
+		}
+		Column(
+			modifier = Modifier.fillMaxWidth(),
+			verticalArrangement = Arrangement.spacedBy(8.dp),
+		) {
+			Text(
+				text = ("Size — " + (size.value).toString()).uppercase(),
+				modifier = Modifier.fillMaxWidth(),
+				style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, letterSpacing = 0.2.sp),
+			)
+			Row(
+				modifier = Modifier.fillMaxWidth(),
+				horizontalArrangement = Arrangement.spacedBy(8.dp),
+			) {
+				Button(
+					onClick = jsSafe({ size.value = "S" }),
+					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
+					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
+				) {
+				if (truthy(size.value == "S")) {
+					Row(
+						modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Color(0xFF2563EB)).width(44.dp).height(44.dp),
+						verticalAlignment = Alignment.CenterVertically,
+						horizontalArrangement = Arrangement.Center,
+					) {
+						Text(
+							text = "S",
+						)
+					}
+				} else {
+					Row(
+						modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(44.dp).height(44.dp),
+						verticalAlignment = Alignment.CenterVertically,
+						horizontalArrangement = Arrangement.Center,
+					) {
+						Text(
+							text = "S",
+						)
+					}
+				}
+				}
+				Button(
+					onClick = jsSafe({ size.value = "M" }),
+					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
+					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
+				) {
+				if (truthy(size.value == "M")) {
+					Row(
+						modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Color(0xFF2563EB)).width(44.dp).height(44.dp),
+						verticalAlignment = Alignment.CenterVertically,
+						horizontalArrangement = Arrangement.Center,
+					) {
+						Text(
+							text = "M",
+						)
+					}
+				} else {
+					Row(
+						modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(44.dp).height(44.dp),
+						verticalAlignment = Alignment.CenterVertically,
+						horizontalArrangement = Arrangement.Center,
+					) {
+						Text(
+							text = "M",
+						)
+					}
+				}
+				}
+				Button(
+					onClick = jsSafe({ size.value = "L" }),
+					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
+					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
+				) {
+				if (truthy(size.value == "L")) {
+					Row(
+						modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Color(0xFF2563EB)).width(44.dp).height(44.dp),
+						verticalAlignment = Alignment.CenterVertically,
+						horizontalArrangement = Arrangement.Center,
+					) {
+						Text(
+							text = "L",
+						)
+					}
+				} else {
+					Row(
+						modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(44.dp).height(44.dp),
+						verticalAlignment = Alignment.CenterVertically,
+						horizontalArrangement = Arrangement.Center,
+					) {
+						Text(
+							text = "L",
+						)
+					}
+				}
+				}
+				Button(
+					onClick = jsSafe({ size.value = "XL" }),
+					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
+					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
+				) {
+				if (truthy(size.value == "XL")) {
+					Row(
+						modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Color(0xFF2563EB)).width(44.dp).height(44.dp),
+						verticalAlignment = Alignment.CenterVertically,
+						horizontalArrangement = Arrangement.Center,
+					) {
+						Text(
+							text = "XL",
+						)
+					}
+				} else {
+					Row(
+						modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(44.dp).height(44.dp),
+						verticalAlignment = Alignment.CenterVertically,
+						horizontalArrangement = Arrangement.Center,
+					) {
+						Text(
+							text = "XL",
+						)
+					}
+				}
+				}
+			}
 		}
 		Row(
 			modifier = Modifier.fillMaxWidth(),
@@ -181,7 +371,7 @@ fun SnowParka(content: @Composable () -> Unit = {}) {
 			}
 			Button(
 				onClick = jsSafe({ added.value = !truthy(added.value) }),
-				modifier = Modifier.shadow(1.dp).clip(RoundedCornerShape(9999.dp)).background(Color(0xFF059669)).weight(1f).padding(vertical = 14.dp),
+				modifier = Modifier.shadow(1.dp).clip(RoundedCornerShape(9999.dp)).background(Color(0xFF2563EB)).weight(1f).padding(vertical = 14.dp),
 				shape = RoundedCornerShape(9999.dp),
 				colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 				elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
@@ -192,7 +382,7 @@ fun SnowParka(content: @Composable () -> Unit = {}) {
 				)
 			} else {
 				Text(
-					text = ("Add to cart · ${'$'}" + (219 * qty.value)).toString(),
+					text = ("Add to cart · ${'$'}" + (89 * qty.value)).toString(),
 				)
 			}
 			}

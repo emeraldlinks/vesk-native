@@ -4088,6 +4088,7 @@
     },
     "curated": true,
     "essential": false,
-    "libType": "component"
+    "libType": "component",
+    "multiplatform": true
   }
 }

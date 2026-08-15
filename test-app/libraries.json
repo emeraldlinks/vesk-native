@@ -90,7 +90,8 @@
         }
       },
       "curated": true,
-      "essential": false
+      "essential": false,
+      "multiplatform": false
     },
     "animation-core": {
       "id": "animation-core",
@@ -969,7 +970,8 @@
       },
       "tags": {},
       "curated": true,
-      "essential": false
+      "essential": false,
+      "multiplatform": true
     },
     "animation-graphics": {
       "id": "animation-graphics",
@@ -1015,7 +1017,8 @@
       "tags": {},
       "curated": true,
       "essential": false,
-      "libType": "utility"
+      "libType": "utility",
+      "multiplatform": true
     },
     "animation": {
       "id": "animation",
@@ -1116,7 +1119,8 @@
       },
       "curated": true,
       "essential": false,
-      "libType": "component"
+      "libType": "component",
+      "multiplatform": true
     },
     "coil": {
       "id": "coil",
@@ -1146,7 +1150,8 @@
       },
       "gradle": [
         "io.coil-kt:coil-compose:2.7.0"
-      ]
+      ],
+      "multiplatform": false
     },
     "coil3": {
       "id": "coil3",
@@ -1178,7 +1183,8 @@
           }
         }
       },
-      "curated": true
+      "curated": true,
+      "multiplatform": true
     },
     "compose": {
       "id": "compose",
@@ -1261,7 +1267,8 @@
             "com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi"
           ]
         }
-      }
+      },
+      "multiplatform": false
     },
     "constraintlayout-compose": {
       "id": "constraintlayout-compose",
@@ -2147,7 +2154,8 @@
       },
       "curated": true,
       "essential": false,
-      "libType": "component"
+      "libType": "component",
+      "multiplatform": true
     },
     "datetime": {
       "id": "datetime",
@@ -2328,7 +2336,8 @@
       },
       "tags": {},
       "curated": true,
-      "essential": false
+      "essential": false,
+      "multiplatform": true
     },
     "foundation-layout": {
       "id": "foundation-layout",
@@ -2462,7 +2471,8 @@
         }
       },
       "curated": true,
-      "essential": false
+      "essential": false,
+      "multiplatform": true
     },
     "foundation": {
       "id": "foundation",
@@ -3676,7 +3686,8 @@
         }
       },
       "curated": true,
-      "essential": false
+      "essential": false,
+      "multiplatform": true
     },
     "gson": {
       "id": "gson",
@@ -3728,7 +3739,8 @@
         }
       },
       "essential": true,
-      "curated": true
+      "curated": true,
+      "multiplatform": false
     },
     "immutable-collections": {
       "id": "immutable-collections",
@@ -3766,7 +3778,8 @@
       },
       "tags": {},
       "curated": true,
-      "essential": false
+      "essential": false,
+      "multiplatform": true
     },
     "kotlinx-serialization": {
       "id": "kotlinx-serialization",
@@ -3836,7 +3849,8 @@
         }
       },
       "essential": true,
-      "curated": true
+      "curated": true,
+      "multiplatform": true
     },
     "material-icons": {
       "id": "material-icons",
@@ -4405,7 +4419,8 @@
         }
       },
       "curated": true,
-      "libType": "utility"
+      "libType": "utility",
+      "multiplatform": true
     },
     "material-ripple": {
       "id": "material-ripple",
@@ -4456,7 +4471,8 @@
       },
       "tags": {},
       "curated": true,
-      "essential": false
+      "essential": false,
+      "multiplatform": true
     },
     "material": {
       "id": "material",
@@ -6148,7 +6164,8 @@
         }
       },
       "curated": true,
-      "essential": false
+      "essential": false,
+      "multiplatform": true
     },
     "material3": {
       "id": "material3",
@@ -10238,7 +10255,8 @@
       },
       "curated": true,
       "essential": false,
-      "libType": "component"
+      "libType": "component",
+      "multiplatform": true
     },
     "moshi": {
       "id": "moshi",
@@ -10291,7 +10309,8 @@
       },
       "essential": true,
       "curated": true,
-      "libType": "utility"
+      "libType": "utility",
+      "multiplatform": false
     },
     "navigation": {
       "id": "navigation",
@@ -10355,7 +10374,8 @@
         }
       },
       "curated": true,
-      "essential": false
+      "essential": false,
+      "multiplatform": false
     },
     "okhttp": {
       "id": "okhttp",
@@ -10390,7 +10410,8 @@
         }
       },
       "essential": true,
-      "curated": true
+      "curated": true,
+      "multiplatform": false
     },
     "retrofit": {
       "id": "retrofit",
@@ -10434,7 +10455,8 @@
       },
       "essential": true,
       "curated": true,
-      "libType": "utility"
+      "libType": "utility",
+      "multiplatform": false
     },
     "shimmer": {
       "id": "shimmer",
@@ -10554,7 +10576,8 @@
       },
       "curated": true,
       "essential": false,
-      "libType": "utility"
+      "libType": "utility",
+      "multiplatform": true
     },
     "timber": {
       "id": "timber",
@@ -10595,7 +10618,8 @@
           "defaultParams": [],
           "returnShape": "other"
         }
-      }
+      },
+      "multiplatform": false
     },
     "vico": {
       "id": "vico",
@@ -10741,7 +10765,8 @@
           }
         }
       },
-      "libType": "component"
+      "libType": "component",
+      "multiplatform": false
     },
     "ycharts": {
       "id": "ycharts",
@@ -13351,7 +13376,8 @@
             }
           }
         }
-      }
+      },
+      "multiplatform": false
     },
     "zxing": {
       "id": "zxing",
@@ -13403,7 +13429,8 @@
         }
       },
       "curated": true,
-      "libType": "utility"
+      "libType": "utility",
+      "multiplatform": false
     }
   }
 }
