@@ -1,18 +1,12 @@
 package app.navigation
 
-import android.app.Activity
-import android.content.Context
-import android.content.ContextWrapper
-import android.os.SystemClock
-import android.widget.Toast
-import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.ui.platform.LocalContext
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 
 data class Route(val path: String, val params: Map<String, String> = emptyMap(), val composable: @Composable () -> Unit)
 
@@ -102,11 +96,29 @@ val LocalNavController = staticCompositionLocalOf<NavController> {
     error("No NavController provided")
 }
 
+// Platform seams for the back flow. Android wraps androidx.activity's
+// BackHandler and uses Toast + activity finish() for the double-back exit
+// prompt; the iOS actuals arrive with the CMP milestone. Keeping these as
+// expect declarations lets AppRouter live in commonMain with identical
+// behavior on every platform.
+@Composable
+expect fun PlatformBackHandler(enabled: Boolean, onBack: () -> Unit)
+
+// Platform seams for the back handler. They are composable so the actual can
+// capture the host context once; the returned closures run from the
+// non-composable onBack lambda.
+@Composable
+expect fun veskToast(): (String) -> Unit
+
+@Composable
+expect fun veskExitApp(): () -> Unit
+
 @Composable
 fun AppRouter(start: String, routes: List<Route>, back: BackBehavior = BackBehavior()) {
     val nav = LocalNavController.current
-    val context = LocalContext.current
-    var lastBackPress = remember { mutableLongStateOf(0L) }
+    val toast = veskToast()
+    val exitApp = veskExitApp()
+    var lastBackPress = remember { mutableStateOf<TimeMark?>(null) }
 
     LaunchedEffect(start) { nav.start(start) }
 
@@ -114,19 +126,19 @@ fun AppRouter(start: String, routes: List<Route>, back: BackBehavior = BackBehav
     // exitOnBack): a double back press exits the app, regardless of what is
     // underneath on the stack. Every other page pops the history first.
     val exitRoutes = if (back.exitRoutes.isEmpty()) listOf(start) else back.exitRoutes
-    BackHandler {
+    PlatformBackHandler(enabled = true) {
         val exitHere = back.mode == "stack" && nav.currentRoute.value in exitRoutes
         if (!exitHere) {
             nav.pop()
-            return@BackHandler
+            return@PlatformBackHandler
         }
-        if (!back.doubleBackToExit) return@BackHandler
-        val now = SystemClock.uptimeMillis()
-        if (now - lastBackPress.longValue <= back.exitDelayMs) {
-            context.findActivity()?.finish()
+        if (!back.doubleBackToExit) return@PlatformBackHandler
+        val last = lastBackPress.value
+        if (last != null && last.elapsedNow().inWholeMilliseconds <= back.exitDelayMs) {
+            exitApp()
         } else {
-            lastBackPress.longValue = now
-            Toast.makeText(context, "Press back again to exit", Toast.LENGTH_SHORT).show()
+            lastBackPress.value = TimeSource.Monotonic.markNow()
+            toast("Press back again to exit")
         }
     }
 
@@ -155,10 +167,4 @@ fun matchRoute(current: String, routes: List<Route>): Route? {
         if (match) return route.copy(params = params)
     }
     return routes.firstOrNull()
-}
-
-fun Context.findActivity(): Activity? = when (this) {
-    is Activity -> this
-    is ContextWrapper -> baseContext.findActivity()
-    else -> null
 }

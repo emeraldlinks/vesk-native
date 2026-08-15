@@ -122,7 +122,67 @@ import android.view.WindowManager
 import android.widget.Toast
 import androidx.compose.foundation.draganddrop.dragAndDropSource
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
-import app.navigation.*
+`;
+
+// Imports for the pure-Kotlin runtime core (src/commonMain). This is the
+// portable compose ui + coroutines surface only: no android.*. Anything that
+// needs a platform API is either an androidMain helper or an expect/actual
+// seam declaration (see the `expect` field on the seam helpers below).
+export const RUNTIME_COMMON_IMPORTS = `package app
+
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.Easing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.SpringSpec
+import androidx.compose.animation.core.TweenSpec
+import androidx.compose.animation.core.animateTo
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Box
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.unit.Dp
+import app.navigation.LocalNavController
+import kotlin.time.TimeSource
+import kotlin.math.pow
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 `;
 
 // Imports for heavy dependencies are added only when the app uses the APIs
@@ -191,40 +251,8 @@ export function runtimeImports(deviceApis: Set<string>, used: Set<string>): stri
       'import co.yml.charts.ui.linechart.model.LineStyle',
     );
   }
-  if (MOTION_HELPERS.some((h) => used.has(h))) {
-    cond.push(
-      'import androidx.compose.animation.core.Animatable',
-      'import androidx.compose.animation.core.AnimationSpec',
-      'import androidx.compose.animation.core.Easing',
-      'import androidx.compose.animation.core.LinearEasing',
-      'import androidx.compose.animation.core.SpringSpec',
-      'import androidx.compose.animation.core.TweenSpec',
-      'import androidx.compose.runtime.LaunchedEffect',
-      'import androidx.compose.runtime.snapshotFlow',
-      'import androidx.compose.animation.core.CubicBezierEasing',
-      'import androidx.compose.ui.composed',
-      'import androidx.compose.ui.platform.AndroidUiDispatcher',
-      'import androidx.compose.ui.focus.onFocusChanged',
-      'import androidx.compose.ui.graphics.graphicsLayer',
-      'import androidx.compose.ui.input.pointer.PointerEventType',
-      'import androidx.compose.ui.input.pointer.pointerInput',
-      'import androidx.compose.ui.layout.boundsInRoot',
-      'import androidx.compose.ui.layout.onGloballyPositioned',
-      'import androidx.compose.foundation.gestures.detectDragGestures',
-      'import androidx.compose.foundation.gestures.detectTapGestures',
-      'import kotlinx.coroutines.async',
-      'import kotlinx.coroutines.flow.collect',
-      'import kotlinx.coroutines.flow.filter',
-      'import kotlinx.coroutines.flow.take',
-    );
-  }
   return `${RUNTIME_IMPORTS_CORE}${cond.length ? `${cond.join('\n')}\n` : ''}`;
 }
-// Runtime units for motion (motion.dev) mappings; gates the motion import
-// block in `runtimeImports` so no animation dependency is ever pulled for an
-// app that does not animate.
-export const MOTION_HELPERS = ['motionCore', 'motionStagger', 'motionInView', 'motionScroll', 'motionDrag', 'motionHover', 'motionPress', 'motionFocus'];
-
 export const RUNTIME_CORE = `
 // Native counterparts of @vesk/runtime exports referenced by copied .vsk files.
 
@@ -244,7 +272,7 @@ fun num(v: Any?): Double = when (v) {
 }
 `;
 
-export const RUNTIME_HELPERS: Record<string, { deps: string[]; src: string }> = {
+export const RUNTIME_HELPERS: Record<string, { deps: string[]; src: string; platform?: 'common'; expect?: string }> = {
   'veskMediaHub': { deps: [], src: `
 // Shared media coordination: only one vesk player plays at a time (starting
 // one pauses the previous), and <audio> exposes its session so system media
@@ -2597,7 +2625,7 @@ fun veskFileImage(path: String?): ImageBitmap {
     return remember(path) { ImageBitmap(1, 1) }
 }
 ` },
-  'veskColorFilter': { deps: [], src: `
+  'veskColorFilter': { deps: [], platform: 'common', src: `
 // Tailwind color filter base: color-matrix saveLayer; works on all API levels.
 private fun Modifier.veskColorFilter(matrix: ColorMatrix): Modifier = drawWithContent {
     val paint = Paint().apply { colorFilter = ColorFilter.colorMatrix(matrix) }
@@ -2606,7 +2634,7 @@ private fun Modifier.veskColorFilter(matrix: ColorMatrix): Modifier = drawWithCo
     drawContext.canvas.restore()
 }
 ` },
-  'veskBrightness': { deps: ['veskColorFilter'], src: `
+  'veskBrightness': { deps: ['veskColorFilter'], platform: 'common', src: `
 fun Modifier.veskBrightness(mult: Float): Modifier = veskColorFilter(
     ColorMatrix(floatArrayOf(
         mult, 0f, 0f, 0f, 0f,
@@ -2616,7 +2644,7 @@ fun Modifier.veskBrightness(mult: Float): Modifier = veskColorFilter(
     ))
 )
 ` },
-  'veskContrast': { deps: ['veskColorFilter'], src: `
+  'veskContrast': { deps: ['veskColorFilter'], platform: 'common', src: `
 fun Modifier.veskContrast(c: Float): Modifier = veskColorFilter(
     ColorMatrix(floatArrayOf(
         c, 0f, 0f, 0f, 128f * (1f - c),
@@ -2626,17 +2654,17 @@ fun Modifier.veskContrast(c: Float): Modifier = veskColorFilter(
     ))
 )
 ` },
-  'veskGrayscale': { deps: ['veskColorFilter'], src: `
+  'veskGrayscale': { deps: ['veskColorFilter'], platform: 'common', src: `
 fun Modifier.veskGrayscale(factor: Float): Modifier = veskColorFilter(
     ColorMatrix().also { it.setToSaturation(1f - factor) }
 )
 ` },
-  'veskSaturate': { deps: ['veskColorFilter'], src: `
+  'veskSaturate': { deps: ['veskColorFilter'], platform: 'common', src: `
 fun Modifier.veskSaturate(s: Float): Modifier = veskColorFilter(
     ColorMatrix().also { it.setToSaturation(s) }
 )
 ` },
-  'veskInvert': { deps: ['veskColorFilter'], src: `
+  'veskInvert': { deps: ['veskColorFilter'], platform: 'common', src: `
 fun Modifier.veskInvert(factor: Float): Modifier = veskColorFilter(
     ColorMatrix(floatArrayOf(
         -factor, 0f, 0f, 0f, 255f * factor,
@@ -2646,7 +2674,7 @@ fun Modifier.veskInvert(factor: Float): Modifier = veskColorFilter(
     ))
 )
 ` },
-  'veskSepia': { deps: ['veskColorFilter'], src: `
+  'veskSepia': { deps: ['veskColorFilter'], platform: 'common', src: `
 fun Modifier.veskSepia(factor: Float): Modifier = veskColorFilter(
     ColorMatrix(floatArrayOf(
         0.393f * factor + (1f - factor), 0.769f * factor, 0.189f * factor, 0f, 0f,
@@ -2656,7 +2684,7 @@ fun Modifier.veskSepia(factor: Float): Modifier = veskColorFilter(
     ))
 )
 ` },
-  'veskHueRotate': { deps: ['veskColorFilter'], src: `
+  'veskHueRotate': { deps: ['veskColorFilter'], platform: 'common', src: `
 fun Modifier.veskHueRotate(degrees: Float): Modifier {
     val rad = degrees * kotlin.math.PI / 180.0
     val cosA = kotlin.math.cos(rad).toFloat()
@@ -2671,7 +2699,7 @@ fun Modifier.veskHueRotate(degrees: Float): Modifier {
     )
 }
 ` },
-  'veskDashedBorder': { deps: [], src: `
+  'veskDashedBorder': { deps: [], platform: 'common', src: `
 // Dashed/dotted borders (border-dashed / border-dotted) drawn as strokes
 // behind the element content.
 fun Modifier.veskDashedBorder(width: Dp, color: Color, dashes: FloatArray): Modifier = drawBehind {
@@ -2679,7 +2707,7 @@ fun Modifier.veskDashedBorder(width: Dp, color: Color, dashes: FloatArray): Modi
     drawRoundRect(color = color, style = stroke)
 }
 ` },
-  'veskSideBorder': { deps: [], src: `
+  'veskSideBorder': { deps: [], platform: 'common', src: `
 // Per-side borders (border-t/r/b/l, border-x/y).
 fun Modifier.veskSideBorder(top: Dp, end: Dp, bottom: Dp, start: Dp, color: Color): Modifier = drawBehind {
     val w = floatArrayOf(top.toPx(), end.toPx(), bottom.toPx(), start.toPx())
@@ -2690,7 +2718,7 @@ fun Modifier.veskSideBorder(top: Dp, end: Dp, bottom: Dp, start: Dp, color: Colo
     if (w[3] > 0f) drawLine(color, Offset(w[3] / 2f, 0f), Offset(w[3] / 2f, s.height), w[3])
 }
 ` },
-  'veskDivideLine': { deps: [], src: `
+  'veskDivideLine': { deps: [], platform: 'common', src: `
 // Single dashed/dotted divider line (divide-dashed / divide-dotted).
 fun Modifier.veskDivideLine(horizontal: Boolean, width: Dp, color: Color, dashes: FloatArray): Modifier = drawBehind {
     val w = width.toPx()
@@ -2701,7 +2729,7 @@ fun Modifier.veskDivideLine(horizontal: Boolean, width: Dp, color: Color, dashes
     }
 }
 ` },
-  'veskSkew': { deps: [], src: `
+  'veskSkew': { deps: [], platform: 'common', src: `
 // Skew transform (skew-x / skew-y) via canvas transform.
 fun Modifier.veskSkew(sx: Float, sy: Float): Modifier = drawWithContent {
     val canvas = drawContext.canvas
@@ -2711,7 +2739,7 @@ fun Modifier.veskSkew(sx: Float, sy: Float): Modifier = drawWithContent {
     canvas.restore()
 }
 ` },
-  'Link': { deps: [], src: `
+  'Link': { deps: [], platform: 'common', src: `
 data class LinkProps(
     val href: String = "",
     val \`class\`: String = "",
@@ -2725,7 +2753,7 @@ fun Link(props: LinkProps, content: @Composable () -> Unit = {}) {
     }
 }
 ` },
-  'rememberRouteScrollState': { deps: [], src: `
+  'rememberRouteScrollState': { deps: [], platform: 'common', src: `
 // Scroll state for overflow-y-auto / overflow-x-auto containers. The scroll
 // wrapper (typically a layout shell) stays in composition across navigations,
 // so plain rememberScrollState would resume the previous page's offset. The
@@ -2739,7 +2767,7 @@ fun rememberRouteScrollState(initial: Int = 0): ScrollState {
     return remember(route) { nav.scrollStateFor(route, initial) }
 }
 ` },
-  'NavLink': { deps: [], src: `
+  'NavLink': { deps: [], platform: 'common', src: `
 data class NavLinkProps(
     val href: String = "",
     val \`class\`: String = "",
@@ -2753,7 +2781,7 @@ fun NavLink(props: NavLinkProps, content: @Composable () -> Unit = {}) {
     }
 }
 ` },
-  'Outlet': { deps: [], src: `
+  'Outlet': { deps: [], platform: 'common', src: `
 @Composable
 fun Outlet(content: @Composable () -> Unit = {}) {
     val nav = LocalNavController.current
@@ -2763,27 +2791,32 @@ fun Outlet(content: @Composable () -> Unit = {}) {
     }
 }
 ` },
-  'jsString': { deps: [], src: `
+  'jsString': { deps: [], platform: 'common', src: `
 fun jsString(v: Any?): String = when (v) {
     null -> "null"
     is String -> v
     else -> v.toString()
 }
 ` },
-  'jsHandleError': { deps: [], src: `
-// Uncaught exceptions in event handlers, timers, and callbacks are reported
-// (Logcat, like the browser's window.onerror/console) and the app keeps
-// running — an error in one interaction never takes the app down.
-fun jsHandleError(e: Throwable) {
+  'jsHandleError': {
+    deps: [],
+    expect: `
+// Platform seam: uncaught exceptions in event handlers, timers, and callbacks
+// are reported and the app keeps running — an error in one interaction never
+// takes the app down (browser window.onerror semantics). Android logs to
+// Logcat; the iOS actual arrives with the CMP milestone.
+expect fun jsHandleError(e: Throwable)`,
+    src: `
+actual fun jsHandleError(e: Throwable) {
     android.util.Log.e("vesk", "uncaught exception (app continues): " + e.message, e)
 }
 ` },
-  'jsSafe': { deps: ['jsHandleError'], src: `
+  'jsSafe': { deps: ['jsHandleError'], platform: 'common', src: `
 // Wrap an event-handler lambda so a throw reports instead of crashing: the
 // browser fires window.onerror and the page keeps running, and so do we.
 fun jsSafe(fn: () -> Unit): () -> Unit = { try { fn() } catch (e: Throwable) { jsHandleError(e) } }
 ` },
-  'jsTypeof': { deps: [], src: `
+  'jsTypeof': { deps: [], platform: 'common', src: `
 fun jsTypeof(v: Any?): String = when (v) {
     null -> "object"
     is String -> "string"
@@ -2793,7 +2826,7 @@ fun jsTypeof(v: Any?): String = when (v) {
     else -> "object"
 }
 ` },
-  'jsGlobalIsNaN': { deps: [], src: `
+  'jsGlobalIsNaN': { deps: [], platform: 'common', src: `
 fun jsGlobalIsNaN(v: Any?): Boolean = when (v) {
     is Double -> v.isNaN()
     is Float -> v.isNaN()
@@ -2804,7 +2837,7 @@ fun jsGlobalIsNaN(v: Any?): Boolean = when (v) {
     else -> true
 }
 ` },
-  'jsGlobalIsFinite': { deps: [], src: `
+  'jsGlobalIsFinite': { deps: [], platform: 'common', src: `
 fun jsGlobalIsFinite(v: Any?): Boolean = when (v) {
     is Double -> v.isFinite()
     is Float -> v.isFinite()
@@ -2815,21 +2848,21 @@ fun jsGlobalIsFinite(v: Any?): Boolean = when (v) {
     else -> false
 }
 ` },
-  'jsStrictIsNaN': { deps: [], src: `
+  'jsStrictIsNaN': { deps: [], platform: 'common', src: `
 fun jsStrictIsNaN(v: Any?): Boolean = when (v) {
     is Double -> v.isNaN()
     is Float -> v.isNaN()
     else -> false
 }
 ` },
-  'jsStrictIsFinite': { deps: [], src: `
+  'jsStrictIsFinite': { deps: [], platform: 'common', src: `
 fun jsStrictIsFinite(v: Any?): Boolean = when (v) {
     is Double -> v.isFinite()
     is Float -> v.isFinite()
     else -> false
 }
 ` },
-  'jsIsInteger': { deps: [], src: `
+  'jsIsInteger': { deps: [], platform: 'common', src: `
 fun jsIsInteger(v: Any?): Boolean = when (v) {
     is Double -> !v.isNaN() && !v.isInfinite() && v % 1.0 == 0.0
     is Float -> !v.isNaN() && !v.isInfinite() && v % 1.0f == 0.0f
@@ -2837,7 +2870,7 @@ fun jsIsInteger(v: Any?): Boolean = when (v) {
     else -> false
 }
 ` },
-  'jsParseInt': { deps: ['jsString'], src: `
+  'jsParseInt': { deps: ['jsString'], platform: 'common', src: `
 fun jsParseInt(v: Any?, radix: Any? = null): Int {
     var s = jsString(v).trim()
     var sign = 1
@@ -2862,17 +2895,35 @@ fun jsParseInt(v: Any?, radix: Any? = null): Int {
     return (acc * sign).toInt()
 }
 ` },
-  'jsParseFloat': { deps: ['jsString'], src: `
+  'jsParseFloat': { deps: ['jsString'], platform: 'common', src: `
 fun jsParseFloat(v: Any?): Double = jsString(v).trim().toDoubleOrNull() ?: 0.0
 ` },
-  'jsEncodeURIComponent': { deps: ['jsString'], src: `
-fun jsEncodeURIComponent(v: Any?): String = java.net.URLEncoder.encode(jsString(v), "UTF-8").replace("+", "%20")
+  'jsEncodeURIComponent': {
+    deps: ['jsString'],
+    expect: `
+// Platform seam: browser encodeURIComponent semantics. Android uses
+// java.net.URLEncoder; the iOS actual arrives with the CMP milestone.
+expect fun jsEncodeURIComponent(v: Any?): String`,
+    src: `
+actual fun jsEncodeURIComponent(v: Any?): String = java.net.URLEncoder.encode(jsString(v), "UTF-8").replace("+", "%20")
 ` },
-  'jsDecodeURIComponent': { deps: ['jsString'], src: `
-fun jsDecodeURIComponent(v: Any?): String = java.net.URLDecoder.decode(jsString(v), "UTF-8")
+  'jsDecodeURIComponent': {
+    deps: ['jsString'],
+    expect: `
+// Platform seam: browser decodeURIComponent semantics (android actual keeps
+// the JVM URLDecoder behavior; iOS actual arrives with the CMP milestone).
+expect fun jsDecodeURIComponent(v: Any?): String`,
+    src: `
+actual fun jsDecodeURIComponent(v: Any?): String = java.net.URLDecoder.decode(jsString(v), "UTF-8")
 ` },
-  'jsEncodeURI': { deps: ['jsString'], src: `
-fun jsEncodeURI(v: Any?): String = java.net.URLEncoder.encode(jsString(v), "UTF-8")
+  'jsEncodeURI': {
+    deps: ['jsString'],
+    expect: `
+// Platform seam: browser encodeURI semantics (leaves URI-reserved characters
+// unescaped). Android actual = JVM URLEncoder + unescape pass, unchanged.
+expect fun jsEncodeURI(v: Any?): String`,
+    src: `
+actual fun jsEncodeURI(v: Any?): String = java.net.URLEncoder.encode(jsString(v), "UTF-8")
     .replace("+", "%20")
     .replace("%2C", ",")
     .replace("%2F", "/")
@@ -2890,10 +2941,16 @@ fun jsEncodeURI(v: Any?): String = java.net.URLEncoder.encode(jsString(v), "UTF-
     .replace("%29", ")")
     .replace("%7E", "~")
 ` },
-  'jsDecodeURI': { deps: ['jsString'], src: `
-fun jsDecodeURI(v: Any?): String = java.net.URLDecoder.decode(jsString(v), "UTF-8")
+  'jsDecodeURI': {
+    deps: ['jsString'],
+    expect: `
+// Platform seam: browser decodeURI semantics (android actual = JVM
+// URLDecoder, unchanged; iOS actual arrives with the CMP milestone).
+expect fun jsDecodeURI(v: Any?): String`,
+    src: `
+actual fun jsDecodeURI(v: Any?): String = java.net.URLDecoder.decode(jsString(v), "UTF-8")
 ` },
-  'jsRegexExec': { deps: ['jsString'], src: `
+  'jsRegexExec': { deps: ['jsString'], platform: 'common', src: `
 fun jsAsRegex(v: Any?): Regex = when (v) {
     is Regex -> v
     is String -> Regex(v)
@@ -2903,10 +2960,10 @@ fun jsRegexExec(re: Any?, s: Any?): List<String?>? = jsAsRegex(re).find(jsString
     listOf(m.value) + m.groups.drop(1).map { g -> g?.value }
 }
 ` },
-  'jsRegexSearch': { deps: ['jsString'], src: `
+  'jsRegexSearch': { deps: ['jsString'], platform: 'common', src: `
 fun jsRegexSearch(re: Any?, s: Any?): Int = jsAsRegex(re).find(jsString(s))?.range?.first ?: -1
 ` },
-  'jsStringify': { deps: [], src: `
+  'jsStringify': { deps: [], platform: 'common', src: `
 fun jsStringify(v: Any?): String = when (v) {
     null -> "null"
     is String -> "\\"$v\\""
@@ -2917,8 +2974,14 @@ fun jsStringify(v: Any?): String = when (v) {
     else -> "\\"\${v.toString()}\\""
 }
 ` },
-  'jsParseJson': { deps: ['jsString'], src: `
-fun jsParseJson(s: Any?): Any? = jsJsonValue(org.json.JSONTokener(jsString(s)).nextValue())
+  'jsParseJson': {
+    deps: ['jsString'],
+    expect: `
+// Platform seam: JSON.parse. Android actual = org.json (bundled with the
+// platform), unchanged; the iOS actual arrives with the CMP milestone.
+expect fun jsParseJson(s: Any?): Any?`,
+    src: `
+actual fun jsParseJson(s: Any?): Any? = jsJsonValue(org.json.JSONTokener(jsString(s)).nextValue())
 private fun jsJsonValue(v: Any?): Any? = when (v) {
     org.json.JSONObject.NULL -> null
     is org.json.JSONObject -> {
@@ -2931,61 +2994,61 @@ private fun jsJsonValue(v: Any?): Any? = when (v) {
     else -> v
 }
 ` },
-  'jsMapOf': { deps: [], src: `
+  'jsMapOf': { deps: [], platform: 'common', src: `
 fun jsMapOf(from: Any?): LinkedHashMap<Any?, Any?> {
     val out = linkedMapOf<Any?, Any?>()
     (from as List<Any?>).forEach { p -> out[(p as List<Any?>)[0]] = p[1] }
     return out
 }
 ` },
-  'jsSetOf': { deps: [], src: `
+  'jsSetOf': { deps: [], platform: 'common', src: `
 fun jsSetOf(from: Any?): LinkedHashSet<Any?> {
     val out = linkedSetOf<Any?>()
     (from as List<Any?>).forEach { out.add(it) }
     return out
 }
 ` },
-  'jsMapIterable': { deps: [], src: `
+  'jsMapIterable': { deps: [], platform: 'common', src: `
 fun jsMapIterable(map: Any?): List<List<Any?>> = (map as Map<*, *>).map { (k, v) -> listOf(k, v) }
 ` },
-  'jsMapGet': { deps: [], src: `
+  'jsMapGet': { deps: [], platform: 'common', src: `
 fun jsMapGet(map: Any?, key: Any?): Any? = (map as? Map<*, *>)?.get(key)
 ` },
-  'jsMapSet': { deps: [], src: `
+  'jsMapSet': { deps: [], platform: 'common', src: `
 @Suppress("UNCHECKED_CAST")
 fun jsMapSet(map: Any?, key: Any?, value: Any?): Any? { (map as MutableMap<Any?, Any?>)[key] = value; return map }
 ` },
-  'jsHas': { deps: [], src: `
+  'jsHas': { deps: [], platform: 'common', src: `
 fun jsHas(coll: Any?, key: Any?): Boolean = when (coll) {
     is Map<*, *> -> coll.containsKey(key)
     is Set<*> -> coll.contains(key)
     else -> false
 }
 ` },
-  'jsDelete': { deps: [], src: `
+  'jsDelete': { deps: [], platform: 'common', src: `
 fun jsDelete(coll: Any?, key: Any?): Boolean = when (coll) {
     is MutableMap<*, *> -> if (coll.containsKey(key)) { coll.remove(key); true } else false
     is MutableSet<*> -> coll.remove(key)
     else -> false
 }
 ` },
-  'jsClear': { deps: [], src: `
+  'jsClear': { deps: [], platform: 'common', src: `
 fun jsClear(coll: Any?) { when (coll) {
     is MutableMap<*, *> -> coll.clear()
     is MutableSet<*> -> coll.clear()
     else -> {}
 } }
 ` },
-  'jsMapKeys': { deps: [], src: `
+  'jsMapKeys': { deps: [], platform: 'common', src: `
 fun jsMapKeys(map: Any?): Set<Any?> = (map as Map<*, *>).keys
 ` },
-  'jsMapValues': { deps: [], src: `
+  'jsMapValues': { deps: [], platform: 'common', src: `
 fun jsMapValues(map: Any?): Collection<Any?> = (map as Map<*, *>).values
 ` },
-  'jsMapEntries': { deps: [], src: `
+  'jsMapEntries': { deps: [], platform: 'common', src: `
 fun jsMapEntries(map: Any?): List<List<Any?>> = (map as Map<*, *>).map { (k, v) -> listOf(k, v) }
 ` },
-  'jsSize': { deps: [], src: `
+  'jsSize': { deps: [], platform: 'common', src: `
 fun jsSize(coll: Any?): Int = when (coll) {
     is List<*> -> coll.size
     is Set<*> -> coll.size
@@ -2994,7 +3057,7 @@ fun jsSize(coll: Any?): Int = when (coll) {
     else -> 0
 }
 ` },
-  'jsLength': { deps: [], src: `
+  'jsLength': { deps: [], platform: 'common', src: `
 fun jsLength(coll: Any?): Int = when (coll) {
     is String -> coll.length
     is CharSequence -> coll.length
@@ -3005,7 +3068,7 @@ fun jsLength(coll: Any?): Int = when (coll) {
     else -> 0
 }
 ` },
-  'jsForEach': { deps: [], src: `
+  'jsForEach': { deps: [], platform: 'common', src: `
 fun jsForEach(coll: Any?, cb: (Any?, Any?, Any?) -> Any?) { when (coll) {
     is Map<*, *> -> coll.forEach { (k, v) -> cb(v, k, coll) }
     is Set<*> -> coll.forEach { x -> cb(x, x, coll) }
@@ -3014,27 +3077,34 @@ fun jsForEach(coll: Any?, cb: (Any?, Any?, Any?) -> Any?) { when (coll) {
     else -> throw Exception("jsForEach: not iterable")
 } }
 ` },
-  'jsDateValue': { deps: ['jsString'], src: `
-fun jsDateValue(v: Any?): Long = when (v) {
+  'jsDateValue': {
+    deps: ['jsString'],
+    expect: `
+// Platform seam: Date.parse / Date.valueOf semantics (epoch milliseconds).
+// Android actual = java.time.Instant, unchanged; iOS actual arrives with the
+// CMP milestone.
+expect fun jsDateValue(v: Any?): Long`,
+    src: `
+actual fun jsDateValue(v: Any?): Long = when (v) {
     is Number -> v.toLong()
     is String -> try { java.time.Instant.parse(jsString(v)).toEpochMilli() } catch (_: Exception) { java.time.Instant.parse(jsString(v).replace(' ', 'T') + "Z").toEpochMilli() }
     else -> 0L
 }
 ` },
-  'jsTagged': { deps: [], src: `
+  'jsTagged': { deps: [], platform: 'common', src: `
 fun jsTagged(tag: (List<String>, List<Any?>) -> Any?, strings: List<String>, values: List<Any?>): Any? = tag(strings, values)
 ` },
-  'JsConsole': { deps: ['jsString'], src: `
+  'JsConsole': { deps: ['jsString'], platform: 'common', src: `
 object JsConsole {
     private val counts = mutableMapOf<String, Int>()
     private val times = mutableMapOf<String, Long>()
     fun count(label: Any?) { val k = jsString(label); val c = (counts[k] ?: 0) + 1; counts[k] = c; println("$k: $c") }
     fun countReset(label: Any?) { counts.remove(jsString(label)) }
-    fun time(label: Any?) { times[jsString(label)] = System.nanoTime() }
-    fun timeEnd(label: Any?) { val k = jsString(label); val s = times.remove(k) ?: 0L; println("\$k: \${(System.nanoTime() - s) / 1_000_000.0} ms") }
+    fun time(label: Any?) { times[jsString(label)] = TimeSource.Monotonic.markNow().elapsedNow().inWholeNanoseconds }
+    fun timeEnd(label: Any?) { val k = jsString(label); val s = times.remove(k) ?: 0L; println("\$k: \${(TimeSource.Monotonic.markNow().elapsedNow().inWholeNanoseconds - s) / 1_000_000.0} ms") }
 }
 ` },
-  'VeskTimers': { deps: ['jsHandleError'], src: `
+  'VeskTimers': { deps: ['jsHandleError'], platform: 'common', src: `
 object VeskTimers {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private val jobs = mutableMapOf<Int, Job>()
@@ -3353,7 +3423,7 @@ fun veskYchartsLineChart(values: List<*>, labels: List<String>, modifier: Modifi
     )
 }
 ` },
-  'motionCore': { deps: ['VeskTimers', 'jsString', 'jsMapGet'], src: `
+  'motionCore': { deps: ['VeskTimers', 'jsString', 'jsMapGet', 'motionDispatcher', 'motionViewportSize'], platform: 'common', src: `
 // motion (motion.dev) native mappings. The easing constants are the real
 // motion-utils values verified against the installed motion@13 source: easeIn
 // = cubicBezier(0.42,0,1,1), easeOut = cubicBezier(0,0,0.58,1), easeInOut =
@@ -3400,8 +3470,8 @@ fun rememberMotionRef(): MotionRef = remember { MotionRef() }
 // ref's state (Compose re-layers on state reads), and onGloballyPositioned
 // feeds the ref the viewport-relative bounds for inView checks.
 fun Modifier.motionGraphics(ref: MotionRef): Modifier = composed {
-    val dm = LocalContext.current.resources.displayMetrics
-    ref.updateViewport(dm.widthPixels, dm.heightPixels)
+    val vs = motionViewportSize()
+    ref.updateViewport(vs.width, vs.height)
     graphicsLayer {
         alpha = ref.alpha
         scaleX = ref.scaleX
@@ -3426,7 +3496,7 @@ val anticipate: Easing = Easing { p ->
     else {
         val q = p * 2f
         if (q < 1f) 0.5f * backIn.transform(q)
-        else 0.5f * (2f - java.lang.Math.pow(2.0, (-10f * (q - 1f)).toDouble()).toFloat())
+        else 0.5f * (2f - (2.0).pow((-10f * (q - 1f)).toDouble()).toFloat())
     }
 }
 
@@ -3542,13 +3612,13 @@ private fun motionAnimateNumber(from: Any?, to: Any?, options: Any?): MotionCont
     val repeatType = jsString(jsMapGet(opts, "repeatType")).let { if (it == "reverse" || it == "mirror") it else "loop" }
     val repeatDelay = num(jsMapGet(opts, "repeatDelay"))
     val spec = motionSpecFor(opts)
-    val scope = CoroutineScope(SupervisorJob() + AndroidUiDispatcher.Main)
+    val scope = CoroutineScope(SupervisorJob() + motionDispatcher())
     val controls = MotionControls()
     val job = scope.launch {
         if (delaySec > 0) delay((delaySec * 1000.0).toLong())
         val start = num(from).toFloat()
         val target = num(to).toFloat()
-        val t0 = System.nanoTime()
+        val t0 = TimeSource.Monotonic.markNow()
         var iteration = 0
         while (isActive && (repeat == Double.POSITIVE_INFINITY || iteration <= repeat)) {
             val isReversed = repeatType != "loop" && iteration % 2 == 1
@@ -3556,7 +3626,7 @@ private fun motionAnimateNumber(from: Any?, to: Any?, options: Any?): MotionCont
             val dst = if (isReversed) start else target
             val anim = Animatable(cur)
             anim.animateTo(dst, spec) {
-                controls.time = (System.nanoTime() - t0) / 1_000_000_000.0
+                controls.time = t0.elapsedNow().inWholeNanoseconds / 1_000_000_000.0
                 onUpdate?.invoke(this.value)
             }
             if (repeat > 0.0 && iteration < repeat) {
@@ -3579,7 +3649,7 @@ private fun motionAnimateElement(ref: MotionRef, props: Any?, options: Any?): Mo
     val target = props as? Map<*, *> ?: emptyMap<Any, Any>()
     val onComplete = optFn(opts, "onComplete")
     val spec = motionSpecFor(opts)
-    val scope = CoroutineScope(SupervisorJob() + AndroidUiDispatcher.Main)
+    val scope = CoroutineScope(SupervisorJob() + motionDispatcher())
     val controls = MotionControls()
     val job = scope.launch {
         val running = target.mapNotNull { (k, v) ->
@@ -3616,7 +3686,32 @@ fun motionDelay(callback: Any?, timeout: Any?): () -> Unit {
     return { VeskTimers.clearTimeout(id) }
 }
 ` },
-  'motionStagger': { deps: ['jsMapGet'], src: `
+  'motionDispatcher': {
+    deps: [],
+    expect: `
+// Platform seam: the coroutine dispatcher that carries a MonotonicFrameClock
+// so Animatable/animateTo can animate (plain Dispatchers.Main crashes without
+// one). Android's compose main dispatcher provides it; the iOS actual arrives
+// with the CMP milestone.
+internal expect fun motionDispatcher(): kotlin.coroutines.CoroutineContext`,
+    src: `
+internal actual fun motionDispatcher(): kotlin.coroutines.CoroutineContext = androidx.compose.ui.platform.AndroidUiDispatcher.Main
+` },
+  'motionViewportSize': {
+    deps: [],
+    expect: `
+// Platform seam: the viewport size motionInView uses to test element
+// intersection against the bounds captured by the motionGraphics
+// onGloballyPositioned hook. Android reports the display size; the iOS actual
+// arrives with the CMP milestone.
+@Composable
+expect fun motionViewportSize(): androidx.compose.ui.unit.IntSize`,
+    src: `
+@Composable
+actual fun motionViewportSize(): androidx.compose.ui.unit.IntSize =
+    LocalContext.current.resources.displayMetrics.run { androidx.compose.ui.unit.IntSize(widthPixels, heightPixels) }
+` },
+  'motionStagger': { deps: ['jsMapGet'], platform: 'common', src: `
 // motion-utils stagger(duration, { startDelay, from }): per-index delay.
 // The callback form carries a total that vesk scripts rarely know, so the
 // from-index default of 0 is assumed (distance = index). The ease option is
@@ -3629,7 +3724,7 @@ fun motionStagger(i: Any?, duration: Any?, options: Any? = null): Double {
     return startDelay + d * kotlin.math.abs(from - num(i))
 }
 ` },
-  'motionInView': { deps: ['motionCore'], src: `
+  'motionInView': { deps: ['motionCore'], platform: 'common', src: `
 // inView(ref, onStart, { once }): fires when the ref'd element intersects the
 // viewport (the element's bounds come from the motionGraphics
 // onGloballyPositioned hook; the viewport is the display size).
@@ -3649,7 +3744,7 @@ fun motionInView(ref: Any?, onEnter: Any?, options: Any? = null) {
     }
 }
 ` },
-  'motionScroll': { deps: ['jsMapGet'], src: `
+  'motionScroll': { deps: ['jsMapGet'], platform: 'common', src: `
 // scroll(onScroll, { axis }): reports scroll progress (0..1) of the current
 // route's scroll container — the same ScrollState the layout shell uses, so
 // progress follows the page content.
@@ -3669,7 +3764,7 @@ fun motionScroll(onScroll: Any?, options: Any? = null) {
     }
 }
 ` },
-  'motionDrag': { deps: [], src: `
+  'motionDrag': { deps: [], platform: 'common', src: `
 // Modifier-producing drag gestures (detectDragGestures). The drag offset is
 // passed to the JS handler as an Offset {x, y}.
 fun Modifier.motionDrag(
@@ -3685,7 +3780,7 @@ fun Modifier.motionDrag(
     )
 }
 ` },
-  'motionHover': { deps: [], src: `
+  'motionHover': { deps: [], platform: 'common', src: `
 // Modifier-producing hover enter/exit events (awaitPointerEventScope).
 fun Modifier.motionHover(
     onHoverStart: (() -> Unit)? = null,
@@ -3701,7 +3796,7 @@ fun Modifier.motionHover(
     }
 }
 ` },
-  'motionPress': { deps: [], src: `
+  'motionPress': { deps: [], platform: 'common', src: `
 // Modifier-producing press start/end (detectTapGestures onPress/onTap).
 fun Modifier.motionPress(
     onPress: (() -> Unit)? = null,
@@ -3713,7 +3808,7 @@ fun Modifier.motionPress(
     )
 }
 ` },
-  'motionFocus': { deps: [], src: `
+  'motionFocus': { deps: [], platform: 'common', src: `
 // Modifier-producing focus/blur events (onFocusChanged).
 fun Modifier.motionFocus(
     onFocus: (() -> Unit)? = null,

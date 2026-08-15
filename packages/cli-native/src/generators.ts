@@ -18,7 +18,7 @@ import type { JsNode } from '@compiler-native/js2kt';
 import type { VeskConfig } from '@vesk/native';
 import { AAPT2_OVERRIDE, DEFAULT_SDK, NAVIGATION_KT, TEMPLATE_DIR, collectVskFiles, colorLiteral, log, slugify } from '@cli-native/constants';
 import { API_PERMISSIONS, MAX_SDK_PERMS, collectBrowserApiUsage, collectDeviceApiUsage, collectRuntimeUsage } from '@cli-native/usage';
-import { BIOMETRIC_AUTH_BODY, BIOMETRIC_CHECK_BODY, QRGEN_BODY, QR_OVERLAY_BLOCK, RUNTIME_CORE, RUNTIME_HELPERS, RUNTIME_ORDER, runtimeImports } from '@cli-native/runtime-templates';
+import { BIOMETRIC_AUTH_BODY, BIOMETRIC_CHECK_BODY, QRGEN_BODY, QR_OVERLAY_BLOCK, RUNTIME_COMMON_IMPORTS, RUNTIME_CORE, RUNTIME_HELPERS, RUNTIME_ORDER, runtimeImports } from '@cli-native/runtime-templates';
 import { installedLibraries } from '@cli-native/vsklib';
 import type { VskLibRecord } from '@cli-native/vsklib';
 
@@ -55,6 +55,14 @@ include(":app", ":shared")
 // only the Android chrome: manifest, MainActivity, app-level res.
 function sharedKotlinDir(target: string): string {
   return join(target, 'shared', 'src', 'androidMain', 'kotlin', 'app');
+}
+
+// The portable runtime core lives in commonMain: pure Kotlin + compose
+// foundation/ui/coroutines only. Platform seams (expect) are declared here
+// with their Android actuals in androidMain (Runtime.kt), so nothing in this
+// directory ever references android.*.
+function sharedCommonKotlinDir(target: string): string {
+  return join(target, 'shared', 'src', 'commonMain', 'kotlin', 'app');
 }
 
 function sharedResDir(target: string): string {
@@ -124,10 +132,13 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-// The :shared KMP module is the framework's home: every generated page and the
-// runtime live in src/androidMain today. As the expect/actual seam lands they
-// migrate into commonMain and iosMain actuals appear (iOS targets are added
-// macOS-gated with the CMP milestone — never configured on Linux).
+// The :shared KMP module is the framework's home: generated pages live in
+// src/androidMain today (R class + LocalContext), and the runtime splits
+// between commonMain (pure-Kotlin core + expect seams) and androidMain
+// (android actuals). iOS targets are added macOS-gated with the CMP
+// milestone — never configured on Linux; when they land, the commonMain
+// androidx compose coordinates below switch to their org.jetbrains.compose
+// equivalents.
 @OptIn(ExperimentalKotlinGradlePluginApi::class)
 kotlin {
     android {
@@ -139,6 +150,19 @@ kotlin {
     }
 
     sourceSets {
+        // The portable core (RuntimeCore.kt) + navigation Router.kt are plain
+        // Kotlin + compose ui/foundation/runtime/animation-core + coroutines
+        // only — no LocalContext, no platform APIs. The versions match what
+        // the android source set resolves (ui/foundation 1.11.4 from the app
+        // BOM, kotlinx-coroutines-core 1.9.0 transitively).
+        commonMain.dependencies {
+            implementation("androidx.compose.runtime:runtime:1.11.4")
+            implementation("androidx.compose.ui:ui:1.11.4")
+            implementation("androidx.compose.foundation:foundation:1.11.4")
+            implementation("androidx.compose.foundation:foundation-layout:1.11.4")
+            implementation("androidx.compose.animation:animation-core:1.11.4")
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
+        }
         androidMain.dependencies {
 ${deps.join('\n')}
         }
@@ -146,7 +170,7 @@ ${deps.join('\n')}
 }
 `,
   );
-  log('gen', `shared/build.gradle.kts (${deps.length} androidMain dependencies, ${deps.length - 6} usage-derived)`);
+  log('gen', `shared/build.gradle.kts (${deps.length} androidMain dependencies, ${deps.length - 6} usage-derived; commonMain: runtime + ui + foundation + animation-core + coroutines-core)`);
 }
 
 // A signing password may be given inline or as `env:NAME` to read the value
@@ -663,18 +687,24 @@ fun VeskTheme(content: @Composable () -> Unit) {
   log('gen', 'Theme.kt (light/dark colorScheme, theme mode, typography from config)');
 }
 
-// Runtime.kt is pruned to only the helpers referenced by the generated app
+// The runtime is pruned to only the helpers referenced by the generated app
 // code, so apps ship exactly the tailwind runtime they use. Symbols are
 // collected from every generated .kt file except Runtime.kt itself; helpers
 // are emitted with their transitive dependencies (e.g. any color filter also
 // emits the private veskColorFilter base). truthy/num are core JS->Kotlin
 // runtime helpers always included.
+//
+// CMP split: pure-Kotlin helpers, RUNTIME_CORE, and the expect declarations
+// of platform seams go to commonMain (RuntimeCore.kt); everything with an
+// android.* reference stays in the androidMain Runtime.kt together with the
+// seam actuals. Each half carries only the imports it needs.
 
 export function generateRuntimeKt(appDir: string, config: VeskConfig): Set<string> {
   const used = collectRuntimeUsage(appDir);
   const deviceApis = collectDeviceApiUsage(appDir);
   const broadcast = config.media?.broadcast ?? true;
-  const body: string[] = [];
+  const commonBody: string[] = [];
+  const androidBody: string[] = [];
   const emitted = new Set<string>();
   const emit = (name: string): void => {
     if (emitted.has(name)) return;
@@ -701,30 +731,61 @@ export function generateRuntimeKt(appDir: string, config: VeskConfig): Set<strin
         .split('__QR_OVERLAY__')
         .join(deviceApis.has('scanQr') ? QR_OVERLAY_BLOCK : '');
     }
-    body.push(src);
+    // Platform routing: expect/actual seams emit the expect declaration to
+    // commonMain and the actual (verbatim android implementation) to
+    // androidMain; tagged 'common' helpers go entirely to commonMain;
+    // everything else stays in the android Runtime.kt.
+    if (unit.expect != null) {
+      commonBody.push(unit.expect);
+      androidBody.push(src);
+    } else if (unit.platform === 'common') {
+      commonBody.push(src);
+    } else {
+      androidBody.push(src);
+    }
   };
   for (const name of RUNTIME_ORDER) {
     if (used.has(name)) emit(name);
   }
   const outDir = sharedKotlinDir(dirname(appDir));
+  const commonOutDir = sharedCommonKotlinDir(dirname(appDir));
   mkdirSync(outDir, { recursive: true });
-  writeFileSync(join(outDir, 'Runtime.kt'), `${runtimeImports(deviceApis, used)}${RUNTIME_CORE}${body.join('\n')}`);
-  log('gen', `Runtime.kt (${body.length} helpers used of ${RUNTIME_ORDER.length}, media broadcast ${broadcast ? 'on' : 'off'})`);
+  mkdirSync(commonOutDir, { recursive: true });
+  writeFileSync(join(commonOutDir, 'RuntimeCore.kt'), `${RUNTIME_COMMON_IMPORTS}\n${RUNTIME_CORE}\n${commonBody.join('\n')}\n`);
+  writeFileSync(join(outDir, 'Runtime.kt'), `${runtimeImports(deviceApis, used)}${androidBody.join('\n')}\n`);
+  log('gen', `Runtime.kt (${androidBody.length} android helpers, ${commonBody.length} common helpers of ${RUNTIME_ORDER.length}, media broadcast ${broadcast ? 'on' : 'off'})`);
   return used;
 }
 
 export function generateRouterKt(appDir: string): void {
   const outDir = sharedKotlinDir(dirname(appDir));
+  const commonOutDir = sharedCommonKotlinDir(dirname(appDir));
   mkdirSync(outDir, { recursive: true });
+  mkdirSync(commonOutDir, { recursive: true });
   // Resolved from the CLI's own package location (not cwd) so it works from
   // inside the user's project, where `packages/navigation-native` does not
   // exist relative to the working directory.
   const src = NAVIGATION_KT;
   if (existsSync(src)) {
-    const navDir = join(outDir, 'navigation');
-    mkdirSync(navDir, { recursive: true });
-    writeFileSync(join(navDir, 'Router.kt'), readFileSync(src, 'utf8'));
-    log('gen', 'navigation/Router.kt (from @navigation-native)');
+    // The portable router (commonMain) plus its platform actuals. Android
+    // actuals follow Kotlin's Platform.android.kt naming and sit beside the
+    // common file in the assets/navigation directory.
+    const commonNavDir = join(commonOutDir, 'navigation');
+    mkdirSync(commonNavDir, { recursive: true });
+    writeFileSync(join(commonNavDir, 'Router.kt'), readFileSync(src, 'utf8'));
+    const androidSrc = join(dirname(src), 'Router.android.kt');
+    if (existsSync(androidSrc)) {
+      const navDir = join(outDir, 'navigation');
+      mkdirSync(navDir, { recursive: true });
+      // The router moved to commonMain; drop any stale androidMain Router.kt
+      // from an earlier generation so the two source sets never both define
+      // Route/AppRouter/LocalNavController.
+      rmSync(join(navDir, 'Router.kt'), { force: true });
+      writeFileSync(join(navDir, 'Router.android.kt'), readFileSync(androidSrc, 'utf8'));
+      log('gen', 'navigation/Router.kt (common) + Router.android.kt (actuals, from @navigation-native)');
+    } else {
+      log('warn', `navigation android actuals not found at ${androidSrc}; Router.kt emitted without back-handler seams`);
+    }
   } else {
     log('warn', `navigation module not found at ${src}; skipping Router.kt`);
   }

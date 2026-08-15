@@ -6,10 +6,13 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-// The :shared KMP module is the framework's home: every generated page and the
-// runtime live in src/androidMain today. As the expect/actual seam lands they
-// migrate into commonMain and iosMain actuals appear (iOS targets are added
-// macOS-gated with the CMP milestone — never configured on Linux).
+// The :shared KMP module is the framework's home: generated pages live in
+// src/androidMain today (R class + LocalContext), and the runtime splits
+// between commonMain (pure-Kotlin core + expect seams) and androidMain
+// (android actuals). iOS targets are added macOS-gated with the CMP
+// milestone — never configured on Linux; when they land, the commonMain
+// androidx compose coordinates below switch to their org.jetbrains.compose
+// equivalents.
 @OptIn(ExperimentalKotlinGradlePluginApi::class)
 kotlin {
     android {
@@ -21,6 +24,19 @@ kotlin {
     }
 
     sourceSets {
+        // The portable core (RuntimeCore.kt) + navigation Router.kt are plain
+        // Kotlin + compose ui/foundation/runtime/animation-core + coroutines
+        // only — no LocalContext, no platform APIs. The versions match what
+        // the android source set resolves (ui/foundation 1.11.4 from the app
+        // BOM, kotlinx-coroutines-core 1.9.0 transitively).
+        commonMain.dependencies {
+            implementation("androidx.compose.runtime:runtime:1.11.4")
+            implementation("androidx.compose.ui:ui:1.11.4")
+            implementation("androidx.compose.foundation:foundation:1.11.4")
+            implementation("androidx.compose.foundation:foundation-layout:1.11.4")
+            implementation("androidx.compose.animation:animation-core:1.11.4")
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
+        }
         androidMain.dependencies {
 implementation("androidx.compose.ui:ui:1.11.4")
 implementation("androidx.compose.ui:ui-tooling-preview:1.11.4")
