@@ -483,6 +483,14 @@ object VeskTimers {
 }
 
 
+// Platform seam: the activity anchor that browser-API dialogs and the
+// storage/sqlite actuals resolve their Context from. commonMain code only
+// ever names the type; the android actual (below) supplies activity +
+// setup() as extra members, and the generated App() registers the current
+// activity through veskAppSetup().
+expect object VeskAppContext
+
+
 expect fun jsAlert(message: Any?)
 
 

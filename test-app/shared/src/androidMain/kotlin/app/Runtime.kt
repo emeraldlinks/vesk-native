@@ -2639,7 +2639,7 @@ actual fun jsHandleError(e: Throwable) {
 
 // Activity anchor for browser-API dialogs. The generated App() composable
 // registers the current activity (main thread, once per composition).
-object VeskAppContext {
+actual object VeskAppContext {
     @Volatile var activity: Activity? = null
     fun setup(context: Context) {
         fun resolve(c: Context): Activity? = when (c) {

@@ -3398,10 +3398,19 @@ object VeskTimers {
     fun clearInterval(id: Any?) { jobs.remove(num(id).toInt())?.cancel() }
 }
 ` },
-  'VeskAppContext': { deps: [], src: `
+  'VeskAppContext': { deps: [],
+    expect: `
+// Platform seam: the activity anchor that browser-API dialogs and the
+// storage/sqlite actuals resolve their Context from. commonMain code only
+// ever names the type; the android actual (below) supplies activity +
+// setup() as extra members, and the generated App() registers the current
+// activity through veskAppSetup().
+expect object VeskAppContext
+`,
+    src: `
 // Activity anchor for browser-API dialogs. The generated App() composable
 // registers the current activity (main thread, once per composition).
-object VeskAppContext {
+actual object VeskAppContext {
     @Volatile var activity: Activity? = null
     fun setup(context: Context) {
         fun resolve(c: Context): Activity? = when (c) {
