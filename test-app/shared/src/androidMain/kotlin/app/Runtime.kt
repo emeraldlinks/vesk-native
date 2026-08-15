@@ -226,15 +226,15 @@ object VeskFocus {
 // vesk media, and by default broadcasts a media session + notification
 // (broadcast=false via media.broadcast in config turns that off).
 @Composable
-fun veskVideo(
+actual fun veskVideo(
     url: String?,
-    controls: Boolean = false,
-    autoplay: Boolean = false,
-    loop: Boolean = false,
-    muted: Boolean = false,
-    scale: String = "fit",
-    broadcast: Boolean = true,
-    modifier: Modifier = Modifier,
+    controls: Boolean,
+    autoplay: Boolean,
+    loop: Boolean,
+    muted: Boolean,
+    scale: String,
+    broadcast: Boolean,
+    modifier: Modifier,
 ) {
     val context = LocalContext.current
     if (url == null) return
@@ -439,14 +439,14 @@ fun veskVideo(
 // settings / headset buttons). broadcast=false (media.broadcast in config)
 // turns the session off per app.
 @Composable
-fun veskAudio(
+actual fun veskAudio(
     url: String?,
-    controls: Boolean = true,
-    autoplay: Boolean = false,
-    loop: Boolean = false,
-    muted: Boolean = false,
-    broadcast: Boolean = true,
-    modifier: Modifier = Modifier,
+    controls: Boolean,
+    autoplay: Boolean,
+    loop: Boolean,
+    muted: Boolean,
+    broadcast: Boolean,
+    modifier: Modifier,
 ) {
     val context = LocalContext.current
     if (url == null) return
@@ -608,7 +608,7 @@ fun veskAudio(
 // <img src="/storage/..."> (or content:// and file://): runtime decode from
 // device storage. Missing/unreadable files render a transparent placeholder.
 @Composable
-fun veskFileImage(path: String?): ImageBitmap {
+actual fun veskFileImage(path: String?): ImageBitmap {
     val context = LocalContext.current
     val bmp = remember(path) {
         if (path == null) null
@@ -706,7 +706,7 @@ private fun veskNotify(context: Context, title: String, text: String, onTap: (()
 //      cell's .value).
 // Both styles run the same launcher, so mixing them on one page is fine.
 @Composable
-fun rememberDeviceApi(): DeviceApi {
+actual fun rememberDeviceApi(): DeviceApi {
     val context = LocalContext.current
 
     var pendingPhoto by remember { mutableStateOf<Uri?>(null) }
@@ -987,7 +987,7 @@ fun rememberDeviceApi(): DeviceApi {
     return device
 }
 
-class DeviceApi internal constructor(
+actual class DeviceApi internal constructor(
     private val context: Context,
     private val imagePicker: (cb: ((String?) -> Unit)?) -> Unit,
     private val audioPicker: (cb: ((String?) -> Unit)?) -> Unit,
@@ -1002,56 +1002,56 @@ class DeviceApi internal constructor(
     private val notifyAction: (String, String, (() -> Unit)?) -> Unit,
 ) {
     // Observable state (style A): {device.lastImage} bindings recompose.
-    var lastImage: String? by mutableStateOf(null)
-    var lastAudio: String? by mutableStateOf(null)
-    var lastFile: String? by mutableStateOf(null)
-    var lastFileName: String? by mutableStateOf(null)
-    var lastPhoto: String? by mutableStateOf(null)
-    var lastVideo: String? by mutableStateOf(null)
-    var lastRecording: String? by mutableStateOf(null)
-    var recording: Boolean by mutableStateOf(false)
-    var batteryLevel: Int by mutableStateOf(0)
-    var charging: Boolean by mutableStateOf(false)
-    var networkType: String? by mutableStateOf(null)
-    var networkAvailable: Boolean by mutableStateOf(false)
-    var wifiEnabled: Boolean by mutableStateOf(false)
-    var locationEnabled: Boolean by mutableStateOf(false)
-    var lastLocation: String? by mutableStateOf(null)
-    var installedApps: List<String> by mutableStateOf(emptyList())
-    var contacts: List<String> by mutableStateOf(emptyList())
-    var callLogs: List<String> by mutableStateOf(emptyList())
-    var messages: List<String> by mutableStateOf(emptyList())
-    var accounts: List<String> by mutableStateOf(emptyList())
-    var clipboardText: String? by mutableStateOf(null)
-    var lastScreenshot: String? by mutableStateOf(null)
-    var torchEnabled: Boolean by mutableStateOf(false)
-    var torchAvailable: Boolean by mutableStateOf(false)
-    var appFiles: List<String> by mutableStateOf(emptyList())
-    var biometricAvailable: Boolean by mutableStateOf(false)
-    var biometricTypes: String? by mutableStateOf(null)
-    var bluetoothEnabled: Boolean by mutableStateOf(false)
-    var bluetoothDevices: List<String> by mutableStateOf(emptyList())
-    var scanningQr: Boolean by mutableStateOf(false)
-    var lastQrCodePath: String? by mutableStateOf(null)
-    var screenRecording: Boolean by mutableStateOf(false)
-    var lastScreenRecord: String? by mutableStateOf(null)
-    var mediaVolume: Int by mutableStateOf(0)
-    var ringerMode: String? by mutableStateOf(null)
-    var screenBrightness: Float by mutableStateOf(-1f)
-    var keepAwake: Boolean by mutableStateOf(false)
-    var storageFree: Long by mutableStateOf(0)
-    var storageTotal: Long by mutableStateOf(0)
-    var ramFree: Long by mutableStateOf(0)
-    var ramTotal: Long by mutableStateOf(0)
-    var calendarEvents: List<String> by mutableStateOf(emptyList())
-    var nfcAvailable: Boolean by mutableStateOf(false)
-    var nfcEnabled: Boolean by mutableStateOf(false)
-    var carrier: String? by mutableStateOf(null)
-    var simState: String? by mutableStateOf(null)
-    var deviceModel: String? by mutableStateOf(null)
-    var deviceManufacturer: String? by mutableStateOf(null)
-    var androidVersion: String? by mutableStateOf(null)
-    var screenSize: String? by mutableStateOf(null)
+    actual var lastImage: String? by mutableStateOf(null)
+    actual var lastAudio: String? by mutableStateOf(null)
+    actual var lastFile: String? by mutableStateOf(null)
+    actual var lastFileName: String? by mutableStateOf(null)
+    actual var lastPhoto: String? by mutableStateOf(null)
+    actual var lastVideo: String? by mutableStateOf(null)
+    actual var lastRecording: String? by mutableStateOf(null)
+    actual var recording: Boolean by mutableStateOf(false)
+    actual var batteryLevel: Int by mutableStateOf(0)
+    actual var charging: Boolean by mutableStateOf(false)
+    actual var networkType: String? by mutableStateOf(null)
+    actual var networkAvailable: Boolean by mutableStateOf(false)
+    actual var wifiEnabled: Boolean by mutableStateOf(false)
+    actual var locationEnabled: Boolean by mutableStateOf(false)
+    actual var lastLocation: String? by mutableStateOf(null)
+    actual var installedApps: List<String> by mutableStateOf(emptyList())
+    actual var contacts: List<String> by mutableStateOf(emptyList())
+    actual var callLogs: List<String> by mutableStateOf(emptyList())
+    actual var messages: List<String> by mutableStateOf(emptyList())
+    actual var accounts: List<String> by mutableStateOf(emptyList())
+    actual var clipboardText: String? by mutableStateOf(null)
+    actual var lastScreenshot: String? by mutableStateOf(null)
+    actual var torchEnabled: Boolean by mutableStateOf(false)
+    actual var torchAvailable: Boolean by mutableStateOf(false)
+    actual var appFiles: List<String> by mutableStateOf(emptyList())
+    actual var biometricAvailable: Boolean by mutableStateOf(false)
+    actual var biometricTypes: String? by mutableStateOf(null)
+    actual var bluetoothEnabled: Boolean by mutableStateOf(false)
+    actual var bluetoothDevices: List<String> by mutableStateOf(emptyList())
+    actual var scanningQr: Boolean by mutableStateOf(false)
+    actual var lastQrCodePath: String? by mutableStateOf(null)
+    actual var screenRecording: Boolean by mutableStateOf(false)
+    actual var lastScreenRecord: String? by mutableStateOf(null)
+    actual var mediaVolume: Int by mutableStateOf(0)
+    actual var ringerMode: String? by mutableStateOf(null)
+    actual var screenBrightness: Float by mutableStateOf(-1f)
+    actual var keepAwake: Boolean by mutableStateOf(false)
+    actual var storageFree: Long by mutableStateOf(0)
+    actual var storageTotal: Long by mutableStateOf(0)
+    actual var ramFree: Long by mutableStateOf(0)
+    actual var ramTotal: Long by mutableStateOf(0)
+    actual var calendarEvents: List<String> by mutableStateOf(emptyList())
+    actual var nfcAvailable: Boolean by mutableStateOf(false)
+    actual var nfcEnabled: Boolean by mutableStateOf(false)
+    actual var carrier: String? by mutableStateOf(null)
+    actual var simState: String? by mutableStateOf(null)
+    actual var deviceModel: String? by mutableStateOf(null)
+    actual var deviceManufacturer: String? by mutableStateOf(null)
+    actual var androidVersion: String? by mutableStateOf(null)
+    actual var screenSize: String? by mutableStateOf(null)
 
     private var recorder: MediaRecorder? = null
     private var recordingFile: java.io.File? = null
@@ -1060,21 +1060,21 @@ class DeviceApi internal constructor(
     //     device.pickImage { uri -> photo = uri }
     // or rely on the observable fields above (style A):
     //     device.pickImage()
-    fun pickImage(onDone: ((String?) -> Unit)? = null) = imagePicker(onDone)
-    fun pickAudio(onDone: ((String?) -> Unit)? = null) = audioPicker(onDone)
-    fun pickFile(onDone: ((String?, String?) -> Unit)? = null, mime: String = "*/*") = filePicker(mime, onDone)
-    fun capturePhoto(onDone: ((String?) -> Unit)? = null) = photoCapture(onDone)
-    fun captureVideo(onDone: ((String?) -> Unit)? = null) = videoCapture(onDone)
+    actual fun pickImage(onDone: ((String?) -> Unit)?) = imagePicker(onDone)
+    actual fun pickAudio(onDone: ((String?) -> Unit)?) = audioPicker(onDone)
+    actual fun pickFile(onDone: ((String?, String?) -> Unit)?, mime: String) = filePicker(mime, onDone)
+    actual fun capturePhoto(onDone: ((String?) -> Unit)?) = photoCapture(onDone)
+    actual fun captureVideo(onDone: ((String?) -> Unit)?) = videoCapture(onDone)
 
     // Starts recording after the RECORD_AUDIO runtime permission is granted;
     // the system prompt shows on first use. onStarted receives the output
     // path (null if recording could not start).
-    fun startRecording(onStarted: ((String?) -> Unit)? = null) {
+    actual fun startRecording(onStarted: ((String?) -> Unit)?) {
         permissionRunner(android.Manifest.permission.RECORD_AUDIO) { onStarted?.invoke(beginRecording()) }
     }
 
     // Stops the recorder and returns the path of the saved file.
-    fun stopRecording(): String? {
+    actual fun stopRecording(): String? {
         val r = recorder ?: return null
         val f = recordingFile
         runCatching { r.stop() }
@@ -1088,10 +1088,10 @@ class DeviceApi internal constructor(
 
     // Posts a plain notification (title/text) on the app channel; onTap runs
     // when it is tapped (which also opens the app).
-    fun notify(title: String, text: String, onTap: (() -> Unit)? = null) = notifyAction(title, text, onTap)
+    actual fun notify(title: String, text: String, onTap: (() -> Unit)?) = notifyAction(title, text, onTap)
 
     // Battery level (0-100) and charge state; cached in batteryLevel/charging.
-    fun getBattery(onDone: ((Int, Boolean) -> Unit)? = null) {
+    actual fun getBattery(onDone: ((Int, Boolean) -> Unit)?) {
         val bm = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
         @Suppress("DEPRECATION")
         val sticky = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
@@ -1113,7 +1113,7 @@ class DeviceApi internal constructor(
 
     // Active transport ("wifi"/"cellular"/"ethernet"/null) + internet access;
     // also caches networkType, networkAvailable and wifiEnabled.
-    fun refreshNetwork(onDone: ((String?, Boolean) -> Unit)? = null) {
+    actual fun refreshNetwork(onDone: ((String?, Boolean) -> Unit)?) {
         val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val caps = cm.getNetworkCapabilities(cm.activeNetwork)
         val type = when {
@@ -1136,7 +1136,7 @@ class DeviceApi internal constructor(
     // Last known fix (GPS first, network fallback) as lat/lng strings.
     // Requires location services + the ACCESS_FINE_LOCATION runtime permission
     // (granted on first use); state lands in locationEnabled/lastLocation.
-    fun getLocation(onDone: ((String?, String?) -> Unit)? = null) {
+    actual fun getLocation(onDone: ((String?, String?) -> Unit)?) {
         fun read(): Unit {
             val lm = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
             locationEnabled = lm.isProviderEnabled(LocationManager.GPS_PROVIDER) || lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
@@ -1153,7 +1153,7 @@ class DeviceApi internal constructor(
 
     // Launchable apps (labels, sorted, capped); cached in installedApps.
     // Listing needs only a <queries> MAIN/LAUNCHER declaration, no permission.
-    fun listApps(onDone: ((List<String>) -> Unit)? = null, limit: Int = 100) {
+    actual fun listApps(onDone: ((List<String>) -> Unit)?, limit: Int) {
         val pm = context.packageManager
         val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
         @Suppress("DEPRECATION")
@@ -1167,7 +1167,7 @@ class DeviceApi internal constructor(
 
     // Contacts as "name · number" rows; requires READ_CONTACTS (granted on
     // first use). Cached in contacts.
-    fun listContacts(onDone: ((List<String>) -> Unit)? = null, limit: Int = 100) {
+    actual fun listContacts(onDone: ((List<String>) -> Unit)?, limit: Int) {
         fun read(): Unit {
             val rows = mutableListOf<String>()
             try {
@@ -1192,7 +1192,7 @@ class DeviceApi internal constructor(
     }
 
     // Call log as "type · age · number" rows; requires READ_CALL_LOG.
-    fun listCallLogs(onDone: ((List<String>) -> Unit)? = null, limit: Int = 100) {
+    actual fun listCallLogs(onDone: ((List<String>) -> Unit)?, limit: Int) {
         fun read(): Unit {
             val rows = mutableListOf<String>()
             try {
@@ -1227,7 +1227,7 @@ class DeviceApi internal constructor(
     }
 
     // SMS inbox as "sender: body" rows (body trimmed); requires READ_SMS.
-    fun listMessages(onDone: ((List<String>) -> Unit)? = null, limit: Int = 100) {
+    actual fun listMessages(onDone: ((List<String>) -> Unit)?, limit: Int) {
         fun read(): Unit {
             val rows = mutableListOf<String>()
             try {
@@ -1252,7 +1252,7 @@ class DeviceApi internal constructor(
     }
 
     // Device accounts as "type · name" rows; requires GET_ACCOUNTS.
-    fun listAccounts(onDone: ((List<String>) -> Unit)? = null, limit: Int = 100) {
+    actual fun listAccounts(onDone: ((List<String>) -> Unit)?, limit: Int) {
         fun read(): Unit {
             val rows = AccountManager.get(context).accounts
                 .take(limit)
@@ -1264,7 +1264,7 @@ class DeviceApi internal constructor(
     }
 
     // Current clipboard text; cached in clipboardText.
-    fun readClipboard(onDone: ((String?) -> Unit)? = null) {
+    actual fun readClipboard(onDone: ((String?) -> Unit)?) {
         val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         val text = cm.primaryClip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.text?.toString()
         clipboardText = text
@@ -1272,7 +1272,7 @@ class DeviceApi internal constructor(
     }
 
     // Writes text to the clipboard.
-    fun copyToClipboard(value: String, onDone: ((Boolean) -> Unit)? = null) {
+    actual fun copyToClipboard(value: String, onDone: ((Boolean) -> Unit)?) {
         val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         cm.setPrimaryClip(ClipData.newPlainText("vesk", value))
         clipboardText = value
@@ -1280,7 +1280,7 @@ class DeviceApi internal constructor(
     }
 
     // Pulses the vibrator (VIBRATE is a normal permission, granted at install).
-    fun vibrate(millis: Long = 200, onDone: ((Boolean) -> Unit)? = null) {
+    actual fun vibrate(millis: Long, onDone: ((Boolean) -> Unit)?) {
         val v = ContextCompat.getSystemService(context, Vibrator::class.java)
         if (v == null) {
             runCatching { java.io.File(android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS), "vesk-debug.txt").appendText("${java.util.Date()}\nVIBRATE: no Vibrator service\n") }
@@ -1302,7 +1302,7 @@ class DeviceApi internal constructor(
 
     // Toggles the camera flash (torch mode needs no camera permission); state
     // lands in torchEnabled/torchAvailable.
-    fun toggleTorch(onDone: ((Boolean) -> Unit)? = null) {
+    actual fun toggleTorch(onDone: ((Boolean) -> Unit)?) {
         val cm = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
         val id = cm.cameraIdList.firstOrNull { camId ->
             cm.getCameraCharacteristics(camId).get(CameraCharacteristics.FLASH_INFO_AVAILABLE) == true
@@ -1317,10 +1317,10 @@ class DeviceApi internal constructor(
 
     // Captures the current window to a PNG in the cache (also lastScreenshot);
     // needs no media projection — it copies our own window's pixels.
-    fun captureScreenshot(onDone: ((String?) -> Unit)? = null) = screenshotCapture(onDone)
+    actual fun captureScreenshot(onDone: ((String?) -> Unit)?) = screenshotCapture(onDone)
 
     // Opens the system share sheet with plain text.
-    fun shareText(text: String, onDone: ((Boolean) -> Unit)? = null) {
+    actual fun shareText(text: String, onDone: ((Boolean) -> Unit)?) {
         val i = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(Intent.EXTRA_TEXT, text)
@@ -1330,7 +1330,7 @@ class DeviceApi internal constructor(
     }
 
     // Shares a file (device path or content:// URI) through the FileProvider.
-    fun shareFile(path: String, mime: String? = null, onDone: ((Boolean) -> Unit)? = null) {
+    actual fun shareFile(path: String, mime: String?, onDone: ((Boolean) -> Unit)?) {
         val uri = if (path.startsWith("content://")) {
             android.net.Uri.parse(path)
         } else {
@@ -1349,7 +1349,7 @@ class DeviceApi internal constructor(
 
     // Files in the app-private directory (subdirectory via dir); cached in
     // appFiles. Directory entries carry a trailing "/".
-    fun listFiles(dir: String = "", onDone: ((List<String>) -> Unit)? = null) {
+    actual fun listFiles(dir: String, onDone: ((List<String>) -> Unit)?) {
         val base = java.io.File(context.filesDir, dir)
         val items = if (base.exists()) {
             base.listFiles()?.sortedBy { it.name }?.map { if (it.isDirectory) "${it.name}/" else it.name } ?: emptyList()
@@ -1359,21 +1359,21 @@ class DeviceApi internal constructor(
     }
 
     // Writes text into the app-private directory; returns the path.
-    fun writeFile(name: String, content: String, onDone: ((String?) -> Unit)? = null) {
+    actual fun writeFile(name: String, content: String, onDone: ((String?) -> Unit)?) {
         val f = java.io.File(context.filesDir, name)
         val path = runCatching { f.parentFile?.mkdirs(); f.writeText(content); f.absolutePath }.getOrNull()
         onDone?.invoke(path)
     }
 
     // Reads a file from the app-private directory.
-    fun readFile(name: String, onDone: ((String?) -> Unit)? = null) {
+    actual fun readFile(name: String, onDone: ((String?) -> Unit)?) {
         val f = java.io.File(context.filesDir, name)
         val text = if (f.exists()) runCatching { f.readText() }.getOrNull() else null
         onDone?.invoke(text)
     }
 
 // Deletes a file from the app-private directory.
-    fun deleteFile(name: String, onDone: ((Boolean) -> Unit)? = null) {
+    actual fun deleteFile(name: String, onDone: ((Boolean) -> Unit)?) {
         val f = java.io.File(context.filesDir, name)
         val ok = f.exists() && f.delete()
         onDone?.invoke(ok)
@@ -1385,7 +1385,7 @@ class DeviceApi internal constructor(
     // is inlined by the generator only when the app calls device.checkBiometrics
     // — otherwise a stub keeps the method available and the androidx.biometric
     // dependency is not shipped.
-    fun checkBiometrics(onDone: ((Boolean, String?) -> Unit)? = null) {
+    actual fun checkBiometrics(onDone: ((Boolean, String?) -> Unit)?) {
         val pm = context.packageManager
         val fp = pm.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)
         val face = pm.hasSystemFeature(PackageManager.FEATURE_FACE)
@@ -1412,7 +1412,7 @@ class DeviceApi internal constructor(
 
     // Prompts the system biometric dialog (fingerprint/face). onDone receives
     // (ok, reason) — ok=false with a message on cancel or missing hardware.
-    fun authenticate(onDone: ((Boolean, String?) -> Unit)? = null) {
+    actual fun authenticate(onDone: ((Boolean, String?) -> Unit)?) {
         val act = findActivity(context)
         if (act == null) { onDone?.invoke(false, "No activity"); return }
         if (act !is FragmentActivity) { onDone?.invoke(false, "Not supported"); return }
@@ -1456,7 +1456,7 @@ class DeviceApi internal constructor(
     // 12+ (granted on first use; legacy BLUETOOTH/BLUETOOTH_ADMIN are
     // maxSdkVersion-30 only). Adapter state is never read before the runtime
     // permission is granted — on API 31+ that throws SecurityException.
-    fun refreshBluetooth(onDone: ((Boolean, List<String>) -> Unit)? = null) {
+    actual fun refreshBluetooth(onDone: ((Boolean, List<String>) -> Unit)?) {
         permissionRunner(android.Manifest.permission.BLUETOOTH_CONNECT) {
             val ba = context.getSystemService(BluetoothManager::class.java)?.adapter
             val enabled = runCatching { ba?.isEnabled == true }.getOrDefault(false)
@@ -1478,7 +1478,7 @@ class DeviceApi internal constructor(
     // enable()/disable() calls are no-ops (and deprecated), so we ask the
     // user through the system enable dialog (on) or the Bluetooth settings
     // screen (off) — the only supported paths since API 30.
-    fun toggleBluetooth(enabled: Boolean, onDone: ((Boolean) -> Unit)? = null) {
+    actual fun toggleBluetooth(enabled: Boolean, onDone: ((Boolean) -> Unit)?) {
         permissionRunner(android.Manifest.permission.BLUETOOTH_CONNECT) {
             val ba = context.getSystemService(BluetoothManager::class.java)?.adapter
             if (ba == null) { onDone?.invoke(false); return@permissionRunner }
@@ -1496,7 +1496,7 @@ class DeviceApi internal constructor(
 
     // Discovers nearby devices for a few seconds; BLUETOOTH_SCAN on 12+.
     // Results ("name · address") land in bluetoothDevices too.
-    fun scanBluetooth(seconds: Int = 5, onDone: ((List<String>) -> Unit)? = null) {
+    actual fun scanBluetooth(seconds: Int, onDone: ((List<String>) -> Unit)?) {
         permissionRunner(android.Manifest.permission.BLUETOOTH_SCAN) {
             permissionRunner(android.Manifest.permission.BLUETOOTH_CONNECT) {
                 val ba = context.getSystemService(BluetoothManager::class.java)?.adapter
@@ -1543,7 +1543,7 @@ class DeviceApi internal constructor(
     // lastQrCodePath). Inline rendering via <qr-code value="...">. The real
     // body is inlined only when device.generateQrCode is used — otherwise a
     // stub keeps the method and drops the zxing dependency.
-    fun generateQrCode(text: String, onDone: ((String?) -> Unit)? = null, size: Int = 512) {
+    actual fun generateQrCode(text: String, onDone: ((String?) -> Unit)?, size: Int) {
         val matrix = runCatching {
             MultiFormatWriter().encode(text, BarcodeFormat.QR_CODE, size, size, mapOf(EncodeHintType.MARGIN to 1))
         }.getOrNull()
@@ -1564,7 +1564,7 @@ class DeviceApi internal constructor(
     // Opens the camera scanner overlay (CameraX + ML Kit; needs the CAMERA
     // runtime permission, granted on first use). While active the
     // device.scanningQr flag is set; onResult receives the decoded text.
-    fun scanQr(onResult: ((String?) -> Unit)? = null) {
+    actual fun scanQr(onResult: ((String?) -> Unit)?) {
         permissionRunner(android.Manifest.permission.CAMERA) {
             scanningQr = true
             scanStarter { text ->
@@ -1577,12 +1577,12 @@ class DeviceApi internal constructor(
     // ---- Screen recording --------------------------------------------------
     // System consent dialog, then a service-backed capture into the cache.
     // stopScreenRecord() finalizes and returns the output path.
-    fun startScreenRecord(onStarted: ((String?) -> Unit)? = null) = screenRecStarter(onStarted)
+    actual fun startScreenRecord(onStarted: ((String?) -> Unit)?) = screenRecStarter(onStarted)
 
-    fun stopScreenRecord(): String? = screenRecStopper()
+    actual fun stopScreenRecord(): String? = screenRecStopper()
 
     // ---- Volume & ringer ---------------------------------------------------
-    fun refreshVolume(onDone: ((Int, String?) -> Unit)? = null) {
+    actual fun refreshVolume(onDone: ((Int, String?) -> Unit)?) {
         val am = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         val max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
         val level = if (max > 0) (am.getStreamVolume(AudioManager.STREAM_MUSIC) * 100 + max / 2) / max else 0
@@ -1597,7 +1597,7 @@ class DeviceApi internal constructor(
     }
 
     // Sets the media stream volume 0-100 (clamped; scaled to the stream max).
-    fun setVolume(level: Int, onDone: ((Boolean) -> Unit)? = null) {
+    actual fun setVolume(level: Int, onDone: ((Boolean) -> Unit)?) {
         val am = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         val max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
         val clamped = level.coerceIn(0, 100)
@@ -1608,7 +1608,7 @@ class DeviceApi internal constructor(
     }
 
     // Ringer mode: "normal" / "vibrate" / "silent" (MODIFY_AUDIO_SETTINGS).
-    fun setRingerMode(mode: String, onDone: ((Boolean) -> Unit)? = null) {
+    actual fun setRingerMode(mode: String, onDone: ((Boolean) -> Unit)?) {
         val am = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         val m = when (mode) {
             "silent" -> AudioManager.RINGER_MODE_SILENT
@@ -1623,7 +1623,7 @@ class DeviceApi internal constructor(
     // ---- Display -----------------------------------------------------------
     // Window brightness 0-100 (this app's window only); reset restores the
     // system auto setting.
-    fun setScreenBrightness(level: Int, onDone: ((Boolean) -> Unit)? = null) {
+    actual fun setScreenBrightness(level: Int, onDone: ((Boolean) -> Unit)?) {
         val act = findActivity(context)
         val lp = act?.window?.attributes
         if (act == null || lp == null) { onDone?.invoke(false); return }
@@ -1633,7 +1633,7 @@ class DeviceApi internal constructor(
         onDone?.invoke(true)
     }
 
-    fun resetScreenBrightness(onDone: ((Boolean) -> Unit)? = null) {
+    actual fun resetScreenBrightness(onDone: ((Boolean) -> Unit)?) {
         val act = findActivity(context)
         val lp = act?.window?.attributes
         if (act == null || lp == null) { onDone?.invoke(false); return }
@@ -1644,7 +1644,7 @@ class DeviceApi internal constructor(
     }
 
     // Keeps the screen on while this app's window is visible.
-    fun setKeepAwake(on: Boolean, onDone: ((Boolean) -> Unit)? = null) {
+    actual fun setKeepAwake(on: Boolean, onDone: ((Boolean) -> Unit)?) {
         val act = findActivity(context)
         if (act == null || act.window == null) { onDone?.invoke(false); return }
         if (on) act.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -1654,7 +1654,7 @@ class DeviceApi internal constructor(
     }
 
     // ---- Storage & memory --------------------------------------------------
-    fun refreshStorage(onDone: ((String, String) -> Unit)? = null) {
+    actual fun refreshStorage(onDone: ((String, String) -> Unit)?) {
         val st = StatFs(context.filesDir.path)
         storageTotal = st.totalBytes
         storageFree = st.availableBytes
@@ -1668,7 +1668,7 @@ class DeviceApi internal constructor(
 
     // ---- Orientation -------------------------------------------------------
     // "portrait" / "landscape" / "auto".
-    fun lockOrientation(mode: String, onDone: ((Boolean) -> Unit)? = null) {
+    actual fun lockOrientation(mode: String, onDone: ((Boolean) -> Unit)?) {
         val act = findActivity(context)
         if (act == null) { onDone?.invoke(false); return }
         act.requestedOrientation = when (mode) {
@@ -1682,7 +1682,7 @@ class DeviceApi internal constructor(
     // ---- Sensors -----------------------------------------------------------
     // One-shot read of a hardware sensor: "light", "proximity",
     // "accelerometer", "gyroscope", "temperature" → comma-joined values.
-    fun readSensor(type: String, onDone: ((String?) -> Unit)? = null) {
+    actual fun readSensor(type: String, onDone: ((String?) -> Unit)?) {
         val sm = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
         val sensor = when (type) {
             "light" -> sm.getDefaultSensor(Sensor.TYPE_LIGHT)
@@ -1712,18 +1712,18 @@ class DeviceApi internal constructor(
     }
 
     // Dialer pre-filled with the number.
-    fun dial(number: String, onDone: ((Boolean) -> Unit)? = null) {
+    actual fun dial(number: String, onDone: ((Boolean) -> Unit)?) {
         onDone?.invoke(launchSafe(Intent(Intent.ACTION_DIAL, Uri.parse("tel:${number}"))))
     }
 
     // Messenger pre-filled with the recipient + body.
-    fun sendSms(number: String, text: String, onDone: ((Boolean) -> Unit)? = null) {
+    actual fun sendSms(number: String, text: String, onDone: ((Boolean) -> Unit)?) {
         val i = Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:${number}")).putExtra("sms_body", text)
         onDone?.invoke(launchSafe(i))
     }
 
     // Mail client with to/subject/body pre-filled.
-    fun sendEmail(to: String, subject: String, body: String, onDone: ((Boolean) -> Unit)? = null) {
+    actual fun sendEmail(to: String, subject: String, body: String, onDone: ((Boolean) -> Unit)?) {
         val i = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:${to}"))
             .putExtra(Intent.EXTRA_SUBJECT, subject)
             .putExtra(Intent.EXTRA_TEXT, body)
@@ -1731,19 +1731,19 @@ class DeviceApi internal constructor(
     }
 
     // Opens any URL in the browser.
-    fun openUrl(url: String, onDone: ((Boolean) -> Unit)? = null) {
+    actual fun openUrl(url: String, onDone: ((Boolean) -> Unit)?) {
         onDone?.invoke(launchSafe(Intent(Intent.ACTION_VIEW, Uri.parse(url))))
     }
 
     // Opens Google Maps with a place query.
-    fun openMaps(query: String, onDone: ((Boolean) -> Unit)? = null) {
+    actual fun openMaps(query: String, onDone: ((Boolean) -> Unit)?) {
         val uri = "geo:0,0?q=" + Uri.encode(query)
         onDone?.invoke(launchSafe(Intent(Intent.ACTION_VIEW, Uri.parse(uri))))
     }
 
     // System settings screens: "wifi" / "bluetooth" / "location" / "sound" /
     // "display" / "security" / "apps" / "nfc" / "main".
-    fun openSettings(section: String? = null, onDone: ((Boolean) -> Unit)? = null) {
+    actual fun openSettings(section: String?, onDone: ((Boolean) -> Unit)?) {
         val target = when (section) {
             "wifi" -> Settings.ACTION_WIFI_SETTINGS
             "bluetooth" -> Settings.ACTION_BLUETOOTH_SETTINGS
@@ -1759,7 +1759,7 @@ class DeviceApi internal constructor(
     }
 
     // Sets an alarm clock (system alarm intent).
-    fun setAlarm(hour: Int, minute: Int, title: String, onDone: ((Boolean) -> Unit)? = null) {
+    actual fun setAlarm(hour: Int, minute: Int, title: String, onDone: ((Boolean) -> Unit)?) {
         val i = Intent(AlarmClock.ACTION_SET_ALARM)
             .putExtra(AlarmClock.EXTRA_HOUR, hour)
             .putExtra(AlarmClock.EXTRA_MINUTES, minute)
@@ -1768,7 +1768,7 @@ class DeviceApi internal constructor(
     }
 
     // Launches an installed app by package name (e.g. "com.android.settings").
-    fun openApp(packageName: String, onDone: ((Boolean) -> Unit)? = null) {
+    actual fun openApp(packageName: String, onDone: ((Boolean) -> Unit)?) {
         val launch = context.packageManager.getLaunchIntentForPackage(packageName)
         if (launch == null) { onDone?.invoke(false); return }
         onDone?.invoke(launchSafe(launch))
@@ -1776,13 +1776,13 @@ class DeviceApi internal constructor(
 
     // ---- Misc system -------------------------------------------------------
     // Android toast (short/long).
-    fun toast(text: String, long: Boolean = false, onDone: ((Boolean) -> Unit)? = null) {
+    actual fun toast(text: String, long: Boolean, onDone: ((Boolean) -> Unit)?) {
         Toast.makeText(context, text, if (long) Toast.LENGTH_LONG else Toast.LENGTH_SHORT).show()
         onDone?.invoke(true)
     }
 
     // Plays a system sound: "notification" / "alarm" / "ringtone" / null.
-    fun playSound(kind: String? = null, onDone: ((Boolean) -> Unit)? = null) {
+    actual fun playSound(kind: String?, onDone: ((Boolean) -> Unit)?) {
         val uri = when (kind) {
             "notification" -> RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
             "alarm" -> RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
@@ -1796,7 +1796,7 @@ class DeviceApi internal constructor(
     }
 
     // Sets the home/lock wallpaper from an image file path.
-    fun setWallpaper(path: String, onDone: ((Boolean) -> Unit)? = null) {
+    actual fun setWallpaper(path: String, onDone: ((Boolean) -> Unit)?) {
         val f = java.io.File(path)
         if (!f.exists()) { onDone?.invoke(false); return }
         val wm = WallpaperManager.getInstance(context)
@@ -1806,7 +1806,7 @@ class DeviceApi internal constructor(
 
     // Upcoming calendar events as "title · MMM d, HH:mm" rows; READ_CALENDAR
     // runtime permission granted on first use.
-    fun listCalendarEvents(onDone: ((List<String>) -> Unit)? = null, limit: Int = 50) {
+    actual fun listCalendarEvents(onDone: ((List<String>) -> Unit)?, limit: Int) {
         fun read(): Unit {
             val rows = mutableListOf<String>()
             try {
@@ -1834,7 +1834,7 @@ class DeviceApi internal constructor(
     }
 
     // NFC presence + adapter state.
-    fun refreshNfc(onDone: ((Boolean, Boolean) -> Unit)? = null) {
+    actual fun refreshNfc(onDone: ((Boolean, Boolean) -> Unit)?) {
         val na = runCatching { context.getSystemService(Context.NFC_SERVICE) as NfcAdapter }.getOrNull()
         nfcAvailable = na != null
         nfcEnabled = na?.isEnabled == true
@@ -1842,7 +1842,7 @@ class DeviceApi internal constructor(
     }
 
     // SIM/carrier info (no permission needed for operator name + state).
-    fun refreshTelephony(onDone: ((String?, String?) -> Unit)? = null) {
+    actual fun refreshTelephony(onDone: ((String?, String?) -> Unit)?) {
         val tm = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
         carrier = runCatching { tm.simOperatorName ?: tm.networkOperatorName }.getOrNull()?.ifBlank { null }
         simState = when (tm.simState) {
@@ -1857,7 +1857,7 @@ class DeviceApi internal constructor(
     }
 
     // Device identity/screen summary for labels and diagnostics.
-    fun refreshDeviceInfo(onDone: ((String) -> Unit)? = null) {
+    actual fun refreshDeviceInfo(onDone: ((String) -> Unit)?) {
         deviceModel = Build.MODEL
         deviceManufacturer = Build.MANUFACTURER
         androidVersion = Build.VERSION.RELEASE
@@ -1868,7 +1868,7 @@ class DeviceApi internal constructor(
     }
 
     // Speaks text with the system TTS engine (callback fires when ready/used).
-    fun speak(text: String, onDone: ((Boolean) -> Unit)? = null) {
+    actual fun speak(text: String, onDone: ((Boolean) -> Unit)?) {
         var tts: TextToSpeech? = null
         tts = TextToSpeech(context) { status ->
             val engine = tts
@@ -1972,10 +1972,10 @@ class VeskScreenRecordService : android.app.Service() {
 // "label" static attribute, and binds results through onDone/onTap/onPick.
 
 @Composable
-fun VeskPhotoPicker(
-    label: String = "Pick a photo",
-    onPick: ((String?) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+actual fun VeskPhotoPicker(
+    label: String,
+    onPick: ((String?) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.pickImage(onPick) }, modifier = modifier) { Text(label) }
@@ -1984,11 +1984,11 @@ fun VeskPhotoPicker(
 // <camera> captures through the system camera app (FileProvider output URI);
 // the video attribute switches to video capture.
 @Composable
-fun VeskCamera(
-    label: String = "Take a photo",
-    onDone: ((String?) -> Unit)? = null,
-    video: Boolean = false,
-    modifier: Modifier = Modifier,
+actual fun VeskCamera(
+    label: String,
+    onDone: ((String?) -> Unit)?,
+    video: Boolean,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(
@@ -2000,10 +2000,10 @@ fun VeskCamera(
 // <recorder> toggles the mic recorder; onDone receives the saved path when
 // recording stops (the same path lands in device.lastRecording).
 @Composable
-fun VeskRecorder(
-    label: String = "Record",
-    onDone: ((String?) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+actual fun VeskRecorder(
+    label: String,
+    onDone: ((String?) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(
@@ -2018,11 +2018,11 @@ fun VeskRecorder(
 // <file-input mime="..."> picks any document (persistable read/write access
 // is taken when the provider allows). onDone receives (uri, displayName).
 @Composable
-fun VeskFileInput(
-    label: String = "Pick a file",
-    mime: String = "*/*",
-    onDone: ((String?, String?) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+actual fun VeskFileInput(
+    label: String,
+    mime: String,
+    onDone: ((String?, String?) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.pickFile(onDone, mime) }, modifier = modifier) { Text(label) }
@@ -2031,12 +2031,12 @@ fun VeskFileInput(
 // <notification title="..." text="..."> posts on the app channel; onTap runs
 // when it is tapped (the tap also opens the app).
 @Composable
-fun VeskNotification(
+actual fun VeskNotification(
     title: String,
     text: String,
-    label: String = "Notify",
-    onTap: (() -> Unit)? = null,
-    modifier: Modifier = Modifier,
+    label: String,
+    onTap: (() -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.notify(title, text, onTap) }, modifier = modifier) { Text(label) }
@@ -2045,10 +2045,10 @@ fun VeskNotification(
 // <battery-status onDone={(level, charging) => ...}> reports battery level
 // (0-100) and charge state, also cached in device.batteryLevel/charging.
 @Composable
-fun VeskBatteryStatus(
-    label: String = "Battery",
-    onDone: ((Int, Boolean) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+actual fun VeskBatteryStatus(
+    label: String,
+    onDone: ((Int, Boolean) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.getBattery(onDone) }, modifier = modifier) { Text(label) }
@@ -2057,10 +2057,10 @@ fun VeskBatteryStatus(
 // <network-status onDone={(type, available) => ...}> reports the active
 // transport ("wifi" / "cellular" / "ethernet" / null) and internet access.
 @Composable
-fun VeskNetworkStatus(
-    label: String = "Network",
-    onDone: ((String?, Boolean) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+actual fun VeskNetworkStatus(
+    label: String,
+    onDone: ((String?, Boolean) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.refreshNetwork(onDone) }, modifier = modifier) { Text(label) }
@@ -2069,10 +2069,10 @@ fun VeskNetworkStatus(
 // <location onDone={(lat, lng) => ...}> reads the last known fix (GPS first,
 // network fallback); requires location services and runtime permission.
 @Composable
-fun VeskLocation(
-    label: String = "Location",
-    onDone: ((String?, String?) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+actual fun VeskLocation(
+    label: String,
+    onDone: ((String?, String?) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.getLocation(onDone) }, modifier = modifier) { Text(label) }
@@ -2081,10 +2081,10 @@ fun VeskLocation(
 // <apps onDone={(list) => ...}> lists launchable apps (label, sorted, capped),
 // also cached in device.installedApps.
 @Composable
-fun VeskApps(
-    label: String = "Apps",
-    onDone: ((List<String>) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+actual fun VeskApps(
+    label: String,
+    onDone: ((List<String>) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.listApps(onDone) }, modifier = modifier) { Text(label) }
@@ -2093,10 +2093,10 @@ fun VeskApps(
 // <contacts onDone={(list) => ...}> lists "name · number" rows; requires the
 // READ_CONTACTS runtime permission (granted on first use).
 @Composable
-fun VeskContacts(
-    label: String = "Contacts",
-    onDone: ((List<String>) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+actual fun VeskContacts(
+    label: String,
+    onDone: ((List<String>) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.listContacts(onDone) }, modifier = modifier) { Text(label) }
@@ -2105,10 +2105,10 @@ fun VeskContacts(
 // <call-log onDone={(list) => ...}> lists "type · age · number" rows; requires
 // the READ_CALL_LOG runtime permission.
 @Composable
-fun VeskCallLog(
-    label: String = "Call log",
-    onDone: ((List<String>) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+actual fun VeskCallLog(
+    label: String,
+    onDone: ((List<String>) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.listCallLogs(onDone) }, modifier = modifier) { Text(label) }
@@ -2117,10 +2117,10 @@ fun VeskCallLog(
 // <messages onDone={(list) => ...}> lists "sender: body" rows; requires the
 // READ_SMS runtime permission.
 @Composable
-fun VeskMessages(
-    label: String = "Messages",
-    onDone: ((List<String>) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+actual fun VeskMessages(
+    label: String,
+    onDone: ((List<String>) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.listMessages(onDone) }, modifier = modifier) { Text(label) }
@@ -2129,10 +2129,10 @@ fun VeskMessages(
 // <accounts onDone={(list) => ...}> lists "type · name" rows; requires the
 // GET_ACCOUNTS runtime permission.
 @Composable
-fun VeskAccounts(
-    label: String = "Accounts",
-    onDone: ((List<String>) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+actual fun VeskAccounts(
+    label: String,
+    onDone: ((List<String>) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.listAccounts(onDone) }, modifier = modifier) { Text(label) }
@@ -2140,10 +2140,10 @@ fun VeskAccounts(
 
 // <clipboard onDone={(text) => ...}> reads the current clipboard text.
 @Composable
-fun VeskClipboard(
-    label: String = "Clipboard",
-    onDone: ((String?) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+actual fun VeskClipboard(
+    label: String,
+    onDone: ((String?) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.readClipboard(onDone) }, modifier = modifier) { Text(label) }
@@ -2151,11 +2151,11 @@ fun VeskClipboard(
 
 // <copy-to-clipboard value="..."> writes text to the clipboard.
 @Composable
-fun VeskCopyToClipboard(
+actual fun VeskCopyToClipboard(
     value: String,
-    label: String = "Copy",
-    onDone: ((Boolean) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+    label: String,
+    onDone: ((Boolean) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.copyToClipboard(value, onDone) }, modifier = modifier) { Text(label) }
@@ -2163,11 +2163,11 @@ fun VeskCopyToClipboard(
 
 // <vibrate duration="200"> pulses the vibrator for the given milliseconds.
 @Composable
-fun VeskVibrate(
-    label: String = "Vibrate",
-    duration: Long = 200,
-    onDone: ((Boolean) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+actual fun VeskVibrate(
+    label: String,
+    duration: Long,
+    onDone: ((Boolean) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.vibrate(duration, onDone) }, modifier = modifier) { Text(label) }
@@ -2175,10 +2175,10 @@ fun VeskVibrate(
 
 // <torch> toggles the camera flash (no permission needed for torch mode).
 @Composable
-fun VeskTorch(
-    label: String = "Torch",
-    onDone: ((Boolean) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+actual fun VeskTorch(
+    label: String,
+    onDone: ((Boolean) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.toggleTorch(onDone) }, modifier = modifier) { Text(label) }
@@ -2187,10 +2187,10 @@ fun VeskTorch(
 // <screenshot onDone={(path) => ...}> captures the current window to a PNG in
 // the app cache (also device.lastScreenshot).
 @Composable
-fun VeskScreenshot(
-    label: String = "Screenshot",
-    onDone: ((String?) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+actual fun VeskScreenshot(
+    label: String,
+    onDone: ((String?) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.captureScreenshot(onDone) }, modifier = modifier) { Text(label) }
@@ -2198,11 +2198,11 @@ fun VeskScreenshot(
 
 // <share-text text="..."> opens the system share sheet with plain text.
 @Composable
-fun VeskShareText(
+actual fun VeskShareText(
     text: String,
-    label: String = "Share",
-    onDone: ((Boolean) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+    label: String,
+    onDone: ((Boolean) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.shareText(text, onDone) }, modifier = modifier) { Text(label) }
@@ -2211,12 +2211,12 @@ fun VeskShareText(
 // <share-file path="..." mime="..."> shares a file through its FileProvider
 // URI (the path can be a device path or a content:// URI).
 @Composable
-fun VeskShareFile(
-    path: String? = null,
-    mime: String = "application/octet-stream",
-    label: String = "Share file",
-    onDone: ((Boolean) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+actual fun VeskShareFile(
+    path: String?,
+    mime: String,
+    label: String,
+    onDone: ((Boolean) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { if (path != null) device.shareFile(path, mime, onDone) }, modifier = modifier) { Text(label) }
@@ -2225,10 +2225,10 @@ fun VeskShareFile(
 // <biometric-auth> checks hardware then prompts (fingerprint/face);
 // onDone = (ok, reason).
 @Composable
-fun VeskBiometricAuth(
-    label: String = "Unlock with biometrics",
-    onDone: ((Boolean, String?) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+actual fun VeskBiometricAuth(
+    label: String,
+    onDone: ((Boolean, String?) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.checkBiometrics(); device.authenticate(onDone) }, modifier = modifier) { Text(label) }
@@ -2236,10 +2236,10 @@ fun VeskBiometricAuth(
 
 // <bluetooth> refreshes adapter state + bonded devices.
 @Composable
-fun VeskBluetooth(
-    label: String = "Bluetooth",
-    onDone: ((Boolean, List<String>) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+actual fun VeskBluetooth(
+    label: String,
+    onDone: ((Boolean, List<String>) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.refreshBluetooth(onDone) }, modifier = modifier) { Text(label) }
@@ -2247,10 +2247,10 @@ fun VeskBluetooth(
 
 // <bluetooth-toggle> flips the adapter.
 @Composable
-fun VeskBluetoothToggle(
-    label: String = "Toggle Bluetooth",
-    onDone: ((Boolean) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+actual fun VeskBluetoothToggle(
+    label: String,
+    onDone: ((Boolean) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.toggleBluetooth(!device.bluetoothEnabled, onDone) }, modifier = modifier) { Text(label) }
@@ -2258,10 +2258,10 @@ fun VeskBluetoothToggle(
 
 // <bluetooth-scan> discovers nearby devices for a few seconds.
 @Composable
-fun VeskBluetoothScan(
-    label: String = "Scan devices",
-    onDone: ((List<String>) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+actual fun VeskBluetoothScan(
+    label: String,
+    onDone: ((List<String>) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.scanBluetooth(6, onDone) }, modifier = modifier) { Text(label) }
@@ -2269,10 +2269,10 @@ fun VeskBluetoothScan(
 
 // <screen-record> toggles MediaProjection capture (system consent first).
 @Composable
-fun VeskScreenRecord(
-    label: String = "Record screen",
-    onDone: ((String?) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+actual fun VeskScreenRecord(
+    label: String,
+    onDone: ((String?) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(
@@ -2286,10 +2286,10 @@ fun VeskScreenRecord(
 
 // <volume> reports media volume + ringer mode.
 @Composable
-fun VeskVolume(
-    label: String = "Volume",
-    onDone: ((Int, String?) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+actual fun VeskVolume(
+    label: String,
+    onDone: ((Int, String?) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.refreshVolume(onDone) }, modifier = modifier) { Text(label) }
@@ -2297,11 +2297,11 @@ fun VeskVolume(
 
 // <set-volume value="60"> sets the media stream volume 0-100.
 @Composable
-fun VeskSetVolume(
+actual fun VeskSetVolume(
     value: Int,
-    label: String = "Set volume",
-    onDone: ((Boolean) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+    label: String,
+    onDone: ((Boolean) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.setVolume(value, onDone) }, modifier = modifier) { Text(label) }
@@ -2309,11 +2309,11 @@ fun VeskSetVolume(
 
 // <brightness value="80"> sets this window's brightness 0-100.
 @Composable
-fun VeskBrightness(
+actual fun VeskBrightness(
     value: Int,
-    label: String = "Set brightness",
-    onDone: ((Boolean) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+    label: String,
+    onDone: ((Boolean) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.setScreenBrightness(value, onDone) }, modifier = modifier) { Text(label) }
@@ -2321,11 +2321,11 @@ fun VeskBrightness(
 
 // <keep-awake value="true"> pins the screen on/off while the app is visible.
 @Composable
-fun VeskKeepAwake(
+actual fun VeskKeepAwake(
     value: Boolean,
-    label: String = "Keep awake",
-    onDone: ((Boolean) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+    label: String,
+    onDone: ((Boolean) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.setKeepAwake(value, onDone) }, modifier = modifier) { Text(label) }
@@ -2333,11 +2333,11 @@ fun VeskKeepAwake(
 
 // <orientation mode="portrait|landscape|auto"> locks the app orientation.
 @Composable
-fun VeskOrientation(
-    mode: String = "auto",
-    label: String = "Set orientation",
-    onDone: ((Boolean) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+actual fun VeskOrientation(
+    mode: String,
+    label: String,
+    onDone: ((Boolean) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.lockOrientation(mode, onDone) }, modifier = modifier) { Text(label) }
@@ -2345,10 +2345,10 @@ fun VeskOrientation(
 
 // <device-info> reports "manufacturer model · Android X · WxH".
 @Composable
-fun VeskDeviceInfo(
-    label: String = "Device info",
-    onDone: ((String) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+actual fun VeskDeviceInfo(
+    label: String,
+    onDone: ((String) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.refreshDeviceInfo(onDone) }, modifier = modifier) { Text(label) }
@@ -2356,10 +2356,10 @@ fun VeskDeviceInfo(
 
 // <storage-status> reports free/total app storage.
 @Composable
-fun VeskStorage(
-    label: String = "Storage",
-    onDone: ((String, String) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+actual fun VeskStorage(
+    label: String,
+    onDone: ((String, String) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.refreshStorage(onDone) }, modifier = modifier) { Text(label) }
@@ -2367,11 +2367,11 @@ fun VeskStorage(
 
 // <sensor type="light|proximity|accelerometer|gyroscope|temperature">
 @Composable
-fun VeskSensor(
-    type: String = "light",
-    label: String = "Read sensor",
-    onDone: ((String?) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+actual fun VeskSensor(
+    type: String,
+    label: String,
+    onDone: ((String?) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.readSensor(type, onDone) }, modifier = modifier) { Text(label) }
@@ -2379,11 +2379,11 @@ fun VeskSensor(
 
 // <toast text="..."> shows an Android toast.
 @Composable
-fun VeskToast(
+actual fun VeskToast(
     text: String,
-    label: String = "Toast",
-    onDone: ((Boolean) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+    label: String,
+    onDone: ((Boolean) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.toast(text, onDone = onDone) }, modifier = modifier) { Text(label) }
@@ -2391,11 +2391,11 @@ fun VeskToast(
 
 // <sound kind="notification|alarm|ringtone"> plays a system sound.
 @Composable
-fun VeskSound(
-    kind: String = "notification",
-    label: String = "Play sound",
-    onDone: ((Boolean) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+actual fun VeskSound(
+    kind: String,
+    label: String,
+    onDone: ((Boolean) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.playSound(kind, onDone) }, modifier = modifier) { Text(label) }
@@ -2403,11 +2403,11 @@ fun VeskSound(
 
 // <wallpaper path="..."> sets the home/lock wallpaper from an image file.
 @Composable
-fun VeskWallpaper(
-    path: String? = null,
-    label: String = "Set wallpaper",
-    onDone: ((Boolean) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+actual fun VeskWallpaper(
+    path: String?,
+    label: String,
+    onDone: ((Boolean) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { if (path != null) device.setWallpaper(path, onDone) }, modifier = modifier) { Text(label) }
@@ -2415,10 +2415,10 @@ fun VeskWallpaper(
 
 // <calendar> lists upcoming events (READ_CALENDAR prompt on first use).
 @Composable
-fun VeskCalendar(
-    label: String = "Calendar",
-    onDone: ((List<String>) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+actual fun VeskCalendar(
+    label: String,
+    onDone: ((List<String>) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.listCalendarEvents(onDone) }, modifier = modifier) { Text(label) }
@@ -2426,10 +2426,10 @@ fun VeskCalendar(
 
 // <nfc> refreshes NFC presence + state.
 @Composable
-fun VeskNfc(
-    label: String = "NFC",
-    onDone: ((Boolean, Boolean) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+actual fun VeskNfc(
+    label: String,
+    onDone: ((Boolean, Boolean) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.refreshNfc(onDone) }, modifier = modifier) { Text(label) }
@@ -2437,10 +2437,10 @@ fun VeskNfc(
 
 // <sim> refreshes carrier + SIM state.
 @Composable
-fun VeskSim(
-    label: String = "SIM",
-    onDone: ((String?, String?) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+actual fun VeskSim(
+    label: String,
+    onDone: ((String?, String?) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.refreshTelephony(onDone) }, modifier = modifier) { Text(label) }
@@ -2448,11 +2448,11 @@ fun VeskSim(
 
 // <dial number="+1555..."> opens the dialer pre-filled.
 @Composable
-fun VeskDial(
+actual fun VeskDial(
     number: String,
-    label: String = "Dial",
-    onDone: ((Boolean) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+    label: String,
+    onDone: ((Boolean) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.dial(number, onDone) }, modifier = modifier) { Text(label) }
@@ -2460,12 +2460,12 @@ fun VeskDial(
 
 // <sms number="..." text="..."> opens the messenger pre-filled.
 @Composable
-fun VeskSms(
+actual fun VeskSms(
     number: String,
     text: String,
-    label: String = "Send SMS",
-    onDone: ((Boolean) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+    label: String,
+    onDone: ((Boolean) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.sendSms(number, text, onDone) }, modifier = modifier) { Text(label) }
@@ -2473,13 +2473,13 @@ fun VeskSms(
 
 // <email to="..." subject="..." body="..."> opens the mail client.
 @Composable
-fun VeskEmail(
+actual fun VeskEmail(
     to: String,
-    subject: String = "",
-    body: String = "",
-    label: String = "Email",
-    onDone: ((Boolean) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+    subject: String,
+    body: String,
+    label: String,
+    onDone: ((Boolean) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.sendEmail(to, subject, body, onDone) }, modifier = modifier) { Text(label) }
@@ -2487,11 +2487,11 @@ fun VeskEmail(
 
 // <open-link url="https://..."> opens a URL in the browser.
 @Composable
-fun VeskLink(
+actual fun VeskLink(
     url: String,
-    label: String = "Open link",
-    onDone: ((Boolean) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+    label: String,
+    onDone: ((Boolean) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.openUrl(url, onDone) }, modifier = modifier) { Text(label) }
@@ -2499,11 +2499,11 @@ fun VeskLink(
 
 // <map query="..."> opens Google Maps with a place query.
 @Composable
-fun VeskMap(
+actual fun VeskMap(
     query: String,
-    label: String = "Open map",
-    onDone: ((Boolean) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+    label: String,
+    onDone: ((Boolean) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.openMaps(query, onDone) }, modifier = modifier) { Text(label) }
@@ -2511,13 +2511,13 @@ fun VeskMap(
 
 // <alarm hour="8" minute="30" title="..."> sets an alarm clock.
 @Composable
-fun VeskAlarm(
+actual fun VeskAlarm(
     hour: Int,
     minute: Int,
-    title: String = "Alarm",
-    label: String = "Set alarm",
-    onDone: ((Boolean) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+    title: String,
+    label: String,
+    onDone: ((Boolean) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.setAlarm(hour, minute, title, onDone) }, modifier = modifier) { Text(label) }
@@ -2525,11 +2525,11 @@ fun VeskAlarm(
 
 // <open-settings section="wifi|bluetooth|location|sound|display|security|apps|nfc|main">
 @Composable
-fun VeskOpenSettings(
-    section: String = "main",
-    label: String = "Open settings",
-    onDone: ((Boolean) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+actual fun VeskOpenSettings(
+    section: String,
+    label: String,
+    onDone: ((Boolean) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.openSettings(section, onDone) }, modifier = modifier) { Text(label) }
@@ -2537,11 +2537,11 @@ fun VeskOpenSettings(
 
 // <open-app app="com.android.settings"> launches an installed app.
 @Composable
-fun VeskOpenApp(
+actual fun VeskOpenApp(
     app: String,
-    label: String = "Open app",
-    onDone: ((Boolean) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+    label: String,
+    onDone: ((Boolean) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.openApp(app, onDone) }, modifier = modifier) { Text(label) }
@@ -2549,11 +2549,11 @@ fun VeskOpenApp(
 
 // <speak text="..."> speaks the text with the system TTS engine.
 @Composable
-fun VeskSpeak(
+actual fun VeskSpeak(
     text: String,
-    label: String = "Speak",
-    onDone: ((Boolean) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+    label: String,
+    onDone: ((Boolean) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.speak(text, onDone) }, modifier = modifier) { Text(label) }
@@ -2580,9 +2580,9 @@ private fun veskQrBitmap(text: String, size: Int = 512): ImageBitmap? {
 
 // <qr-code value="..."> renders the encoded QR bitmap inline (no button).
 @Composable
-fun VeskQrCode(
-    value: String = "",
-    modifier: Modifier = Modifier,
+actual fun VeskQrCode(
+    value: String,
+    modifier: Modifier,
 ) {
     val bmp = remember(value) { veskQrBitmap(value) }
     if (bmp != null) Image(bitmap = bmp, contentDescription = null, modifier = modifier)
@@ -2590,10 +2590,10 @@ fun VeskQrCode(
 
 // <qr-scanner> opens the camera overlay and reports the decoded text.
 @Composable
-fun VeskQrScanner(
-    label: String = "Scan QR",
-    onResult: ((String?) -> Unit)? = null,
-    modifier: Modifier = Modifier,
+actual fun VeskQrScanner(
+    label: String,
+    onResult: ((String?) -> Unit)?,
+    modifier: Modifier,
 ) {
     val device = rememberDeviceApi()
     Button(onClick = { device.scanQr(onResult) }, modifier = modifier) { Text(label) }
@@ -2603,20 +2603,20 @@ fun VeskQrScanner(
 // Drag and drop (markup-level): drag sources via the draggable attribute,
 // drop targets via the ondrop binding. Backed by the platform drag & drop,
 // so dragged text also lands in other apps.
-class VeskDragData(val text: String)
+actual class VeskDragData actual constructor(actual val text: String)
 
 // Same-app fallback: some devices deliver the platform drag without a
 // readable clip, so the source records the pending text at drag start.
-object VeskDragSession { @Volatile var pendingText: String? = null }
+actual object VeskDragSession { @Volatile actual var pendingText: String? = null }
 
-fun Modifier.veskDraggable(data: VeskDragData): Modifier = this.dragAndDropSource(transferData = {
+actual fun Modifier.veskDraggable(data: VeskDragData): Modifier = this.dragAndDropSource(transferData = {
     VeskDragSession.pendingText = data.text
     DragAndDropTransferData(ClipData.newPlainText("vesk", data.text), flags = View.DRAG_FLAG_GLOBAL)
 })
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun Modifier.veskDropTarget(onDrop: (String?) -> Unit): Modifier {
+actual fun Modifier.veskDropTarget(onDrop: (String?) -> Unit): Modifier {
     val ctx = LocalContext.current
     return this.dragAndDropTarget(
         shouldStartDragAndDrop = { true },
@@ -2657,7 +2657,7 @@ fun veskAppSetup(context: Context) = VeskAppContext.setup(context)
 // window.alert: non-blocking native AlertDialog. A blocking dialog cannot run
 // on Android's main thread without ANRing, so alert returns immediately with
 // Unit (JS undefined) and shows the dialog asynchronously.
-fun jsAlert(message: Any?) {
+actual fun jsAlert(message: Any?) {
     val ctx = VeskAppContext.activity ?: return
     android.app.AlertDialog.Builder(ctx)
         .setMessage(if (message == null) "" else message.toString())
@@ -2670,26 +2670,26 @@ fun jsAlert(message: Any?) {
 // restarts in SharedPreferences, sessionStorage lives in memory for the
 // process lifetime. JS semantics: values are stored as strings, getItem
 // returns null for missing keys, key(i) is the i-th key or null.
-object VeskWebStorage {
+actual object VeskWebStorage {
     private val prefs by lazy {
         VeskAppContext.activity?.applicationContext
             ?.getSharedPreferences("vesk_web_storage", android.content.Context.MODE_PRIVATE)
     }
     private val session = LinkedHashMap<String?, String>()
 
-    fun localGetItem(key: Any?): Any? = prefs?.getString(key?.toString(), null)
-    fun localSetItem(key: Any?, value: Any?) { prefs?.edit()?.putString(key?.toString(), storeString(value))?.apply() }
-    fun localRemoveItem(key: Any?) { prefs?.edit()?.remove(key?.toString())?.apply() }
-    fun localClear() { prefs?.edit()?.clear()?.apply() }
-    fun localKey(i: Any?): Any? = localKeys().getOrNull(num(i).toInt())
-    fun localLength(): Int = localKeys().size
+    actual fun localGetItem(key: Any?): Any? = prefs?.getString(key?.toString(), null)
+    actual fun localSetItem(key: Any?, value: Any?) { prefs?.edit()?.putString(key?.toString(), storeString(value))?.apply() }
+    actual fun localRemoveItem(key: Any?) { prefs?.edit()?.remove(key?.toString())?.apply() }
+    actual fun localClear() { prefs?.edit()?.clear()?.apply() }
+    actual fun localKey(i: Any?): Any? = localKeys().getOrNull(num(i).toInt())
+    actual fun localLength(): Int = localKeys().size
 
-    fun sessionGetItem(key: Any?): Any? = session[key?.toString()]
-    fun sessionSetItem(key: Any?, value: Any?) { session.put(key?.toString(), storeString(value)) }
-    fun sessionRemoveItem(key: Any?) { session.remove(key?.toString()) }
-    fun sessionClear() { session.clear() }
-    fun sessionKey(i: Any?): Any? = session.keys.toList().getOrNull(num(i).toInt())
-    fun sessionLength(): Int = session.size
+    actual fun sessionGetItem(key: Any?): Any? = session[key?.toString()]
+    actual fun sessionSetItem(key: Any?, value: Any?) { session.put(key?.toString(), storeString(value)) }
+    actual fun sessionRemoveItem(key: Any?) { session.remove(key?.toString()) }
+    actual fun sessionClear() { session.clear() }
+    actual fun sessionKey(i: Any?): Any? = session.keys.toList().getOrNull(num(i).toInt())
+    actual fun sessionLength(): Int = session.size
 
     private fun localKeys(): List<String> = prefs?.all?.keys?.sorted() ?: emptyList()
     private fun storeString(v: Any?): String = if (v == null) "null" else v.toString()
@@ -2714,20 +2714,20 @@ private fun jsJsonValue(v: Any?): Any? = when (v) {
 // returns a browser-shaped VeskResponse. vesk-native's fetch is synchronous
 // (blocking) until async/await lands; the values (status/ok/statusText/
 // text()/json()) match browser semantics.
-class VeskResponse(
-    val url: String,
-    val status: Int,
-    val statusText: String,
-    val ok: Boolean,
-    val headers: Map<String, String>,
+actual class VeskResponse internal constructor(
+    actual val url: String,
+    actual val status: Int,
+    actual val statusText: String,
+    actual val ok: Boolean,
+    actual val headers: Map<String, String>,
     private val bodyText: String,
 ) {
-    fun text(): String = bodyText
-    fun json(): Any? = jsParseJson(bodyText)
+    actual fun text(): String = bodyText
+    actual fun json(): Any? = jsParseJson(bodyText)
 }
 
-object VeskFetch {
-    fun fetch(url: String, init: Any? = null): VeskResponse {
+actual object VeskFetch {
+    actual fun fetch(url: String, init: Any?): VeskResponse {
         val opts = init as? Map<*, *> ?: emptyMap<Any, Any>()
         val method = (jsMapGet(opts, "method") as? String)?.uppercase() ?: "GET"
         val headers = jsMapGet(opts, "headers") as? Map<*, *> ?: emptyMap<Any, Any>()
@@ -2768,11 +2768,11 @@ object VeskFetch {
 // openSqlite(name) — native SQLite with a better-sqlite3-style surface:
 // exec/run/get/all/close. Rows are List<Map<String, Any?>>; params bind
 // positionally. Handles are cached per database name for the process.
-class VeskSqliteDb internal constructor(db: android.database.sqlite.SQLiteDatabase) {
+actual class VeskSqliteDb internal constructor(db: android.database.sqlite.SQLiteDatabase) {
     private var database: android.database.sqlite.SQLiteDatabase? = db
 
-    fun exec(sql: String) { database?.execSQL(sql) }
-    fun run(sql: String, params: Any? = null): Map<String, Any?> {
+    actual fun exec(sql: String) { database?.execSQL(sql) }
+    actual fun run(sql: String, params: Any?): Map<String, Any?> {
         val db = database ?: return mapOf("lastInsertRowid" to 0L, "changes" to 0L)
         val stmt = db.compileStatement(sql)
         bindStatement(stmt, params)
@@ -2788,9 +2788,9 @@ class VeskSqliteDb internal constructor(db: android.database.sqlite.SQLiteDataba
         }
         return mapOf("lastInsertRowid" to lastId, "changes" to changes)
     }
-    fun get(sql: String, params: Any? = null): Map<String, Any?>? = query(sql, params).firstOrNull()
-    fun all(sql: String, params: Any? = null): List<Map<String, Any?>> = query(sql, params)
-    fun close() { database?.close(); database = null }
+    actual fun get(sql: String, params: Any?): Map<String, Any?>? = query(sql, params).firstOrNull()
+    actual fun all(sql: String, params: Any?): List<Map<String, Any?>> = query(sql, params)
+    actual fun close() { database?.close(); database = null }
 
     private fun query(sql: String, params: Any?): List<Map<String, Any?>> {
         val db = database ?: return emptyList()
@@ -2841,9 +2841,9 @@ class VeskSqliteDb internal constructor(db: android.database.sqlite.SQLiteDataba
     }
 }
 
-object VeskSqlite {
+actual object VeskSqlite {
     private val handles = mutableMapOf<String, VeskSqliteDb>()
-    fun openDatabase(name: String, version: Int = 1): VeskSqliteDb = handles.getOrPut(name) {
+    actual fun openDatabase(name: String, version: Int): VeskSqliteDb = handles.getOrPut(name) {
         val ctx = VeskAppContext.activity?.applicationContext
         val db = if (ctx == null) {
             android.database.sqlite.SQLiteDatabase.create(null)
@@ -2859,7 +2859,7 @@ object VeskSqlite {
 // current session persists in localStorage so it survives app restarts.
 // Passwords are stored as a SHA-256 hash of "username:password" — a native
 // hash, never a JS shim.
-object VeskAuth {
+actual object VeskAuth {
     private const val DB_NAME = "vesk_auth"
     private const val SESSION_USER = "vesk.session.user"
     private const val SESSION_STATE = "vesk.session.signedIn"
@@ -2872,7 +2872,7 @@ object VeskAuth {
         ready = true
     }
 
-    fun signUp(username: Any?, password: Any?): Map<String, Any?>? {
+    actual fun signUp(username: Any?, password: Any?): Map<String, Any?>? {
         val u = username?.toString()?.trim() ?: return null
         val p = password?.toString() ?: ""
         if (u.isEmpty() || p.isEmpty()) return null
@@ -2882,7 +2882,7 @@ object VeskAuth {
         return db.get("SELECT id, username FROM users WHERE username = ?", listOf(u))
     }
 
-    fun signIn(username: Any?, password: Any?): Map<String, Any?>? {
+    actual fun signIn(username: Any?, password: Any?): Map<String, Any?>? {
         val u = username?.toString()?.trim() ?: return null
         val p = password?.toString() ?: ""
         ensure()
@@ -2895,19 +2895,19 @@ object VeskAuth {
         return user
     }
 
-    fun signOut() {
+    actual fun signOut() {
         VeskWebStorage.localRemoveItem(SESSION_USER)
         VeskWebStorage.localRemoveItem(SESSION_STATE)
     }
 
-    fun currentUser(): Map<String, Any?>? {
+    actual fun currentUser(): Map<String, Any?>? {
         if (VeskWebStorage.localGetItem(SESSION_STATE) != "1") return null
         val u = VeskWebStorage.localGetItem(SESSION_USER)?.toString() ?: return null
         ensure()
         return db.get("SELECT id, username FROM users WHERE username = ?", listOf(u))
     }
 
-    fun isSignedIn(): Boolean = currentUser() != null
+    actual fun isSignedIn(): Boolean = currentUser() != null
 
     private fun hash(s: String): String = java.security.MessageDigest.getInstance("SHA-256")
         .digest(s.toByteArray(Charsets.UTF_8))

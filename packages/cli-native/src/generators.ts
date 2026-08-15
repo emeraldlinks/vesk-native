@@ -717,9 +717,13 @@ export function generateRuntimeKt(appDir: string, config: VeskConfig): Set<strin
     // Usage-pruned device APIs (biometrics, zxing, camera overlay) get their
     // real bodies inlined only when called; stubs keep the methods callable
     // without the library on the classpath.
-    let src = name === 'veskAudio' || name === 'veskVideo'
-      ? unit.src.split('__BROADCAST__').join(String(broadcast))
-      : unit.src;
+    let src = unit.src;
+    if (name === 'veskAudio' || name === 'veskVideo') {
+      src = unit.src.split('__BROADCAST__').join(String(broadcast));
+      if (unit.expect != null) {
+        unit.expect = unit.expect.split('__BROADCAST__').join(String(broadcast));
+      }
+    }
     if (name === 'veskDeviceApi') {
       src = src
         .split('__BIOMETRIC_CHECK_BODY__')

@@ -30,6 +30,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -71,6 +72,273 @@ fun num(v: Any?): Double = when (v) {
     is Boolean -> if (v) 1.0 else 0.0
     else -> 0.0
 }
+
+
+@Composable
+expect fun veskVideo(
+    url: String?,
+    controls: Boolean = false,
+    autoplay: Boolean = false,
+    loop: Boolean = false,
+    muted: Boolean = false,
+    scale: String = "fit",
+    broadcast: Boolean = true,
+    modifier: Modifier = Modifier,
+)
+
+
+@Composable
+expect fun veskAudio(
+    url: String?,
+    controls: Boolean = true,
+    autoplay: Boolean = false,
+    loop: Boolean = false,
+    muted: Boolean = false,
+    broadcast: Boolean = true,
+    modifier: Modifier = Modifier,
+)
+
+
+@Composable
+expect fun veskFileImage(path: String?): ImageBitmap
+
+
+// Platform seam (Phase 3 slice 1): the portable DeviceApi surface — the
+// composable factory plus the full public property/method set with the
+// browser-facing default argument values. The android actual (below) supplies
+// the implementations and strips the defaults (KMP: defaults live on the
+// expect side only); android pages keep resolving the defaults from here.
+@Composable
+expect fun rememberDeviceApi(): DeviceApi
+
+expect class DeviceApi {
+    var lastImage: String?
+    var lastAudio: String?
+    var lastFile: String?
+    var lastFileName: String?
+    var lastPhoto: String?
+    var lastVideo: String?
+    var lastRecording: String?
+    var recording: Boolean
+    var batteryLevel: Int
+    var charging: Boolean
+    var networkType: String?
+    var networkAvailable: Boolean
+    var wifiEnabled: Boolean
+    var locationEnabled: Boolean
+    var lastLocation: String?
+    var installedApps: List<String>
+    var contacts: List<String>
+    var callLogs: List<String>
+    var messages: List<String>
+    var accounts: List<String>
+    var clipboardText: String?
+    var lastScreenshot: String?
+    var torchEnabled: Boolean
+    var torchAvailable: Boolean
+    var appFiles: List<String>
+    var biometricAvailable: Boolean
+    var biometricTypes: String?
+    var bluetoothEnabled: Boolean
+    var bluetoothDevices: List<String>
+    var scanningQr: Boolean
+    var lastQrCodePath: String?
+    var screenRecording: Boolean
+    var lastScreenRecord: String?
+    var mediaVolume: Int
+    var ringerMode: String?
+    var screenBrightness: Float
+    var keepAwake: Boolean
+    var storageFree: Long
+    var storageTotal: Long
+    var ramFree: Long
+    var ramTotal: Long
+    var calendarEvents: List<String>
+    var nfcAvailable: Boolean
+    var nfcEnabled: Boolean
+    var carrier: String?
+    var simState: String?
+    var deviceModel: String?
+    var deviceManufacturer: String?
+    var androidVersion: String?
+    var screenSize: String?
+    fun pickImage(onDone: ((String?) -> Unit)? = null)
+    fun pickAudio(onDone: ((String?) -> Unit)? = null)
+    fun pickFile(onDone: ((String?, String?) -> Unit)? = null, mime: String = "*/*")
+    fun capturePhoto(onDone: ((String?) -> Unit)? = null)
+    fun captureVideo(onDone: ((String?) -> Unit)? = null)
+    fun startRecording(onStarted: ((String?) -> Unit)? = null)
+    fun stopRecording(): String?
+    fun notify(title: String, text: String, onTap: (() -> Unit)? = null)
+    fun getBattery(onDone: ((Int, Boolean) -> Unit)? = null)
+    fun refreshNetwork(onDone: ((String?, Boolean) -> Unit)? = null)
+    fun getLocation(onDone: ((String?, String?) -> Unit)? = null)
+    fun listApps(onDone: ((List<String>) -> Unit)? = null, limit: Int = 100)
+    fun listContacts(onDone: ((List<String>) -> Unit)? = null, limit: Int = 100)
+    fun listCallLogs(onDone: ((List<String>) -> Unit)? = null, limit: Int = 100)
+    fun listMessages(onDone: ((List<String>) -> Unit)? = null, limit: Int = 100)
+    fun listAccounts(onDone: ((List<String>) -> Unit)? = null, limit: Int = 100)
+    fun readClipboard(onDone: ((String?) -> Unit)? = null)
+    fun copyToClipboard(value: String, onDone: ((Boolean) -> Unit)? = null)
+    fun vibrate(millis: Long = 200, onDone: ((Boolean) -> Unit)? = null)
+    fun toggleTorch(onDone: ((Boolean) -> Unit)? = null)
+    fun captureScreenshot(onDone: ((String?) -> Unit)? = null)
+    fun shareText(text: String, onDone: ((Boolean) -> Unit)? = null)
+    fun shareFile(path: String, mime: String? = null, onDone: ((Boolean) -> Unit)? = null)
+    fun listFiles(dir: String = "", onDone: ((List<String>) -> Unit)? = null)
+    fun writeFile(name: String, content: String, onDone: ((String?) -> Unit)? = null)
+    fun readFile(name: String, onDone: ((String?) -> Unit)? = null)
+    fun deleteFile(name: String, onDone: ((Boolean) -> Unit)? = null)
+    fun checkBiometrics(onDone: ((Boolean, String?) -> Unit)? = null)
+    fun authenticate(onDone: ((Boolean, String?) -> Unit)? = null)
+    fun refreshBluetooth(onDone: ((Boolean, List<String>) -> Unit)? = null)
+    fun toggleBluetooth(enabled: Boolean, onDone: ((Boolean) -> Unit)? = null)
+    fun scanBluetooth(seconds: Int = 5, onDone: ((List<String>) -> Unit)? = null)
+    fun generateQrCode(text: String, onDone: ((String?) -> Unit)? = null, size: Int = 512)
+    fun scanQr(onResult: ((String?) -> Unit)? = null)
+    fun startScreenRecord(onStarted: ((String?) -> Unit)? = null)
+    fun stopScreenRecord(): String?
+    fun refreshVolume(onDone: ((Int, String?) -> Unit)? = null)
+    fun setVolume(level: Int, onDone: ((Boolean) -> Unit)? = null)
+    fun setRingerMode(mode: String, onDone: ((Boolean) -> Unit)? = null)
+    fun setScreenBrightness(level: Int, onDone: ((Boolean) -> Unit)? = null)
+    fun resetScreenBrightness(onDone: ((Boolean) -> Unit)? = null)
+    fun setKeepAwake(on: Boolean, onDone: ((Boolean) -> Unit)? = null)
+    fun refreshStorage(onDone: ((String, String) -> Unit)? = null)
+    fun lockOrientation(mode: String, onDone: ((Boolean) -> Unit)? = null)
+    fun readSensor(type: String, onDone: ((String?) -> Unit)? = null)
+    fun dial(number: String, onDone: ((Boolean) -> Unit)? = null)
+    fun sendSms(number: String, text: String, onDone: ((Boolean) -> Unit)? = null)
+    fun sendEmail(to: String, subject: String, body: String, onDone: ((Boolean) -> Unit)? = null)
+    fun openUrl(url: String, onDone: ((Boolean) -> Unit)? = null)
+    fun openMaps(query: String, onDone: ((Boolean) -> Unit)? = null)
+    fun openSettings(section: String? = null, onDone: ((Boolean) -> Unit)? = null)
+    fun setAlarm(hour: Int, minute: Int, title: String, onDone: ((Boolean) -> Unit)? = null)
+    fun openApp(packageName: String, onDone: ((Boolean) -> Unit)? = null)
+    fun toast(text: String, long: Boolean = false, onDone: ((Boolean) -> Unit)? = null)
+    fun playSound(kind: String? = null, onDone: ((Boolean) -> Unit)? = null)
+    fun setWallpaper(path: String, onDone: ((Boolean) -> Unit)? = null)
+    fun listCalendarEvents(onDone: ((List<String>) -> Unit)? = null, limit: Int = 50)
+    fun refreshNfc(onDone: ((Boolean, Boolean) -> Unit)? = null)
+    fun refreshTelephony(onDone: ((String?, String?) -> Unit)? = null)
+    fun refreshDeviceInfo(onDone: ((String) -> Unit)? = null)
+    fun speak(text: String, onDone: ((Boolean) -> Unit)? = null)
+}
+
+// Declarative device elements (style C) — <photo-picker>, <camera> and the
+// rest compile to these composables. Each binds its label attribute and
+// reports results through onDone/onTap/onPick.
+@Composable
+expect fun VeskPhotoPicker(label: String = "Pick a photo", onPick: ((String?) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskCamera(label: String = "Take a photo", onDone: ((String?) -> Unit)? = null, video: Boolean = false, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskRecorder(label: String = "Record", onDone: ((String?) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskFileInput(label: String = "Pick a file", mime: String = "*/*", onDone: ((String?, String?) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskNotification(title: String, text: String, label: String = "Notify", onTap: (() -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskBatteryStatus(label: String = "Battery", onDone: ((Int, Boolean) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskNetworkStatus(label: String = "Network", onDone: ((String?, Boolean) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskLocation(label: String = "Location", onDone: ((String?, String?) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskApps(label: String = "Apps", onDone: ((List<String>) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskContacts(label: String = "Contacts", onDone: ((List<String>) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskCallLog(label: String = "Call log", onDone: ((List<String>) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskMessages(label: String = "Messages", onDone: ((List<String>) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskAccounts(label: String = "Accounts", onDone: ((List<String>) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskClipboard(label: String = "Clipboard", onDone: ((String?) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskCopyToClipboard(value: String, label: String = "Copy", onDone: ((Boolean) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskVibrate(label: String = "Vibrate", duration: Long = 200, onDone: ((Boolean) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskTorch(label: String = "Torch", onDone: ((Boolean) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskScreenshot(label: String = "Screenshot", onDone: ((String?) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskShareText(text: String, label: String = "Share", onDone: ((Boolean) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskShareFile(path: String? = null, mime: String = "application/octet-stream", label: String = "Share file", onDone: ((Boolean) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskBiometricAuth(label: String = "Unlock with biometrics", onDone: ((Boolean, String?) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskBluetooth(label: String = "Bluetooth", onDone: ((Boolean, List<String>) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskBluetoothToggle(label: String = "Toggle Bluetooth", onDone: ((Boolean) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskBluetoothScan(label: String = "Scan devices", onDone: ((List<String>) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskScreenRecord(label: String = "Record screen", onDone: ((String?) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskVolume(label: String = "Volume", onDone: ((Int, String?) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskSetVolume(value: Int, label: String = "Set volume", onDone: ((Boolean) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskBrightness(value: Int, label: String = "Set brightness", onDone: ((Boolean) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskKeepAwake(value: Boolean, label: String = "Keep awake", onDone: ((Boolean) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskOrientation(mode: String = "auto", label: String = "Set orientation", onDone: ((Boolean) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskDeviceInfo(label: String = "Device info", onDone: ((String) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskStorage(label: String = "Storage", onDone: ((String, String) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskSensor(type: String = "light", label: String = "Read sensor", onDone: ((String?) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskToast(text: String, label: String = "Toast", onDone: ((Boolean) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskSound(kind: String = "notification", label: String = "Play sound", onDone: ((Boolean) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskWallpaper(path: String? = null, label: String = "Set wallpaper", onDone: ((Boolean) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskCalendar(label: String = "Calendar", onDone: ((List<String>) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskNfc(label: String = "NFC", onDone: ((Boolean, Boolean) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskSim(label: String = "SIM", onDone: ((String?, String?) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskDial(number: String, label: String = "Dial", onDone: ((Boolean) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskSms(number: String, text: String, label: String = "Send SMS", onDone: ((Boolean) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskEmail(to: String, subject: String = "", body: String = "", label: String = "Email", onDone: ((Boolean) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskLink(url: String, label: String = "Open link", onDone: ((Boolean) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskMap(query: String, label: String = "Open map", onDone: ((Boolean) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskAlarm(hour: Int, minute: Int, title: String = "Alarm", label: String = "Set alarm", onDone: ((Boolean) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskOpenSettings(section: String = "main", label: String = "Open settings", onDone: ((Boolean) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskOpenApp(app: String, label: String = "Open app", onDone: ((Boolean) -> Unit)? = null, modifier: Modifier = Modifier)
+@Composable
+expect fun VeskSpeak(text: String, label: String = "Speak", onDone: ((Boolean) -> Unit)? = null, modifier: Modifier = Modifier)
+
+
+@Composable
+expect fun VeskQrCode(value: String = "", modifier: Modifier = Modifier)
+@Composable
+expect fun VeskQrScanner(label: String = "Scan QR", onResult: ((String?) -> Unit)? = null, modifier: Modifier = Modifier)
+
+
+expect class VeskDragData(text: String) {
+    val text: String
+}
+expect object VeskDragSession { var pendingText: String? }
+expect fun Modifier.veskDraggable(data: VeskDragData): Modifier
+@Composable
+expect fun Modifier.veskDropTarget(onDrop: (String?) -> Unit): Modifier
 
 
 // Tailwind color filter base: color-matrix saveLayer; works on all API levels.
@@ -215,9 +483,63 @@ object VeskTimers {
 }
 
 
+expect fun jsAlert(message: Any?)
+
+
+expect object VeskWebStorage {
+    fun localGetItem(key: Any?): Any?
+    fun localSetItem(key: Any?, value: Any?)
+    fun localRemoveItem(key: Any?)
+    fun localClear()
+    fun localKey(i: Any?): Any?
+    fun localLength(): Int
+    fun sessionGetItem(key: Any?): Any?
+    fun sessionSetItem(key: Any?, value: Any?)
+    fun sessionRemoveItem(key: Any?)
+    fun sessionClear()
+    fun sessionKey(i: Any?): Any?
+    fun sessionLength(): Int
+}
+
+
 // Platform seam: JSON.parse. Android actual = org.json (bundled with the
 // platform), unchanged; the iOS actual arrives with the CMP milestone.
 expect fun jsParseJson(s: Any?): Any?
+
+expect class VeskResponse {
+    val url: String
+    val status: Int
+    val statusText: String
+    val ok: Boolean
+    val headers: Map<String, String>
+    fun text(): String
+    fun json(): Any?
+}
+expect object VeskFetch {
+    fun fetch(url: String, init: Any? = null): VeskResponse
+}
+
+
+expect class VeskSqliteDb {
+    fun exec(sql: String)
+    fun run(sql: String, params: Any? = null): Map<String, Any?>
+    fun get(sql: String, params: Any? = null): Map<String, Any?>?
+    fun all(sql: String, params: Any? = null): List<Map<String, Any?>>
+    fun close()
+}
+expect object VeskSqlite {
+    fun openDatabase(name: String, version: Int = 1): VeskSqliteDb
+}
+
+
+expect object VeskAuth {
+    fun signUp(username: Any?, password: Any?): Map<String, Any?>?
+    fun signIn(username: Any?, password: Any?): Map<String, Any?>?
+    fun signOut()
+    fun currentUser(): Map<String, Any?>?
+    fun isSignedIn(): Boolean
+}
+
 
 // scroll(onScroll, { axis }): reports scroll progress (0..1) of the current
 // route's scroll container — the same ScrollState the layout shell uses, so
