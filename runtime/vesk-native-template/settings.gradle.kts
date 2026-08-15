@@ -14,4 +14,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "vesk-app"
-include(":app")
+include(":app", ":shared")

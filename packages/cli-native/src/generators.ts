@@ -43,10 +43,22 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "${name}"
-include(":app")
+include(":app", ":shared")
 `,
   );
-  log('gen', 'settings.gradle.kts (rootProject.name from appName)');
+  log('gen', 'settings.gradle.kts (rootProject.name from appName; :app + :shared)');
+}
+
+// Generated Kotlin and bundled resources live in the :shared module (a KMP
+// com.android.kotlin.multiplatform.library — the future home of commonMain +
+// iosMain once the runtime expect/actual seam lands). The :app module keeps
+// only the Android chrome: manifest, MainActivity, app-level res.
+function sharedKotlinDir(target: string): string {
+  return join(target, 'shared', 'src', 'androidMain', 'kotlin', 'app');
+}
+
+function sharedResDir(target: string): string {
+  return join(target, 'shared', 'src', 'androidMain', 'res');
 }
 
 // Gradle dependencies derived from actual usage — the same conditions that
@@ -56,25 +68,17 @@ include(":app")
 // referenced by the generated pages; hasMedia covers media elements.
 // libs are the installed .vsklib libraries — registered verbatim (their
 // permissions are wired into the manifest by generateManifest).
-// A signing password may be given inline or as `env:NAME` to read the value
-// from the environment at build time (secrets never land in generated files).
-// The env lookup is lenient (empty string) so plain debug builds configure
-// fine without release secrets; the CLI validates env: values up front in the
-// bundle flow, where missing secrets fail with a clear message before gradle.
-function signingValue(value: string): string {
-  if (value.startsWith('env:')) {
-    const name = value.slice(4);
-    return `System.getenv("${name}") ?: ""`;
-  }
-  return `"${value.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}"`;
-}
-
-export function generateAppBuildGradleKts(target: string, config: VeskConfig, deviceApis: Set<string>, hasMedia: boolean, used: Set<string>, libs: VskLibRecord[]): void {
+// These land in the :shared module's androidMain (usage-derived deps are page/
+// runtime concerns; the :app module only hosts the Android chrome).
+function usageDeps(deviceApis: Set<string>, hasMedia: boolean, used: Set<string>, libs: VskLibRecord[]): string[] {
+  // Explicit versions, not the compose BOM — the KMP module's androidMain
+  // source-set dependency handler has no platform() helper. The versions are
+  // exactly what compose-bom:2026.06.01 pins (ui 1.11.4, material3 1.4.0), so
+  // the app keeps the identical androidx artifacts it resolves today.
   const deps = [
-    'implementation(platform("androidx.compose:compose-bom:2026.06.01"))',
-    'implementation("androidx.compose.ui:ui")',
-    'implementation("androidx.compose.ui:ui-tooling-preview")',
-    'implementation("androidx.compose.material3:material3")',
+    'implementation("androidx.compose.ui:ui:1.11.4")',
+    'implementation("androidx.compose.ui:ui-tooling-preview:1.11.4")',
+    'implementation("androidx.compose.material3:material3:1.4.0")',
     'implementation("androidx.activity:activity-compose:1.13.0")',
     'implementation("androidx.core:core-ktx:1.19.0")',
     'implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.11.0")',
@@ -104,6 +108,78 @@ export function generateAppBuildGradleKts(target: string, config: VeskConfig, de
   for (const lib of libs) {
     for (const coord of lib.gradle) deps.push(`implementation("${coord}")`);
   }
+  return deps;
+}
+
+export function generateSharedBuildGradleKts(target: string, config: VeskConfig, deviceApis: Set<string>, hasMedia: boolean, used: Set<string>, libs: VskLibRecord[]): void {
+  const deps = usageDeps(deviceApis, hasMedia, used, libs);
+  const minSdk = Math.max(config.minSdk ?? 24, ...libs.map((l) => l.minSdk ?? 0));
+  writeFileSync(
+    join(target, 'shared', 'build.gradle.kts'),
+    `import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+
+plugins {
+    id("com.android.kotlin.multiplatform.library")
+    id("org.jetbrains.kotlin.multiplatform")
+    id("org.jetbrains.kotlin.plugin.compose")
+}
+
+// The :shared KMP module is the framework's home: every generated page and the
+// runtime live in src/androidMain today. As the expect/actual seam lands they
+// migrate into commonMain and iosMain actuals appear (iOS targets are added
+// macOS-gated with the CMP milestone — never configured on Linux).
+@OptIn(ExperimentalKotlinGradlePluginApi::class)
+kotlin {
+    android {
+        namespace = "${config.appId}.shared"
+        compileSdk = ${config.compileSdk}
+        minSdk = ${minSdk}
+        androidResources { enable = true }
+        compilerOptions { jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17 }
+    }
+
+    sourceSets {
+        androidMain.dependencies {
+${deps.join('\n')}
+        }
+    }
+}
+`,
+  );
+  log('gen', `shared/build.gradle.kts (${deps.length} androidMain dependencies, ${deps.length - 6} usage-derived)`);
+}
+
+// A signing password may be given inline or as `env:NAME` to read the value
+// from the environment at build time (secrets never land in generated files).
+// The env lookup is lenient (empty string) so plain debug builds configure
+// fine without release secrets; the CLI validates env: values up front in the
+// bundle flow, where missing secrets fail with a clear message before gradle.
+function signingValue(value: string): string {
+  if (value.startsWith('env:')) {
+    const name = value.slice(4);
+    return `System.getenv("${name}") ?: ""`;
+  }
+  return `"${value.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}"`;
+}
+
+export function generateAppBuildGradleKts(target: string, config: VeskConfig, libs: VskLibRecord[]): void {
+  // The :app module hosts only the Android chrome (MainActivity, manifest,
+  // app-level res). The compose BOM stays here for the chrome's few compose
+  // references; the usage-derived dependencies live in :shared (usageDeps).
+  const deps = [
+    'implementation(project(":shared"))',
+    'implementation(platform("androidx.compose:compose-bom:2026.06.01"))',
+    'implementation("androidx.compose.ui:ui")',
+    'implementation("androidx.compose.material3:material3")',
+    'implementation("androidx.activity:activity-compose:1.13.0")',
+    'implementation("androidx.core:core-ktx:1.19.0")',
+    'implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.11.0")',
+    // MainActivity extends FragmentActivity (the runtime's ActivityResult
+    // launchers require it). The shared module gets fragment transitively via
+    // androidx.biometric; this pins the same 1.2.5 on the app chrome's own
+    // compile classpath so both modules resolve identically.
+    'implementation("androidx.fragment:fragment:1.2.5")',
+  ];
   // Release signing is driven by veskconfig.signing.android (upload key for
   // Play App Signing). Passwords may reference environment variables with
   // `env:NAME` so secrets never land in generated files. When the config is
@@ -174,7 +250,7 @@ ${deps.join('\n')}
 }
 `,
   );
-  log('gen', `app/build.gradle.kts (${deps.length} dependencies, ${deps.length - 7} usage-derived)`);
+  log('gen', `app/build.gradle.kts (${deps.length} chrome dependencies; usage-derived deps live in :shared)`);
 }
 
 export function generateManifest(target: string, config: VeskConfig, mediaReadPerms: boolean, mediaNotifyPerms: boolean, mediaButtonReceiver: boolean, deviceApis: Set<string>, libs: VskLibRecord[] = [], browserApis: Set<string> = new Set()): void {
@@ -537,7 +613,7 @@ export function generateThemeKt(target: string, config: VeskConfig): void {
   themeArgs.push('content = content');
 
   writeFileSync(
-    join(target, 'app', 'src', 'main', 'kotlin', 'app', 'Theme.kt'),
+    join(sharedKotlinDir(target), 'Theme.kt'),
     `package app
 
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -630,7 +706,7 @@ export function generateRuntimeKt(appDir: string, config: VeskConfig): Set<strin
   for (const name of RUNTIME_ORDER) {
     if (used.has(name)) emit(name);
   }
-  const outDir = join(appDir, 'src', 'main', 'kotlin', 'app');
+  const outDir = sharedKotlinDir(dirname(appDir));
   mkdirSync(outDir, { recursive: true });
   writeFileSync(join(outDir, 'Runtime.kt'), `${runtimeImports(deviceApis, used)}${RUNTIME_CORE}${body.join('\n')}`);
   log('gen', `Runtime.kt (${body.length} helpers used of ${RUNTIME_ORDER.length}, media broadcast ${broadcast ? 'on' : 'off'})`);
@@ -638,7 +714,7 @@ export function generateRuntimeKt(appDir: string, config: VeskConfig): Set<strin
 }
 
 export function generateRouterKt(appDir: string): void {
-  const outDir = join(appDir, 'src', 'main', 'kotlin', 'app');
+  const outDir = sharedKotlinDir(dirname(appDir));
   mkdirSync(outDir, { recursive: true });
   // Resolved from the CLI's own package location (not cwd) so it works from
   // inside the user's project, where `packages/navigation-native` does not
@@ -706,13 +782,14 @@ function compileProjectModules(appDir: string): { registry: Map<string, Map<stri
 }
 
 export function compileVskFiles(appDir: string, config: VeskConfig, target: string): void {
-  const outDir = join(appDir, 'src', 'main', 'kotlin', 'app');
+  const outDir = sharedKotlinDir(target);
   mkdirSync(outDir, { recursive: true });
 
-  const KEEP = new Set(['App.kt', 'Runtime.kt', 'Router.kt', 'Theme.kt', 'MainActivity.kt', 'DebugCrashLog.kt']);
+  const KEEP = new Set(['App.kt', 'Runtime.kt', 'Router.kt', 'Theme.kt']);
   for (const f of readdirSync(outDir)) {
     if (f.endsWith('.kt') && !KEEP.has(f)) unlinkSync(join(outDir, f));
   }
+  if (!existsSync(join(outDir, 'navigation'))) mkdirSync(join(outDir, 'navigation'), { recursive: true });
 
   const vskFiles = collectVskFiles(appDir);
   if (vskFiles.length === 0) {
@@ -791,7 +868,8 @@ export function compileVskFiles(appDir: string, config: VeskConfig, target: stri
   const imageResources = new Map<string, string>();
   const mediaResources = new Map<string, string>();
   const usedNames = new Set<string>();
-  const resDir = join(appDir, 'src', 'main', 'res');
+  const resDir = sharedResDir(target);
+  if (!existsSync(resDir)) mkdirSync(resDir, { recursive: true });
   for (const e of readdirSync(resDir, { withFileTypes: true })) {
     if (e.name.startsWith('drawable') && e.isDirectory()) rmSync(join(resDir, e.name), { recursive: true, force: true });
   }
@@ -849,7 +927,7 @@ export function compileVskFiles(appDir: string, config: VeskConfig, target: stri
   }
   for (const file of vskFiles) {
     const source = readFileSync(file, 'utf8');
-    const result = compileVskResult(source, file, { componentsWithoutProps, componentNames, customClasses, scopedCustomClasses: scopedClasses, imageResources, mediaResources, rClass: `${config.appId}.R`, rootName: config.root ?? '', fileRel: relative(appDir, file), appDir, moduleRegistry, moduleSlugs, projectModuleRegistry, npmRegistry, vsklibRegistry });
+    const result = compileVskResult(source, file, { componentsWithoutProps, componentNames, customClasses, scopedCustomClasses: scopedClasses, imageResources, mediaResources, rClass: `${config.appId}.shared.R`, resourceAuthority: config.appId, rootName: config.root ?? '', fileRel: relative(appDir, file), appDir, moduleRegistry, moduleSlugs, projectModuleRegistry, npmRegistry, vsklibRegistry });
     if (result.errors.length > 0) {
       console.error(`  [compile] errors in ${relative(appDir, file)}:`);
       for (const e of result.errors) console.error(`    ! ${e}`);
@@ -1000,7 +1078,7 @@ function screenPropsArg(page: { path: string; component: string; props: Array<{ 
 }
 
 export function generateAppKt(appDir: string, config: VeskConfig): void {
-  const outDir = join(appDir, 'src', 'main', 'kotlin', 'app');
+  const outDir = sharedKotlinDir(dirname(appDir));
   const files = collectVskFiles(appDir);
   let root: ComponentDecl | null = null;
 
@@ -1354,8 +1432,9 @@ export {};
 
 export function generateProject(target: string, config: VeskConfig): void {
   const appDir = join(target, 'app');
-  mkdirSync(join(appDir, 'src', 'main', 'kotlin', 'app'), { recursive: true });
   mkdirSync(join(appDir, 'src', 'main', 'res', 'values'), { recursive: true });
+  mkdirSync(sharedKotlinDir(target), { recursive: true });
+  mkdirSync(sharedResDir(target), { recursive: true });
   mkdirSync(join(target), { recursive: true });
 
   // Build scaffolding is framework-owned: the template is the single source of
@@ -1409,7 +1488,8 @@ export function generateProject(target: string, config: VeskConfig): void {
   // Gradle dependencies are derived from the same usage so they stay in lock
   // step with the pruned imports and code.
   const used = generateRuntimeKt(appDir, config);
-  generateAppBuildGradleKts(target, config, deviceApis, hasMedia, used, libs);
+  generateSharedBuildGradleKts(target, config, deviceApis, hasMedia, used, libs);
+  generateAppBuildGradleKts(target, config, libs);
 }
 
 export function syncAapt2Override(gradleProperties: string): void {

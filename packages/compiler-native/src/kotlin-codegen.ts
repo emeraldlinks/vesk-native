@@ -56,6 +56,10 @@ export interface CompileOptions {
   imageResources?: Map<string, string>;
   mediaResources?: Map<string, string>;
   rClass?: string;
+  /** Package the OS resolves android.resource:// URIs against at runtime — the
+   *  app applicationId (library resource URIs must not leak the library's own
+   *  namespace, since bundled media is merged into the app's resources). */
+  resourceAuthority?: string;
   rootName?: string;
   /** Project-relative path of this .vsk file (enables header import/export support). */
   fileRel?: string;
@@ -240,7 +244,7 @@ function mediaLines(node: StaticNode, em: Emitter, level: number, parentAxis: 'c
     } else {
       const res = em.mediaResources?.get(staticSrc);
       if (res) {
-        urlArg = `"android.resource://${em.rClass.replace(/\.R$/, '')}/" + ${em.rClass}.raw.${res}`;
+        urlArg = `"android.resource://${em.resourceAuthority}/" + ${em.rClass}.raw.${res}`;
       } else {
         em.err.warn(null, `<${node.tag} src="${staticSrc}">: project file not found (looked up ${em.mediaResources ? 'bundled media' : 'no media map'})`);
       }
@@ -604,6 +608,7 @@ class Emitter {
   imageResources?: Map<string, string>;
   mediaResources?: Map<string, string>;
   rClass: string;
+  resourceAuthority: string;
   libraryTags?: Map<string, VskLibTag>;
   libImports: Set<string>;
   vsklibRegistry?: Map<string, VskLibSurface>;
@@ -611,7 +616,7 @@ class Emitter {
   motionExports: Set<string>;
   refCells: Set<string>;
 
-  constructor(err: KtErrors, tracked: Map<string, TrackedInfo>, componentsWithoutProps?: Set<string>, customClasses?: Map<string, ModifierParts>, imageResources?: Map<string, string>, mediaResources?: Map<string, string>, rClass = 'app.R', libraryTags?: Map<string, VskLibTag>, libImports: Set<string> = new Set(), componentNames?: Set<string>, vsklibRegistry?: Map<string, VskLibSurface>, libraryExports: Map<string, LibExportSig> = new Map(), motionExports: Set<string> = new Set(), refCells: Set<string> = new Set(), cellTypes: Map<string, string> = new Map()) {
+  constructor(err: KtErrors, tracked: Map<string, TrackedInfo>, componentsWithoutProps?: Set<string>, customClasses?: Map<string, ModifierParts>, imageResources?: Map<string, string>, mediaResources?: Map<string, string>, rClass = 'app.R', resourceAuthority = '', libraryTags?: Map<string, VskLibTag>, libImports: Set<string> = new Set(), componentNames?: Set<string>, vsklibRegistry?: Map<string, VskLibSurface>, libraryExports: Map<string, LibExportSig> = new Map(), motionExports: Set<string> = new Set(), refCells: Set<string> = new Set(), cellTypes: Map<string, string> = new Map()) {
     this.err = err;
     this.j2k = new Js2Kt(err, cellTypes);
     this.j2k.libraryExports = libraryExports;
@@ -624,6 +629,7 @@ class Emitter {
     this.imageResources = imageResources;
     this.mediaResources = mediaResources;
     this.rClass = rClass;
+    this.resourceAuthority = resourceAuthority || rClass.replace(/\.R$/, '');
     this.libraryTags = libraryTags;
     this.libImports = libImports;
     this.vsklibRegistry = vsklibRegistry;
@@ -2076,7 +2082,7 @@ function runCompile(source: string, filename: string, options: CompileOptions): 
       resolvedClasses = new Map(customClasses);
       for (const [k, v] of own) resolvedClasses.set(k, v); // scoped wins over global
     }
-    const em = new Emitter(err, tracked, options.componentsWithoutProps, resolvedClasses, options.imageResources, options.mediaResources, options.rClass, fileLibraryTags, libImports, options.componentNames, options.vsklibRegistry, fileLibraryExports, fileMotionExports, refCells, cellTypes);
+    const em = new Emitter(err, tracked, options.componentsWithoutProps, resolvedClasses, options.imageResources, options.mediaResources, options.rClass, options.resourceAuthority ?? '', fileLibraryTags, libImports, options.componentNames, options.vsklibRegistry, fileLibraryExports, fileMotionExports, refCells, cellTypes);
 
     const propsArg = propsClass ? `props: ${comp.name}Props${propsParamDefault ? ` = ${comp.name}Props()` : ''}` : '';
     const params = [propsArg, 'content: @Composable () -> Unit = {}'].filter(Boolean).join(', ');

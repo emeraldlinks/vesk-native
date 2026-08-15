@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
 import { parse, generateIR } from '@vesk/compiler';
 import { StaticNode } from '@vesk/compiler/src/ir';
 import { walkIR } from '@compiler-native/walk-ir';
@@ -138,7 +138,9 @@ function scanKtCalls(src: string): Set<string> {
 
 export function collectRuntimeUsage(appDir: string): Set<string> {
   const used = new Set<string>();
-  const scanDir = join(appDir, 'src', 'main', 'kotlin', 'app');
+  // Generated page Kotlin lives in the :shared module (androidMain) — the
+  // usage scan follows it there.
+  const scanDir = join(dirname(appDir), 'shared', 'src', 'androidMain', 'kotlin', 'app');
   if (!existsSync(scanDir)) return used;
   const files: string[] = [];
   const walk = (d: string): void => {

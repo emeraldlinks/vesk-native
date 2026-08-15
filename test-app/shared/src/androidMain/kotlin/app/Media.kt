@@ -127,18 +127,18 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				verticalArrangement = Arrangement.spacedBy(16.dp),
 			) {
 				veskVideo(
-					url = "android.resource://com.vesk.demo3/" + com.vesk.demo3.R.raw.demo_1,
+					url = "android.resource://com.vesk.demo3/" + com.vesk.demo3.shared.R.raw.demo_1,
 					controls = true,
 					modifier = Modifier.clip(RoundedCornerShape(16.dp)).fillMaxWidth().aspectRatio(16f / 9f),
 				)
 				veskVideo(
-					url = "android.resource://com.vesk.demo3/" + com.vesk.demo3.R.raw.demo_1,
+					url = "android.resource://com.vesk.demo3/" + com.vesk.demo3.shared.R.raw.demo_1,
 					loop = true,
 					muted = true,
 					modifier = Modifier.clip(RoundedCornerShape(16.dp)).fillMaxWidth().height(160.dp),
 				)
 				veskAudio(
-					url = "android.resource://com.vesk.demo3/" + com.vesk.demo3.R.raw.last_train,
+					url = "android.resource://com.vesk.demo3/" + com.vesk.demo3.shared.R.raw.last_train,
 					controls = true,
 					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).padding(horizontal = 12.dp).padding(vertical = 8.dp),
 				)
