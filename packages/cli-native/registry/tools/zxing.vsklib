@@ -44,6 +44,7 @@
         "qualified": "com.google.zxing.BarcodeFormat",
         "jsdoc": "Barcode/QR format enum. Pass BarcodeFormat.QR_CODE to QRCodeWriter().encode().",
         "isConstructor": false,
+        "isEnum": true,
         "params": [],
         "defaultParams": [],
         "returnShape": "string"

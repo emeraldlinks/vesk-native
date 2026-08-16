@@ -147,6 +147,16 @@ async function verifyRecord(record: VskLibRecord): Promise<Failure[]> {
       }
       continue;
     }
+    // Modifier-wrapper tags (`<Shimmer>`) are markup natives implemented in
+    // the compiler codegen, not composables in the artifact: verify them
+    // against the codegen source that renders them.
+    if (tag.shimmer === true) {
+      const codegenSource = readFileSync('packages/compiler-native/src/kotlin-codegen.ts', 'utf8');
+      if (!codegenSource.includes('shimmerWrapperLines') || !codegenSource.includes('binding.shimmer')) {
+        failures.push({ id: record.id, detail: `tag '${tagName}' shimmer wrapper is not implemented in the Kotlin codegen` });
+      }
+      continue;
+    }
     const machineName = tag.composable.slice(tag.composable.lastIndexOf('.') + 1);
     const mtag = machineTags[machineName];
     if (!mtag) {

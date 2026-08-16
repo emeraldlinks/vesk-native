@@ -45,11 +45,18 @@ export interface MethodInfo {
   parameterAnnotations: AnnotationValue[][];
 }
 
+export interface FieldInfo {
+  name: string;
+  descriptor: string;
+  access: number;
+}
+
 export interface ClassFileInfo {
   thisClass: string;
   superClass: string | null;
   access: number;
   annotations: AnnotationValue[];
+  fields: FieldInfo[];
   methods: MethodInfo[];
 }
 
@@ -332,7 +339,7 @@ export function parseClassFile(buf: Uint8Array): ClassFileInfo {
   const superClass = superClassIdx !== 0 ? cpString(cp, cp[superClassIdx - 1]?.value as number) : null;
   const ifaceCount = r.u2();
   r.skip(ifaceCount * 2);
-  parseMembers(r, cp); // fields
+  const fields = parseMembers(r, cp).map((m) => ({ name: m.name, descriptor: m.descriptor, access: m.access }));
   const methods = parseMembers(r, cp).map((m) => {
     let annotations: AnnotationValue[] = [];
     let parameterAnnotations: AnnotationValue[][] = [];
@@ -361,7 +368,7 @@ export function parseClassFile(buf: Uint8Array): ClassFileInfo {
       }
     }
   }
-  return { thisClass, superClass, access, annotations: classAnnotations, methods };
+  return { thisClass, superClass, access, annotations: classAnnotations, fields, methods };
 }
 
 // Debug aid: raw class attribute list (name index + resolved name + byte
@@ -445,5 +452,8 @@ export const ACC_PUBLIC = 0x0001;
 export const ACC_PRIVATE = 0x0002;
 export const ACC_PROTECTED = 0x0004;
 export const ACC_STATIC = 0x0008;
+export const ACC_INTERFACE = 0x0200;
+export const ACC_ABSTRACT = 0x0400;
 export const ACC_BRIDGE = 0x0040;
 export const ACC_SYNTHETIC = 0x1000;
+export const ACC_ENUM = 0x4000;

@@ -20,7 +20,7 @@
         "name": "AnimatedImageVector",
         "target": "AnimatedImageVector",
         "qualified": "androidx.compose.animation.graphics.vector.AnimatedImageVector",
-        "isConstructor": false,
+        "isConstructor": true,
         "params": [
           {
             "name": "imageVector",
@@ -38,7 +38,7 @@
         ],
         "defaultParams": [],
         "returnShape": "object",
-        "jsdoc": "AnimatedImageVector — public class, but its constructor and AnimatedVectorTarget are Kotlin-internal in animation-graphics 1.11.4 (verified via compiler metadata). Instances only come from XML resource parsing (loadAnimatedVectorResource(theme, resources, id) + rememberAnimatedVectorPainter), which needs Android Resources — not expressible in vesk JS; import fails closed by design."
+        "jsdoc": "AnimatedImageVector — public constructor in animation-graphics 1.6.8: AnimatedImageVector(imageVector, targets). AnimatedVectorTarget is a sealed interface; instances also come from XML vector resources via loadAnimatedVectorResource(theme, resources, id) + rememberAnimatedVectorPainter."
       }
     },
     "tags": {},

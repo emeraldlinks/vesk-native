@@ -118,7 +118,7 @@
       "ArrowBack": {
         "name": "ArrowBack",
         "target": "ArrowBack",
-        "qualified": "androidx.compose.material.icons.filled.ArrowBack",
+        "qualified": "androidx.compose.material.icons.automirrored.filled.ArrowBack",
         "jsdoc": "Material icon 'ArrowBack' (Icons.Default). Use as imageVector on the material3 <Icon> tag.",
         "isConstructor": false,
         "params": [],
@@ -138,7 +138,7 @@
       "ArrowForward": {
         "name": "ArrowForward",
         "target": "ArrowForward",
-        "qualified": "androidx.compose.material.icons.filled.ArrowForward",
+        "qualified": "androidx.compose.material.icons.automirrored.filled.ArrowForward",
         "jsdoc": "Material icon 'ArrowForward' (Icons.Default). Use as imageVector on the material3 <Icon> tag.",
         "isConstructor": false,
         "params": [],
@@ -268,7 +268,7 @@
       "ExitToApp": {
         "name": "ExitToApp",
         "target": "ExitToApp",
-        "qualified": "androidx.compose.material.icons.filled.ExitToApp",
+        "qualified": "androidx.compose.material.icons.automirrored.filled.ExitToApp",
         "jsdoc": "Material icon 'ExitToApp' (Icons.Default). Use as imageVector on the material3 <Icon> tag.",
         "isConstructor": false,
         "params": [],
@@ -338,7 +338,7 @@
       "KeyboardArrowLeft": {
         "name": "KeyboardArrowLeft",
         "target": "KeyboardArrowLeft",
-        "qualified": "androidx.compose.material.icons.filled.KeyboardArrowLeft",
+        "qualified": "androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft",
         "jsdoc": "Material icon 'KeyboardArrowLeft' (Icons.Default). Use as imageVector on the material3 <Icon> tag.",
         "isConstructor": false,
         "params": [],
@@ -348,7 +348,7 @@
       "KeyboardArrowRight": {
         "name": "KeyboardArrowRight",
         "target": "KeyboardArrowRight",
-        "qualified": "androidx.compose.material.icons.filled.KeyboardArrowRight",
+        "qualified": "androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight",
         "jsdoc": "Material icon 'KeyboardArrowRight' (Icons.Default). Use as imageVector on the material3 <Icon> tag.",
         "isConstructor": false,
         "params": [],
@@ -368,7 +368,7 @@
       "List": {
         "name": "List",
         "target": "List",
-        "qualified": "androidx.compose.material.icons.filled.List",
+        "qualified": "androidx.compose.material.icons.automirrored.filled.List",
         "jsdoc": "Material icon 'List' (Icons.Default). Use as imageVector on the material3 <Icon> tag.",
         "isConstructor": false,
         "params": [],
@@ -498,7 +498,7 @@
       "Send": {
         "name": "Send",
         "target": "Send",
-        "qualified": "androidx.compose.material.icons.filled.Send",
+        "qualified": "androidx.compose.material.icons.automirrored.filled.Send",
         "jsdoc": "Material icon 'Send' (Icons.Default). Use as imageVector on the material3 <Icon> tag.",
         "isConstructor": false,
         "params": [],

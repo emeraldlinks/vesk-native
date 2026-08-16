@@ -24,7 +24,7 @@
       "FirebaseMessagingKtxRegistrar": {
         "name": "FirebaseMessagingKtxRegistrar",
         "target": "FirebaseMessagingKtxRegistrar",
-        "qualified": "com.google.firebase.messaging.ktx.FirebaseMessagingKtxRegistrar",
+        "qualified": "com.google.firebase.messaging.FirebaseMessagingKtxRegistrar",
         "isConstructor": true,
         "params": [],
         "defaultParams": [],

@@ -22,8 +22,8 @@
         "name": "Moshi",
         "target": "Moshi",
         "qualified": "com.squareup.moshi.Moshi",
-        "jsdoc": "Moshi JSON library. Moshi() / new Moshi.Builder().build() returns the JSON engine; Moshi.adapter(String) returns a JsonAdapter<String> (other adapters need class literals).",
-        "isConstructor": true,
+        "jsdoc": "Moshi JSON library. The Moshi constructor is package-private — obtain the engine via new Moshi.Builder().build(); Moshi.adapter(String) returns a JsonAdapter<String> (other adapters need class literals).",
+        "isConstructor": false,
         "params": [],
         "defaultParams": [],
         "returnShape": "other"

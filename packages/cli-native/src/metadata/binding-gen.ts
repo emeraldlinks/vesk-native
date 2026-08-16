@@ -28,10 +28,14 @@ import {
   ACC_PUBLIC,
   ACC_STATIC,
   ACC_SYNTHETIC,
+  ACC_INTERFACE,
+  ACC_ABSTRACT,
+  ACC_ENUM,
   methodAnnotationOf,
   paramAnnotationOf,
   parseClassFile,
   type MethodInfo,
+  type FieldInfo,
 } from './classfile.js';
 import { extractKotlinMetadata } from './kotlin-metadata.js';
 import {
@@ -47,6 +51,7 @@ import {
   type ConstructorMsg,
   type FunctionMsg,
   type PackageMsg,
+  type PropertyMsg,
   type TypeMsg,
   type TypeTableMsg,
   type ValueParameterMsg,
@@ -284,6 +289,7 @@ function walkClassFiles(dir: string): string[] {
 
 interface FacadeSurface {
   functions: FunctionMsg[];
+  properties: PropertyMsg[];
   typeTable: PackageMsg['typeTable'];
   packageDotted: string;
   methods: MethodInfo[];
@@ -294,6 +300,15 @@ interface ClassSurface {
   simpleName: string;
   kind: number;
   cls: ClassMsg;
+  jvmPublic: boolean;
+}
+
+interface JavaClassSurface {
+  simpleName: string;
+  qualified: string;
+  access: number;
+  methods: MethodInfo[];
+  fields: FieldInfo[];
 }
 
 /** True when the dotted name contains a `$` immediately followed by a digit
@@ -306,6 +321,12 @@ function hasAnonymousDollarSuffix(name: string): boolean {
     if (c >= 48 && c <= 57) return true;
   }
   return false;
+}
+
+/** The importable name of a class: for nested classes (`Outer$Inner`), the
+ *  last `$` segment is what source refers to (`Timber.DebugTree`). */
+function exportNameOf(simpleName: string): string {
+  return simpleName.includes('$') ? simpleName.slice(simpleName.lastIndexOf('$') + 1) : simpleName;
 }
 
 /** Public usable constructor: a primary constructor (`IS_SECONDARY` bit 4
@@ -505,6 +526,10 @@ export async function generateLibraryBinding(coord: MavenCoord, opts?: BindingGe
     // registry conformance to verify opaque exports of Java-authored libs.
     const surfaceNames = new Set<string>();
     const javaNoArgCtors = new Set<string>();
+    // Public Java-authored classes (no Kotlin metadata) whose constructor /
+    // reference surface the schema can express directly: enum sigs, public
+    // no-arg constructor sigs, and opaque non-constructor references.
+    const javaClasses: JavaClassSurface[] = [];
     // Classes in this artifact annotated with `kotlin.RequiresOptIn` — the
     // opt-in markers that callers of experimental APIs must opt into.
     const optInMarkers = new Set<string>();
@@ -536,6 +561,18 @@ export async function generateLibraryBinding(coord: MavenCoord, opts?: BindingGe
           javaNoArgCtors.add(simpleName);
         }
       }
+      // Java-authored (no metadata) public classes keep a reference surface
+      // even when nested: the simple name of the last `$` segment is what
+      // source refers to (`Retrofit.Builder`, `Moshi.Builder`). Anonymous
+      // (`$1`) and `*Kt` file facades carry no such surface.
+      if (!meta && (cf.access & ACC_PUBLIC) !== 0 && (cf.access & ACC_INTERFACE) === 0 && !simpleName.endsWith('Kt')) {
+        const nestedName = simpleName.includes('$') ? simpleName.slice(simpleName.lastIndexOf('$') + 1) : simpleName;
+        if (nestedName && !hasAnonymousDollarSuffix(cf.thisClass)) {
+          surfaceNames.add(nestedName);
+          const dotted = cf.thisClass.replaceAll('/', '.');
+          javaClasses.push({ simpleName: nestedName, qualified: dotted, access: cf.access, methods: cf.methods, fields: cf.fields });
+        }
+      }
       // Top-level functions on `*Kt` file facades surface as public static
       // methods even when the Kotlin metadata cannot be decoded (e.g. the
       // Kotlin 2.0 metadata format, or Java-compiled Kotlin).
@@ -556,7 +593,7 @@ export async function generateLibraryBinding(coord: MavenCoord, opts?: BindingGe
         if (!decoded.pkg) continue;
         const slash = cf.thisClass.lastIndexOf('/');
         const packageDotted = slash >= 0 ? cf.thisClass.slice(0, slash).replaceAll('/', '.') : '';
-        facades.push({ functions: decoded.pkg.functions, typeTable: decoded.pkg.typeTable, packageDotted, methods: cf.methods });
+        facades.push({ functions: decoded.pkg.functions, properties: decoded.pkg.properties, typeTable: decoded.pkg.typeTable, packageDotted, methods: cf.methods });
         stats.facades++;
       } else if (meta.kind === 1 || meta.kind === 3) {
         if (dotted.endsWith('$Companion')) {
@@ -577,7 +614,7 @@ export async function generateLibraryBinding(coord: MavenCoord, opts?: BindingGe
         }
         if (!decoded.class) continue;
         const kind = flagBits(decoded.class.flags, FLAGS.CLASS_KIND.offset, FLAGS.CLASS_KIND.width);
-        classSurfaces.push({ qualified: dotted, simpleName, kind, cls: decoded.class });
+        classSurfaces.push({ qualified: dotted, simpleName, kind, cls: decoded.class, jvmPublic: (cf.access & ACC_PUBLIC) !== 0 });
       }
     }
 
@@ -670,42 +707,81 @@ export async function generateLibraryBinding(coord: MavenCoord, opts?: BindingGe
       constructible.add(s.qualified);
     }
 
-    // Round 2: emit constructor/enum signatures. Constructible data classes
-    // map to object factories; a param whose class resolves in the same
-    // artifact gets a typed `object`/`enum` shape.
+    // Round 2: emit constructor/enum/reference signatures. Constructible data
+    // classes map to object factories; a param whose class resolves in the
+    // same artifact gets a typed `object`/`enum` shape. Non-constructible
+    // JVM-public classes (metadata visibility quirk, nested, abstract, or
+    // no-public-ctor) keep an opaque reference sig so imports resolve, and
+    // nested classes with a usable primary ctor still map to a constructor.
     const tags: Record<string, NonNullable<VskLibRecord['tags']>[string]> = {};
     const exportsSet = new Set<string>();
     const signatures: Record<string, LibExportSig> = {};
     const exportedNames = new Map<string, string>();
 
-    for (const s of sortedClasses) {
-      let sig: LibExportSig | null = null;
-      if (constructible.has(s.qualified)) {
-        const ctor = usablePrimaryCtor(s.cls);
-        if (!ctor) continue;
-        const params: LibParamSig[] = ctor.valueParams.map((p) => paramSigOf(p, s.cls.typeTable, constructible, enumEntriesByClass, sealedEnumsByClass));
-        const defaultParams: string[] = [];
-        let fromDefault = false;
-        for (const p of ctor.valueParams) {
-          if (flagBits(p.flags, FLAGS.DECLARES_DEFAULT_VALUE, 1) === 1) fromDefault = true;
-          if (fromDefault && p.name) defaultParams.push(p.name);
-        }
-        sig = { name: s.simpleName, target: s.simpleName, qualified: s.qualified, isConstructor: true, params, defaultParams, returnShape: 'object' };
-      } else if (enumClasses.has(s.qualified)) {
-        sig = { name: s.simpleName, target: s.simpleName, qualified: s.qualified, isConstructor: false, isEnum: true, enumValues: s.cls.enumEntries, params: [], defaultParams: [], returnShape: 'string' };
-      } else if (sealedEnumsByClass.has(s.qualified)) {
-        sig = { name: s.simpleName, target: s.simpleName, qualified: s.qualified, isConstructor: false, isEnum: true, enumValues: sealedEnumsByClass.get(s.qualified), params: [], defaultParams: [], returnShape: 'string' };
-      }
-      if (!sig) continue;
+    const emitSig = (sig: LibExportSig): void => {
       const previous = exportedNames.get(sig.name);
       if (previous !== undefined) {
         skipped.push(`${sig.qualified} — duplicate export name (${previous} already exports ${sig.name})`);
-        continue;
+        return;
       }
       exportedNames.set(sig.name, sig.qualified);
       signatures[sig.name] = sig;
       exportsSet.add(sig.name);
       stats.exports++;
+    };
+
+    const ctorSig = (s: ClassSurface): LibExportSig | null => {
+      const ctor = usablePrimaryCtor(s.cls);
+      if (!ctor) return null;
+      const params: LibParamSig[] = ctor.valueParams.map((p) => paramSigOf(p, s.cls.typeTable, constructible, enumEntriesByClass, sealedEnumsByClass));
+      const defaultParams: string[] = [];
+      let fromDefault = false;
+      for (const p of ctor.valueParams) {
+        if (flagBits(p.flags, FLAGS.DECLARES_DEFAULT_VALUE, 1) === 1) fromDefault = true;
+        if (fromDefault && p.name) defaultParams.push(p.name);
+      }
+      const name = exportNameOf(s.simpleName);
+      const dotQualified = s.qualified.includes('$') ? s.qualified.replaceAll('$', '.') : s.qualified;
+      return { name, target: name, qualified: dotQualified, isConstructor: true, params, defaultParams, returnShape: 'object' };
+    };
+
+    for (const s of sortedClasses) {
+      let sig: LibExportSig | null = null;
+      if (constructible.has(s.qualified)) {
+        sig = ctorSig(s);
+      } else if (enumClasses.has(s.qualified)) {
+        sig = { name: s.simpleName, target: s.simpleName, qualified: s.qualified, isConstructor: false, isEnum: true, enumValues: s.cls.enumEntries, params: [], defaultParams: [], returnShape: 'string' };
+      } else if (sealedEnumsByClass.has(s.qualified)) {
+        sig = { name: s.simpleName, target: s.simpleName, qualified: s.qualified, isConstructor: false, isEnum: true, enumValues: sealedEnumsByClass.get(s.qualified), params: [], defaultParams: [], returnShape: 'string' };
+      } else if (s.kind === CLASS_KIND.OBJECT && !s.qualified.includes('$') && s.jvmPublic) {
+        // Top-level public object (e.g. `androidx.compose.material.icons.Icons`):
+        // importable opaque reference for member-chained values (`Icons.Filled.Home`).
+        sig = { name: s.simpleName, target: s.simpleName, qualified: s.qualified, isConstructor: false, params: [], defaultParams: [], returnShape: 'object' };
+      } else if (s.kind === CLASS_KIND.CLASS && s.jvmPublic) {
+        sig = ctorSig(s) ?? { name: exportNameOf(s.simpleName), target: exportNameOf(s.simpleName), qualified: s.qualified.includes('$') ? s.qualified.replaceAll('$', '.') : s.qualified, isConstructor: false, params: [], defaultParams: [], returnShape: 'object' };
+      }
+      if (!sig) continue;
+      emitSig(sig);
+    }
+
+    // Java-authored classes (no Kotlin metadata): enums map to enum sigs,
+    // public no-arg-constructor classes to constructor factories, and every
+    // other public class to an opaque reference (`Moshi`, `JsonAdapter`).
+    for (const jc of javaClasses) {
+      let sig: LibExportSig;
+      const qualified = jc.qualified.includes('$') ? jc.qualified.replaceAll('$', '.') : jc.qualified;
+      if ((jc.access & ACC_ENUM) !== 0) {
+        const self = `L${jc.qualified.replaceAll('.', '/')};`;
+        const entries = jc.fields.filter((f) => (f.access & ACC_ENUM) !== 0 && f.descriptor === self).map((f) => f.name);
+        sig = { name: jc.simpleName, target: jc.simpleName, qualified, isConstructor: false, isEnum: true, enumValues: entries, params: [], defaultParams: [], returnShape: 'string' };
+      } else if ((jc.access & ACC_ABSTRACT) !== 0) {
+        sig = { name: jc.simpleName, target: jc.simpleName, qualified, isConstructor: false, params: [], defaultParams: [], returnShape: 'object' };
+      } else if (jc.methods.some((m) => m.name === '<init>' && m.descriptor === '()V' && (m.access & ACC_PUBLIC) !== 0)) {
+        sig = { name: jc.simpleName, target: jc.simpleName, qualified, isConstructor: true, params: [], defaultParams: [], returnShape: 'object' };
+      } else {
+        sig = { name: jc.simpleName, target: jc.simpleName, qualified, isConstructor: false, params: [], defaultParams: [], returnShape: 'object' };
+      }
+      emitSig(sig);
     }
 
     for (const facade of facades) {
@@ -731,16 +807,20 @@ export async function generateLibraryBinding(coord: MavenCoord, opts?: BindingGe
           skipped.push(`${facade.packageDotted}.${fn.name} — non-stable parameter names`);
           continue;
         }
-        if (tags[fn.name] !== undefined) {
-          skipped.push(`${facade.packageDotted}.${fn.name} — duplicate tag name`);
-          continue;
-        }
         const composable = methodAnnotationOf(method, COMPOSABLE_DESC) !== null;
         if (composable) {
           const tag = buildTag(facade, fn, method, constructible, enumEntriesByClass, sealedEnumsByClass, optInMarkers);
           if (tag) {
-            tags[fn.name] = tag;
-            stats.composables++;
+            const existing = tags[fn.name];
+            if (existing) {
+              // Overloaded composables share one markup element: union the
+              // parameter surfaces (`Icon(imageVector, …)` + `Icon(painter, …)`)
+              // instead of keeping only the first overload.
+              mergeTagOverloads(existing, tag);
+            } else {
+              tags[fn.name] = tag;
+              stats.composables++;
+            }
           } else {
             skipped.push(`${facade.packageDotted}.${fn.name} — composable with non-Unit return or no mappable params`);
           }
@@ -752,6 +832,25 @@ export async function generateLibraryBinding(coord: MavenCoord, opts?: BindingGe
           exportsSet.add(fn.name);
           stats.exports++;
         }
+      }
+      for (const p of facade.properties) {
+        if (!p.name || p.name.startsWith('_')) continue;
+        if (signatures[p.name] !== undefined || tags[p.name] !== undefined) continue;
+        const vis =
+          p.getterFlags !== undefined
+            ? flagBits(p.getterFlags, FLAGS.VISIBILITY.offset, FLAGS.VISIBILITY.width)
+            : flagBits(p.flags, FLAGS.VISIBILITY.offset, FLAGS.VISIBILITY.width);
+        if (vis !== VISIBILITY_PUBLIC) continue;
+        const cap = p.name.charAt(0).toUpperCase() + p.name.slice(1);
+        const hasAccessor = facade.methods.some(
+          (m) =>
+            (m.name === `get${cap}` || m.name === `is${cap}`) &&
+            (m.access & ACC_PUBLIC) !== 0 &&
+            (m.access & ACC_STATIC) !== 0 &&
+            (m.access & ACC_SYNTHETIC) === 0,
+        );
+        if (!hasAccessor) continue;
+        emitSig({ name: p.name, target: p.name, qualified: `${facade.packageDotted}.${p.name}`, isConstructor: false, params: [], defaultParams: [], returnShape: 'any' });
       }
     }
 
@@ -812,7 +911,7 @@ function buildTag(
     }
     const sig = classShapeOf(t, constructible, enumEntriesByClass, sealedEnumsByClass, table);
     const shape = sig.shape;
-    if (shape === 'function' || shape === 'other' || shape === 'void') continue;
+    if (shape === 'function' || shape === 'void') continue;
     if (shape === 'array') {
       const elemShape = sig.elem?.shape;
       if (elemShape !== 'number' && elemShape !== 'string' && elemShape !== 'boolean' && elemShape !== 'any' && elemShape !== 'object' && elemShape !== 'enum') continue;
@@ -830,6 +929,29 @@ function buildTag(
     ...(container ? { container: true } : {}),
     ...(optIn.length > 0 ? { optIn } : {}),
   };
+}
+
+/** Union a second composable overload into the tag of the first so a markup
+ *  element accepts every parameter the overloads expose. First overload wins
+ *  on conflicting shapes; container/optIn are OR-ed. */
+function mergeTagOverloads(
+  existing: NonNullable<VskLibRecord['tags']>[string],
+  extra: NonNullable<VskLibRecord['tags']>[string],
+): void {
+  const attrs = existing.attrs ?? {};
+  const shapes = existing.attrShapes ?? {};
+  for (const [attr, value] of Object.entries(extra.attrs ?? {})) {
+    if (attrs[attr] !== undefined) continue;
+    attrs[attr] = value;
+    const shape = extra.attrShapes?.[attr];
+    if (shape) shapes[attr] = shape;
+  }
+  existing.attrs = attrs;
+  if (Object.keys(shapes).length > 0) existing.attrShapes = shapes;
+  if (extra.container) existing.container = true;
+  if (extra.optIn && extra.optIn.length > 0) {
+    existing.optIn = [...new Set([...(existing.optIn ?? []), ...extra.optIn])];
+  }
 }
 
 function methodOptIns(method: MethodInfo, optInMarkers: Set<string>): string[] {

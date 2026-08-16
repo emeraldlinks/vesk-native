@@ -618,7 +618,7 @@
       "TextFieldState": {
         "name": "TextFieldState",
         "target": "TextFieldState",
-        "qualified": "androidx.compose.foundation.text2.input.TextFieldState",
+        "qualified": "androidx.compose.foundation.text.TextFieldState",
         "isConstructor": true,
         "params": [
           {
@@ -661,7 +661,7 @@
           {
             "name": "state",
             "shape": "object",
-            "typeName": "androidx.compose.foundation.text2.input.TextFieldState"
+            "typeName": "androidx.compose.foundation.text.TextFieldState"
           }
         ],
         "defaultParams": [],
@@ -1142,7 +1142,7 @@
           "state": {
             "name": "state",
             "shape": "object",
-            "typeName": "androidx.compose.foundation.text2.input.TextFieldState"
+            "typeName": "androidx.compose.foundation.text.TextFieldState"
           },
           "textObfuscationMode": {
             "name": "textObfuscationMode",
@@ -1180,7 +1180,7 @@
           "state": {
             "name": "state",
             "shape": "object",
-            "typeName": "androidx.compose.foundation.text2.input.TextFieldState"
+            "typeName": "androidx.compose.foundation.text.TextFieldState"
           },
           "enabled": {
             "name": "enabled",
