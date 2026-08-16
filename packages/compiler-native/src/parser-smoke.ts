@@ -314,11 +314,17 @@ check('js2kt: document member read is hard error', (() => {
   const out = j2k.expr(initOf('let t = document.title;'));
   return err.errors.length > 0 && out.startsWith('error("vesk: document.title is not supported');
 })());
-check('js2kt: localStorage member call is hard error', (() => {
+check('js2kt: localStorage.getItem maps to VeskWebStorage.localGetItem', (() => {
   const err = new KtErrors();
   const j2k = new Js2Kt(err);
   const out = j2k.expr(initOf('let v = localStorage.getItem("k");'));
-  return err.errors.length > 0 && out.startsWith('error("vesk: localStorage.getItem() is not supported');
+  return err.errors.length === 0 && out.startsWith('VeskWebStorage.localGetItem(');
+})());
+check('js2kt: sessionStorage.getItem maps to VeskWebStorage.sessionGetItem', (() => {
+  const err = new KtErrors();
+  const j2k = new Js2Kt(err);
+  const out = j2k.expr(initOf('let v = sessionStorage.getItem("k");'));
+  return err.errors.length === 0 && out.startsWith('VeskWebStorage.sessionGetItem(');
 })());
 check('js2kt: navigator member read is hard error', (() => {
   const err = new KtErrors();
@@ -326,11 +332,17 @@ check('js2kt: navigator member read is hard error', (() => {
   const out = j2k.expr(initOf('let ua = navigator.userAgent;'));
   return err.errors.length > 0 && out.startsWith('error("vesk: navigator.userAgent is not supported');
 })());
-check('js2kt: fetch free fn is hard error', (() => {
+check('js2kt: fetch maps to VeskFetch.fetch', (() => {
   const err = new KtErrors();
   const j2k = new Js2Kt(err);
   const out = j2k.expr(initOf('let r = fetch("/api");'));
-  return err.errors.length > 0 && out.startsWith('error("vesk: fetch() is not supported');
+  return err.errors.length === 0 && out.startsWith('VeskFetch.fetch(');
+})());
+check('js2kt: window.fetch maps to VeskFetch.fetch', (() => {
+  const err = new KtErrors();
+  const j2k = new Js2Kt(err);
+  const out = j2k.expr(initOf('let r = window.fetch("/api");'));
+  return err.errors.length === 0 && out.startsWith('VeskFetch.fetch(');
 })());
 check('js2kt: atob free fn is hard error', (() => {
   const err = new KtErrors();

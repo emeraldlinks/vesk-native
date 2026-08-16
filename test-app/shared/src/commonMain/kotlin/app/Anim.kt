@@ -67,6 +67,12 @@ import androidx.compose.ui.zIndex
 fun Anim(content: @Composable () -> Unit = {}) {
 	val box = remember { mutableStateOf<Any?>(null) }
 		val boxCell = box
+	val boxA = remember { mutableStateOf<Any?>(null) }
+		val boxACell = boxA
+	val boxB = remember { mutableStateOf<Any?>(null) }
+		val boxBCell = boxB
+	val boxC = remember { mutableStateOf<Any?>(null) }
+		val boxCCell = boxC
 	val count = remember { mutableStateOf(0) }
 	val shown = remember { mutableStateOf(false) }
 	val scrollP = remember { mutableStateOf(0.0) }
@@ -97,7 +103,7 @@ fun Anim(content: @Composable () -> Unit = {}) {
 				style = TextStyle(fontWeight = FontWeight.SemiBold),
 			)
 			Text(
-				text = "The ref attribute binds a MotionRef; animate(box, ...) drives graphicsLayer scale/opacity through a Compose spring.",
+				text = "The ref attribute binds a MotionRef; animate(box, scale [1, 1.2, 1], opacity [1, 0.6, 1] keyframes) pulses the graphicsLayer through a Compose spring, and a new animate() on the same ref stops the previous one.",
 				modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
 				style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant),
 			)
@@ -118,7 +124,7 @@ fun Anim(content: @Composable () -> Unit = {}) {
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				Button(
-					onClick = jsSafe({ run __veskret0@ { motionAnimate(boxCell.value, mutableMapOf<String, Any?>("scale" to 1.2, "opacity" to 0.6), mutableMapOf<String, Any?>("spring" to motionSpring(mutableMapOf<String, Any?>("stiffness" to 220, "damping" to 18)))); motionAnimate(boxCell.value, mutableMapOf<String, Any?>("scale" to 1, "opacity" to 1), mutableMapOf<String, Any?>("spring" to motionSpring(mutableMapOf<String, Any?>("stiffness" to 220, "damping" to 18)))) } }),
+					onClick = jsSafe({ motionAnimate(boxCell.value, mutableMapOf<String, Any?>("scale" to listOf(1, 1.2, 1), "opacity" to listOf(1, 0.6, 1)), mutableMapOf<String, Any?>("spring" to motionSpring(mutableMapOf<String, Any?>("stiffness" to 220, "damping" to 18)))) }),
 					modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(Color(0xFFF43F5E)),
 					shape = RoundedCornerShape(8.dp),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -152,7 +158,7 @@ fun Anim(content: @Composable () -> Unit = {}) {
 				style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp),
 			)
 			Button(
-				onClick = jsSafe({ motionAnimate(0, 100, mutableMapOf<String, Any?>("duration" to 0.8, "ease" to "easeInOut", "onUpdate" to  { v: Any? -> run __veskret1@ { count.value = num(v).toInt() } })) }),
+				onClick = jsSafe({ motionAnimate(0, 100, mutableMapOf<String, Any?>("duration" to 0.8, "ease" to "easeInOut", "onUpdate" to  { v: Any? -> run __veskret0@ { count.value = num(v).toInt() } })) }),
 				modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(Color(0xFFF97316)),
 				shape = RoundedCornerShape(8.dp),
 				colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -187,7 +193,7 @@ fun Anim(content: @Composable () -> Unit = {}) {
 				style = TextStyle(fontWeight = FontWeight.SemiBold),
 			)
 			Text(
-				text = "motion-utils stagger(duration)(index) — the curried call maps to motionStagger(index, duration).",
+				text = "motion-utils stagger(duration)(index) — the curried call maps to motionStagger(index, duration) and becomes each element's delay, so the three boxes pop in one after the other.",
 				modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
 				style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant),
 			)
@@ -200,8 +206,10 @@ fun Anim(content: @Composable () -> Unit = {}) {
 				modifier = Modifier.fillMaxWidth(),
 				horizontalArrangement = Arrangement.spacedBy(12.dp),
 			) {
+				val __veskRef2 = rememberMotionRef()
+				boxACell.value = __veskRef2
 				Row(
-					modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(Color(0xFF10B981)).width(64.dp).height(64.dp),
+					modifier = Modifier.motionGraphics(__veskRef2).clip(RoundedCornerShape(4.dp)).background(Color(0xFF10B981)).width(64.dp).height(64.dp),
 					verticalAlignment = Alignment.CenterVertically,
 					horizontalArrangement = Arrangement.Center,
 				) {
@@ -210,8 +218,10 @@ fun Anim(content: @Composable () -> Unit = {}) {
 						style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
 					)
 				}
+				val __veskRef3 = rememberMotionRef()
+				boxBCell.value = __veskRef3
 				Row(
-					modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(Color(0xFF10B981)).width(64.dp).height(64.dp),
+					modifier = Modifier.motionGraphics(__veskRef3).clip(RoundedCornerShape(4.dp)).background(Color(0xFF10B981)).width(64.dp).height(64.dp),
 					verticalAlignment = Alignment.CenterVertically,
 					horizontalArrangement = Arrangement.Center,
 				) {
@@ -220,8 +230,10 @@ fun Anim(content: @Composable () -> Unit = {}) {
 						style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
 					)
 				}
+				val __veskRef4 = rememberMotionRef()
+				boxCCell.value = __veskRef4
 				Row(
-					modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(Color(0xFF10B981)).width(64.dp).height(64.dp),
+					modifier = Modifier.motionGraphics(__veskRef4).clip(RoundedCornerShape(4.dp)).background(Color(0xFF10B981)).width(64.dp).height(64.dp),
 					verticalAlignment = Alignment.CenterVertically,
 					horizontalArrangement = Arrangement.Center,
 				) {
@@ -230,6 +242,20 @@ fun Anim(content: @Composable () -> Unit = {}) {
 						style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
 					)
 				}
+			}
+			Button(
+				onClick = jsSafe({ run __veskret1@ { motionAnimate(boxACell.value, mutableMapOf<String, Any?>("scale" to listOf(0.4, 1), "opacity" to listOf(0, 1)), mutableMapOf<String, Any?>("delay" to motionStagger(0, 0.15), "spring" to motionSpring(mutableMapOf<String, Any?>("stiffness" to 220, "damping" to 18)))); motionAnimate(boxBCell.value, mutableMapOf<String, Any?>("scale" to listOf(0.4, 1), "opacity" to listOf(0, 1)), mutableMapOf<String, Any?>("delay" to motionStagger(1, 0.15), "spring" to motionSpring(mutableMapOf<String, Any?>("stiffness" to 220, "damping" to 18)))); motionAnimate(boxCCell.value, mutableMapOf<String, Any?>("scale" to listOf(0.4, 1), "opacity" to listOf(0, 1)), mutableMapOf<String, Any?>("delay" to motionStagger(2, 0.15), "spring" to motionSpring(mutableMapOf<String, Any?>("stiffness" to 220, "damping" to 18)))) } }),
+				modifier = Modifier.padding(top = 12.dp).clip(RoundedCornerShape(8.dp)).background(Color(0xFF10B981)),
+				shape = RoundedCornerShape(8.dp),
+				colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
+				elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
+				contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+			) {
+			Text(
+				text = "Stagger in",
+				modifier = Modifier.padding(top = 12.dp).clip(RoundedCornerShape(8.dp)).background(Color(0xFF10B981)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
+				style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 14.sp, lineHeight = 20.sp),
+			)
 			}
 		}
 		Column(

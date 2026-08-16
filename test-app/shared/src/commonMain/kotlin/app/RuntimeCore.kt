@@ -619,6 +619,12 @@ class MotionRef {
     var entered: Boolean by mutableStateOf(false)
     internal var viewportW: Int = 0
     internal var viewportH: Int = 0
+    // In-flight animate() jobs per property, cancelled when a new animate()
+    // targets the same property (motion.dev: starting an animation on a value
+    // stops the previous one). animGens tags each claimed job so a job that
+    // was superseded while waiting out its delay exits without animating.
+    internal val animJobs = mutableMapOf<String, Job?>()
+    internal val animGens = mutableMapOf<String, Int>()
     fun onPositioned(b: Rect) {
         bounds = b
         updateVisibility()
@@ -818,34 +824,78 @@ private fun motionAnimateNumber(from: Any?, to: Any?, options: Any?): MotionCont
     return controls
 }
 
+private class MotionProp(val key: String, val get: () -> Float, val set: (Float) -> Unit, val frames: List<Float>)
+
 private fun motionAnimateElement(ref: MotionRef, props: Any?, options: Any?): MotionControls {
     val opts = options as? Map<*, *> ?: emptyMap<Any, Any>()
     val target = props as? Map<*, *> ?: emptyMap<Any, Any>()
     val onComplete = optFn(opts, "onComplete")
     val spec = motionSpecFor(opts)
+    val delaySec = num(jsMapGet(opts, "delay"))
+    val repeat = (jsMapGet(opts, "repeat") as? Number)?.toDouble() ?: 0.0
+    val repeatType = jsString(jsMapGet(opts, "repeatType")).let { if (it == "reverse" || it == "mirror") it else "loop" }
+    val repeatDelay = num(jsMapGet(opts, "repeatDelay"))
+    // Resolve each property to a MotionProp: a multi-stop array is a motion
+    // keyframe sequence (keyframes include the start value), a scalar is a
+    // single target that starts from the element's current value.
+    val resolved = target.mapNotNull { (k, v) ->
+        val key = k.toString()
+        var get: (() -> Float)? = null
+        var set: ((Float) -> Unit)? = null
+        when (key) {
+            "opacity" -> { get = { ref.alpha }; set = { ref.alpha = it } }
+            "scale", "scaleX" -> { get = { ref.scaleX }; set = { ref.scaleX = it } }
+            "scaleY" -> { get = { ref.scaleY }; set = { ref.scaleY = it } }
+            "translateX", "x" -> { get = { ref.translateX }; set = { ref.translateX = it } }
+            "translateY", "y" -> { get = { ref.translateY }; set = { ref.translateY = it } }
+            "rotate" -> { get = { ref.rotate }; set = { ref.rotate = it } }
+        }
+        if (get == null || set == null) return@mapNotNull null
+        val frames = (v as? List<*>)?.map { num(it).toFloat() } ?: listOf(num(v).toFloat())
+        MotionProp(key, get, set, frames)
+    }
+    // Starting a new animate() on a value stops its previous animation
+    // immediately (motion.dev motion-value semantics) and starts from the
+    // element's current value. Claim this call's generation synchronously so
+    // a delayed predecessor that was superseded while waiting exits without
+    // animating.
+    val gens = mutableMapOf<String, Int>()
+    resolved.forEach { p ->
+        ref.animJobs[p.key]?.cancel()
+        val g = (ref.animGens[p.key] ?: 0) + 1
+        gens[p.key] = g
+        ref.animGens[p.key] = g
+    }
     val scope = CoroutineScope(SupervisorJob() + motionDispatcher())
     val controls = MotionControls()
     val job = scope.launch {
-        val running = target.mapNotNull { (k, v) ->
-            val value = (v as? List<*>)?.lastOrNull() ?: v
-            val dst = num(value).toFloat()
-            var get: (() -> Float)? = null
-            var set: ((Float) -> Unit)? = null
-            when (k.toString()) {
-                "opacity" -> { get = { ref.alpha }; set = { ref.alpha = it } }
-                "scale", "scaleX" -> { get = { ref.scaleX }; set = { ref.scaleX = it } }
-                "scaleY" -> { get = { ref.scaleY }; set = { ref.scaleY = it } }
-                "translateX", "x" -> { get = { ref.translateX }; set = { ref.translateX = it } }
-                "translateY", "y" -> { get = { ref.translateY }; set = { ref.translateY = it } }
-                "rotate" -> { get = { ref.rotate }; set = { ref.rotate = it } }
+        if (delaySec > 0) delay((delaySec * 1000.0).toLong())
+        resolved.map { p ->
+            val gen = gens[p.key] ?: 0
+            val child = launch {
+                if (ref.animGens[p.key] != gen) return@launch
+                val isKeyframes = p.frames.size >= 2
+                val start = if (isKeyframes) p.frames[0] else p.get()
+                val targets = if (isKeyframes) p.frames.drop(1) else p.frames
+                var iteration = 0
+                while (isActive && (repeat == Double.POSITIVE_INFINITY || iteration <= repeat)) {
+                    val isReversed = repeatType != "loop" && iteration % 2 == 1
+                    val anim = Animatable(if (isReversed) (targets.lastOrNull() ?: start) else start)
+                    if (isReversed) {
+                        for (dst in targets.reversed()) anim.animateTo(dst, spec) { p.set(this.value) }
+                        anim.animateTo(start, spec) { p.set(this.value) }
+                    } else {
+                        for (dst in targets) anim.animateTo(dst, spec) { p.set(this.value) }
+                    }
+                    if (repeat > 0.0 && iteration < repeat) {
+                        if (repeatDelay > 0) delay((repeatDelay * 1000.0).toLong())
+                        iteration++
+                    } else break
+                }
             }
-            if (get != null && set != null) Triple(get, set, dst) else null
-        }
-        running.map { (get, set, dst) ->
-            launch {
-                val anim = Animatable(get())
-                anim.animateTo(dst, spec) { set(this.value) }
-            }
+            ref.animJobs[p.key] = child
+            child.invokeOnCompletion { if (ref.animJobs[p.key] === child) ref.animJobs.remove(p.key) }
+            child
         }.forEach { it.join() }
         onComplete?.invoke(null)
     }

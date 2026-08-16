@@ -372,6 +372,70 @@ const BROWSER_APIS = new Set([
   'signUp', 'signIn', 'signOut', 'currentUser', 'isSignedIn',
 ]);
 
+// iOS Info.plist usage keys derived from device-API usage, the same way
+// API_PERMISSIONS derives Android manifest permissions. Every entry is the
+// API's Android-permission -> Apple usage-key counterpart, key names and
+// purposes verified against Apple's Info.plist key reference / protected
+// resources docs (never invented):
+//   RECORD_AUDIO                 -> NSMicrophoneUsageDescription
+//   CAMERA                       -> NSCameraUsageDescription
+//   ACCESS_*_LOCATION (foreground)-> NSLocationWhenInUseUsageDescription
+//   READ_CONTACTS                -> NSContactsUsageDescription
+//   READ_CALENDAR                -> NSCalendarsUsageDescription
+//   USE_BIOMETRIC                -> NSFaceIDUsageDescription
+//   BLUETOOTH_*                  -> NSBluetoothAlwaysUsageDescription
+// capturePhoto/captureVideo need NSCameraUsageDescription on iOS even though
+// Android grants them no CAMERA permission: UIImagePickerController refuses
+// to open without the key.
+// Fail closed: API_PERMISSIONS entries with NO Apple iOS usage-key counterpart
+// stay unmapped so no bogus key is emitted — READ_CALL_LOG (iOS exposes no
+// call-history API), READ_SMS / GET_ACCOUNTS (no SMS/account-read API),
+// SET_WALLPAPER (no wallpaper API), VIBRATE / MODIFY_AUDIO_SETTINGS /
+// ACCESS_NETWORK_STATE / ACCESS_WIFI_STATE / INTERNET (no privacy prompt on
+// iOS), and FOREGROUND_SERVICE_MEDIA_PROJECTION (ReplayKit shows its own
+// system dialog; only mic capture adds a key — hence startScreenRecord ->
+// NSMicrophoneUsageDescription).
+const DEVICE_API_IOS_USAGE: Record<string, string> = {
+  capturePhoto: 'NSCameraUsageDescription',
+  captureVideo: 'NSCameraUsageDescription',
+  scanQr: 'NSCameraUsageDescription',
+  startRecording: 'NSMicrophoneUsageDescription',
+  startScreenRecord: 'NSMicrophoneUsageDescription',
+  getLocation: 'NSLocationWhenInUseUsageDescription',
+  listContacts: 'NSContactsUsageDescription',
+  listCalendarEvents: 'NSCalendarsUsageDescription',
+  checkBiometrics: 'NSFaceIDUsageDescription',
+  authenticate: 'NSFaceIDUsageDescription',
+  refreshBluetooth: 'NSBluetoothAlwaysUsageDescription',
+  toggleBluetooth: 'NSBluetoothAlwaysUsageDescription',
+  scanBluetooth: 'NSBluetoothAlwaysUsageDescription',
+};
+
+const IOS_USAGE_STRINGS: Record<string, string> = {
+  NSCameraUsageDescription: 'Take photos, record video or scan QR codes on pages in this app.',
+  NSMicrophoneUsageDescription: 'Record audio or screen recordings on pages in this app.',
+  NSLocationWhenInUseUsageDescription: 'Show your location on pages in this app.',
+  NSContactsUsageDescription: 'List contacts you choose to share with a page in this app.',
+  NSCalendarsUsageDescription: 'Show calendar events on pages in this app.',
+  NSFaceIDUsageDescription: 'Unlock secure actions on pages in this app with Face ID.',
+  NSBluetoothAlwaysUsageDescription: 'Connect to nearby devices from pages in this app.',
+};
+
+// The usage-key entries for the iOS Info.plist, pruned to what the app's
+// device-API calls actually need (same rule as API_PERMISSIONS: never emit a
+// key "just in case"). Only keys with a purpose string are emitted — a key
+// that cannot be verified is never filled in.
+export function iosUsageStrings(deviceApis: Set<string>): Map<string, string> {
+  const usage = new Map<string, string>();
+  for (const api of deviceApis) {
+    const key = DEVICE_API_IOS_USAGE[api];
+    if (!key) continue;
+    const purpose = IOS_USAGE_STRINGS[key];
+    if (purpose) usage.set(key, purpose);
+  }
+  return usage;
+}
+
 export function collectBrowserApiUsage(appDir: string): Set<string> {
   const used = new Set<string>();
   const walk = (node: JsNode): void => {
