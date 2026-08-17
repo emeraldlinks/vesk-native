@@ -705,13 +705,11 @@ import androidx.activity.enableEdgeToEdge
   const appCall = deepLinks ? 'App(deepLink = deepLinkPath.value)' : 'App()';
   const permImports = (mediaReadPerms || mediaNotifyPerms)
     ? `import android.os.Build
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.app.ActivityCompat
 `
     : '';
   const permLaunch = (mediaReadPerms || mediaNotifyPerms)
     ? `
-    private val mediaPermLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         ${splashCall}super.onCreate(savedInstanceState)
         if (Thread.getDefaultUncaughtExceptionHandler() !is DebugCrashLog) {
@@ -719,7 +717,7 @@ import androidx.activity.result.contract.ActivityResultContracts
         }
 ${e2eCall}        if (intent.getBooleanExtra("vesk_notify_tap", false)) jsSafe({ VeskDeviceSession.notifyTap?.invoke() })
 ${deepLinkCall}        if (Build.VERSION.SDK_INT >= 33) {
-            mediaPermLauncher.launch(arrayOf(
+            ActivityCompat.requestPermissions(this, arrayOf(
                 ${[
                   mediaReadPerms && 'android.Manifest.permission.READ_MEDIA_IMAGES',
                   mediaReadPerms && 'android.Manifest.permission.READ_MEDIA_VIDEO',
@@ -729,9 +727,9 @@ ${deepLinkCall}        if (Build.VERSION.SDK_INT >= 33) {
                   .filter((p): p is string => !!p)
                   .map((p) => `                ${p},`)
                   .join('\n')}
-            ))
+            ), 0)
         } else {
-            mediaPermLauncher.launch(arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE))
+            ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE), 0)
         }
         setContent {`
     : `

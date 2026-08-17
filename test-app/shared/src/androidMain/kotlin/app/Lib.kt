@@ -288,7 +288,7 @@ fun Lib(content: @Composable () -> Unit = {}) {
 				)
 				LineChart(
 					lineChartData = chart,
-					modifier = Modifier.fillMaxWidth().height(224.dp).fillMaxWidth(),
+					modifier = Modifier.height(224.dp).fillMaxWidth(),
 				)
 			}
 		}
@@ -324,7 +324,7 @@ fun Lib(content: @Composable () -> Unit = {}) {
 					style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.2.sp, color = MaterialTheme.colorScheme.onSurfaceVariant),
 				)
 				Card(
-					modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f)).fillMaxWidth().padding(12.dp),
+					modifier = Modifier.background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f)).fillMaxWidth().padding(12.dp),
 				) {
 					Column(
 						modifier = Modifier.fillMaxWidth(),
@@ -343,7 +343,7 @@ fun Lib(content: @Composable () -> Unit = {}) {
 					}
 				}
 				Divider(
-					modifier = Modifier.fillMaxWidth().height(8.dp),
+					modifier = Modifier.height(8.dp),
 				)
 				Text(
 					text = "Divider above.",
@@ -365,10 +365,10 @@ fun Lib(content: @Composable () -> Unit = {}) {
 					style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.2.sp, color = MaterialTheme.colorScheme.onSurfaceVariant),
 				)
 				Box(
-					modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color(0xFF6366F1)).width(64.dp).height(64.dp),
+					modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(Color(0xFF6366F1)).width(64.dp).height(64.dp),
 				)
 				Spacer(
-					modifier = Modifier.fillMaxWidth().height(8.dp),
+					modifier = Modifier.height(8.dp),
 				)
 				Text(
 					text = "Colored Box above, Spacer below.",
@@ -478,7 +478,7 @@ fun Lib(content: @Composable () -> Unit = {}) {
 				Text(
 					text = (qr).toString(),
 					modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Color(0xFF111827)).padding(12.dp),
-					style = TextStyle(color = Color(0xFF4ADE80), lineHeight = 16.sp),
+					style = TextStyle(color = Color(0xFF4ADE80), fontSize = 10.sp, lineHeight = 16.sp),
 				)
 			}
 		}
@@ -581,7 +581,7 @@ fun Lib(content: @Composable () -> Unit = {}) {
 					style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.2.sp, color = MaterialTheme.colorScheme.onSurfaceVariant),
 				)
 				ConstraintLayout(
-					modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).fillMaxWidth().padding(12.dp),
+					modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).fillMaxWidth().padding(12.dp),
 				) {
 					Column(
 						modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(Color(0xFFDBEAFE)).padding(horizontal = 12.dp).padding(vertical = 8.dp),
@@ -866,31 +866,37 @@ fun Lib(content: @Composable () -> Unit = {}) {
 						imageVector = Icons.Filled.Home,
 						contentDescription = "home",
 						modifier = Modifier.width(32.dp).height(32.dp),
+						tint = MaterialTheme.colorScheme.onSurfaceVariant,
 					)
 					Icon(
 						imageVector = Icons.Filled.Search,
 						contentDescription = "search",
 						modifier = Modifier.width(32.dp).height(32.dp),
+						tint = MaterialTheme.colorScheme.onSurfaceVariant,
 					)
 					Icon(
 						imageVector = Icons.Filled.Favorite,
 						contentDescription = "favorite",
 						modifier = Modifier.width(32.dp).height(32.dp),
+						tint = Color(0xFFEF4444),
 					)
 					Icon(
 						imageVector = Icons.Filled.Star,
 						contentDescription = "star",
 						modifier = Modifier.width(32.dp).height(32.dp),
+						tint = Color(0xFFF59E0B),
 					)
 					Icon(
 						imageVector = Icons.Filled.Settings,
 						contentDescription = "settings",
 						modifier = Modifier.width(32.dp).height(32.dp),
+						tint = MaterialTheme.colorScheme.onSurfaceVariant,
 					)
 					Icon(
 						imageVector = Icons.Filled.ShoppingCart,
 						contentDescription = "cart",
 						modifier = Modifier.width(32.dp).height(32.dp),
+						tint = MaterialTheme.colorScheme.onSurfaceVariant,
 					)
 				}
 				Row(
@@ -902,21 +908,25 @@ fun Lib(content: @Composable () -> Unit = {}) {
 						imageVector = Icons.Filled.Face,
 						contentDescription = "face",
 						modifier = Modifier.width(32.dp).height(32.dp),
+						tint = MaterialTheme.colorScheme.onSurfaceVariant,
 					)
 					Icon(
 						imageVector = Icons.Filled.ThumbUp,
 						contentDescription = "thumbs up",
 						modifier = Modifier.width(32.dp).height(32.dp),
+						tint = MaterialTheme.colorScheme.onSurfaceVariant,
 					)
 					Icon(
 						imageVector = Icons.Filled.Email,
 						contentDescription = "email",
 						modifier = Modifier.width(32.dp).height(32.dp),
+						tint = MaterialTheme.colorScheme.onSurfaceVariant,
 					)
 					Icon(
 						imageVector = Icons.Filled.Notifications,
 						contentDescription = "notifications",
 						modifier = Modifier.width(32.dp).height(32.dp),
+						tint = MaterialTheme.colorScheme.onSurfaceVariant,
 					)
 				}
 				Text(
@@ -947,31 +957,37 @@ fun Lib(content: @Composable () -> Unit = {}) {
 						imageVector = Lucide.House,
 						contentDescription = "home",
 						modifier = Modifier.width(32.dp).height(32.dp),
+						tint = MaterialTheme.colorScheme.onSurfaceVariant,
 					)
 					Icon(
 						imageVector = Lucide.Search,
 						contentDescription = "search",
 						modifier = Modifier.width(32.dp).height(32.dp),
+						tint = MaterialTheme.colorScheme.onSurfaceVariant,
 					)
 					Icon(
 						imageVector = Lucide.Heart,
 						contentDescription = "heart",
 						modifier = Modifier.width(32.dp).height(32.dp),
+						tint = Color(0xFFEF4444),
 					)
 					Icon(
 						imageVector = Lucide.Star,
 						contentDescription = "star",
 						modifier = Modifier.width(32.dp).height(32.dp),
+						tint = Color(0xFFF59E0B),
 					)
 					Icon(
 						imageVector = Lucide.Settings,
 						contentDescription = "settings",
 						modifier = Modifier.width(32.dp).height(32.dp),
+						tint = MaterialTheme.colorScheme.onSurfaceVariant,
 					)
 					Icon(
 						imageVector = Lucide.ShoppingCart,
 						contentDescription = "cart",
 						modifier = Modifier.width(32.dp).height(32.dp),
+						tint = MaterialTheme.colorScheme.onSurfaceVariant,
 					)
 				}
 				Row(
@@ -983,21 +999,25 @@ fun Lib(content: @Composable () -> Unit = {}) {
 						imageVector = Lucide.Smile,
 						contentDescription = "smile",
 						modifier = Modifier.width(32.dp).height(32.dp),
+						tint = MaterialTheme.colorScheme.onSurfaceVariant,
 					)
 					Icon(
 						imageVector = Lucide.ThumbsUp,
 						contentDescription = "thumbs up",
 						modifier = Modifier.width(32.dp).height(32.dp),
+						tint = MaterialTheme.colorScheme.onSurfaceVariant,
 					)
 					Icon(
 						imageVector = Lucide.Mail,
 						contentDescription = "mail",
 						modifier = Modifier.width(32.dp).height(32.dp),
+						tint = MaterialTheme.colorScheme.onSurfaceVariant,
 					)
 					Icon(
 						imageVector = Lucide.Bell,
 						contentDescription = "bell",
 						modifier = Modifier.width(32.dp).height(32.dp),
+						tint = MaterialTheme.colorScheme.onSurfaceVariant,
 					)
 				}
 				Text(

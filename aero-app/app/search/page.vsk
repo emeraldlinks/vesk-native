@@ -1,0 +1,38 @@
+// Search — type-to-filter over the mock fleet: flight number, airline,
+// aircraft, airport code or city all match. Empty query shows a hint;
+// no matches shows the empty state.
+
+import { Icon } from '@vesk/material3'
+import { Lucide } from '@vesk/icons-lucide'
+import { FlightCard } from '../components/flight-card.vsk'
+import { BottomNav } from '../components/bottom-nav.vsk'
+import { EmptyState } from '../components/empty-state.vsk'
+import { flights } from '../data/flights.ts'
+
+component Search() {
+    const &[query] = track('')
+    const q = query.toLowerCase().trim()
+    const results = q.length > 0
+        ? flights.filter(f => `${f['flightNumber']} ${f['secondary']} ${f['aircraft']} ${f['airline']} ${f['from']['code']} ${f['from']['city']} ${f['to']['code']} ${f['to']['city']}`.toLowerCase().includes(q))
+        : []
+
+    <div class="w-full h-full flex-col bg-[#0A0F16]">
+        <div class="px-4 pt-4 flex-col gap-4">
+            <p class="text-white font-bold text-2xl tracking-tight">Search</p>
+            <div class="h-12 rounded-full bg-[#141B26] flex-row items-center px-4 gap-2.5">
+                <Icon imageVector={Lucide.Search} contentDescription="Search" class="w-5 h-5 text-slate-400" />
+                <input ref={bindValue(query)} placeholder="Search flight or aircraft" class="flex-1 text-white" />
+            </div>
+        </div>
+        <div class="flex-1 overflow-y-auto">
+            <div class="px-4 py-4 flex-col gap-3">
+                {q.length === 0 && <EmptyState icon="search" title="Search flight or aircraft" hint="Try a flight number, airline, airport code or city — for example TVF6474, Ryanair, CDG or Prague." />}
+                {q.length > 0 && results.length === 0 && <EmptyState icon="search" title="No flights found" hint="Try searching by flight number, airport or city." />}
+                for (const f of results) {
+                    <FlightCard flight={f} />
+                }
+            </div>
+        </div>
+        <BottomNav active="search" />
+    </div>
+}

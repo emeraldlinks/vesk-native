@@ -386,14 +386,17 @@ fun Cart(content: @Composable () -> Unit = {}) {
 				)
 			}
 		}
-		NavLink(props = NavLinkProps(href = "/checkout"))
+		NavLink(props = NavLinkProps(href = "/checkout", modifier = Modifier.fillMaxWidth()))
 			{
 				Column(
-					modifier = Modifier.fillMaxWidth().shadow(1.dp).clip(RoundedCornerShape(9999.dp)).background(Color(0xFF2563EB)).padding(vertical = 14.dp),
 				) {
-					Text(
-						text = ("Checkout — ${'$'}${kotlin.math.round(((((89 * qty1.value) + (219 * qty2.value)) + (75 * qty3.value)) * (if (truthy(promo.value)) 0.9 else 1.0)).toDouble()).toInt()}").toString(),
-					)
+					Column(
+						modifier = Modifier.fillMaxWidth().shadow(1.dp).clip(RoundedCornerShape(9999.dp)).background(Color(0xFF2563EB)).padding(vertical = 14.dp),
+					) {
+						Text(
+							text = ("Checkout — ${'$'}${kotlin.math.round(((((89 * qty1.value) + (219 * qty2.value)) + (75 * qty3.value)) * (if (truthy(promo.value)) 0.9 else 1.0)).toDouble()).toInt()}").toString(),
+						)
+					}
 				}
 			}
 	}

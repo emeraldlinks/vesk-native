@@ -97,14 +97,17 @@ fun Home(props: HomeProps = HomeProps(), content: @Composable () -> Unit = {}) {
 			Column(
 				modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
 			) {
-				NavLink(props = NavLinkProps(href = "/shop"))
+				NavLink(props = NavLinkProps(href = "/shop", modifier = Modifier.fillMaxWidth()))
 					{
 						Column(
-							modifier = Modifier.fillMaxWidth().shadow(6.dp).clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.surface).padding(horizontal = 20.dp).padding(vertical = 10.dp).align(Alignment.Start),
 						) {
-							Text(
-								text = (props.cta).toString(),
-							)
+							Column(
+								modifier = Modifier.fillMaxWidth().shadow(6.dp).clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.surface).padding(horizontal = 20.dp).padding(vertical = 10.dp).align(Alignment.Start),
+							) {
+								Text(
+									text = (props.cta).toString(),
+								)
+							}
 						}
 					}
 			}
@@ -129,51 +132,66 @@ fun Home(props: HomeProps = HomeProps(), content: @Composable () -> Unit = {}) {
 				NavLink(props = NavLinkProps(href = "/shop"))
 					{
 						Column(
-							modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF2563EB)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
 						) {
-							Text(
-								text = "All outerwear",
-							)
+							Column(
+								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF2563EB)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
+							) {
+								Text(
+									text = "All outerwear",
+								)
+							}
 						}
 					}
 				NavLink(props = NavLinkProps(href = "/shop"))
 					{
 						Column(
-							modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
 						) {
-							Text(
-								text = "Knitwear",
-							)
+							Column(
+								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
+							) {
+								Text(
+									text = "Knitwear",
+								)
+							}
 						}
 					}
 				NavLink(props = NavLinkProps(href = "/shop"))
 					{
 						Column(
-							modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
 						) {
-							Text(
-								text = "Base layers",
-							)
+							Column(
+								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
+							) {
+								Text(
+									text = "Base layers",
+								)
+							}
 						}
 					}
 				NavLink(props = NavLinkProps(href = "/shop"))
 					{
 						Column(
-							modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
 						) {
-							Text(
-								text = "Bags",
-							)
+							Column(
+								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
+							) {
+								Text(
+									text = "Bags",
+								)
+							}
 						}
 					}
 				NavLink(props = NavLinkProps(href = "/shop"))
 					{
 						Column(
-							modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
 						) {
-							Text(
-								text = "Accessories",
-							)
+							Column(
+								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
+							) {
+								Text(
+									text = "Accessories",
+								)
+							}
 						}
 					}
 			}
@@ -255,115 +273,127 @@ fun Home(props: HomeProps = HomeProps(), content: @Composable () -> Unit = {}) {
 				)
 			}
 		}
-		NavLink(props = NavLinkProps(href = "/media"))
+		NavLink(props = NavLinkProps(href = "/media", modifier = Modifier.fillMaxWidth()))
 			{
-				Row(
-					modifier = Modifier.fillMaxWidth().padding(top = 8.dp).clip(RoundedCornerShape(16.dp)).background(Color(0xFF111827)).padding(20.dp),
-					verticalAlignment = Alignment.CenterVertically,
-					horizontalArrangement = Arrangement.SpaceBetween,
+				Column(
 				) {
-					Column {
-						Text(
-							text = ("Native media lab").uppercase(),
-							modifier = Modifier.fillMaxWidth(),
-							style = TextStyle(color = Color(0xB3FFFFFF), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.8.sp),
-						)
-						Text(
-							text = "Camera, recorder, pickers & media broadcast",
-							modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-							style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 18.sp, lineHeight = 28.sp, fontWeight = FontWeight.ExtraBold),
-						)
-					}
-					Column(
-						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.surface).padding(horizontal = 16.dp).padding(vertical = 8.dp),
+					Row(
+						modifier = Modifier.fillMaxWidth().padding(top = 8.dp).clip(RoundedCornerShape(16.dp)).background(Color(0xFF111827)).padding(20.dp),
+						verticalAlignment = Alignment.CenterVertically,
+						horizontalArrangement = Arrangement.SpaceBetween,
 					) {
-						Text(
-							text = "Open",
-						)
+						Column {
+							Text(
+								text = ("Native media lab").uppercase(),
+								modifier = Modifier.fillMaxWidth(),
+								style = TextStyle(color = Color(0xB3FFFFFF), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.8.sp),
+							)
+							Text(
+								text = "Camera, recorder, pickers & media broadcast",
+								modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+								style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 18.sp, lineHeight = 28.sp, fontWeight = FontWeight.ExtraBold),
+							)
+						}
+						Column(
+							modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.surface).padding(horizontal = 16.dp).padding(vertical = 8.dp),
+						) {
+							Text(
+								text = "Open",
+							)
+						}
 					}
 				}
 			}
-		NavLink(props = NavLinkProps(href = "/lab"))
+		NavLink(props = NavLinkProps(href = "/lab", modifier = Modifier.fillMaxWidth()))
 			{
-				Row(
-					modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color(0xFFEEF2FF)).padding(20.dp),
-					verticalAlignment = Alignment.CenterVertically,
-					horizontalArrangement = Arrangement.SpaceBetween,
+				Column(
 				) {
-					Column {
-						Text(
-							text = ("Tailwind lab").uppercase(),
-							modifier = Modifier.fillMaxWidth(),
-							style = TextStyle(color = Color(0xFF4F46E5), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.8.sp),
-						)
-						Text(
-							text = "Grid, positioning & utility tests",
-							modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-							style = TextStyle(color = Color(0xFF312E81), fontSize = 18.sp, lineHeight = 28.sp, fontWeight = FontWeight.ExtraBold),
-						)
-					}
-					Column(
-						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF4F46E5)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
+					Row(
+						modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color(0xFFEEF2FF)).padding(20.dp),
+						verticalAlignment = Alignment.CenterVertically,
+						horizontalArrangement = Arrangement.SpaceBetween,
 					) {
-						Text(
-							text = "Open",
-						)
+						Column {
+							Text(
+								text = ("Tailwind lab").uppercase(),
+								modifier = Modifier.fillMaxWidth(),
+								style = TextStyle(color = Color(0xFF4F46E5), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.8.sp),
+							)
+							Text(
+								text = "Grid, positioning & utility tests",
+								modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+								style = TextStyle(color = Color(0xFF312E81), fontSize = 18.sp, lineHeight = 28.sp, fontWeight = FontWeight.ExtraBold),
+							)
+						}
+						Column(
+							modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF4F46E5)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
+						) {
+							Text(
+								text = "Open",
+							)
+						}
 					}
 				}
 			}
-		NavLink(props = NavLinkProps(href = "/lib"))
+		NavLink(props = NavLinkProps(href = "/lib", modifier = Modifier.fillMaxWidth()))
 			{
-				Row(
-					modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color(0xFFECFDF5)).padding(20.dp),
-					verticalAlignment = Alignment.CenterVertically,
-					horizontalArrangement = Arrangement.SpaceBetween,
+				Column(
 				) {
-					Column {
-						Text(
-							text = ("Installed libraries").uppercase(),
-							modifier = Modifier.fillMaxWidth(),
-							style = TextStyle(color = Color(0xFF059669), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.8.sp),
-						)
-						Text(
-							text = "Coil images & charts from .vsklib",
-							modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-							style = TextStyle(color = Color(0xFF064E3B), fontSize = 18.sp, lineHeight = 28.sp, fontWeight = FontWeight.ExtraBold),
-						)
-					}
-					Column(
-						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF059669)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
+					Row(
+						modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color(0xFFECFDF5)).padding(20.dp),
+						verticalAlignment = Alignment.CenterVertically,
+						horizontalArrangement = Arrangement.SpaceBetween,
 					) {
-						Text(
-							text = "Open",
-						)
+						Column {
+							Text(
+								text = ("Installed libraries").uppercase(),
+								modifier = Modifier.fillMaxWidth(),
+								style = TextStyle(color = Color(0xFF059669), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.8.sp),
+							)
+							Text(
+								text = "Coil images & charts from .vsklib",
+								modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+								style = TextStyle(color = Color(0xFF064E3B), fontSize = 18.sp, lineHeight = 28.sp, fontWeight = FontWeight.ExtraBold),
+							)
+						}
+						Column(
+							modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF059669)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
+						) {
+							Text(
+								text = "Open",
+							)
+						}
 					}
 				}
 			}
-		NavLink(props = NavLinkProps(href = "/labs"))
+		NavLink(props = NavLinkProps(href = "/labs", modifier = Modifier.fillMaxWidth()))
 			{
-				Row(
-					modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color(0xFFF0F9FF)).padding(20.dp),
-					verticalAlignment = Alignment.CenterVertically,
-					horizontalArrangement = Arrangement.SpaceBetween,
+				Column(
 				) {
-					Column {
-						Text(
-							text = ("Browser APIs lab").uppercase(),
-							modifier = Modifier.fillMaxWidth(),
-							style = TextStyle(color = Color(0xFF0284C7), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.8.sp),
-						)
-						Text(
-							text = "Storage, auth, fetch & sqlite",
-							modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-							style = TextStyle(color = Color(0xFF0C4A6E), fontSize = 18.sp, lineHeight = 28.sp, fontWeight = FontWeight.ExtraBold),
-						)
-					}
-					Column(
-						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF0284C7)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
+					Row(
+						modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color(0xFFF0F9FF)).padding(20.dp),
+						verticalAlignment = Alignment.CenterVertically,
+						horizontalArrangement = Arrangement.SpaceBetween,
 					) {
-						Text(
-							text = "Open",
-						)
+						Column {
+							Text(
+								text = ("Browser APIs lab").uppercase(),
+								modifier = Modifier.fillMaxWidth(),
+								style = TextStyle(color = Color(0xFF0284C7), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.8.sp),
+							)
+							Text(
+								text = "Storage, auth, fetch & sqlite",
+								modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+								style = TextStyle(color = Color(0xFF0C4A6E), fontSize = 18.sp, lineHeight = 28.sp, fontWeight = FontWeight.ExtraBold),
+							)
+						}
+						Column(
+							modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF0284C7)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
+						) {
+							Text(
+								text = "Open",
+							)
+						}
 					}
 				}
 			}
@@ -379,11 +409,14 @@ fun Home(props: HomeProps = HomeProps(), content: @Composable () -> Unit = {}) {
 					text = "New arrivals",
 					style = TextStyle(fontSize = 18.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold, letterSpacing = -0.2.sp),
 				)
-				NavLink(props = NavLinkProps(href = "/shop", `class` = "text-sm font-semibold text-blue-600"))
+				NavLink(props = NavLinkProps(href = "/shop"))
 					{
-						Text(
-							text = "See all",
-						)
+						Column(
+						) {
+							Text(
+								text = "See all",
+							)
+						}
 					}
 			}
 			@OptIn(ExperimentalLayoutApi::class)
@@ -393,40 +426,43 @@ fun Home(props: HomeProps = HomeProps(), content: @Composable () -> Unit = {}) {
 				NavLink(props = NavLinkProps(href = "/shop/arctic-hoodie"))
 					{
 						Column(
-							modifier = Modifier.padding(8.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(160.dp),
 						) {
 							Column(
-								modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFF60A5FA), Color(0xFF4F46E5)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
+								modifier = Modifier.padding(8.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(160.dp),
 							) {
-							}
-							Column(
-								modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(vertical = 10.dp),
-							) {
-								Text(
-									text = ("New").uppercase(),
-									modifier = Modifier.fillMaxWidth(),
-									style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF1D4ED8), letterSpacing = 0.2.sp),
-								)
-								Text(
-									text = "Arctic Fleece Hoodie",
-									modifier = Modifier.fillMaxWidth(),
-									style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
-									maxLines = 1,
-									overflow = TextOverflow.Ellipsis,
-								)
-								Row(
-									modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-									verticalAlignment = Alignment.CenterVertically,
-									horizontalArrangement = Arrangement.SpaceBetween,
+								Column(
+									modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFF60A5FA), Color(0xFF4F46E5)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
+								) {
+								}
+								Column(
+									modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(vertical = 10.dp),
 								) {
 									Text(
-										text = "${'$'}89",
-										style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
+										text = ("New").uppercase(),
+										modifier = Modifier.fillMaxWidth(),
+										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF1D4ED8), letterSpacing = 0.2.sp),
 									)
 									Text(
-										text = "${'$'}120",
-										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
+										text = "Arctic Fleece Hoodie",
+										modifier = Modifier.fillMaxWidth(),
+										style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
+										maxLines = 1,
+										overflow = TextOverflow.Ellipsis,
 									)
+									Row(
+										modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+										verticalAlignment = Alignment.CenterVertically,
+										horizontalArrangement = Arrangement.SpaceBetween,
+									) {
+										Text(
+											text = "${'$'}89",
+											style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
+										)
+										Text(
+											text = "${'$'}120",
+											style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
+										)
+									}
 								}
 							}
 						}
@@ -434,40 +470,43 @@ fun Home(props: HomeProps = HomeProps(), content: @Composable () -> Unit = {}) {
 				NavLink(props = NavLinkProps(href = "/shop/snow-parka"))
 					{
 						Column(
-							modifier = Modifier.padding(8.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(160.dp),
 						) {
 							Column(
-								modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFF34D399), Color(0xFF0D9488)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
+								modifier = Modifier.padding(8.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(160.dp),
 							) {
-							}
-							Column(
-								modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(vertical = 10.dp),
-							) {
-								Text(
-									text = ("Best seller").uppercase(),
-									modifier = Modifier.fillMaxWidth(),
-									style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF047857), letterSpacing = 0.2.sp),
-								)
-								Text(
-									text = "Snowdrift Parka",
-									modifier = Modifier.fillMaxWidth(),
-									style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
-									maxLines = 1,
-									overflow = TextOverflow.Ellipsis,
-								)
-								Row(
-									modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-									verticalAlignment = Alignment.CenterVertically,
-									horizontalArrangement = Arrangement.SpaceBetween,
+								Column(
+									modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFF34D399), Color(0xFF0D9488)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
+								) {
+								}
+								Column(
+									modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(vertical = 10.dp),
 								) {
 									Text(
-										text = "${'$'}219",
-										style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
+										text = ("Best seller").uppercase(),
+										modifier = Modifier.fillMaxWidth(),
+										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF047857), letterSpacing = 0.2.sp),
 									)
 									Text(
-										text = "${'$'}260",
-										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
+										text = "Snowdrift Parka",
+										modifier = Modifier.fillMaxWidth(),
+										style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
+										maxLines = 1,
+										overflow = TextOverflow.Ellipsis,
 									)
+									Row(
+										modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+										verticalAlignment = Alignment.CenterVertically,
+										horizontalArrangement = Arrangement.SpaceBetween,
+									) {
+										Text(
+											text = "${'$'}219",
+											style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
+										)
+										Text(
+											text = "${'$'}260",
+											style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
+										)
+									}
 								}
 							}
 						}
@@ -475,40 +514,43 @@ fun Home(props: HomeProps = HomeProps(), content: @Composable () -> Unit = {}) {
 				NavLink(props = NavLinkProps(href = "/shop/merino-crew"))
 					{
 						Column(
-							modifier = Modifier.padding(8.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(160.dp),
 						) {
 							Column(
-								modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFFFBBF24), Color(0xFFEA580C)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
+								modifier = Modifier.padding(8.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(160.dp),
 							) {
-							}
-							Column(
-								modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(vertical = 10.dp),
-							) {
-								Text(
-									text = ("Limited").uppercase(),
-									modifier = Modifier.fillMaxWidth(),
-									style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFFB45309), letterSpacing = 0.2.sp),
-								)
-								Text(
-									text = "Merino Crew",
-									modifier = Modifier.fillMaxWidth(),
-									style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
-									maxLines = 1,
-									overflow = TextOverflow.Ellipsis,
-								)
-								Row(
-									modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-									verticalAlignment = Alignment.CenterVertically,
-									horizontalArrangement = Arrangement.SpaceBetween,
+								Column(
+									modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFFFBBF24), Color(0xFFEA580C)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
+								) {
+								}
+								Column(
+									modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(vertical = 10.dp),
 								) {
 									Text(
-										text = "${'$'}75",
-										style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
+										text = ("Limited").uppercase(),
+										modifier = Modifier.fillMaxWidth(),
+										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFFB45309), letterSpacing = 0.2.sp),
 									)
 									Text(
-										text = "${'$'}95",
-										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
+										text = "Merino Crew",
+										modifier = Modifier.fillMaxWidth(),
+										style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
+										maxLines = 1,
+										overflow = TextOverflow.Ellipsis,
 									)
+									Row(
+										modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+										verticalAlignment = Alignment.CenterVertically,
+										horizontalArrangement = Arrangement.SpaceBetween,
+									) {
+										Text(
+											text = "${'$'}75",
+											style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
+										)
+										Text(
+											text = "${'$'}95",
+											style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
+										)
+									}
 								}
 							}
 						}
@@ -516,40 +558,43 @@ fun Home(props: HomeProps = HomeProps(), content: @Composable () -> Unit = {}) {
 				NavLink(props = NavLinkProps(href = "/shop/splitshirt-tee"))
 					{
 						Column(
-							modifier = Modifier.padding(8.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(160.dp),
 						) {
 							Column(
-								modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFFFB7185), Color(0xFFDB2777)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
+								modifier = Modifier.padding(8.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(160.dp),
 							) {
-							}
-							Column(
-								modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(vertical = 10.dp),
-							) {
-								Text(
-									text = ("New").uppercase(),
-									modifier = Modifier.fillMaxWidth(),
-									style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFFBE123C), letterSpacing = 0.2.sp),
-								)
-								Text(
-									text = "Split Shoulder Tee",
-									modifier = Modifier.fillMaxWidth(),
-									style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
-									maxLines = 1,
-									overflow = TextOverflow.Ellipsis,
-								)
-								Row(
-									modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-									verticalAlignment = Alignment.CenterVertically,
-									horizontalArrangement = Arrangement.SpaceBetween,
+								Column(
+									modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFFFB7185), Color(0xFFDB2777)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
+								) {
+								}
+								Column(
+									modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(vertical = 10.dp),
 								) {
 									Text(
-										text = "${'$'}42",
-										style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
+										text = ("New").uppercase(),
+										modifier = Modifier.fillMaxWidth(),
+										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFFBE123C), letterSpacing = 0.2.sp),
 									)
 									Text(
-										text = "${'$'}55",
-										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
+										text = "Split Shoulder Tee",
+										modifier = Modifier.fillMaxWidth(),
+										style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
+										maxLines = 1,
+										overflow = TextOverflow.Ellipsis,
 									)
+									Row(
+										modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+										verticalAlignment = Alignment.CenterVertically,
+										horizontalArrangement = Arrangement.SpaceBetween,
+									) {
+										Text(
+											text = "${'$'}42",
+											style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
+										)
+										Text(
+											text = "${'$'}55",
+											style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
+										)
+									}
 								}
 							}
 						}

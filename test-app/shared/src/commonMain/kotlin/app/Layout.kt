@@ -89,47 +89,59 @@ fun Layout(props: LayoutProps = LayoutProps(), content: @Composable () -> Unit =
 				) {
 					NavLink(props = NavLinkProps(href = "/"))
 						{
-							Row(
-								verticalAlignment = Alignment.CenterVertically,
-								horizontalArrangement = Arrangement.spacedBy(8.dp),
+							Column(
 							) {
 								Row(
-									modifier = Modifier.clip(RoundedCornerShape(6.dp)).background(Color(0xFF2563EB)).width(24.dp).height(24.dp),
 									verticalAlignment = Alignment.CenterVertically,
-									horizontalArrangement = Arrangement.Center,
+									horizontalArrangement = Arrangement.spacedBy(8.dp),
 								) {
+									Row(
+										modifier = Modifier.clip(RoundedCornerShape(6.dp)).background(Color(0xFF2563EB)).width(24.dp).height(24.dp),
+										verticalAlignment = Alignment.CenterVertically,
+										horizontalArrangement = Arrangement.Center,
+									) {
+										Text(
+											text = "N",
+											style = TextStyle(color = Color(0xFFFFFFFF), fontWeight = FontWeight.Bold, fontSize = 12.sp, lineHeight = 16.sp),
+										)
+									}
 									Text(
-										text = "N",
-										style = TextStyle(color = Color(0xFFFFFFFF), fontWeight = FontWeight.Bold, fontSize = 12.sp, lineHeight = 16.sp),
+										text = "Nordi",
+										style = TextStyle(fontSize = 16.sp, lineHeight = 24.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = -0.2.sp),
 									)
 								}
-								Text(
-									text = "Nordi",
-									style = TextStyle(fontSize = 16.sp, lineHeight = 24.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = -0.2.sp),
-								)
 							}
 						}
 					Column(
 						modifier = Modifier.weight(1f),
 					) {
 					}
-					NavLink(props = NavLinkProps(href = "/shop", `class` = "text-sm font-semibold text-gray-600"))
+					NavLink(props = NavLinkProps(href = "/shop"))
 						{
-							Text(
-								text = "Shop",
-							)
+							Column(
+							) {
+								Text(
+									text = "Shop",
+								)
+							}
 						}
-					NavLink(props = NavLinkProps(href = "/anim", `class` = "text-sm font-semibold text-gray-600"))
+					NavLink(props = NavLinkProps(href = "/anim"))
 						{
-							Text(
-								text = "Anim",
-							)
+							Column(
+							) {
+								Text(
+									text = "Anim",
+								)
+							}
 						}
-					NavLink(props = NavLinkProps(href = "/cart", `class` = "text-lg leading-6"))
+					NavLink(props = NavLinkProps(href = "/cart"))
 						{
-							Text(
-								text = "🛒",
-							)
+							Column(
+							) {
+								Text(
+									text = "🛒",
+								)
+							}
 						}
 				}
 			}

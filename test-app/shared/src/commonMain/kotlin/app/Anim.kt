@@ -172,7 +172,9 @@ fun Anim(content: @Composable () -> Unit = {}) {
 				style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 14.sp, lineHeight = 20.sp),
 			)
 			}
-			Column(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+			Column(
+				modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+			) {
 				Text("ease: ")
 				if (truthy(motionEase("easeInOut") == motionEase("backOut"))) {
 					Text(
@@ -272,7 +274,9 @@ fun Anim(content: @Composable () -> Unit = {}) {
 				modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
 				style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant),
 			)
-			Column(modifier = Modifier.fillMaxWidth()) {
+			Column(
+				modifier = Modifier.fillMaxWidth(),
+			) {
 				Text("box in view: ")
 				if (truthy(shown.value)) {
 					Text(
@@ -304,11 +308,7 @@ fun Anim(content: @Composable () -> Unit = {}) {
 				style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp),
 			)
 		}
-		Text(
-			text = (motionInView(boxCell.value,  { run __veskret2@ { shown.value = true } }, mutableMapOf<String, Any?>("once" to true))).toString(),
-		)
-		Text(
-			text = (motionScroll( { p: Any? -> run __veskret3@ { scrollP.value = num(p) } })).toString(),
-		)
+		motionInView(boxCell.value,  { run __veskret2@ { shown.value = true } }, mutableMapOf<String, Any?>("once" to true))
+		motionScroll( { p: Any? -> run __veskret3@ { scrollP.value = num(p) } })
 	}
 }

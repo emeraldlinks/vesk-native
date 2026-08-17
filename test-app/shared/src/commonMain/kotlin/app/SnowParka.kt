@@ -197,14 +197,17 @@ fun SnowParka(content: @Composable () -> Unit = {}) {
 			}
 			}
 		}
-		NavLink(props = NavLinkProps(href = "/cart"))
+		NavLink(props = NavLinkProps(href = "/cart", modifier = Modifier.fillMaxWidth()))
 			{
 				Column(
-					modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)).padding(vertical = 14.dp),
 				) {
-					Text(
-						text = "Go to bag",
-					)
+					Column(
+						modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)).padding(vertical = 14.dp),
+					) {
+						Text(
+							text = "Go to bag",
+						)
+					}
 				}
 			}
 	}

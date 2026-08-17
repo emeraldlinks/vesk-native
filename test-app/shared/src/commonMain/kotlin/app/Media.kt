@@ -1051,7 +1051,9 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 					path = run { val __vsk_v27 = device.lastPhoto; if (truthy(__vsk_v27)) __vsk_v27 else cbPhotoCell.value },
 				)
 			}
-			Column(modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
+			Column(
+				modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+			) {
 				Text("tts: ")
 				if (truthy(ttsDone.value)) {
 					Text(

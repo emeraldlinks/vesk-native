@@ -79,7 +79,9 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				modifier = Modifier.fillMaxWidth(),
 				style = TextStyle(fontSize = 24.sp, lineHeight = 32.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = -0.2.sp),
 			)
-			Column(modifier = Modifier.fillMaxWidth().padding(top = 4.dp)) {
+			Column(
+				modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+			) {
 				if (truthy(filter.value == "All")) {
 					Text(
 						text = ("6 products, sorted by \"recommended\"").toString(),
@@ -243,47 +245,50 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				NavLink(props = NavLinkProps(href = "/shop/arctic-hoodie"))
 					{
 						Column(
-							modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(176.dp),
 						) {
-							Row(
-								modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFF60A5FA), Color(0xFF4F46E5)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
-								verticalAlignment = Alignment.CenterVertically,
-								horizontalArrangement = Arrangement.Center,
-							) {
-								Text(
-									text = "-26%",
-									modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0x66000000)).padding(horizontal = 8.dp).padding(vertical = 4.dp),
-									style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
-								)
-							}
 							Column(
-								modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(vertical = 10.dp),
+								modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(176.dp),
 							) {
-								Text(
-									text = "Arctic Fleece Hoodie",
-									modifier = Modifier.fillMaxWidth(),
-									style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
-									maxLines = 1,
-									overflow = TextOverflow.Ellipsis,
-								)
-								Text(
-									text = "4.5 ★ (212)",
-									modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-									style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
-								)
 								Row(
-									modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+									modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFF60A5FA), Color(0xFF4F46E5)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
 									verticalAlignment = Alignment.CenterVertically,
-									horizontalArrangement = Arrangement.SpaceBetween,
+									horizontalArrangement = Arrangement.Center,
 								) {
 									Text(
-										text = "${'$'}89",
-										style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
+										text = "-26%",
+										modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0x66000000)).padding(horizontal = 8.dp).padding(vertical = 4.dp),
+										style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
+									)
+								}
+								Column(
+									modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(vertical = 10.dp),
+								) {
+									Text(
+										text = "Arctic Fleece Hoodie",
+										modifier = Modifier.fillMaxWidth(),
+										style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
+										maxLines = 1,
+										overflow = TextOverflow.Ellipsis,
 									)
 									Text(
-										text = "${'$'}120",
-										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
+										text = "4.5 ★ (212)",
+										modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
+										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
 									)
+									Row(
+										modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+										verticalAlignment = Alignment.CenterVertically,
+										horizontalArrangement = Arrangement.SpaceBetween,
+									) {
+										Text(
+											text = "${'$'}89",
+											style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
+										)
+										Text(
+											text = "${'$'}120",
+											style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
+										)
+									}
 								}
 							}
 						}
@@ -294,47 +299,50 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				NavLink(props = NavLinkProps(href = "/shop/snow-parka"))
 					{
 						Column(
-							modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(176.dp),
 						) {
-							Row(
-								modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFF34D399), Color(0xFF0D9488)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
-								verticalAlignment = Alignment.CenterVertically,
-								horizontalArrangement = Arrangement.Center,
-							) {
-								Text(
-									text = "-16%",
-									modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0x33000000)).padding(horizontal = 8.dp).padding(vertical = 4.dp),
-									style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
-								)
-							}
 							Column(
-								modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(vertical = 10.dp),
+								modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(176.dp),
 							) {
-								Text(
-									text = "Snowdrift Parka",
-									modifier = Modifier.fillMaxWidth(),
-									style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
-									maxLines = 1,
-									overflow = TextOverflow.Ellipsis,
-								)
-								Text(
-									text = "4.8 ★ (96)",
-									modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-									style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
-								)
 								Row(
-									modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+									modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFF34D399), Color(0xFF0D9488)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
 									verticalAlignment = Alignment.CenterVertically,
-									horizontalArrangement = Arrangement.SpaceBetween,
+									horizontalArrangement = Arrangement.Center,
 								) {
 									Text(
-										text = "${'$'}219",
-										style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
+										text = "-16%",
+										modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0x33000000)).padding(horizontal = 8.dp).padding(vertical = 4.dp),
+										style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
+									)
+								}
+								Column(
+									modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(vertical = 10.dp),
+								) {
+									Text(
+										text = "Snowdrift Parka",
+										modifier = Modifier.fillMaxWidth(),
+										style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
+										maxLines = 1,
+										overflow = TextOverflow.Ellipsis,
 									)
 									Text(
-										text = "${'$'}260",
-										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
+										text = "4.8 ★ (96)",
+										modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
+										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
 									)
+									Row(
+										modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+										verticalAlignment = Alignment.CenterVertically,
+										horizontalArrangement = Arrangement.SpaceBetween,
+									) {
+										Text(
+											text = "${'$'}219",
+											style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
+										)
+										Text(
+											text = "${'$'}260",
+											style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
+										)
+									}
 								}
 							}
 						}
@@ -345,47 +353,50 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				NavLink(props = NavLinkProps(href = "/shop/merino-crew"))
 					{
 						Column(
-							modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(176.dp),
 						) {
-							Row(
-								modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFFFBBF24), Color(0xFFEA580C)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
-								verticalAlignment = Alignment.CenterVertically,
-								horizontalArrangement = Arrangement.Center,
-							) {
-								Text(
-									text = "New",
-									modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0x33000000)).padding(horizontal = 8.dp).padding(vertical = 4.dp),
-									style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
-								)
-							}
 							Column(
-								modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(vertical = 10.dp),
+								modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(176.dp),
 							) {
-								Text(
-									text = "Merino Crew",
-									modifier = Modifier.fillMaxWidth(),
-									style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
-									maxLines = 1,
-									overflow = TextOverflow.Ellipsis,
-								)
-								Text(
-									text = "4.6 · (340)",
-									modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-									style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
-								)
 								Row(
-									modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+									modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFFFBBF24), Color(0xFFEA580C)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
 									verticalAlignment = Alignment.CenterVertically,
-									horizontalArrangement = Arrangement.SpaceBetween,
+									horizontalArrangement = Arrangement.Center,
 								) {
 									Text(
-										text = "${'$'}75",
-										style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
+										text = "New",
+										modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0x33000000)).padding(horizontal = 8.dp).padding(vertical = 4.dp),
+										style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
+									)
+								}
+								Column(
+									modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(vertical = 10.dp),
+								) {
+									Text(
+										text = "Merino Crew",
+										modifier = Modifier.fillMaxWidth(),
+										style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
+										maxLines = 1,
+										overflow = TextOverflow.Ellipsis,
 									)
 									Text(
-										text = "${'$'}95",
-										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
+										text = "4.6 · (340)",
+										modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
+										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
 									)
+									Row(
+										modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+										verticalAlignment = Alignment.CenterVertically,
+										horizontalArrangement = Arrangement.SpaceBetween,
+									) {
+										Text(
+											text = "${'$'}75",
+											style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
+										)
+										Text(
+											text = "${'$'}95",
+											style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
+										)
+									}
 								}
 							}
 						}
@@ -393,47 +404,50 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				NavLink(props = NavLinkProps(href = "/shop/splitshirt-tee"))
 					{
 						Column(
-							modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(176.dp),
 						) {
-							Row(
-								modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFFFB7185), Color(0xFFDB2777)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
-								verticalAlignment = Alignment.CenterVertically,
-								horizontalArrangement = Arrangement.Center,
-							) {
-								Text(
-									text = "-24%",
-									modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0x33000000)).padding(horizontal = 8.dp).padding(vertical = 4.dp),
-									style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
-								)
-							}
 							Column(
-								modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(vertical = 10.dp),
+								modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(176.dp),
 							) {
-								Text(
-									text = "Split Shoulder Tee",
-									modifier = Modifier.fillMaxWidth(),
-									style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
-									maxLines = 1,
-									overflow = TextOverflow.Ellipsis,
-								)
-								Text(
-									text = "4.6 ★ (88)",
-									modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-									style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
-								)
 								Row(
-									modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+									modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFFFB7185), Color(0xFFDB2777)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
 									verticalAlignment = Alignment.CenterVertically,
-									horizontalArrangement = Arrangement.SpaceBetween,
+									horizontalArrangement = Arrangement.Center,
 								) {
 									Text(
-										text = "${'$'}42",
-										style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
+										text = "-24%",
+										modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0x33000000)).padding(horizontal = 8.dp).padding(vertical = 4.dp),
+										style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
+									)
+								}
+								Column(
+									modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(vertical = 10.dp),
+								) {
+									Text(
+										text = "Split Shoulder Tee",
+										modifier = Modifier.fillMaxWidth(),
+										style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
+										maxLines = 1,
+										overflow = TextOverflow.Ellipsis,
 									)
 									Text(
-										text = "${'$'}55",
-										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
+										text = "4.6 ★ (88)",
+										modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
+										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
 									)
+									Row(
+										modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+										verticalAlignment = Alignment.CenterVertically,
+										horizontalArrangement = Arrangement.SpaceBetween,
+									) {
+										Text(
+											text = "${'$'}42",
+											style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
+										)
+										Text(
+											text = "${'$'}55",
+											style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
+										)
+									}
 								}
 							}
 						}
@@ -483,39 +497,42 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				NavLink(props = NavLinkProps(href = "/shop/yellowstone-beanie"))
 					{
 						Column(
-							modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(176.dp),
 						) {
-							Row(
-								modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFFFACC15), Color(0xFFD97706)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
-								verticalAlignment = Alignment.CenterVertically,
-								horizontalArrangement = Arrangement.Center,
-							) {
-								Text(
-									text = "New",
-									modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0x33000000)).padding(horizontal = 8.dp).padding(vertical = 4.dp),
-									style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
-								)
-							}
 							Column(
-								modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(vertical = 10.dp),
+								modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(176.dp),
 							) {
-								Text(
-									text = "Yellowstone Beanie",
-									modifier = Modifier.fillMaxWidth(),
-									style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
-									maxLines = 1,
-									overflow = TextOverflow.Ellipsis,
-								)
-								Text(
-									text = "4.9 ★ (57)",
-									modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-									style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
-								)
-								Text(
-									text = "${'$'}28",
-									modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-									style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
-								)
+								Row(
+									modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFFFACC15), Color(0xFFD97706)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
+									verticalAlignment = Alignment.CenterVertically,
+									horizontalArrangement = Arrangement.Center,
+								) {
+									Text(
+										text = "New",
+										modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0x33000000)).padding(horizontal = 8.dp).padding(vertical = 4.dp),
+										style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
+									)
+								}
+								Column(
+									modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(vertical = 10.dp),
+								) {
+									Text(
+										text = "Yellowstone Beanie",
+										modifier = Modifier.fillMaxWidth(),
+										style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
+										maxLines = 1,
+										overflow = TextOverflow.Ellipsis,
+									)
+									Text(
+										text = "4.9 ★ (57)",
+										modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
+										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
+									)
+									Text(
+										text = "${'$'}28",
+										modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+										style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
+									)
+								}
 							}
 						}
 					}
@@ -570,47 +587,50 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				NavLink(props = NavLinkProps(href = "/shop/arctic-hoodie"))
 					{
 						Column(
-							modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(176.dp),
 						) {
-							Row(
-								modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFF60A5FA), Color(0xFF4F46E5)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
-								verticalAlignment = Alignment.CenterVertically,
-								horizontalArrangement = Arrangement.Center,
-							) {
-								Text(
-									text = "-26%",
-									modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0x66000000)).padding(horizontal = 8.dp).padding(vertical = 4.dp),
-									style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
-								)
-							}
 							Column(
-								modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(vertical = 10.dp),
+								modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(176.dp),
 							) {
-								Text(
-									text = "Arctic Fleece Hoodie",
-									modifier = Modifier.fillMaxWidth(),
-									style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
-									maxLines = 1,
-									overflow = TextOverflow.Ellipsis,
-								)
-								Text(
-									text = "4.5 ★ (212)",
-									modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-									style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
-								)
 								Row(
-									modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+									modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFF60A5FA), Color(0xFF4F46E5)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
 									verticalAlignment = Alignment.CenterVertically,
-									horizontalArrangement = Arrangement.SpaceBetween,
+									horizontalArrangement = Arrangement.Center,
 								) {
 									Text(
-										text = "${'$'}89",
-										style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
+										text = "-26%",
+										modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0x66000000)).padding(horizontal = 8.dp).padding(vertical = 4.dp),
+										style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
+									)
+								}
+								Column(
+									modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(vertical = 10.dp),
+								) {
+									Text(
+										text = "Arctic Fleece Hoodie",
+										modifier = Modifier.fillMaxWidth(),
+										style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
+										maxLines = 1,
+										overflow = TextOverflow.Ellipsis,
 									)
 									Text(
-										text = "${'$'}120",
-										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
+										text = "4.5 ★ (212)",
+										modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
+										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
 									)
+									Row(
+										modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+										verticalAlignment = Alignment.CenterVertically,
+										horizontalArrangement = Arrangement.SpaceBetween,
+									) {
+										Text(
+											text = "${'$'}89",
+											style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
+										)
+										Text(
+											text = "${'$'}120",
+											style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
+										)
+									}
 								}
 							}
 						}
@@ -618,47 +638,50 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				NavLink(props = NavLinkProps(href = "/shop/snow-parka"))
 					{
 						Column(
-							modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(176.dp),
 						) {
-							Row(
-								modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFF34D399), Color(0xFF0D9488)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
-								verticalAlignment = Alignment.CenterVertically,
-								horizontalArrangement = Arrangement.Center,
-							) {
-								Text(
-									text = "-16%",
-									modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0x33000000)).padding(horizontal = 8.dp).padding(vertical = 4.dp),
-									style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
-								)
-							}
 							Column(
-								modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(vertical = 10.dp),
+								modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(176.dp),
 							) {
-								Text(
-									text = "Snowdrift Parka",
-									modifier = Modifier.fillMaxWidth(),
-									style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
-									maxLines = 1,
-									overflow = TextOverflow.Ellipsis,
-								)
-								Text(
-									text = "4.8 ★ (96)",
-									modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-									style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
-								)
 								Row(
-									modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+									modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFF34D399), Color(0xFF0D9488)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
 									verticalAlignment = Alignment.CenterVertically,
-									horizontalArrangement = Arrangement.SpaceBetween,
+									horizontalArrangement = Arrangement.Center,
 								) {
 									Text(
-										text = "${'$'}219",
-										style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
+										text = "-16%",
+										modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0x33000000)).padding(horizontal = 8.dp).padding(vertical = 4.dp),
+										style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
+									)
+								}
+								Column(
+									modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(vertical = 10.dp),
+								) {
+									Text(
+										text = "Snowdrift Parka",
+										modifier = Modifier.fillMaxWidth(),
+										style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
+										maxLines = 1,
+										overflow = TextOverflow.Ellipsis,
 									)
 									Text(
-										text = "${'$'}260",
-										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
+										text = "4.8 ★ (96)",
+										modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
+										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
 									)
+									Row(
+										modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+										verticalAlignment = Alignment.CenterVertically,
+										horizontalArrangement = Arrangement.SpaceBetween,
+									) {
+										Text(
+											text = "${'$'}219",
+											style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
+										)
+										Text(
+											text = "${'$'}260",
+											style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
+										)
+									}
 								}
 							}
 						}
@@ -666,47 +689,50 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				NavLink(props = NavLinkProps(href = "/shop/merino-crew"))
 					{
 						Column(
-							modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(176.dp),
 						) {
-							Row(
-								modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFFFBBF24), Color(0xFFEA580C)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
-								verticalAlignment = Alignment.CenterVertically,
-								horizontalArrangement = Arrangement.Center,
-							) {
-								Text(
-									text = "New",
-									modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0x33000000)).padding(horizontal = 8.dp).padding(vertical = 4.dp),
-									style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
-								)
-							}
 							Column(
-								modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(vertical = 10.dp),
+								modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(176.dp),
 							) {
-								Text(
-									text = "Merino Crew",
-									modifier = Modifier.fillMaxWidth(),
-									style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
-									maxLines = 1,
-									overflow = TextOverflow.Ellipsis,
-								)
-								Text(
-									text = "4.6 · (340)",
-									modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-									style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
-								)
 								Row(
-									modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+									modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFFFBBF24), Color(0xFFEA580C)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
 									verticalAlignment = Alignment.CenterVertically,
-									horizontalArrangement = Arrangement.SpaceBetween,
+									horizontalArrangement = Arrangement.Center,
 								) {
 									Text(
-										text = "${'$'}75",
-										style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
+										text = "New",
+										modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0x33000000)).padding(horizontal = 8.dp).padding(vertical = 4.dp),
+										style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
+									)
+								}
+								Column(
+									modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(vertical = 10.dp),
+								) {
+									Text(
+										text = "Merino Crew",
+										modifier = Modifier.fillMaxWidth(),
+										style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
+										maxLines = 1,
+										overflow = TextOverflow.Ellipsis,
 									)
 									Text(
-										text = "${'$'}95",
-										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
+										text = "4.6 · (340)",
+										modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
+										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
 									)
+									Row(
+										modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+										verticalAlignment = Alignment.CenterVertically,
+										horizontalArrangement = Arrangement.SpaceBetween,
+									) {
+										Text(
+											text = "${'$'}75",
+											style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
+										)
+										Text(
+											text = "${'$'}95",
+											style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
+										)
+									}
 								}
 							}
 						}
@@ -750,47 +776,50 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				NavLink(props = NavLinkProps(href = "/shop/splitshirt-tee"))
 					{
 						Column(
-							modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(176.dp),
 						) {
-							Row(
-								modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFFFB7185), Color(0xFFDB2777)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
-								verticalAlignment = Alignment.CenterVertically,
-								horizontalArrangement = Arrangement.Center,
-							) {
-								Text(
-									text = "-24%",
-									modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0x33000000)).padding(horizontal = 8.dp).padding(vertical = 4.dp),
-									style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
-								)
-							}
 							Column(
-								modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(vertical = 10.dp),
+								modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(176.dp),
 							) {
-								Text(
-									text = "Split Shoulder Tee",
-									modifier = Modifier.fillMaxWidth(),
-									style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
-									maxLines = 1,
-									overflow = TextOverflow.Ellipsis,
-								)
-								Text(
-									text = "4.6 ★ (88)",
-									modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-									style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
-								)
 								Row(
-									modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+									modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFFFB7185), Color(0xFFDB2777)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
 									verticalAlignment = Alignment.CenterVertically,
-									horizontalArrangement = Arrangement.SpaceBetween,
+									horizontalArrangement = Arrangement.Center,
 								) {
 									Text(
-										text = "${'$'}42",
-										style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
+										text = "-24%",
+										modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0x33000000)).padding(horizontal = 8.dp).padding(vertical = 4.dp),
+										style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
+									)
+								}
+								Column(
+									modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(vertical = 10.dp),
+								) {
+									Text(
+										text = "Split Shoulder Tee",
+										modifier = Modifier.fillMaxWidth(),
+										style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
+										maxLines = 1,
+										overflow = TextOverflow.Ellipsis,
 									)
 									Text(
-										text = "${'$'}55",
-										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
+										text = "4.6 ★ (88)",
+										modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
+										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
 									)
+									Row(
+										modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+										verticalAlignment = Alignment.CenterVertically,
+										horizontalArrangement = Arrangement.SpaceBetween,
+									) {
+										Text(
+											text = "${'$'}42",
+											style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
+										)
+										Text(
+											text = "${'$'}55",
+											style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f), textDecoration = TextDecoration.LineThrough),
+										)
+									}
 								}
 							}
 						}
@@ -798,39 +827,42 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				NavLink(props = NavLinkProps(href = "/shop/yellowstone-beanie"))
 					{
 						Column(
-							modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(176.dp),
 						) {
-							Row(
-								modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFFFACC15), Color(0xFFD97706)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
-								verticalAlignment = Alignment.CenterVertically,
-								horizontalArrangement = Arrangement.Center,
-							) {
-								Text(
-									text = "New",
-									modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0x33000000)).padding(horizontal = 8.dp).padding(vertical = 4.dp),
-									style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
-								)
-							}
 							Column(
-								modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(vertical = 10.dp),
+								modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(176.dp),
 							) {
-								Text(
-									text = "Yellowstone Beanie",
-									modifier = Modifier.fillMaxWidth(),
-									style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
-									maxLines = 1,
-									overflow = TextOverflow.Ellipsis,
-								)
-								Text(
-									text = "4.9 ★ (57)",
-									modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-									style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
-								)
-								Text(
-									text = "${'$'}28",
-									modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-									style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
-								)
+								Row(
+									modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Brush.linearGradient(listOf(Color(0xFFFACC15), Color(0xFFD97706)), start = Offset(0f, 0f), end = Offset(1f, 1f))).aspectRatio(1f),
+									verticalAlignment = Alignment.CenterVertically,
+									horizontalArrangement = Arrangement.Center,
+								) {
+									Text(
+										text = "New",
+										modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0x33000000)).padding(horizontal = 8.dp).padding(vertical = 4.dp),
+										style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
+									)
+								}
+								Column(
+									modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(vertical = 10.dp),
+								) {
+									Text(
+										text = "Yellowstone Beanie",
+										modifier = Modifier.fillMaxWidth(),
+										style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
+										maxLines = 1,
+										overflow = TextOverflow.Ellipsis,
+									)
+									Text(
+										text = "4.9 ★ (57)",
+										modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
+										style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
+									)
+									Text(
+										text = "${'$'}28",
+										modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+										style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
+									)
+								}
 							}
 						}
 					}

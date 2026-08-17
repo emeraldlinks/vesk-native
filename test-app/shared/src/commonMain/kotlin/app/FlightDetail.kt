@@ -104,7 +104,9 @@ fun FlightDetail(props: FlightDetailProps = FlightDetailProps(), content: @Compo
 				modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
 				style = TextStyle(fontWeight = FontWeight.SemiBold),
 			)
-			Column(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+			Column(
+				modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+			) {
 				Text("props.id = " + " · props.title = ")
 				Text(
 					text = (props.id).toString(),
@@ -115,14 +117,18 @@ fun FlightDetail(props: FlightDetailProps = FlightDetailProps(), content: @Compo
 					style = TextStyle(fontFamily = FontFamily.Monospace),
 				)
 			}
-			Column(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+			Column(
+				modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+			) {
 				Text("const " + ("{ id }").toString() + " = useParams() → id = ")
 				Text(
 					text = (paramId).toString(),
 					style = TextStyle(fontFamily = FontFamily.Monospace),
 				)
 			}
-			Column(modifier = Modifier.fillMaxWidth()) {
+			Column(
+				modifier = Modifier.fillMaxWidth(),
+			) {
 				Text("const " + ("{ id, seat }").toString() + " = useQuery() → id = " + ", seat = ")
 				Text(
 					text = (id).toString(),

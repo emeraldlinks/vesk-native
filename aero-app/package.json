@@ -1,0 +1,17 @@
+{
+  "name": "aero-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vesk-native build",
+    "clean": "rm -rf app/build shared/build build .gradle",
+    "demo": "bash scripts/demo.sh",
+    "release": "bash scripts/release.sh"
+  },
+  "dependencies": {
+    "@vesk/native": "file:/root/vesk-native/packages/native",
+    "@vesk/native-compiler": "file:/root/vesk-native/packages/compiler-native",
+    "@vesk/native-cli": "file:/root/vesk-native/packages/cli-native"
+  },
+  "devDependencies": {}
+}

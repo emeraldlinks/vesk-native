@@ -92,10 +92,16 @@ function inferTrackCellType(init: string): string | null {
   let digit = false;
   let float = false;
   const first = inner[0] ?? '';
-  // String-literal inits (track(''), track("x"), track(`y`)) make the cell a
-  // MutableState<String>: writes get jsString() coercion so dynamic values
-  // (jsIndex, params, user input) assign with JS String() semantics.
-  if (first === "'" || first === '"' || first === '`') return 'String';
+  const last = inner[inner.length - 1] ?? '';
+  // A bare quoted literal (track(''), track("x"), track(`y`)) makes the cell
+  // a MutableState<String>: writes get jsString() coercion so dynamic values
+  // (jsIndex, params, user input) assign with JS String() semantics. Anything
+  // that merely starts with a quote (track("a".split(",").contains(b))) is a
+  // computed value with an unrelated type and stays untyped.
+  if (first === "'" || first === '"' || first === '`') {
+    if (last === first && inner.length >= 2) return 'String';
+    return null;
+  }
   for (let i = 0; i < inner.length; i++) {
     const c = inner[i]!;
     if (c >= '0' && c <= '9') {
@@ -153,8 +159,12 @@ function imageLines(node: StaticNode, em: Emitter, level: number, parentAxis: 'c
   const parts = classify(classes, em.customClasses, parentAxis === 'row' ? 'row' : 'column');
   emitTailwindWarnings(parts, em);
   if (parentAxis === null) stripScopeMods(parts);
-  if (!boxScope) parts.posMod = [];
-  else stripWeight(parts);
+  if (!boxScope) {
+    // align() needs BoxScope; offset/fillMax/padding do not. Keep the
+    // fill+padding so absolute inset-* children still bleed edge-to-edge
+    // (web inset-0 = full-bleed) even when their parent is not a Box.
+    parts.posMod = parts.posMod.filter((s) => s.startsWith('fillMax') || s.startsWith('padding('));
+  } else stripWeight(parts);
   let modifier = buildModifier(parts);
   modifier = prependModifier(modifier, extraModifier);
 
@@ -232,8 +242,12 @@ function mediaLines(node: StaticNode, em: Emitter, level: number, parentAxis: 'c
   const parts = classify(classes, em.customClasses, parentAxis === 'row' ? 'row' : 'column');
   emitTailwindWarnings(parts, em);
   if (parentAxis === null) stripScopeMods(parts);
-  if (!boxScope) parts.posMod = [];
-  else stripWeight(parts);
+  if (!boxScope) {
+    // align() needs BoxScope; offset/fillMax/padding do not. Keep the
+    // fill+padding so absolute inset-* children still bleed edge-to-edge
+    // (web inset-0 = full-bleed) even when their parent is not a Box.
+    parts.posMod = parts.posMod.filter((s) => s.startsWith('fillMax') || s.startsWith('padding('));
+  } else stripWeight(parts);
   let modifier = buildModifier(parts);
   if (node.tag === 'video' && parts.size.length === 0) modifier = `${modifier ? modifier + '.' : ''}fillMaxWidth().aspectRatio(16f / 9f)`;
   modifier = prependModifier(modifier, extraModifier);
@@ -348,8 +362,12 @@ function deviceApiLines(node: StaticNode, em: Emitter, level: number, extraModif
   const parts = classify(classes, em.customClasses, undefined);
   emitTailwindWarnings(parts, em);
   stripScopeMods(parts);
-  if (!boxScope) parts.posMod = [];
-  else stripWeight(parts);
+  if (!boxScope) {
+    // align() needs BoxScope; offset/fillMax/padding do not. Keep the
+    // fill+padding so absolute inset-* children still bleed edge-to-edge
+    // (web inset-0 = full-bleed) even when their parent is not a Box.
+    parts.posMod = parts.posMod.filter((s) => s.startsWith('fillMax') || s.startsWith('padding('));
+  } else stripWeight(parts);
   let modifier = buildModifier(parts);
   modifier = prependModifier(modifier, extraModifier);
   const attrs = em.dynamicAttrs(node);
@@ -506,6 +524,10 @@ function emitButton(node: StaticNode, classes: string[], attrs: Map<string, JsNo
 
   const isTexty = (c: IRNode) => c instanceof TextNode || (c instanceof DynamicBinding && c.kind === 'text');
   const blocker = node.children.filter((c) => !isTexty(c));
+  // An absolute child (pill/badge) overlays the button edge-to-edge while
+  // staying out of flow: wrap the contents in a centered Box so the label
+  // paints on top (web: absolute element covers, label shows through).
+  const absChild = blocker.some((c) => c instanceof StaticNode && isAbsolute(em.classList(c)));
 
   let contentLines: string[] = [];
   const btnDefaultColor = 'MaterialTheme.colorScheme.onSurface';
@@ -524,6 +546,12 @@ function emitButton(node: StaticNode, classes: string[], attrs: Map<string, JsNo
   }
 
   const lines: string[] = [];
+  let absOpen: string[] = [];
+  let absClose: string[] = [];
+  if (absChild) {
+    absOpen = [pad + 'Box(', padIn + 'modifier = Modifier.fillMaxSize(),', padIn + 'contentAlignment = Alignment.Center,', pad + ') {'];
+    absClose = [pad + '}'];
+  }
   lines.push(pad + 'Button(');
   lines.push(`${padIn}onClick = jsSafe(${onClickKt}),`);
   const modClasses = classes.filter((c) => !BTN_PAD_RE.test(c));
@@ -536,7 +564,9 @@ function emitButton(node: StaticNode, classes: string[], attrs: Map<string, JsNo
   const padVal = buttonPadding(classes);
   if (padVal) lines.push(`${padIn}contentPadding = PaddingValues(horizontal = ${padVal.h}.dp, vertical = ${padVal.v}.dp),`);
   lines.push(pad + ') {');
+  lines.push(...absOpen);
   lines.push(...contentLines);
+  lines.push(...absClose);
   lines.push(pad + '}');
   return lines;
 }
@@ -970,8 +1000,12 @@ function modifierFor(classes: string[], em: Emitter, parentAxis: 'column' | 'row
   const parts = classify(classes, em.customClasses, parentAxis === 'row' ? 'row' : 'column');
   emitTailwindWarnings(parts, em);
   if (parentAxis === null) stripScopeMods(parts);
-  if (!boxScope) parts.posMod = [];
-  else stripWeight(parts);
+  if (!boxScope) {
+    // align() needs BoxScope; offset/fillMax/padding do not. Keep the
+    // fill+padding so absolute inset-* children still bleed edge-to-edge
+    // (web inset-0 = full-bleed) even when their parent is not a Box.
+    parts.posMod = parts.posMod.filter((s) => s.startsWith('fillMax') || s.startsWith('padding('));
+  } else stripWeight(parts);
   let modifier = buildModifier(parts);
   if (fillWidth) modifier = prependFill(modifier);
   return prependModifier(modifier, extraModifier);
@@ -1033,8 +1067,12 @@ function makeTextCall(text: string, classes: string[], level: number, em: Emitte
   const parts = classify(classes, em.customClasses, parentAxis === 'row' ? 'row' : 'column');
   emitTailwindWarnings(parts, em);
   if (parentAxis === null || flowParent) stripScopeMods(parts);
-  if (!boxScope) parts.posMod = [];
-  else stripWeight(parts);
+  if (!boxScope) {
+    // align() needs BoxScope; offset/fillMax/padding do not. Keep the
+    // fill+padding so absolute inset-* children still bleed edge-to-edge
+    // (web inset-0 = full-bleed) even when their parent is not a Box.
+    parts.posMod = parts.posMod.filter((s) => s.startsWith('fillMax') || s.startsWith('padding('));
+  } else stripWeight(parts);
   let modifier = buildModifier(parts);
   if (fillWidth) modifier = prependFill(modifier);
   modifier = prependModifier(modifier, extraModifier);
@@ -1062,9 +1100,9 @@ function makeTextCall(text: string, classes: string[], level: number, em: Emitte
 // become the modifier; unknown props are hard errors so a typo never silently
 // miscompiles. Children render into a trailing content lambda when the binding
 // is a container.
-function libraryTagLines(node: ComponentCall, em: Emitter, level: number, parentAxis: 'column' | 'row' | null = null, flowParent = false, boxScope = false, inVertScroll = false, inHorizScroll = false): string[] {
+function libraryTagLines(node: ComponentCall, em: Emitter, level: number, parentAxis: 'column' | 'row' | null = null, flowParent = false, boxScope = false, inVertScroll = false, inHorizScroll = false, inAutoWidth = false): string[] {
   const binding = em.libraryTags?.get(node.componentName);
-  if (!binding) return [componentCallLines(node, em, level, parentAxis, flowParent, boxScope, inVertScroll, inHorizScroll)];
+  if (!binding) return [componentCallLines(node, em, level, parentAxis, flowParent, boxScope, inVertScroll, inHorizScroll, inAutoWidth)];
   for (const imp of binding.imports) {
     em.libImports.add(imp.startsWith('import ') ? imp : `import ${imp}`);
   }
@@ -1075,7 +1113,7 @@ function libraryTagLines(node: ComponentCall, em: Emitter, level: number, parent
   // can't be constructed from JS (the @Composable rememberShimmer factory is
   // the supported entry point), so the binding wraps children in the same way
   // a user would write `Modifier.shimmer(rememberShimmer(...))`.
-  if (binding.shimmer) return shimmerWrapperLines(node, em, level, parentAxis, flowParent, boxScope, inVertScroll, inHorizScroll);
+  if (binding.shimmer) return shimmerWrapperLines(node, em, level, parentAxis, flowParent, boxScope, inVertScroll, inHorizScroll, inAutoWidth);
 
   const pad = '\t'.repeat(level);
   const padIn = '\t'.repeat(level + 1);
@@ -1088,9 +1126,17 @@ function libraryTagLines(node: ComponentCall, em: Emitter, level: number, parent
         ? raw.slice(1, -1)
         : raw;
       const classes = cls.split(/\s+/).filter(Boolean);
-      const fill = parentAxis !== 'row';
-      const modifier = modifierFor(classes, em, parentAxis, fill, null, boxScope);
+      // Library tags are inline-level like the web (Button, Icon, Text keep
+      // their content size); an explicit w-full still fills via the class.
+      const modifier = modifierFor(classes, em, parentAxis, false, null, boxScope);
       if (modifier) argLines.push(`${padIn}modifier = ${modifier},`);
+      // Icon takes its color through tint: text-* color classes map there,
+      // otherwise a dark-on-dark Icon renders invisible.
+      if (binding.composable === 'Icon') {
+        const parts = classify(classes, em.customClasses, elementAxis(classes), false);
+        const tint = parts.textStyle.find((s) => s.startsWith('color = '));
+        if (tint) argLines.push(`${padIn}tint = ${tint.slice('color = '.length)},`);
+      }
       continue;
     }
     if (!param) {
@@ -1116,7 +1162,7 @@ function libraryTagLines(node: ComponentCall, em: Emitter, level: number, parent
   if (binding.container && node.children.length > 0) {
     out.push(pad + `) {`);
     for (const child of node.children) {
-      out.push(...emitChild(child, em, level + 1, parentAxis, null, flowParent, boxScope, inVertScroll, inHorizScroll));
+      out.push(...emitChild(child, em, level + 1, parentAxis, null, flowParent, boxScope, inVertScroll, inHorizScroll, inAutoWidth));
     }
     out.push(pad + `}`);
   } else {
@@ -1125,7 +1171,7 @@ function libraryTagLines(node: ComponentCall, em: Emitter, level: number, parent
   return out;
 }
 
-function shimmerWrapperLines(node: ComponentCall, em: Emitter, level: number, parentAxis: 'column' | 'row' | null = null, flowParent = false, boxScope = false, inVertScroll = false, inHorizScroll = false): string[] {
+function shimmerWrapperLines(node: ComponentCall, em: Emitter, level: number, parentAxis: 'column' | 'row' | null = null, flowParent = false, boxScope = false, inVertScroll = false, inHorizScroll = false, inAutoWidth = false): string[] {
   const pad = '\t'.repeat(level);
   const padIn = '\t'.repeat(level + 1);
   const varName = `__shimmer${++em.shimmerCount}`;
@@ -1148,13 +1194,82 @@ function shimmerWrapperLines(node: ComponentCall, em: Emitter, level: number, pa
   out.push(padIn + `modifier = ${classMod ?? shimmerMod},`);
   out.push(pad + `) {`);
   for (const child of node.children) {
-    out.push(...emitChild(child, em, level + 1, parentAxis, null, flowParent, boxScope, inVertScroll, inHorizScroll));
+    out.push(...emitChild(child, em, level + 1, parentAxis, null, flowParent, boxScope, inVertScroll, inHorizScroll, inAutoWidth));
   }
   out.push(pad + `}`);
   return out;
 }
 
-function componentCallLines(node: ComponentCall, em: Emitter, level: number, parentAxis: 'column' | 'row' | null = null, flowParent = false, boxScope = false, inVertScroll = false, inHorizScroll = false): string {
+function navCallLines(node: ComponentCall, em: Emitter, level: number, parentAxis: 'column' | 'row' | null = null, flowParent = false, boxScope = false, inAutoWidth = false): string {
+  const pad = '\t'.repeat(level);
+  const padIn = '\t'.repeat(level + 1);
+  const name = node.componentName;
+  let href = '""';
+  let cls = '';
+  for (const p of node.props) {
+    if (p.name === 'href') {
+      href = em.exprOf(p.value);
+    } else if (p.name === 'class' || p.name === 'className') {
+      const raw = (p.value.raw ?? '').trim();
+      cls = raw.length >= 2 && (raw[0] === '"' || raw[0] === "'") && raw[raw.length - 1] === raw[0]
+        ? raw.slice(1, -1)
+        : raw;
+    } else {
+      em.err.warn(null, `<${name}> does not support attribute "${p.name}"`);
+    }
+  }
+  const classes = cls.split(/\s+/).filter(Boolean);
+  const axis = elementAxis(classes);
+  const layout = layoutArgs(classes, axis);
+  const parts = classify(classes, em.customClasses, axis, false);
+  emitTailwindWarnings(parts, em);
+  // The anchor itself lives in the parent's Row/Column scope: keep weight and
+  // size, but align() needs BoxScope so it strips like a normal element.
+  if (parentAxis === null) stripScopeMods(parts);
+  if (!boxScope) {
+    parts.posMod = parts.posMod.filter((s) => s.startsWith('fillMax') || s.startsWith('padding('));
+  } else stripWeight(parts);
+  let boxMod = buildModifier(parts);
+  const fillWidth = fillMaxWidth(classes, 'div', parentAxis) && !inAutoWidth;
+  if (fillWidth) boxMod = prependFill(boxMod);
+
+  const out: string[] = [];
+  const propBits = [`href = ${href}`];
+  if (boxMod) propBits.push(`modifier = ${boxMod}`);
+  out.push(pad + `${name}(props = ${name}Props(${propBits.join(', ')}))`);
+  if (node.children.length > 0) {
+    out.push(padIn + '{');
+    out.push(padIn + `\t${axis === 'row' ? 'Row' : 'Column'}(`);
+    // No size modifier: the anchor's Box sizes to content (like the web's
+    // inline anchor). A fillMaxSize inner container would explode inside a
+    // bounded parent — e.g. a header Row — taking the full height and
+    // collapsing every sibling (weight(1f) page area) to zero.
+    if (layout.horizontalAlignment) out.push(padIn + `\t\thorizontalAlignment = ${layout.horizontalAlignment},`);
+    if (layout.verticalAlignment) out.push(padIn + `\t\tverticalAlignment = ${layout.verticalAlignment},`);
+    if (layout.horizontalArrangement) out.push(padIn + `\t\thorizontalArrangement = ${layout.horizontalArrangement},`);
+    if (layout.verticalArrangement) out.push(padIn + `\t\tverticalArrangement = ${layout.verticalArrangement},`);
+    out.push(padIn + `\t) {`);
+    for (const child of node.children) {
+      // Children keep the anchor's own parent axis: an anchor sizes to its
+      // content (shrink-to-fit), so block children must not stretch to the
+      // outer container's remaining width — in a header Row that would make
+      // the anchor absorb the whole row and squeeze its siblings to zero.
+      out.push(...emitChild(child, em, level + 3, parentAxis, null, flowParent, boxScope, false, false, false));
+    }
+    out.push(padIn + `\t}`);
+    out.push(padIn + '}');
+  }
+  return out.join('\n');
+}
+
+function componentCallLines(node: ComponentCall, em: Emitter, level: number, parentAxis: 'column' | 'row' | null = null, flowParent = false, boxScope = false, inVertScroll = false, inHorizScroll = false, inAutoWidth = false): string {
+  // Link/NavLink are anchor elements: the class string becomes the wrapper's
+  // modifier (flex-1 weights in the parent's scope) and the children render
+  // inside a matching flex container (web: class="flex-col ..." lays out the
+  // anchor's content), filling the anchor edge-to-edge.
+  if (node.componentName === 'Link' || node.componentName === 'NavLink') {
+    return navCallLines(node, em, level, parentAxis, flowParent, boxScope, inAutoWidth);
+  }
   const propArgs = node.props.map((p) => `${ktIdent(p.name)} = ${em.exprOf(p.value)}`);
   for (const sp of node.spreadProps) {
     em.err.warn(null, `spread props are not supported in component calls: ...${sp.raw}`);
@@ -1172,7 +1287,7 @@ function componentCallLines(node: ComponentCall, em: Emitter, level: number, par
   if (node.children.length > 0) {
     out.push(padIn + '{');
     for (const child of node.children) {
-      out.push(...emitChild(child, em, level + 2, parentAxis, null, flowParent, boxScope, inVertScroll, inHorizScroll));
+      out.push(...emitChild(child, em, level + 2, parentAxis, null, flowParent, boxScope, inVertScroll, inHorizScroll, inAutoWidth));
     }
     out.push(padIn + '}');
   }
@@ -1206,7 +1321,7 @@ function dragModifier(node: StaticNode, em: Emitter): string | null {
   return m.length > 0 ? m : null;
 }
 
-function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: 'column' | 'row' | null, extraModifier: string | null = null, flowParent = false, boxScope = false, inVertScroll = false, inHorizScroll = false): string[] {
+function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: 'column' | 'row' | null, extraModifier: string | null = null, flowParent = false, boxScope = false, inVertScroll = false, inHorizScroll = false, inAutoWidth = false): string[] {
   const dropMod = dragModifier(node, em);
   if (dropMod && extraModifier) extraModifier += dropMod;
   else if (dropMod) extraModifier = `Modifier${dropMod}`;
@@ -1260,8 +1375,16 @@ function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: '
     prologue = [pad + `val ${refName} = rememberMotionRef()`, pad + `${refCell}.value = ${refName}`];
     extraModifier = prependModifier(extraModifier, `Modifier.motionGraphics(${refName})`);
   }
-  // absolute/fixed elements are out of flow: shrink-to-fit, never block-fill
-  const fillWidth = fillMaxWidth(classes, node.tag, parentAxis) && !isAbsolute(classes);
+  // absolute/fixed elements are out of flow: shrink-to-fit, never block-fill.
+  // An auto-width ancestor (a Row child sized by content) shrinks the flow,
+  // so block children must not stretch to the outer Row's width either —
+  // that would collapse sibling columns (web shrink-to-fit).
+  const fillWidth = fillMaxWidth(classes, node.tag, parentAxis) && !isAbsolute(classes) && !inAutoWidth;
+  const selfAutoWidth = parentAxis === 'row' && !fillWidth && !hasExplicitWidth(classes)
+    && !classes.some((c) => c === 'flex-1' || c === 'flex-auto' || c === 'flex-grow')
+    && !(classes.includes('relative') || classes.includes('fixed'))
+    && !(classes.includes('flex') || classes.includes('flex-row') || classes.includes('flex-col') || classes.includes('flex-row-reverse') || classes.includes('flex-col-reverse'))
+    && layoutArgs(classes, elementAxis(classes)).grid === null;
 
   if (info.kind === 'image') {
     return [...prologue, ...imageLines(node, em, level, parentAxis, extraModifier, boxScope)];
@@ -1279,16 +1402,30 @@ function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: '
     if (nonText.length === 0) {
       return [...prologue, ...splitLines(makeTextCall(content, classes, level, em, fillWidth, parentAxis, extraModifier, null, flowParent, boxScope))];
     }
+    // Text with inline children (spans, icons) becomes a real flex container
+    // matching its class axis: flex-row spans must emit Row, not a bare
+    // Column, or the arrangement/alignment classes silently vanish.
+    const axis = elementAxis(classes);
+    const layout = layoutArgs(classes, axis);
     const lines: string[] = [];
     const modifier = modifierFor(classes, em, parentAxis, fillWidth, extraModifier, boxScope);
-    if (modifier) {
-      lines.push(pad + `Column(modifier = ${modifier}) {`);
+    const composable = axis === 'row' ? 'Row' : 'Column';
+    const argLines: string[] = [];
+    if (modifier) argLines.push(`${padIn}modifier = ${modifier},`);
+    if (layout.horizontalAlignment) argLines.push(`${padIn}horizontalAlignment = ${layout.horizontalAlignment},`);
+    if (layout.verticalAlignment) argLines.push(`${padIn}verticalAlignment = ${layout.verticalAlignment},`);
+    if (layout.horizontalArrangement) argLines.push(`${padIn}horizontalArrangement = ${layout.horizontalArrangement},`);
+    if (layout.verticalArrangement) argLines.push(`${padIn}verticalArrangement = ${layout.verticalArrangement},`);
+    if (argLines.length === 0) {
+      lines.push(pad + `${composable} {`);
     } else {
-      lines.push(pad + 'Column {');
+      lines.push(pad + `${composable}(`);
+      lines.push(...argLines);
+      lines.push(pad + ') {');
     }
     if (content !== '""') lines.push(`${padIn}Text(${content})`);
     for (const child of nonText) {
-      lines.push(...emitChild(child, em, level + 1, 'column', null, false, false, childVert, childHoriz));
+      lines.push(...emitChild(child, em, level + 1, axis === 'grid' ? 'column' : axis, null, false, false, childVert, childHoriz, selfAutoWidth));
     }
     lines.push(pad + '}');
     return [...prologue, ...lines];
@@ -1343,8 +1480,12 @@ function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: '
   emitTailwindWarnings(containerParts, em);
   const flow = containerParts.flow === true;
   if (parentAxis === null || flow || flowParent) stripScopeMods(containerParts); // Flow layouts have no align/weight scope
-  if (!boxScope) containerParts.posMod = [];
-  else stripWeight(containerParts); // Box content has no weight scope (web: flex-grow on non-flex parent is ignored)
+  if (!boxScope) {
+    // align() needs BoxScope; offset/fillMax/padding do not. Keep the
+    // fill+padding so absolute inset-* children still bleed edge-to-edge
+    // (web inset-0 = full-bleed) even when their parent is not a Box.
+    containerParts.posMod = containerParts.posMod.filter((s) => s.startsWith('fillMax') || s.startsWith('padding('));
+  } else stripWeight(containerParts); // Box content has no weight scope (web: flex-grow on non-flex parent is ignored)
   let modifier = buildModifier(containerParts);
   if (fillWidth) modifier = prependFill(modifier);
   modifier = prependModifier(modifier, extraModifier);
@@ -1387,9 +1528,9 @@ function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: '
   for (let i = 0; i < node.children.length; i++) {
     const child = node.children[i]!;
     if (divide && i > 0) {
-      childrenLines.push(...emitChild(child, em, level + 1, childAxis, divideBorderMod(divide), flow, childBox, childVert, childHoriz));
+      childrenLines.push(...emitChild(child, em, level + 1, childAxis, divideBorderMod(divide), flow, childBox, childVert, childHoriz, selfAutoWidth));
     } else {
-      childrenLines.push(...emitChild(child, em, level + 1, childAxis, null, flow, childBox, childVert, childHoriz));
+      childrenLines.push(...emitChild(child, em, level + 1, childAxis, null, flow, childBox, childVert, childHoriz, selfAutoWidth));
     }
   }
 
@@ -1486,24 +1627,31 @@ function isGuardSafe(n: IRNode): boolean {
   return false;
 }
 
-function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'column' | 'row' | null, extraModifier: string | null = null, flowParent = false, boxScope = false, inVertScroll = false, inHorizScroll = false): string[] {
+function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'column' | 'row' | null, extraModifier: string | null = null, flowParent = false, boxScope = false, inVertScroll = false, inHorizScroll = false, inAutoWidth = false): string[] {
   const pad = '\t'.repeat(level);
 
   if (child instanceof StaticNode) {
-    return emitElement(child, em, level, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll);
+    return emitElement(child, em, level, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll, inAutoWidth);
   }
   if (child instanceof TextNode) {
     return splitLines(makeTextCall(em.ktString(child.value), [], level, em, false, parentAxis, extraModifier, null, flowParent, boxScope));
   }
   if (child instanceof DynamicBinding) {
     if (child.kind === 'text') {
-      const raw = child.expression.raw ?? '';
       // Motion side-effects (inView, scroll, animate) return Unit — render
-      // them as LaunchedEffect blocks instead of Text(text = "kotlin.Unit").
-      if (raw.includes('motionInView(') || raw.includes('motionScroll(') || raw.includes('motionAnimate(') || raw.includes('motionStagger(')) {
-        return [pad + `LaunchedEffect(Unit) { ${em.exprOf(child.expression)} }`];
+      // them as effect calls instead of Text(text = "kotlin.Unit"). The
+      // check runs on the translated expression (js2kt maps inView to
+      // motionInView etc.), not the raw JS text.
+      const exprText = em.exprOf(child.expression);
+      if (exprText.includes('motionInView(') || exprText.includes('motionScroll(')) {
+        // motionInView/motionScroll are @Composable (they host their own
+        // LaunchedEffect), so they run as bare composition statements.
+        return [pad + exprText];
       }
-      return splitLines(makeTextCall(dynamicText(em.exprOf(child.expression)), [], level, em, false, parentAxis, extraModifier, null, flowParent, boxScope));
+      if (exprText.includes('motionAnimate(') || exprText.includes('motionStagger(')) {
+        return [pad + `LaunchedEffect(Unit) { ${exprText} }`];
+      }
+      return splitLines(makeTextCall(dynamicText(exprText), [], level, em, false, parentAxis, extraModifier, null, flowParent, boxScope));
     }
     return [];
   }
@@ -1511,9 +1659,9 @@ function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'colum
     const cond = em.exprOf(child.condition);
     const out: string[] = [];
     out.push(pad + `if (truthy(${cond})) {`);
-    for (const n of child.consequentNodes) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll));
+    for (const n of child.consequentNodes) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll, inAutoWidth));
     out.push(pad + `} else {`);
-    for (const n of child.alternateNodes) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll));
+    for (const n of child.alternateNodes) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll, inAutoWidth));
     out.push(pad + `}`);
     return out;
   }
@@ -1529,7 +1677,7 @@ function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'colum
     if (inVertScroll || inHorizScroll || parentAxis === 'row') {
       out.push(pad + `for (${item} in ${arrExpr}) {`);
       const bodyAxis = parentAxis === 'row' ? 'row' : 'column';
-      for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1, bodyAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll));
+      for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1, bodyAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll, inAutoWidth));
       out.push(pad + `}`);
       return out;
     }
@@ -1542,14 +1690,14 @@ function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'colum
     // no-op anyway).
     out.push(pad + `LazyColumn {`);
     out.push(pad + `\titems(${arrExpr}${keyExpr ? `, key = { ${keyExpr} }` : ''}) { ${item} ->`);
-    for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 2, null, extraModifier, flowParent, boxScope, true, false));
+    for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 2, null, extraModifier, flowParent, boxScope, true, false, inAutoWidth));
     out.push(pad + `\t}`);
     out.push(pad + `}`);
     return out;
   }
   if (child instanceof ComponentCall) {
     if (em.libraryTags?.has(child.componentName)) {
-      return libraryTagLines(child, em, level, parentAxis, flowParent, boxScope, inVertScroll, inHorizScroll);
+      return libraryTagLines(child, em, level, parentAxis, flowParent, boxScope, inVertScroll, inHorizScroll, inAutoWidth);
     }
     const name = child.componentName;
     const known = (em.componentNames?.has(name) ?? false) || FRAMEWORK_COMPONENT_CALLS.has(name);
@@ -1565,7 +1713,7 @@ function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'colum
       }
       em.err.warn(null, `<${name}>: unknown component${hint}`);
     }
-    return splitLines(componentCallLines(child, em, level, parentAxis, flowParent, boxScope, inVertScroll, inHorizScroll));
+    return splitLines(componentCallLines(child, em, level, parentAxis, flowParent, boxScope, inVertScroll, inHorizScroll, inAutoWidth));
   }
   if (child instanceof TrackDecl) {
     return splitLines(em.trackDecl(child)).map((l) => pad + l);
@@ -1582,7 +1730,7 @@ function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'colum
     return [pad + `error("server block not supported in vesk-native")`];
   }
   if (child instanceof ClientBlock) {
-    return child.children.length ? emitChild(child.children[0]!, em, level, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll) : [];
+    return child.children.length ? emitChild(child.children[0]!, em, level, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll, inAutoWidth) : [];
   }
   if (child instanceof SlotNode) {
     return [pad + `content()`];
@@ -1592,11 +1740,11 @@ function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'colum
     const out: string[] = [];
     if ((child as { isDoWhile?: boolean }).isDoWhile) {
       out.push(pad + `do {`);
-      for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll));
+      for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll, inAutoWidth));
       out.push(pad + `} while (truthy(${cond}));`);
     } else {
       out.push(pad + `while (truthy(${cond})) {`);
-      for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll));
+      for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll, inAutoWidth));
       out.push(pad + `}`);
     }
     return out;
@@ -1614,7 +1762,7 @@ function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'colum
       const bodyNodes = (c.body as IRNode[]).filter(
         (n) => !(n instanceof RuntimeStatement) || (n.ast as { type?: string } | null)?.type !== 'BreakStatement',
       );
-      for (const n of bodyNodes) out.push(...emitChild(n, em, level + 2, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll));
+      for (const n of bodyNodes) out.push(...emitChild(n, em, level + 2, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll, inAutoWidth));
       out.push(pad + '\t}');
     }
     out.push(pad + `}`);
@@ -1634,17 +1782,17 @@ function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'colum
     const catchRender = child.catchBody.filter((n) => !isGuardSafe(n));
     out.push(pad + `var ${guard}: Throwable? = null`);
     out.push(pad + `try {`);
-    for (const n of bodyGuard) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll));
+    for (const n of bodyGuard) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll, inAutoWidth));
     out.push(pad + `} catch (${guard}_caught: Throwable) {`);
     out.push(pad + `\t${guard} = ${guard}_caught`);
-    for (const n of catchGuard) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll));
+    for (const n of catchGuard) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll, inAutoWidth));
     out.push(pad + `}`);
     out.push(pad + `if (${guard} == null) {`);
-    for (const n of bodyRender) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll));
+    for (const n of bodyRender) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll, inAutoWidth));
     out.push(pad + `} else {`);
     for (const n of catchRender) {
       const lines = em.withParamAliases(new Map([[catchParam, guard]]), () =>
-        emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll),
+        emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll, inAutoWidth),
       );
       out.push(...lines);
     }
@@ -1662,7 +1810,7 @@ function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'colum
       // JS for-in iterates keys; Kotlin iterating a Map yields entries, so go
       // through the runtime keys view for exact object/map semantics.
       out.push(pad + `for (${name} in jsMapKeys(${cond})) {`);
-      for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll));
+      for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll, inAutoWidth));
       out.push(pad + `}`);
       return out;
     }
@@ -1672,7 +1820,7 @@ function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'colum
       if (trimmedInit) out.push(pad + trimmedInit);
     }
     out.push(pad + `while (truthy(${cond})) {`);
-    for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll));
+    for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll, inAutoWidth));
     if (child.update) {
       const update = em.stmtText(child.update);
       const trimmedUpdate = update.endsWith(';') ? update.slice(0, -1) : update;

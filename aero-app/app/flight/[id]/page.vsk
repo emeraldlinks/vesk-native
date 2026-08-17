@@ -1,0 +1,10 @@
+// Flight [id] — one dynamic route for every flight. The router binds the
+// {id} segment of the matched route into this page's id prop (a route param
+// is always a string, so the prop is String-typed and receives the raw
+// segment value); FlightDetails resolves the flight from it.
+
+import { FlightDetails } from '../../components/flight-details.vsk'
+
+component FlightDetail(props: { id: String }) {
+    <FlightDetails flightId={props.id} />
+}

@@ -629,7 +629,9 @@ fun StatementsIf(content: @Composable () -> Unit = {}) {
 			style = TextStyle(color = Color(0xFFDC2626)),
 		)
 	}
-	Column(modifier = Modifier.fillMaxWidth()) {
+	Column(
+		modifier = Modifier.fillMaxWidth(),
+	) {
 		if (truthy((score % 2) == 0)) {
 			Text(
 				text = ("even").toString(),
@@ -796,7 +798,9 @@ fun StatementsMisc(content: @Composable () -> Unit = {}) {
 		modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
 		style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
 	)
-	Column(modifier = Modifier.fillMaxWidth()) {
+	Column(
+		modifier = Modifier.fillMaxWidth(),
+	) {
 		if (truthy(Regex("ab+c", setOf(RegexOption.IGNORE_CASE)).containsMatchIn("xxabbbc"))) {
 			Text(
 				text = ("regex matched").toString(),

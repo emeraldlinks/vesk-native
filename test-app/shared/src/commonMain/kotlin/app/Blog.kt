@@ -77,21 +77,27 @@ fun Blog(content: @Composable () -> Unit = {}) {
 		Column(
 			modifier = Modifier.fillMaxWidth(),
 		) {
-			NavLink(props = NavLinkProps(href = "/blog/hello-world", `class` = "text-blue-600"))
+			NavLink(props = NavLinkProps(href = "/blog/hello-world", modifier = Modifier.fillMaxWidth()))
 				{
-					Text(
-						text = "Hello World",
-					)
+					Column(
+					) {
+						Text(
+							text = "Hello World",
+						)
+					}
 				}
 		}
 		Column(
 			modifier = Modifier.fillMaxWidth(),
 		) {
-			NavLink(props = NavLinkProps(href = "/blog/vesk-native", `class` = "text-blue-600"))
+			NavLink(props = NavLinkProps(href = "/blog/vesk-native", modifier = Modifier.fillMaxWidth()))
 				{
-					Text(
-						text = "Vesk Native",
-					)
+					Column(
+					) {
+						Text(
+							text = "Vesk Native",
+						)
+					}
 				}
 		}
 	}

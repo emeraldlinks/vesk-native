@@ -1,0 +1,29 @@
+// SaveButton — bookmark toggle persisted to localStorage (SharedPreferences
+// under the hood), with a springy scale pop on every toggle.
+
+import { animate, spring } from 'motion'
+import { Lucide } from '@vesk/icons-lucide'
+import { Icon } from '@vesk/material3'
+
+component SaveButton(props: { flightId: string }) {
+    const &[saved] = track(`${localStorage.getItem('aero.saved') ?? ''}`.split(',').contains(props.flightId))
+    const &[heart] = track(null)
+
+    <button class="w-9 h-9 rounded-full flex items-center justify-center"
+        onClick={() => {
+            saved = !saved
+            animate(heart, { scale: [1, 1.35, 1] }, { spring: spring({ stiffness: 380, damping: 14 }) })
+            const ids = `${localStorage.getItem('aero.saved') ?? ''}`.split(',')
+            if (saved) {
+                ids.push(props.flightId)
+                localStorage.setItem('aero.saved', ids.join(','))
+            } else {
+                const next = ids.filter(x => x !== props.flightId)
+                localStorage.setItem('aero.saved', next.join(','))
+            }
+        }}>
+        <div ref={heart} class="w-9 h-9 rounded-full flex items-center justify-center">
+            {saved ? <Icon imageVector={Lucide.BookmarkCheck} contentDescription="Saved" class="w-5 h-5 text-rose-400" /> : <Icon imageVector={Lucide.Bookmark} contentDescription="Save flight" class="w-5 h-5 text-slate-400" />}
+        </div>
+    </button>
+}

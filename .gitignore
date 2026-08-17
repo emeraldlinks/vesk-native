@@ -1,6 +1,7 @@
 node_modules/
 dist/
 .gradle/
+.kotlin/
 build/
 *.log
 .DS_Store

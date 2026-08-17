@@ -1,0 +1,9 @@
+// Layout — the app shell for every route. Aero pages own their scroll areas
+// (so the bottom nav and CTAs stay pinned), so the layout stays a full-bleed
+// dark canvas with the route's page as its only child.
+
+component Layout(props) {
+    <div class="w-full h-full bg-[#0A0F16]">
+        {props.children}
+    </div>
+}

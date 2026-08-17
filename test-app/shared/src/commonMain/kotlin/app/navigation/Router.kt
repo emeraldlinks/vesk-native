@@ -200,7 +200,7 @@ fun AppRouter(start: String, routes: List<Route>, back: BackBehavior = BackBehav
         nav.updateParams(matched.params)
         // A fragment ('#top') is browser-internal scroll state — it belongs to
         // neither the query string nor the route pattern, so it is stripped.
-        nav.updateQuery(current.substringAfter('?', "").substringBefore('#', ""))
+        nav.updateQuery(current.substringAfter('?', "").substringBefore('#'))
         // Keying on refreshCount gives refresh() browser-reload semantics: a
         // bump remounts the page so its local state is rebuilt from scratch.
         key(nav.refreshCount.value) {
@@ -214,7 +214,7 @@ fun matchRoute(current: String, routes: List<Route>): Route? {
     // route pattern: both are stripped before matching. The query is exposed
     // separately through NavController.currentQuery for script-side useQuery();
     // a fragment is browser-internal scroll state and is ignored entirely.
-    val path = current.substringBefore('?', current).substringBefore('#', current)
+    val path = current.substringBefore('?').substringBefore('#')
     for (route in routes) {
         val pattern = route.path.split('/').filter { it.isNotEmpty() }
         val actual = path.split('/').filter { it.isNotEmpty() }

@@ -3835,12 +3835,13 @@ fun Modifier.veskSkew(sx: Float, sy: Float): Modifier = drawWithContent {
 data class LinkProps(
     val href: String = "",
     val \`class\`: String = "",
+    val modifier: Modifier = Modifier,
 )
 
 @Composable
 fun Link(props: LinkProps, content: @Composable () -> Unit = {}) {
     val nav = LocalNavController.current
-    Box(modifier = Modifier.clickable(onClick = { nav.navigate(props.href) })) {
+    Box(modifier = props.modifier.clickable(onClick = { nav.navigate(props.href) })) {
         content()
     }
 }
@@ -3863,12 +3864,13 @@ fun rememberRouteScrollState(initial: Int = 0): ScrollState {
 data class NavLinkProps(
     val href: String = "",
     val \`class\`: String = "",
+    val modifier: Modifier = Modifier,
 )
 
 @Composable
 fun NavLink(props: NavLinkProps, content: @Composable () -> Unit = {}) {
     val nav = LocalNavController.current
-    Box(modifier = Modifier.clickable(indication = null, interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, onClick = { nav.navigate(props.href) })) {
+    Box(modifier = props.modifier.clickable(indication = null, interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, onClick = { nav.navigate(props.href) })) {
         content()
     }
 }

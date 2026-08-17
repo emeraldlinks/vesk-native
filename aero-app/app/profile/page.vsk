@@ -1,0 +1,61 @@
+// Profile — a simple settings screen that completes the navigation story:
+// profile header, a few preferences and a data action. No backend — every
+// preference is stored locally.
+
+import { animate, spring } from 'motion'
+import { Lucide } from '@vesk/icons-lucide'
+import { Icon } from '@vesk/material3'
+import { BottomNav } from '../components/bottom-nav.vsk'
+
+component Profile() {
+    const &[clearBtn] = track(null)
+    const &[cleared] = track(false)
+
+    <div class="w-full h-full flex-col bg-[#0A0F16]">
+        <div class="px-4 pt-4 pb-1">
+            <p class="text-white font-bold text-2xl tracking-tight">Profile</p>
+        </div>
+        <div class="flex-1 overflow-y-auto flex-col gap-4 px-4 py-4">
+            <div class="rounded-2xl bg-[#141B26] px-4 py-5 flex-row items-center gap-4">
+                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-cyan-500 to-emerald-400 flex items-center justify-center">
+                    <Icon imageVector={Lucide.User} contentDescription="Avatar" class="w-7 h-7 text-[#07131A]" />
+                </div>
+                <div class="flex-col gap-0.5 flex-1">
+                    <p class="text-white font-bold text-lg leading-6">Aero Pilot</p>
+                    <p class="text-xs text-slate-400">Tracking 8 flights · Paris CDG</p>
+                </div>
+            </div>
+
+            <div class="rounded-2xl bg-[#141B26] flex-col divide-y divide-[#1B2432]">
+                <div class="px-4 py-3.5 flex-row items-center gap-3">
+                    <Icon imageVector={Lucide.Bell} contentDescription="Notifications" class="w-5 h-5 text-cyan-300" />
+                    <span class="text-sm text-white font-medium flex-1">Flight notifications</span>
+                    <span class="text-xs text-slate-500">On</span>
+                </div>
+                <div class="px-4 py-3.5 flex-row items-center gap-3">
+                    <Icon imageVector={Lucide.RefreshCw} contentDescription="Live updates" class="w-5 h-5 text-cyan-300" />
+                    <span class="text-sm text-white font-medium flex-1">Live updates</span>
+                    <span class="text-xs text-slate-500">1 min</span>
+                </div>
+                <div class="px-4 py-3.5 flex-row items-center gap-3">
+                    <Icon imageVector={Lucide.User} contentDescription="Account" class="w-5 h-5 text-cyan-300" />
+                    <span class="text-sm text-white font-medium flex-1">Account</span>
+                    <Icon imageVector={Lucide.ChevronRight} contentDescription="Open account" class="w-5 h-5 text-slate-500" />
+                </div>
+            </div>
+
+            <div ref={clearBtn} class="rounded-2xl bg-[#141B26] px-4 py-3.5 flex-row items-center gap-3"
+                onClick={() => {
+                    localStorage.setItem('aero.saved', '')
+                    cleared = true
+                    animate(clearBtn, { scale: [1, 0.97, 1] }, { spring: spring({ stiffness: 360, damping: 15 }) })
+                }}>
+                <Icon imageVector={Lucide.TriangleAlert} contentDescription="Clear saved flights" class="w-5 h-5 text-rose-400" />
+                {cleared ? <span class="text-sm text-rose-300 font-medium flex-1">Saved flights cleared</span> : <span class="text-sm text-rose-300 font-medium flex-1">Clear saved flights</span>}
+            </div>
+
+            <p class="text-center text-xs text-slate-600 mt-2">Aero — a Vesk Native flight tracker sample · v1.0</p>
+        </div>
+        <BottomNav active="profile" />
+    </div>
+}

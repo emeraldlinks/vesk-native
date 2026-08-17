@@ -1,7 +1,7 @@
 package com.vesk.demo3
 
 import android.os.Build
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.app.ActivityCompat
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import android.os.Bundle
@@ -16,8 +16,6 @@ import app.VeskTheme
 import app.jsSafe
 
 class MainActivity : FragmentActivity() {
-    private val mediaPermLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (Thread.getDefaultUncaughtExceptionHandler() !is DebugCrashLog) {
@@ -29,14 +27,14 @@ class MainActivity : FragmentActivity() {
         )
         if (intent.getBooleanExtra("vesk_notify_tap", false)) jsSafe({ VeskDeviceSession.notifyTap?.invoke() })
         if (Build.VERSION.SDK_INT >= 33) {
-            mediaPermLauncher.launch(arrayOf(
+            ActivityCompat.requestPermissions(this, arrayOf(
                                 android.Manifest.permission.READ_MEDIA_IMAGES,
                 android.Manifest.permission.READ_MEDIA_VIDEO,
                 android.Manifest.permission.READ_MEDIA_AUDIO,
                 android.Manifest.permission.POST_NOTIFICATIONS,
-            ))
+            ), 0)
         } else {
-            mediaPermLauncher.launch(arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE))
+            ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE), 0)
         }
         setContent {
             VeskTheme {

@@ -1,0 +1,106 @@
+// FlightDetails — full flight screen: back header, detail map with the
+// aircraft on its route, the two-column information panel and the
+// notification CTA. Pages at app/flight/<id>/page.vsk each render this
+// component for one flight.
+
+import { animate, spring, inView } from 'motion'
+import { Lucide } from '@vesk/icons-lucide'
+import { Icon } from '@vesk/material3'
+import { FlightRoute } from './flight-route.vsk'
+import { StatusBadge } from './status-badge.vsk'
+import { NotifyButton } from './notify-button.vsk'
+import { SaveButton } from './save-button.vsk'
+import { flightById } from '../data/flights.ts'
+
+component FlightDetails(props: { flightId: string }) {
+    const flight = flightById(props.flightId)
+
+    <div class="w-full h-full flex-col bg-[#0A0F16]">
+        <div class="flex-1 overflow-y-auto flex-col gap-4">
+            <div class="px-4 pt-4 flex-row items-center gap-3">
+                <NavLink href="/" class="w-10 h-10 rounded-full bg-[#141B26] flex items-center justify-center">
+                    <Icon imageVector={Lucide.ArrowLeft} contentDescription="Back" class="w-5 h-5 text-white" />
+                </NavLink>
+                <div class="flex-col gap-0.5 flex-1">
+                    <p class="text-white font-bold text-lg tracking-tight leading-5">{flight['flightNumber']}</p>
+                    <p class="text-xs text-slate-400">{flight['from']['city']} {flight['from']['code']} → {flight['to']['city']} {flight['to']['code']}</p>
+                </div>
+                <StatusBadge status={`${flight['status']}`} />
+            </div>
+
+            <div class="mx-4 rounded-3xl bg-[#0B1017] overflow-hidden h-52 relative flex-col">
+                <div class="flex-1 flex-col justify-center px-7 gap-3">
+                    <div class="flex-row items-center gap-2">
+                        <span class="text-white font-bold text-xl tracking-tight w-10">{flight['from']['code']}</span>
+                        <div class="flex-1 flex-row items-center h-5">
+                            <FlightRoute progress={flight['progress']} />
+                        </div>
+                        <span class="text-white font-bold text-xl tracking-tight w-10 text-right">{flight['to']['code']}</span>
+                    </div>
+                    <div class="flex-row items-center justify-between px-1">
+                        <div class="flex-row items-center gap-1.5">
+                            <Icon imageVector={Lucide.MapPin} contentDescription="Departure airport" class="w-3.5 h-3.5 text-slate-500" />
+                            <span class="text-[11px] text-slate-500">{flight['from']['city']} · {flight['from']['timezone']}</span>
+                        </div>
+                        <div class="flex-row items-center gap-1.5">
+                            <Icon imageVector={Lucide.MapPin} contentDescription="Arrival airport" class="w-3.5 h-3.5 text-slate-500" />
+                            <span class="text-[11px] text-slate-500">{flight['to']['city']} · {flight['to']['timezone']}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mx-4 rounded-2xl bg-[#141B26] px-4 py-4 flex-col gap-4">
+                <div class="flex-row items-center justify-between">
+                    <div class="flex-col gap-0.5">
+                        <p class="text-[11px] uppercase tracking-wider text-slate-500 font-medium">Departure</p>
+                        <p class="text-white font-bold text-lg leading-6">{flight['from']['code']}</p>
+                        <p class="text-xs text-slate-400">{flight['from']['city']}, {flight['from']['country']}</p>
+                        <p class="text-[11px] text-slate-500">{flight['from']['timezone']}</p>
+                    </div>
+                    <div class="w-px h-20 bg-[#1B2432]"></div>
+                    <div class="flex-col items-end gap-0.5">
+                        <p class="text-[11px] uppercase tracking-wider text-slate-500 font-medium">Arrival</p>
+                        <p class="text-white font-bold text-lg leading-6">{flight['to']['code']}</p>
+                        <p class="text-xs text-slate-400 text-right">{flight['to']['city']}, {flight['to']['country']}</p>
+                        <p class="text-[11px] text-slate-500">{flight['to']['timezone']}</p>
+                    </div>
+                </div>
+                <div class="h-px bg-[#1B2432]"></div>
+                <div class="flex-row items-center justify-between">
+                    <div class="flex-col gap-0.5">
+                        <p class="text-[11px] uppercase tracking-wider text-slate-500 font-medium">Scheduled</p>
+                        <p class="text-white font-semibold text-base">{flight['scheduledDeparture']}</p>
+                    </div>
+                    <div class="flex-col items-end gap-0.5">
+                        <p class="text-[11px] uppercase tracking-wider text-slate-500 font-medium">Scheduled</p>
+                        <p class="text-white font-semibold text-base">{flight['scheduledArrival']}</p>
+                    </div>
+                </div>
+                <div class="flex-row items-center justify-between">
+                    <div class="flex-col gap-0.5">
+                        <p class="text-[11px] uppercase tracking-wider text-slate-500 font-medium">Actual</p>
+                        <p class="text-slate-300 font-semibold text-base">{flight['actualDeparture']}</p>
+                    </div>
+                    <div class="flex-col items-end gap-0.5">
+                        <div class="flex-row items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+                            <p class="text-[11px] uppercase tracking-wider text-slate-500 font-medium">Estimated</p>
+                        </div>
+                        <p class="text-cyan-300 font-semibold text-base">{flight['estimatedArrival']}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mx-4 rounded-2xl bg-[#141B26] px-4 py-3 flex-row items-center justify-between">
+                <div class="flex-col gap-0.5">
+                    <p class="text-[11px] uppercase tracking-wider text-slate-500 font-medium">Aircraft</p>
+                    <p class="text-white font-semibold text-sm">{flight['airline']} · {flight['aircraft']}</p>
+                </div>
+                <SaveButton flightId={props.flightId} />
+            </div>
+
+            <NotifyButton flight={flight} />
+        </div>
+    </div>
+}

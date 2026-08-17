@@ -1,0 +1,35 @@
+// FlightCard — one tappable flight row: identity up top, the route line with
+// progress in the middle, destination info below. Tapping opens the flight's
+// detail page.
+
+import { FlightRoute } from './flight-route.vsk'
+import { StatusBadge } from './status-badge.vsk'
+import { SaveButton } from './save-button.vsk'
+
+component FlightCard(props: { flight: null }) {
+    const f = props.flight
+
+    <NavLink href={`/flight/${f['id']}`}>
+        <div class="rounded-2xl bg-[#141B26] px-4 py-3.5 shadow-lg flex-col gap-2.5">
+            <div class="flex-row items-center justify-between">
+                <div class="flex-row items-center gap-2">
+                    <span class="text-white font-bold text-base tracking-tight">{f['flightNumber']}</span>
+                    <span class="text-[11px] text-slate-400">{f['secondary']} · {f['aircraft']}</span>
+                </div>
+                <SaveButton flightId={`${f['id']}`} />
+            </div>
+            <div class="flex-row items-center justify-between gap-3">
+                <div class="flex-row items-center gap-2 flex-1">
+                    <span class="text-white font-bold text-lg tracking-tight w-9">{f['from']['code']}</span>
+                    <FlightRoute progress={f['progress']} />
+                    <span class="text-white font-bold text-lg tracking-tight w-9 text-right">{f['to']['code']}</span>
+                </div>
+                <StatusBadge status={`${f['status']}`} />
+            </div>
+            <div class="flex-row items-center justify-between">
+                <p class="text-xs text-slate-400 truncate">{f['from']['city']} → {f['to']['city']}</p>
+                <p class="text-xs text-slate-400">{f['scheduledDeparture']}</p>
+            </div>
+        </div>
+    </NavLink>
+}

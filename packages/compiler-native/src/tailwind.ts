@@ -342,8 +342,10 @@ function resolveValue(ns: Namespace, raw: string): Resolved | null {
       return c ? { kind: 'color', color: c, raw } : null;
     }
     case 'fontSize': {
-      const v = FONT_SIZE[raw];
-      return v === undefined ? null : { kind: 'sp', sp: v, raw };
+      // Arbitrary sizes (text-[11px], text-[2.5rem]) resolve like spacing;
+      // the named FONT_SIZE table covers the standard scale.
+      const v = FONT_SIZE[raw] ?? resolveDp(raw);
+      return v === null || v === undefined ? null : { kind: 'sp', sp: v, raw };
     }
     case 'radius': {
       const v = RADIUS[raw] ?? resolveDp(raw);

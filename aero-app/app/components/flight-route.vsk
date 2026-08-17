@@ -1,0 +1,20 @@
+// FlightRoute — the thin route line that appears inside flight cards and on
+// both maps. Progress is drawn as 10 fixed-width segments so the traveled
+// portion (cyan) always maps to the flight's real progress, and the aircraft
+// sits in the segment at the traveled/remaining boundary.
+
+import { Icon } from '@vesk/material3'
+import { Lucide } from '@vesk/icons-lucide'
+
+component FlightRoute(props: { progress: null }) {
+    const active = Math.round(num(props.progress) * 10)
+    const segs = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+    <div class="flex-1 flex-row items-center h-4">
+        for (const i of segs) {
+            <div class="flex-1 flex items-center justify-center">
+                {i <= active ? <div class="w-full h-[3px] rounded-full bg-cyan-400"></div> : i === active + 1 ? <Icon imageVector={Lucide.Plane} contentDescription="Aircraft" class="w-3.5 h-3.5 text-cyan-300 rotate-[-45deg]" /> : <div class="w-full h-[3px] rounded-full bg-[#243044]"></div>}
+            </div>
+        }
+    </div>
+}

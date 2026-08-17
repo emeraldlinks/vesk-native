@@ -1,0 +1,14 @@
+// EmptyState — used by Saved and Search when there is nothing to show.
+
+import { Lucide } from '@vesk/icons-lucide'
+import { Icon } from '@vesk/material3'
+
+component EmptyState(props: { icon: string, title: string, hint: string }) {
+    <div class="flex-col items-center justify-center px-10 py-14 gap-3">
+        <div class="w-16 h-16 rounded-full bg-[#141B26] flex items-center justify-center">
+            {props.icon === 'search' ? <Icon imageVector={Lucide.Search} contentDescription="Search" class="w-7 h-7 text-slate-500" /> : <Icon imageVector={Lucide.Heart} contentDescription="Empty" class="w-7 h-7 text-slate-500" />}
+        </div>
+        <p class="text-white font-semibold text-base text-center">{props.title}</p>
+        <p class="text-slate-400 text-sm text-center leading-5">{props.hint}</p>
+    </div>
+}

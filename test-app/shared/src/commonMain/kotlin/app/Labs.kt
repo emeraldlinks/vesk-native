@@ -351,7 +351,9 @@ catch (e: Exception) {
 					)
 					}
 				}
-				Column(modifier = Modifier.fillMaxWidth()) {
+				Column(
+					modifier = Modifier.fillMaxWidth(),
+				) {
 					Text(" · ")
 					if (truthy(session.value)) {
 						Text(
@@ -552,11 +554,14 @@ catch (e: Exception) {
 				modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
 				verticalArrangement = Arrangement.spacedBy(8.dp),
 			) {
-				NavLink(props = NavLinkProps(href = "/flights/AA-123?seat=12A", `class` = "bg-indigo-600 text-white text-sm font-semibold px-4 py-2 rounded-full self-start"))
+				NavLink(props = NavLinkProps(href = "/flights/AA-123?seat=12A", modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(9999.dp)).background(Color(0xFF4F46E5)).padding(horizontal = 16.dp).padding(vertical = 8.dp).align(Alignment.Start)))
 					{
-						Text(
-							text = " Open /flights/AA-123?seat=12A (dynamic route + query) ",
-						)
+						Column(
+						) {
+							Text(
+								text = " Open /flights/AA-123?seat=12A (dynamic route + query) ",
+							)
+						}
 					}
 				Text(
 					text = "The [id] route segment arrives as a typed prop; useParams()/useQuery() destructure in scripts and the router handle pushes/backs/refreshes.",

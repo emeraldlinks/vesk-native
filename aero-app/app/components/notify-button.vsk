@@ -1,0 +1,27 @@
+// NotifyButton — the flight-details CTA. Press pops the gradient, then the
+// state flips to a confirmed "Notifications enabled" state with a check.
+// The press also posts a real system notification for the flight via the
+// device.notify() surface (manifest POST_NOTIFICATIONS + Android 13 runtime
+// grant are derived from this usage).
+
+import { animate, spring } from 'motion'
+import { Lucide } from '@vesk/icons-lucide'
+import { Icon } from '@vesk/material3'
+
+component NotifyButton(props: { flight: any }) {
+    const device = rememberDeviceApi()
+    const &[enabled] = track(false)
+    const &[btn] = track(null)
+
+    <div ref={btn} class="rounded-2xl bg-gradient-to-r from-cyan-500 via-teal-400 to-emerald-400 flex-row items-center justify-center gap-2 py-4 shadow-lg"
+        onClick={() => {
+            enabled = true
+            device.notify(
+                `Flight ${props.flight['flightNumber']} · ${props.flight['status']}`,
+                `${props.flight['from']['city']} (${props.flight['from']['code']}) → ${props.flight['to']['city']} (${props.flight['to']['code']}) — we'll update you on departures and status changes.`,
+            )
+            animate(btn, { scale: [1, 0.96, 1.03, 1] }, { spring: spring({ stiffness: 340, damping: 15 }) })
+        }}>
+        {enabled ? <span class="flex-row items-center gap-2"><Icon imageVector={Lucide.Check} contentDescription="Notifications enabled" class="w-5 h-5 text-[#07131A]" /><span class="text-white font-bold text-base">Notifications enabled</span></span> : <span class="flex-row items-center gap-2"><Icon imageVector={Lucide.Bell} contentDescription="Notifications" class="w-5 h-5 text-[#07131A]" /><span class="text-white font-bold text-base">Receive notifications</span></span>}
+    </div>
+}

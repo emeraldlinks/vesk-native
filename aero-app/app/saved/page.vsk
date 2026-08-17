@@ -1,0 +1,29 @@
+// Saved — flights bookmarked on the home screen and flight pages. The list
+// is derived from the aero.saved localStorage key, so it survives restarts
+// and stays in sync with every SaveButton.
+
+import { FlightCard } from '../components/flight-card.vsk'
+import { BottomNav } from '../components/bottom-nav.vsk'
+import { EmptyState } from '../components/empty-state.vsk'
+import { flights } from '../data/flights.ts'
+
+component Saved() {
+    const raw = localStorage.getItem('aero.saved')
+    const ids = raw ? `${raw}`.split(',') : []
+    const saved = flights.filter(f => ids.contains(`${f['id']}`))
+
+    <div class="w-full h-full flex-col bg-[#0A0F16]">
+        <div class="px-4 pt-4 pb-1">
+            <p class="text-white font-bold text-2xl tracking-tight">Saved</p>
+        </div>
+        <div class="flex-1 overflow-y-auto">
+            {saved.length === 0 && <EmptyState icon="saved" title="No saved flights" hint="Save flights to quickly find them later. Tap the bookmark on any flight card." />}
+            <div class="px-4 py-4 flex-col gap-3">
+                for (const f of saved) {
+                    <FlightCard flight={f} />
+                }
+            </div>
+        </div>
+        <BottomNav active="saved" />
+    </div>
+}

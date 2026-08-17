@@ -1,0 +1,105 @@
+// MapView — the grayscale map surface that anchors the home screen. The map
+// is a simulated dark airspace (no map SDK in the sample): landmass shapes,
+// two live route lines and five aircraft placed with fractional spacer rows,
+// so positions stay proportional on any screen width. The search pill and
+// map controls float above it as absolute overlays.
+
+import { animate, spring, inView, easeInOut } from 'motion'
+import { Lucide } from '@vesk/icons-lucide'
+import { Icon } from '@vesk/material3'
+import { FlightRoute } from './flight-route.vsk'
+import { flightById } from '../data/flights.ts'
+
+component MapView() {
+    const &[zoom] = track(1.0)
+    const &[mapBody] = track(null)
+    const &[compass] = track(null)
+    const &[planeA] = track(null)
+    const &[planeB] = track(null)
+    const &[planeC] = track(null)
+    const &[planeD] = track(null)
+    const &[planeE] = track(null)
+    const &[filterBtn] = track(null)
+    const tvf = flightById('tvf6474')
+    const ryr = flightById('ryr642n')
+
+    <div class="relative w-full h-[280px] rounded-3xl overflow-hidden bg-[#0B1017]">
+        <div ref={mapBody} class="absolute inset-0">
+            <div class="w-full h-full flex-col">
+                <div class="h-[14%]"></div>
+                <div class="w-full h-6 flex-row items-center">
+                    <div class="w-[24%]"></div>
+                    <span ref={planeA} class="rotate-[-30deg]"><Icon imageVector={Lucide.Plane} contentDescription="Aircraft" class="w-4 h-4 text-cyan-300" /></span>
+                </div>
+                <div class="h-[8%]"></div>
+                <div class="w-full h-6 flex-row items-center">
+                    <div class="w-[46%]"></div>
+                    <span ref={planeB} class="rotate-[20deg]"><Icon imageVector={Lucide.Plane} contentDescription="Aircraft" class="w-4 h-4 text-slate-200" /></span>
+                </div>
+                <div class="h-[10%]"></div>
+                <div class="w-full px-8 flex-row items-center gap-2">
+                    <span class="text-[11px] font-bold text-slate-500 w-8">ORY</span>
+                    <FlightRoute progress={tvf['progress']} />
+                    <span class="text-[11px] font-bold text-slate-500 w-8 text-right">DJE</span>
+                </div>
+                <div class="h-[9%]"></div>
+                <div class="w-full h-6 flex-row items-center">
+                    <div class="w-[58%]"></div>
+                    <span ref={planeC} class="rotate-[-20deg]"><Icon imageVector={Lucide.Plane} contentDescription="Aircraft" class="w-4 h-4 text-cyan-300" /></span>
+                </div>
+                <div class="h-[8%]"></div>
+                <div class="w-full h-6 flex-row items-center">
+                    <div class="w-[18%]"></div>
+                    <span ref={planeD} class="rotate-[35deg]"><Icon imageVector={Lucide.Plane} contentDescription="Aircraft" class="w-4 h-4 text-slate-200" /></span>
+                </div>
+                <div class="h-[6%]"></div>
+                <div class="w-full px-8 flex-row items-center gap-2">
+                    <span class="text-[11px] font-bold text-slate-500 w-8">BVA</span>
+                    <FlightRoute progress={ryr['progress']} />
+                    <span class="text-[11px] font-bold text-slate-500 w-8 text-right">BCN</span>
+                </div>
+                <div class="h-[7%]"></div>
+                <div class="w-full h-6 flex-row items-center">
+                    <div class="w-[74%]"></div>
+                    <span ref={planeE} class="rotate-[-15deg]"><Icon imageVector={Lucide.Plane} contentDescription="Aircraft" class="w-4 h-4 text-cyan-300" /></span>
+                </div>
+                <div class="h-[10%]"></div>
+            </div>
+        </div>
+
+        <div class="absolute left-4 top-4 right-4">
+            <NavLink href="/search">
+                <div class="h-12 rounded-full bg-[#1B2432] shadow-lg flex-row items-center px-4 gap-2.5">
+                    <Icon imageVector={Lucide.Search} contentDescription="Search" class="w-5 h-5 text-slate-400" />
+                    <span class="text-sm text-slate-400 flex-1">Search flight or aircraft</span>
+                    <div ref={filterBtn} class="w-8 h-8 rounded-full bg-[#243044] flex items-center justify-center"
+                        onClick={() => animate(filterBtn, { scale: [1, 0.85, 1] }, { spring: spring({ stiffness: 400, damping: 15 }) })}>
+                        <Icon imageVector={Lucide.SlidersHorizontal} contentDescription="Filter" class="w-4 h-4 text-slate-300" />
+                    </div>
+                </div>
+            </NavLink>
+        </div>
+
+        <div class="absolute right-4 bottom-4 flex-col items-center gap-2.5">
+            <div ref={compass} class="w-11 h-11 rounded-full bg-[#1B2432] shadow-lg flex items-center justify-center">
+                <Icon imageVector={Lucide.Compass} contentDescription="Compass" class="w-5 h-5 text-cyan-300" />
+            </div>
+            <div class="w-11 rounded-full bg-[#1B2432] shadow-lg flex-col items-center overflow-hidden">
+                <button class="w-11 h-11 flex items-center justify-center" onClick={() => { zoom = Math.min(1.6, zoom + 0.25); animate(mapBody, { scale: zoom }, { spring: spring({ stiffness: 260, damping: 20 }) }) }}>
+                    <Icon imageVector={Lucide.Plus} contentDescription="Zoom in" class="w-5 h-5 text-white" />
+                </button>
+                <div class="w-8 h-px bg-[#0B1017]"></div>
+                <button class="w-11 h-11 flex items-center justify-center" onClick={() => { zoom = Math.max(0.6, zoom - 0.25); animate(mapBody, { scale: zoom }, { spring: spring({ stiffness: 260, damping: 20 }) }) }}>
+                    <Icon imageVector={Lucide.Minus} contentDescription="Zoom out" class="w-5 h-5 text-white" />
+                </button>
+            </div>
+        </div>
+
+        {inView(compass, () => animate(compass, { rotate: [0, 360] }, { duration: 20, repeat: Infinity, ease: 'linear' }), { once: true })}
+        {inView(planeA, () => animate(planeA, { x: [0, 4, 0], y: [0, -5, 0] }, { duration: 5, repeat: Infinity, repeatType: 'reverse', ease: easeInOut }), { once: true })}
+        {inView(planeB, () => animate(planeB, { x: [0, -6, 0], y: [0, 4, 0] }, { duration: 6, repeat: Infinity, repeatType: 'reverse', ease: easeInOut }), { once: true })}
+        {inView(planeC, () => animate(planeC, { x: [0, 5, 0], y: [0, -4, 0] }, { duration: 4.5, repeat: Infinity, repeatType: 'reverse', ease: easeInOut }), { once: true })}
+        {inView(planeD, () => animate(planeD, { x: [0, -4, 0], y: [0, 5, 0] }, { duration: 7, repeat: Infinity, repeatType: 'reverse', ease: easeInOut }), { once: true })}
+        {inView(planeE, () => animate(planeE, { x: [0, 3, 0], y: [0, -6, 0] }, { duration: 5.5, repeat: Infinity, repeatType: 'reverse', ease: easeInOut }), { once: true })}
+    </div>
+}

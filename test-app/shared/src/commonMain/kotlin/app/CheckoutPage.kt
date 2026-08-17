@@ -239,21 +239,27 @@ fun CheckoutPage(content: @Composable () -> Unit = {}) {
 			NavLink(props = NavLinkProps(href = "/"))
 				{
 					Column(
-						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).padding(horizontal = 20.dp).padding(vertical = 12.dp),
 					) {
-						Text(
-							text = "Continue shopping",
-						)
+						Column(
+							modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).padding(horizontal = 20.dp).padding(vertical = 12.dp),
+						) {
+							Text(
+								text = "Continue shopping",
+							)
+						}
 					}
 				}
 			NavLink(props = NavLinkProps(href = "/shop"))
 				{
 					Column(
-						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF2563EB)).padding(horizontal = 20.dp).padding(vertical = 12.dp),
 					) {
-						Text(
-							text = "Track order",
-						)
+						Column(
+							modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF2563EB)).padding(horizontal = 20.dp).padding(vertical = 12.dp),
+						) {
+							Text(
+								text = "Track order",
+							)
+						}
 					}
 				}
 		}

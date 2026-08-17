@@ -1,0 +1,38 @@
+// Home — the main screen: map with floating search + controls, the
+// animated trending/near segmented control, the flight card list and the
+// bottom navigation.
+
+import { animate, spring, inView } from 'motion'
+import { MapView } from './components/map-view.vsk'
+import { FlightCard } from './components/flight-card.vsk'
+import { BottomNav } from './components/bottom-nav.vsk'
+import { trendingFlights, nearFlights } from './data/flights.ts'
+
+component Home() {
+    const &[segment] = track('trending')
+    const &[pill] = track(null)
+    const list = segment === 'trending' ? trendingFlights : nearFlights
+
+    <div class="w-full h-full flex-col bg-[#0A0F16]">
+        <div class="flex-1 overflow-y-auto">
+            <div class="px-4 pt-4 pb-2">
+                <MapView />
+            </div>
+
+            <div class="px-4 pt-2">
+                <div class="flex-row bg-[#10161F] rounded-full p-1">
+                    {segment === 'trending' ? <button class="flex-1 relative flex items-center justify-center py-2.5" onClick={() => { segment = 'trending' }}><div ref={pill} class="absolute inset-0 rounded-full bg-white"></div><span class="text-sm font-semibold text-[#0A0F16]">Trending flights</span></button> : <button class="flex-1 relative flex items-center justify-center py-2.5" onClick={() => { segment = 'trending' }}><span class="text-sm font-medium text-slate-400">Trending flights</span></button>}
+                    {segment === 'near' ? <button class="flex-1 relative flex items-center justify-center py-2.5" onClick={() => { segment = 'near' }}><div ref={pill} class="absolute inset-0 rounded-full bg-white"></div><span class="text-sm font-semibold text-[#0A0F16]">Flights near you</span></button> : <button class="flex-1 relative flex items-center justify-center py-2.5" onClick={() => { segment = 'near' }}><span class="text-sm font-medium text-slate-400">Flights near you</span></button>}
+                </div>
+                {inView(pill, () => animate(pill, { scale: [0.85, 1.04, 1], opacity: [0, 1] }, { spring: spring({ stiffness: 340, damping: 16 }) }), { once: true })}
+            </div>
+
+            <div class="px-4 py-4 flex-col gap-3">
+                for (const f of list) {
+                    <FlightCard flight={f} />
+                }
+            </div>
+        </div>
+        <BottomNav active="home" />
+    </div>
+}

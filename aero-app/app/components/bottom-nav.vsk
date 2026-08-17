@@ -1,0 +1,27 @@
+// BottomNav — the four-tab bar used by the main screens. The active tab gets
+// a white circular pill behind its icon; labels stay tiny so the bar reads as
+// icon-first, like the reference.
+
+import { Lucide } from '@vesk/icons-lucide'
+import { Icon } from '@vesk/material3'
+
+component BottomNav(props: { active: string }) {
+    <div class="w-full flex-row items-center justify-between px-8 py-2.5 bg-[#0A0F16] border-t border-[#1B2432]">
+        <NavLink href="/" class="flex-1 flex-col items-center gap-0.5">
+            {props.active === 'home' ? <div class="w-11 h-11 rounded-full bg-white flex items-center justify-center"><Icon imageVector={Lucide.House} contentDescription="Home" class="w-5 h-5 text-[#0A0F16]" /></div> : <div class="w-11 h-11 rounded-full flex items-center justify-center"><Icon imageVector={Lucide.House} contentDescription="Home" class="w-5 h-5 text-slate-500" /></div>}
+            <span class="text-[10px] text-slate-500">Home</span>
+        </NavLink>
+        <NavLink href="/search" class="flex-1 flex-col items-center gap-0.5">
+            {props.active === 'search' ? <div class="w-11 h-11 rounded-full bg-white flex items-center justify-center"><Icon imageVector={Lucide.Search} contentDescription="Search" class="w-5 h-5 text-[#0A0F16]" /></div> : <div class="w-11 h-11 rounded-full flex items-center justify-center"><Icon imageVector={Lucide.Search} contentDescription="Search" class="w-5 h-5 text-slate-500" /></div>}
+            <span class="text-[10px] text-slate-500">Search</span>
+        </NavLink>
+        <NavLink href="/saved" class="flex-1 flex-col items-center gap-0.5">
+            {props.active === 'saved' ? <div class="w-11 h-11 rounded-full bg-white flex items-center justify-center"><Icon imageVector={Lucide.Heart} contentDescription="Saved" class="w-5 h-5 text-[#0A0F16]" /></div> : <div class="w-11 h-11 rounded-full flex items-center justify-center"><Icon imageVector={Lucide.Heart} contentDescription="Saved" class="w-5 h-5 text-slate-500" /></div>}
+            <span class="text-[10px] text-slate-500">Saved</span>
+        </NavLink>
+        <NavLink href="/profile" class="flex-1 flex-col items-center gap-0.5">
+            {props.active === 'profile' ? <div class="w-11 h-11 rounded-full bg-white flex items-center justify-center"><Icon imageVector={Lucide.User} contentDescription="Profile" class="w-5 h-5 text-[#0A0F16]" /></div> : <div class="w-11 h-11 rounded-full flex items-center justify-center"><Icon imageVector={Lucide.User} contentDescription="Profile" class="w-5 h-5 text-slate-500" /></div>}
+            <span class="text-[10px] text-slate-500">Profile</span>
+        </NavLink>
+    </div>
+}
