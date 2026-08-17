@@ -291,6 +291,12 @@ export class Js2Kt {
   /** JS-visible library exports (`import { X } from '@vesk/...'`): constructors
    *  and enums with typed signatures, resolved by the JS name. */
   libraryExports = new Map<string, LibExportSig>();
+  /** Member surface of imported library objects: for each imported object
+   *  export (e.g. `Lucide` from '@vesk/icons-lucide'), the full export surface
+   *  of its library so `Lucide.AArrowDown` member reads can resolve the
+   *  Kotlin extension property and import it (extension properties only
+   *  resolve with their top-level import in scope). */
+  libraryMemberExports = new Map<string, Map<string, LibExportSig>>();
   /** Names imported from 'motion' (motion.dev) that map to the app runtime's
    *  motion* helpers / easing values. */
   motionExports = new Set<string>();
@@ -665,6 +671,17 @@ export class Js2Kt {
           return `error("vesk: unknown '${object.name}' member '${member}'")`;
         }
         return `${this.id(object.name as string)}.${this.id(member)}`;
+      }
+      // Imported library objects (e.g. `Lucide` from '@vesk/icons-lucide')
+      // expose icons as Kotlin extension properties: `Lucide.AArrowDown`
+      // only resolves with the extension's top-level import in scope, so the
+      // member read imports it here (`import com.composables.icons.lucide.AArrowDown`).
+      const members = this.libraryMemberExports.get(object.name as string);
+      if (members) {
+        const memberSig = members.get(prop.name as string);
+        if (memberSig?.qualified && memberSig.qualified !== lib?.qualified) {
+          this.libImports.add(`import ${memberSig.qualified}`);
+        }
       }
     }
     const obj = this.expr(object);

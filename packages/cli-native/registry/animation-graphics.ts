@@ -5,6 +5,12 @@
 
 export declare interface AnimatedImageVector {}
 
+/**
+
+ * AnimatedImageVector — public constructor in animation-graphics 1.6.8: AnimatedImageVector(imageVector, targets). AnimatedVectorTarget is a sealed interface; instances also come from XML vector resources via loadAnimatedVectorResource(theme, resources, id) + rememberAnimatedVectorPainter.
+
+ */
+
 export declare function AnimatedImageVector(props: {
     imageVector: any;
     targets: Array<any>;

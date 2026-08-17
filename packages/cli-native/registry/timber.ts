@@ -3,4 +3,20 @@
 // Regenerate with packages/cli-native/src/metadata/regenerate-typings.ts.
 // The compiler resolves these names from the .vsklib record, not this file.
 
+/**
+
+ * Timber logging. Static surface: Timber.plant(Timber.DebugTree()), Timber.tag('x'), Timber.d/i/w/e('msg', ...), Timber.treeCount(). Writes to Android logcat.
+
+ */
+
 export declare const Timber: any;
+
+export declare interface DebugTree {}
+
+/**
+
+ * Timber.DebugTree() — the debug tree to plant for logcat output.
+
+ */
+
+export declare function DebugTree(): DebugTree;

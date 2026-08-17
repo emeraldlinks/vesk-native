@@ -3,4 +3,20 @@
 // Regenerate with packages/cli-native/src/metadata/regenerate-typings.ts.
 // The compiler resolves these names from the .vsklib record, not this file.
 
+/**
+
+ * Retrofit REST client. Retrofit.Builder().baseUrl(url).build() constructs the client; Retrofit.baseUrl() / callAdapterFactories() read it back.
+
+ */
+
 export declare const Retrofit: any;
+
+export declare interface Builder {}
+
+/**
+
+ * Retrofit.Builder() — builder (public ctor); baseUrl(String), build().
+
+ */
+
+export declare function Builder(): Builder;

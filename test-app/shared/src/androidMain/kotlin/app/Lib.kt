@@ -36,6 +36,17 @@ import co.yml.charts.ui.linechart.model.LinePlotData
 import coil.compose.AsyncImage
 import coil3.compose.AsyncImage
 import com.bumptech.glide.integration.compose.GlideImage
+import com.composables.icons.lucide.Bell
+import com.composables.icons.lucide.Heart
+import com.composables.icons.lucide.House
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Mail
+import com.composables.icons.lucide.Search
+import com.composables.icons.lucide.Settings
+import com.composables.icons.lucide.ShoppingCart
+import com.composables.icons.lucide.Smile
+import com.composables.icons.lucide.Star
+import com.composables.icons.lucide.ThumbsUp
 import com.google.gson.Gson
 import com.google.gson.JsonParser
 import com.google.zxing.BarcodeFormat
@@ -51,12 +62,14 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
+import retrofit2.Retrofit.Builder
 import timber.log.Timber
 import timber.log.Timber.DebugTree
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
@@ -908,6 +921,87 @@ fun Lib(content: @Composable () -> Unit = {}) {
 				}
 				Text(
 					text = "All 49 Icons.Default (filled) vectors from material-icons-core 1.6.8.",
+					modifier = Modifier.fillMaxWidth(),
+					style = TextStyle(color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, lineHeight = 16.sp),
+				)
+			}
+		}
+		Column(
+			modifier = Modifier.fillMaxWidth(),
+		) {
+			Column(
+				modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surface).padding(16.dp),
+				verticalArrangement = Arrangement.spacedBy(12.dp),
+			) {
+				Text(
+					text = ("28. icons-lucide — 1665 icons").uppercase(),
+					modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
+					style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.2.sp, color = MaterialTheme.colorScheme.onSurfaceVariant),
+				)
+				Row(
+					modifier = Modifier.fillMaxWidth(),
+					verticalAlignment = Alignment.CenterVertically,
+					horizontalArrangement = Arrangement.spacedBy(12.dp),
+				) {
+					Icon(
+						imageVector = Lucide.House,
+						contentDescription = "home",
+						modifier = Modifier.width(32.dp).height(32.dp),
+					)
+					Icon(
+						imageVector = Lucide.Search,
+						contentDescription = "search",
+						modifier = Modifier.width(32.dp).height(32.dp),
+					)
+					Icon(
+						imageVector = Lucide.Heart,
+						contentDescription = "heart",
+						modifier = Modifier.width(32.dp).height(32.dp),
+					)
+					Icon(
+						imageVector = Lucide.Star,
+						contentDescription = "star",
+						modifier = Modifier.width(32.dp).height(32.dp),
+					)
+					Icon(
+						imageVector = Lucide.Settings,
+						contentDescription = "settings",
+						modifier = Modifier.width(32.dp).height(32.dp),
+					)
+					Icon(
+						imageVector = Lucide.ShoppingCart,
+						contentDescription = "cart",
+						modifier = Modifier.width(32.dp).height(32.dp),
+					)
+				}
+				Row(
+					modifier = Modifier.fillMaxWidth(),
+					verticalAlignment = Alignment.CenterVertically,
+					horizontalArrangement = Arrangement.spacedBy(12.dp),
+				) {
+					Icon(
+						imageVector = Lucide.Smile,
+						contentDescription = "smile",
+						modifier = Modifier.width(32.dp).height(32.dp),
+					)
+					Icon(
+						imageVector = Lucide.ThumbsUp,
+						contentDescription = "thumbs up",
+						modifier = Modifier.width(32.dp).height(32.dp),
+					)
+					Icon(
+						imageVector = Lucide.Mail,
+						contentDescription = "mail",
+						modifier = Modifier.width(32.dp).height(32.dp),
+					)
+					Icon(
+						imageVector = Lucide.Bell,
+						contentDescription = "bell",
+						modifier = Modifier.width(32.dp).height(32.dp),
+					)
+				}
+				Text(
+					text = "Lucide icons from com.composables:icons-lucide-cmp:2.2.1, read as extension properties on Lucide.",
 					modifier = Modifier.fillMaxWidth(),
 					style = TextStyle(color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, lineHeight = 16.sp),
 				)

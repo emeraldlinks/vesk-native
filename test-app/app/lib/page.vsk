@@ -22,6 +22,7 @@ import { Retrofit } from '@vesk/retrofit'
 import { Timber, DebugTree } from '@vesk/timber'
 import { ChartScrollState } from '@vesk/vico'
 import { Icons, Home, Search, Favorite, Star, Settings, ShoppingCart, Face, ThumbUp, Email, Notifications } from '@vesk/material-icons'
+import { Lucide } from '@vesk/icons-lucide'
 import { Icon } from '@vesk/material3'
 
 component Lib() {
@@ -336,6 +337,27 @@ component Lib() {
                     <Icon imageVector={Icons.Filled.Notifications} contentDescription="notifications" class="w-8 h-8 text-gray-700" />
                 </div>
                 <p class="text-gray-600 text-xs">All 49 Icons.Default (filled) vectors from material-icons-core 1.6.8.</p>
+            </div>
+        </section>
+
+        <section>
+            <div class="bg-white rounded-2xl p-4 flex-col gap-3">
+                <h2 class="text-sm font-bold uppercase tracking-wide text-gray-700 mb-1">28. icons-lucide — 1665 icons</h2>
+                <div class="flex gap-3 items-center">
+                    <Icon imageVector={Lucide.House} contentDescription="home" class="w-8 h-8 text-gray-700" />
+                    <Icon imageVector={Lucide.Search} contentDescription="search" class="w-8 h-8 text-gray-700" />
+                    <Icon imageVector={Lucide.Heart} contentDescription="heart" class="w-8 h-8 text-red-500" />
+                    <Icon imageVector={Lucide.Star} contentDescription="star" class="w-8 h-8 text-amber-500" />
+                    <Icon imageVector={Lucide.Settings} contentDescription="settings" class="w-8 h-8 text-gray-700" />
+                    <Icon imageVector={Lucide.ShoppingCart} contentDescription="cart" class="w-8 h-8 text-gray-700" />
+                </div>
+                <div class="flex gap-3 items-center">
+                    <Icon imageVector={Lucide.Smile} contentDescription="smile" class="w-8 h-8 text-gray-700" />
+                    <Icon imageVector={Lucide.ThumbsUp} contentDescription="thumbs up" class="w-8 h-8 text-gray-700" />
+                    <Icon imageVector={Lucide.Mail} contentDescription="mail" class="w-8 h-8 text-gray-700" />
+                    <Icon imageVector={Lucide.Bell} contentDescription="bell" class="w-8 h-8 text-gray-700" />
+                </div>
+                <p class="text-gray-600 text-xs">Lucide icons from com.composables:icons-lucide-cmp:2.2.1, read as extension properties on Lucide.</p>
             </div>
         </section>
     </div>

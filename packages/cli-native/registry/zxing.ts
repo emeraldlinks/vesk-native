@@ -23,4 +23,10 @@ export declare interface QRCodeReader {}
 
 export declare function QRCodeReader(): QRCodeReader;
 
+/**
+
+ * Barcode/QR format enum. Pass BarcodeFormat.QR_CODE to QRCodeWriter().encode().
+
+ */
+
 export declare const BarcodeFormat: any;

@@ -83,6 +83,7 @@ implementation("com.jakewharton.timber:timber:5.0.1")
 implementation("com.patrykandpatrick.vico:compose:1.14.0")
 implementation("co.yml:ycharts:2.1.0")
 implementation("com.google.zxing:core:3.5.3")
+implementation("com.composables:icons-lucide-cmp:2.2.1")
         }
     }
 }

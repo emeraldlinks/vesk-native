@@ -2,6 +2,7 @@
 // Type surface for the `@vesk/shimmer` virtual module (Compose Shimmer 1.3.1).
 // Regenerate with packages/cli-native/src/metadata/regenerate-typings.ts.
 // The compiler resolves these names from the .vsklib record, not this file.
+// Markup tags: <Shimmer>.
 
 export declare interface Shimmer {}
 

@@ -657,6 +657,14 @@ actual fun veskBundledMediaUrl(name: String): String {
 }
 
 
+// The hosting Activity for window-level work (screenshot capture).
+private fun findActivity(context: Context): Activity? = when (context) {
+    is Activity -> context
+    is ContextWrapper -> findActivity(context.baseContext)
+    else -> null
+}
+
+
 // Shared device primitives: result naming, camera capture URIs, notifications,
 // and the tap registry. They live outside any composable so the script API
 // (option A state / option B callbacks) and the declarative elements (option
@@ -1965,13 +1973,6 @@ actual class DeviceApi internal constructor(
             f.absolutePath
         }.getOrNull()
     }
-}
-
-// The hosting Activity for window-level work (screenshot capture).
-private fun findActivity(context: Context): Activity? = when (context) {
-    is Activity -> context
-    is ContextWrapper -> findActivity(context.baseContext)
-    else -> null
 }
 
 // Best-effort MIME type from a file path (share sheet).

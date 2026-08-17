@@ -612,10 +612,11 @@ class Emitter {
   motionExports: Set<string>;
   refCells: Set<string>;
 
-  constructor(err: KtErrors, tracked: Map<string, TrackedInfo>, componentsWithoutProps?: Set<string>, customClasses?: Map<string, ModifierParts>, imageResources?: Map<string, string>, mediaResources?: Map<string, string>, libraryTags?: Map<string, VskLibTag>, libImports: Set<string> = new Set(), componentNames?: Set<string>, vsklibRegistry?: Map<string, VskLibSurface>, libraryExports: Map<string, LibExportSig> = new Map(), motionExports: Set<string> = new Set(), refCells: Set<string> = new Set(), cellTypes: Map<string, string> = new Map()) {
+  constructor(err: KtErrors, tracked: Map<string, TrackedInfo>, componentsWithoutProps?: Set<string>, customClasses?: Map<string, ModifierParts>, imageResources?: Map<string, string>, mediaResources?: Map<string, string>, libraryTags?: Map<string, VskLibTag>, libImports: Set<string> = new Set(), componentNames?: Set<string>, vsklibRegistry?: Map<string, VskLibSurface>, libraryExports: Map<string, LibExportSig> = new Map(), libraryMemberExports: Map<string, Map<string, LibExportSig>> = new Map(), motionExports: Set<string> = new Set(), refCells: Set<string> = new Set(), cellTypes: Map<string, string> = new Map()) {
     this.err = err;
     this.j2k = new Js2Kt(err, cellTypes);
     this.j2k.libraryExports = libraryExports;
+    this.j2k.libraryMemberExports = libraryMemberExports;
     this.j2k.motionExports = motionExports;
     this.j2k.libImports = libImports;
     this.tracked = tracked;
@@ -1730,24 +1731,25 @@ function emitVskHeader(
   vsklibRegistry: Map<string, VskLibSurface> | undefined,
   err: KtErrors,
   libExportImports: Set<string> = new Set(),
-): { imports: string[]; decls: string[]; libraryTags: Map<string, VskLibTag>; libraryExports: Map<string, LibExportSig>; motionExports: Set<string>; libraryIds: Set<string>; vskTargets: Set<string>; jsTsTargets: Set<string>; npmTargets: Set<string> } {
+): { imports: string[]; decls: string[]; libraryTags: Map<string, VskLibTag>; libraryExports: Map<string, LibExportSig>; libraryMemberExports: Map<string, Map<string, LibExportSig>>; motionExports: Set<string>; libraryIds: Set<string>; vskTargets: Set<string>; jsTsTargets: Set<string>; npmTargets: Set<string> } {
   const imports: string[] = [];
   const decls: string[] = [];
   const aliases: string[] = [];
   const libraryTags = new Map<string, VskLibTag>();
   const libraryExports = new Map<string, LibExportSig>();
+  const libraryMemberExports = new Map<string, Map<string, LibExportSig>>();
   const motionExports = new Set<string>();
   const libraryIds = new Set<string>();
   const vskTargets = new Set<string>();
   const jsTsTargets = new Set<string>();
   const npmTargets = new Set<string>();
   const { header } = splitVskHeader(source);
-  if (!header.trim()) return { imports, decls, libraryTags, libraryExports, motionExports, libraryIds, vskTargets, jsTsTargets, npmTargets };
+  if (!header.trim()) return { imports, decls, libraryTags, libraryExports, libraryMemberExports, motionExports, libraryIds, vskTargets, jsTsTargets, npmTargets };
 
   const { symbols, error } = collectHeaderSymbols(header);
   if (error) {
     err.warn(null, error);
-    return { imports, decls, libraryTags, libraryExports, motionExports, libraryIds, vskTargets, jsTsTargets, npmTargets };
+    return { imports, decls, libraryTags, libraryExports, libraryMemberExports, motionExports, libraryIds, vskTargets, jsTsTargets, npmTargets };
   }
   for (const e of symbols.expressions) err.warn(e, `top-level expression statements are not supported in a .vsk script header`);
   const slug = slugs?.get(fileRel) ?? slugFor(fileRel);
@@ -1819,6 +1821,13 @@ function emitVskHeader(
               // fully-qualified name and made callable in the script scope.
               imports.push(`import ${sig.qualified}`);
               libraryExports.set(imported, sig);
+              // Imported object exports (e.g. `Lucide`) expose their members
+              // as Kotlin extension properties; remember the library's full
+              // export surface so `Lucide.AArrowDown` member reads can emit
+              // the extension's top-level import (`import ...AArrowDown`).
+              if (!sig.isEnum && !sig.isConstructor) {
+                libraryMemberExports.set(imported, lib.exports);
+              }
             } else if (lib.exports.has(imported)) {
               errors.push(`import '${imported}' from '@vesk/${libId}': this export has no JS-callable binding yet (markup tags: ${tagNames.map((t) => `<${t}>`).join(', ') || 'none'})`);
             } else {
@@ -1878,7 +1887,7 @@ function emitVskHeader(
   }
 
   imports.push(...aliases);
-  return { imports, decls, libraryTags, libraryExports, motionExports, libraryIds, vskTargets, jsTsTargets, npmTargets };
+  return { imports, decls, libraryTags, libraryExports, libraryMemberExports, motionExports, libraryIds, vskTargets, jsTsTargets, npmTargets };
 }
 
 export interface ProjectModuleCompile {
@@ -2043,6 +2052,7 @@ function runCompile(source: string, filename: string, options: CompileOptions): 
   const libImports = new Set<string>();
   let fileLibraryTags: Map<string, VskLibTag> | undefined;
   const fileLibraryExports = new Map<string, LibExportSig>();
+  const fileLibraryMemberExports = new Map<string, Map<string, LibExportSig>>();
   const fileMotionExports = new Set<string>();
   const fileLibraryIds = new Set<string>();
   const fileVskTargets = new Set<string>();
@@ -2067,6 +2077,7 @@ function runCompile(source: string, filename: string, options: CompileOptions): 
       }
     }
     for (const [name, sig] of headerOut.libraryExports) fileLibraryExports.set(name, sig);
+    for (const [name, members] of headerOut.libraryMemberExports) fileLibraryMemberExports.set(name, members);
     for (const name of headerOut.motionExports) fileMotionExports.add(name);
     for (const id of headerOut.libraryIds) fileLibraryIds.add(id);
     for (const t of headerOut.vskTargets) fileVskTargets.add(t);
@@ -2140,7 +2151,7 @@ function runCompile(source: string, filename: string, options: CompileOptions): 
       resolvedClasses = new Map(customClasses);
       for (const [k, v] of own) resolvedClasses.set(k, v); // scoped wins over global
     }
-    const em = new Emitter(err, tracked, options.componentsWithoutProps, resolvedClasses, options.imageResources, options.mediaResources, fileLibraryTags, libImports, options.componentNames, options.vsklibRegistry, fileLibraryExports, fileMotionExports, refCells, cellTypes);
+    const em = new Emitter(err, tracked, options.componentsWithoutProps, resolvedClasses, options.imageResources, options.mediaResources, fileLibraryTags, libImports, options.componentNames, options.vsklibRegistry, fileLibraryExports, fileLibraryMemberExports, fileMotionExports, refCells, cellTypes);
 
     const propsArg = propsClass ? `props: ${comp.name}Props${propsParamDefault ? ` = ${comp.name}Props()` : ''}` : '';
     const params = [propsArg, 'content: @Composable () -> Unit = {}'].filter(Boolean).join(', ');

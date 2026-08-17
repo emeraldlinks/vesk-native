@@ -51,6 +51,7 @@ const CANDIDATES: Cand[] = [
   { id: 'material-icons-extended', group: 'androidx.compose.material', artifact: 'material-icons-extended', version: '1.6.8', category: 'icons', name: 'Material Icons Extended', description: 'Extended Material icon set (thousands of icons).' },
   { id: 'icons-feather', group: 'br.com.devsrsouza.compose.icons', artifact: 'feather', version: '1.0.0', category: 'icons', name: 'Compose Icons — Feather', description: 'Feather icon pack as composable ImageVectors.' },
   { id: 'icons-font-awesome', group: 'br.com.devsrsouza.compose.icons', artifact: 'font-awesome', version: '1.0.0', category: 'icons', name: 'Compose Icons — Font Awesome', description: 'Font Awesome icon pack as composable ImageVectors.' },
+  { id: 'icons-lucide', group: 'com.composables', artifact: 'icons-lucide-cmp', version: '2.2.1', category: 'icons', name: 'Compose Icons — Lucide', description: 'Lucide icon pack (1665 icons) as ImageVector extension properties on Lucide.' },
 
   // ----- device / native SDKs -----
   { id: 'play-services-location', group: 'com.google.android.gms', artifact: 'play-services-location', version: '21.3.0', category: 'device', name: 'Play Services Location', description: 'FusedLocationProviderClient, geofences, activity recognition.' },
