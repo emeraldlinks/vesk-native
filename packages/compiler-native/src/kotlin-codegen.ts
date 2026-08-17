@@ -91,6 +91,11 @@ function inferTrackCellType(init: string): string | null {
   if (inner.length === 0) return null;
   let digit = false;
   let float = false;
+  const first = inner[0] ?? '';
+  // String-literal inits (track(''), track("x"), track(`y`)) make the cell a
+  // MutableState<String>: writes get jsString() coercion so dynamic values
+  // (jsIndex, params, user input) assign with JS String() semantics.
+  if (first === "'" || first === '"' || first === '`') return 'String';
   for (let i = 0; i < inner.length; i++) {
     const c = inner[i]!;
     if (c >= '0' && c <= '9') {
@@ -149,6 +154,7 @@ function imageLines(node: StaticNode, em: Emitter, level: number, parentAxis: 'c
   emitTailwindWarnings(parts, em);
   if (parentAxis === null) stripScopeMods(parts);
   if (!boxScope) parts.posMod = [];
+  else stripWeight(parts);
   let modifier = buildModifier(parts);
   modifier = prependModifier(modifier, extraModifier);
 
@@ -227,6 +233,7 @@ function mediaLines(node: StaticNode, em: Emitter, level: number, parentAxis: 'c
   emitTailwindWarnings(parts, em);
   if (parentAxis === null) stripScopeMods(parts);
   if (!boxScope) parts.posMod = [];
+  else stripWeight(parts);
   let modifier = buildModifier(parts);
   if (node.tag === 'video' && parts.size.length === 0) modifier = `${modifier ? modifier + '.' : ''}fillMaxWidth().aspectRatio(16f / 9f)`;
   modifier = prependModifier(modifier, extraModifier);
@@ -342,6 +349,7 @@ function deviceApiLines(node: StaticNode, em: Emitter, level: number, extraModif
   emitTailwindWarnings(parts, em);
   stripScopeMods(parts);
   if (!boxScope) parts.posMod = [];
+  else stripWeight(parts);
   let modifier = buildModifier(parts);
   modifier = prependModifier(modifier, extraModifier);
   const attrs = em.dynamicAttrs(node);
@@ -920,7 +928,14 @@ function hasExplicitWidth(classes: string[]): boolean {
 }
 
 function fillMaxWidth(classes: string[], tag: string, parentAxis: 'column' | 'row' | null): boolean {
-  return parentAxis !== 'row' && BLOCK_TAGS.has(tag) && !hasExplicitWidth(classes);
+  if (parentAxis === 'row') return false;
+  if (!BLOCK_TAGS.has(tag)) return false;
+  // Inline-level elements stay content-sized like the web: an inline div
+  // never stretches to the column width.
+  for (const c of classes) {
+    if (c === 'inline' || c === 'inline-block' || c === 'inline-flex') return false;
+  }
+  return !hasExplicitWidth(classes);
 }
 
 function prependFill(modifier: string | null): string | null {
@@ -936,6 +951,13 @@ function stripScopeMods(parts: ModifierParts): void {
   parts.align = parts.align.filter((s) => !s.startsWith('align(') && !s.startsWith('fillMax'));
 }
 
+// Modifier.weight() requires a Row/Column scope; Box content has none, and
+// flex-grow on a non-flex parent is a web no-op, so drop the weight instead
+// of emitting Kotlin that does not compile.
+function stripWeight(parts: ModifierParts): void {
+  parts.size = parts.size.filter((s) => !s.startsWith('weight('));
+}
+
 function emitTailwindWarnings(parts: ModifierParts, em: Emitter): void {
   if (parts.warnings) {
     for (const cls of parts.warnings) {
@@ -949,6 +971,7 @@ function modifierFor(classes: string[], em: Emitter, parentAxis: 'column' | 'row
   emitTailwindWarnings(parts, em);
   if (parentAxis === null) stripScopeMods(parts);
   if (!boxScope) parts.posMod = [];
+  else stripWeight(parts);
   let modifier = buildModifier(parts);
   if (fillWidth) modifier = prependFill(modifier);
   return prependModifier(modifier, extraModifier);
@@ -1011,6 +1034,7 @@ function makeTextCall(text: string, classes: string[], level: number, em: Emitte
   emitTailwindWarnings(parts, em);
   if (parentAxis === null || flowParent) stripScopeMods(parts);
   if (!boxScope) parts.posMod = [];
+  else stripWeight(parts);
   let modifier = buildModifier(parts);
   if (fillWidth) modifier = prependFill(modifier);
   modifier = prependModifier(modifier, extraModifier);
@@ -1038,9 +1062,9 @@ function makeTextCall(text: string, classes: string[], level: number, em: Emitte
 // become the modifier; unknown props are hard errors so a typo never silently
 // miscompiles. Children render into a trailing content lambda when the binding
 // is a container.
-function libraryTagLines(node: ComponentCall, em: Emitter, level: number, parentAxis: 'column' | 'row' | null = null, flowParent = false, boxScope = false): string[] {
+function libraryTagLines(node: ComponentCall, em: Emitter, level: number, parentAxis: 'column' | 'row' | null = null, flowParent = false, boxScope = false, inVertScroll = false, inHorizScroll = false): string[] {
   const binding = em.libraryTags?.get(node.componentName);
-  if (!binding) return [componentCallLines(node, em, level, parentAxis, flowParent, boxScope)];
+  if (!binding) return [componentCallLines(node, em, level, parentAxis, flowParent, boxScope, inVertScroll, inHorizScroll)];
   for (const imp of binding.imports) {
     em.libImports.add(imp.startsWith('import ') ? imp : `import ${imp}`);
   }
@@ -1051,7 +1075,7 @@ function libraryTagLines(node: ComponentCall, em: Emitter, level: number, parent
   // can't be constructed from JS (the @Composable rememberShimmer factory is
   // the supported entry point), so the binding wraps children in the same way
   // a user would write `Modifier.shimmer(rememberShimmer(...))`.
-  if (binding.shimmer) return shimmerWrapperLines(node, em, level, parentAxis, flowParent, boxScope);
+  if (binding.shimmer) return shimmerWrapperLines(node, em, level, parentAxis, flowParent, boxScope, inVertScroll, inHorizScroll);
 
   const pad = '\t'.repeat(level);
   const padIn = '\t'.repeat(level + 1);
@@ -1092,7 +1116,7 @@ function libraryTagLines(node: ComponentCall, em: Emitter, level: number, parent
   if (binding.container && node.children.length > 0) {
     out.push(pad + `) {`);
     for (const child of node.children) {
-      out.push(...emitChild(child, em, level + 1, parentAxis, null, flowParent, boxScope));
+      out.push(...emitChild(child, em, level + 1, parentAxis, null, flowParent, boxScope, inVertScroll, inHorizScroll));
     }
     out.push(pad + `}`);
   } else {
@@ -1101,7 +1125,7 @@ function libraryTagLines(node: ComponentCall, em: Emitter, level: number, parent
   return out;
 }
 
-function shimmerWrapperLines(node: ComponentCall, em: Emitter, level: number, parentAxis: 'column' | 'row' | null = null, flowParent = false, boxScope = false): string[] {
+function shimmerWrapperLines(node: ComponentCall, em: Emitter, level: number, parentAxis: 'column' | 'row' | null = null, flowParent = false, boxScope = false, inVertScroll = false, inHorizScroll = false): string[] {
   const pad = '\t'.repeat(level);
   const padIn = '\t'.repeat(level + 1);
   const varName = `__shimmer${++em.shimmerCount}`;
@@ -1124,13 +1148,13 @@ function shimmerWrapperLines(node: ComponentCall, em: Emitter, level: number, pa
   out.push(padIn + `modifier = ${classMod ?? shimmerMod},`);
   out.push(pad + `) {`);
   for (const child of node.children) {
-    out.push(...emitChild(child, em, level + 1, parentAxis, null, flowParent, boxScope));
+    out.push(...emitChild(child, em, level + 1, parentAxis, null, flowParent, boxScope, inVertScroll, inHorizScroll));
   }
   out.push(pad + `}`);
   return out;
 }
 
-function componentCallLines(node: ComponentCall, em: Emitter, level: number, parentAxis: 'column' | 'row' | null = null, flowParent = false, boxScope = false): string {
+function componentCallLines(node: ComponentCall, em: Emitter, level: number, parentAxis: 'column' | 'row' | null = null, flowParent = false, boxScope = false, inVertScroll = false, inHorizScroll = false): string {
   const propArgs = node.props.map((p) => `${ktIdent(p.name)} = ${em.exprOf(p.value)}`);
   for (const sp of node.spreadProps) {
     em.err.warn(null, `spread props are not supported in component calls: ...${sp.raw}`);
@@ -1148,7 +1172,7 @@ function componentCallLines(node: ComponentCall, em: Emitter, level: number, par
   if (node.children.length > 0) {
     out.push(padIn + '{');
     for (const child of node.children) {
-      out.push(...emitChild(child, em, level + 2, parentAxis, null, flowParent, boxScope));
+      out.push(...emitChild(child, em, level + 2, parentAxis, null, flowParent, boxScope, inVertScroll, inHorizScroll));
     }
     out.push(padIn + '}');
   }
@@ -1182,7 +1206,7 @@ function dragModifier(node: StaticNode, em: Emitter): string | null {
   return m.length > 0 ? m : null;
 }
 
-function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: 'column' | 'row' | null, extraModifier: string | null = null, flowParent = false, boxScope = false): string[] {
+function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: 'column' | 'row' | null, extraModifier: string | null = null, flowParent = false, boxScope = false, inVertScroll = false, inHorizScroll = false): string[] {
   const dropMod = dragModifier(node, em);
   if (dropMod && extraModifier) extraModifier += dropMod;
   else if (dropMod) extraModifier = `Modifier${dropMod}`;
@@ -1198,6 +1222,26 @@ function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: '
   const info = elementInfo(node.tag);
   const classes = em.classList(node);
   if (isHidden(classes, em.customClasses)) return [];
+  // A vertical/horizontal scroll modifier makes this element's subtree an
+  // infinite-constraint environment in that axis: children are measured with
+  // unbounded max height/width, so nested same-axis scrollables and
+  // LazyColumns would crash. Propagate the unbounded axes down so lists
+  // render inline; a same-axis nested scroller is a hard error unless some
+  // ancestor pins the main-axis size (its own scroll content is always
+  // unbounded regardless).
+  const scrollParts = classify(classes, em.customClasses, elementAxis(classes), false);
+  const hasVertScroll = scrollParts.scroll.some((m) => m.startsWith('verticalScroll'));
+  const hasHorizScroll = scrollParts.scroll.some((m) => m.startsWith('horizontalScroll'));
+  const selfBoundVert = scrollParts.size.some((s) => s.startsWith('height(') || s.startsWith('heightIn(max =') || s.startsWith('size(') || s.startsWith('aspectRatio('));
+  const selfBoundHoriz = scrollParts.size.some((s) => s.startsWith('width(') || s.startsWith('widthIn(max =') || s.startsWith('size(') || s.startsWith('aspectRatio('));
+  const unboundedVert = inVertScroll && !selfBoundVert;
+  const unboundedHoriz = inHorizScroll && !selfBoundHoriz;
+  const childVert = hasVertScroll || unboundedVert;
+  const childHoriz = hasHorizScroll || unboundedHoriz;
+  if ((hasVertScroll && unboundedVert) || (hasHorizScroll && unboundedHoriz)) {
+    const axisTxt = unboundedVert && unboundedHoriz ? 'height and width' : unboundedVert ? 'height' : 'width';
+    em.err.warn(null, `nested scrolling in the same direction is not supported in native: this element would be measured with infinite ${axisTxt}. Give it a fixed ${unboundedVert ? 'height' : 'width'} (e.g. h-40 / w-40) or drop one of the scroll classes.`);
+  }
   const attrs = em.dynamicAttrs(node);
   const onclick = attrs.get('onclick');
   if (onclick && info.kind !== 'button') {
@@ -1244,7 +1288,7 @@ function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: '
     }
     if (content !== '""') lines.push(`${padIn}Text(${content})`);
     for (const child of nonText) {
-      lines.push(...emitChild(child, em, level + 1, 'column', null, false, false));
+      lines.push(...emitChild(child, em, level + 1, 'column', null, false, false, childVert, childHoriz));
     }
     lines.push(pad + '}');
     return [...prologue, ...lines];
@@ -1300,6 +1344,7 @@ function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: '
   const flow = containerParts.flow === true;
   if (parentAxis === null || flow || flowParent) stripScopeMods(containerParts); // Flow layouts have no align/weight scope
   if (!boxScope) containerParts.posMod = [];
+  else stripWeight(containerParts); // Box content has no weight scope (web: flex-grow on non-flex parent is ignored)
   let modifier = buildModifier(containerParts);
   if (fillWidth) modifier = prependFill(modifier);
   modifier = prependModifier(modifier, extraModifier);
@@ -1312,7 +1357,7 @@ function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: '
   const divide = containerParts.divide;
 
   if (gridInfo) {
-    return [...prologue, ...gridLines(node, em, level, pad, padIn, modifier, gridInfo, divide)];
+    return [...prologue, ...gridLines(node, em, level, pad, padIn, modifier, gridInfo, divide, childVert, childHoriz)];
   }
 
   const composable = boxParent
@@ -1342,9 +1387,9 @@ function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: '
   for (let i = 0; i < node.children.length; i++) {
     const child = node.children[i]!;
     if (divide && i > 0) {
-      childrenLines.push(...emitChild(child, em, level + 1, childAxis, divideBorderMod(divide), flow, childBox));
+      childrenLines.push(...emitChild(child, em, level + 1, childAxis, divideBorderMod(divide), flow, childBox, childVert, childHoriz));
     } else {
-      childrenLines.push(...emitChild(child, em, level + 1, childAxis, null, flow, childBox));
+      childrenLines.push(...emitChild(child, em, level + 1, childAxis, null, flow, childBox, childVert, childHoriz));
     }
   }
 
@@ -1380,6 +1425,8 @@ function gridLines(
   modifier: string | null,
   grid: { cols: number; gapX: number | null; gapY: number | null },
   divide: ModifierParts['divide'],
+  inVertScroll = false,
+  inHorizScroll = false,
 ): string[] {
   const lines: string[] = [];
   const open: string[] = [pad + 'Column('];
@@ -1407,7 +1454,7 @@ function gridLines(
       const child = rowChildren[j]!;
       let cellExtra = 'Modifier.weight(1f)';
       if (divide && j > 0) cellExtra += `.${divideBorderMod(divide).slice('Modifier.'.length)}`;
-      lines.push(...emitChild(child, em, level + 2, 'row', cellExtra, false, false));
+      lines.push(...emitChild(child, em, level + 2, 'row', cellExtra, false, false, inVertScroll, inHorizScroll));
     }
     lines.push(rowPad + '}');
   }
@@ -1439,11 +1486,11 @@ function isGuardSafe(n: IRNode): boolean {
   return false;
 }
 
-function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'column' | 'row' | null, extraModifier: string | null = null, flowParent = false, boxScope = false): string[] {
+function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'column' | 'row' | null, extraModifier: string | null = null, flowParent = false, boxScope = false, inVertScroll = false, inHorizScroll = false): string[] {
   const pad = '\t'.repeat(level);
 
   if (child instanceof StaticNode) {
-    return emitElement(child, em, level, parentAxis, extraModifier, flowParent, boxScope);
+    return emitElement(child, em, level, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll);
   }
   if (child instanceof TextNode) {
     return splitLines(makeTextCall(em.ktString(child.value), [], level, em, false, parentAxis, extraModifier, null, flowParent, boxScope));
@@ -1464,9 +1511,9 @@ function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'colum
     const cond = em.exprOf(child.condition);
     const out: string[] = [];
     out.push(pad + `if (truthy(${cond})) {`);
-    for (const n of child.consequentNodes) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope));
+    for (const n of child.consequentNodes) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll));
     out.push(pad + `} else {`);
-    for (const n of child.alternateNodes) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope));
+    for (const n of child.alternateNodes) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll));
     out.push(pad + `}`);
     return out;
   }
@@ -1475,16 +1522,34 @@ function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'colum
     const item = child.itemVariable;
     const keyExpr = child.keyExpr ? em.exprOf(child.keyExpr) : null;
     const out: string[] = [];
+    // A scrolling ancestor measures children with unbounded height, and a
+    // Row parent has no height for a vertical list: a LazyColumn would crash
+    // (infinity max) or fight the Row. Render the items as plain siblings
+    // instead — matching CSS where the list is just more flow content.
+    if (inVertScroll || inHorizScroll || parentAxis === 'row') {
+      out.push(pad + `for (${item} in ${arrExpr}) {`);
+      const bodyAxis = parentAxis === 'row' ? 'row' : 'column';
+      for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1, bodyAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll));
+      out.push(pad + `}`);
+      return out;
+    }
+    // LazyColumn item slots measure children with an infinite max height,
+    // so the body sees the same unbounded-vertical context as a scroll
+    // ancestor: nested lists inline, nested scrollers error above. Items
+    // live in LazyItemScope (no weight/align), so they are emitted like
+    // top-level flow content (parentAxis=null strips scope-only modifiers
+    // at the item boundary; web flex-grow/align-self on list items is a
+    // no-op anyway).
     out.push(pad + `LazyColumn {`);
     out.push(pad + `\titems(${arrExpr}${keyExpr ? `, key = { ${keyExpr} }` : ''}) { ${item} ->`);
-    for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 2, 'column', extraModifier, flowParent, boxScope));
+    for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 2, null, extraModifier, flowParent, boxScope, true, false));
     out.push(pad + `\t}`);
     out.push(pad + `}`);
     return out;
   }
   if (child instanceof ComponentCall) {
     if (em.libraryTags?.has(child.componentName)) {
-      return libraryTagLines(child, em, level, parentAxis, flowParent, boxScope);
+      return libraryTagLines(child, em, level, parentAxis, flowParent, boxScope, inVertScroll, inHorizScroll);
     }
     const name = child.componentName;
     const known = (em.componentNames?.has(name) ?? false) || FRAMEWORK_COMPONENT_CALLS.has(name);
@@ -1500,7 +1565,7 @@ function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'colum
       }
       em.err.warn(null, `<${name}>: unknown component${hint}`);
     }
-    return splitLines(componentCallLines(child, em, level, parentAxis, flowParent, boxScope));
+    return splitLines(componentCallLines(child, em, level, parentAxis, flowParent, boxScope, inVertScroll, inHorizScroll));
   }
   if (child instanceof TrackDecl) {
     return splitLines(em.trackDecl(child)).map((l) => pad + l);
@@ -1517,7 +1582,7 @@ function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'colum
     return [pad + `error("server block not supported in vesk-native")`];
   }
   if (child instanceof ClientBlock) {
-    return child.children.length ? emitChild(child.children[0]!, em, level, parentAxis, extraModifier, flowParent, boxScope) : [];
+    return child.children.length ? emitChild(child.children[0]!, em, level, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll) : [];
   }
   if (child instanceof SlotNode) {
     return [pad + `content()`];
@@ -1527,11 +1592,11 @@ function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'colum
     const out: string[] = [];
     if ((child as { isDoWhile?: boolean }).isDoWhile) {
       out.push(pad + `do {`);
-      for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope));
+      for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll));
       out.push(pad + `} while (truthy(${cond}));`);
     } else {
       out.push(pad + `while (truthy(${cond})) {`);
-      for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope));
+      for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll));
       out.push(pad + `}`);
     }
     return out;
@@ -1549,7 +1614,7 @@ function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'colum
       const bodyNodes = (c.body as IRNode[]).filter(
         (n) => !(n instanceof RuntimeStatement) || (n.ast as { type?: string } | null)?.type !== 'BreakStatement',
       );
-      for (const n of bodyNodes) out.push(...emitChild(n, em, level + 2, parentAxis, extraModifier, flowParent, boxScope));
+      for (const n of bodyNodes) out.push(...emitChild(n, em, level + 2, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll));
       out.push(pad + '\t}');
     }
     out.push(pad + `}`);
@@ -1569,17 +1634,17 @@ function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'colum
     const catchRender = child.catchBody.filter((n) => !isGuardSafe(n));
     out.push(pad + `var ${guard}: Throwable? = null`);
     out.push(pad + `try {`);
-    for (const n of bodyGuard) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope));
+    for (const n of bodyGuard) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll));
     out.push(pad + `} catch (${guard}_caught: Throwable) {`);
     out.push(pad + `\t${guard} = ${guard}_caught`);
-    for (const n of catchGuard) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope));
+    for (const n of catchGuard) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll));
     out.push(pad + `}`);
     out.push(pad + `if (${guard} == null) {`);
-    for (const n of bodyRender) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope));
+    for (const n of bodyRender) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll));
     out.push(pad + `} else {`);
     for (const n of catchRender) {
       const lines = em.withParamAliases(new Map([[catchParam, guard]]), () =>
-        emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope),
+        emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll),
       );
       out.push(...lines);
     }
@@ -1597,7 +1662,7 @@ function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'colum
       // JS for-in iterates keys; Kotlin iterating a Map yields entries, so go
       // through the runtime keys view for exact object/map semantics.
       out.push(pad + `for (${name} in jsMapKeys(${cond})) {`);
-      for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope));
+      for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll));
       out.push(pad + `}`);
       return out;
     }
@@ -1607,7 +1672,7 @@ function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'colum
       if (trimmedInit) out.push(pad + trimmedInit);
     }
     out.push(pad + `while (truthy(${cond})) {`);
-    for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope));
+    for (const n of child.bodyTemplate) out.push(...emitChild(n, em, level + 1, parentAxis, extraModifier, flowParent, boxScope, inVertScroll, inHorizScroll));
     if (child.update) {
       const update = em.stmtText(child.update);
       const trimmedUpdate = update.endsWith(';') ? update.slice(0, -1) : update;
@@ -2029,9 +2094,10 @@ export function compileProjectModule(source: string, fileRel: string, err: KtErr
 }
 
 // Script-side navigation surface (the names js2kt maps to the runtime
-// veskNavigate/veskGoBack/veskUseParams helpers): bare navigate/back/goBack/
-// useParams calls, history.pushState/back calls, and location.href writes.
-const NAV_FN_NAMES = new Set(['navigate', 'back', 'goBack', 'useParams']);
+// veskNavigate/veskGoBack/veskUseParams/veskUseRouter/veskUseQuery helpers):
+// bare navigate/back/goBack/useParams/useRouter/useQuery calls,
+// history.pushState/back calls, and location.href writes.
+const NAV_FN_NAMES = new Set(['navigate', 'back', 'goBack', 'useParams', 'useRouter', 'useQuery']);
 
 // Walk a native-parser AST for script-side navigation usage. Covers call
 // sites (bare fns and history members) and location.href writes; nested

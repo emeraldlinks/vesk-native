@@ -2692,6 +2692,9 @@ actual fun Modifier.veskDropTarget(onDrop: (String?) -> Unit): Modifier {
 }
 
 
+actual fun jsDecodeURIComponent(v: Any?): String = java.net.URLDecoder.decode(jsString(v).replace("+", "%2B"), "UTF-8")
+
+
 actual fun jsHandleError(e: Throwable) {
     android.util.Log.e("vesk", "uncaught exception (app continues): " + e.message, e)
 }
@@ -2734,7 +2737,7 @@ fun veskAppSetup(context: Context) = VeskAppContext.setup(context)
 actual fun jsAlert(message: Any?) {
     val ctx = VeskAppContext.activity ?: return
     android.app.AlertDialog.Builder(ctx)
-        .setMessage(if (message == null) "" else message.toString())
+        .setMessage(jsString(message))
         .setPositiveButton("OK", null)
         .show()
 }

@@ -585,7 +585,7 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				VeskApps(
 				)
 				Button(
-					onClick = jsSafe({ run __veskret19@ { device.listApps( { list -> run __veskret20@ { firstApp.value = (jsIndex(list, 0) ?: "none") } }) } }),
+					onClick = jsSafe({ run __veskret19@ { device.listApps( { list -> run __veskret20@ { firstApp.value = jsString((jsIndex(list, 0) ?: "none")) } }) } }),
 					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)),
 					shape = RoundedCornerShape(9999.dp),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -681,7 +681,7 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				)
 				VeskCopyToClipboard(
 					value = "copied by vesk",
-					onDone = { run __veskret21@ { clipTxt.value = "copied \"copied by vesk\" — now read it back" } },
+					onDone = { run __veskret21@ { clipTxt.value = jsString("copied \"copied by vesk\" — now read it back") } },
 				)
 				VeskVibrate(
 					duration = 200,
@@ -795,7 +795,7 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				Button(
-					onClick = jsSafe({ run __veskret23@ { device.generateQrCode("vesk-native:" + ((cbPhotoCell.value ?: "qr")),  { path -> run __veskret24@ { qrText.value = (path ?: "") } }) } }),
+					onClick = jsSafe({ run __veskret23@ { device.generateQrCode("vesk-native:" + ((cbPhotoCell.value ?: "qr")),  { path -> run __veskret24@ { qrText.value = jsString((path ?: "")) } }) } }),
 					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)),
 					shape = RoundedCornerShape(9999.dp),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -1086,7 +1086,7 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				Button(
-					onClick = jsSafe({ run __veskret28@ { device.writeFile("notes.txt", "hello vesk",  { path -> run __veskret29@ { fileTxt.value = "wrote: " + ((path ?: "failed")) } }) } }),
+					onClick = jsSafe({ run __veskret28@ { device.writeFile("notes.txt", "hello vesk",  { path -> run __veskret29@ { fileTxt.value = jsString("wrote: " + ((path ?: "failed"))) } }) } }),
 					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)),
 					shape = RoundedCornerShape(9999.dp),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -1100,7 +1100,7 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				)
 				}
 				Button(
-					onClick = jsSafe({ run __veskret30@ { device.readFile("notes.txt",  { text -> run __veskret31@ { fileTxt.value = "read: " + ((text ?: "missing")) } }) } }),
+					onClick = jsSafe({ run __veskret30@ { device.readFile("notes.txt",  { text -> run __veskret31@ { fileTxt.value = jsString("read: " + ((text ?: "missing"))) } }) } }),
 					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)),
 					shape = RoundedCornerShape(9999.dp),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -1114,7 +1114,7 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				)
 				}
 				Button(
-					onClick = jsSafe({ run __veskret32@ { device.listFiles("",  { list -> run __veskret33@ { fileTxt.value = "files: " + ((jsIndex(list, 0) ?: "none")) } }) } }),
+					onClick = jsSafe({ run __veskret32@ { device.listFiles("",  { list -> run __veskret33@ { fileTxt.value = jsString("files: " + ((jsIndex(list, 0) ?: "none"))) } }) } }),
 					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)),
 					shape = RoundedCornerShape(9999.dp),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -1128,7 +1128,7 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				)
 				}
 				Button(
-					onClick = jsSafe({ run __veskret34@ { device.deleteFile("notes.txt",  { ok -> run __veskret35@ { fileTxt.value = "deleted: " + ok } }) } }),
+					onClick = jsSafe({ run __veskret34@ { device.deleteFile("notes.txt",  { ok -> run __veskret35@ { fileTxt.value = jsString("deleted: " + ok) } }) } }),
 					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)),
 					shape = RoundedCornerShape(9999.dp),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),

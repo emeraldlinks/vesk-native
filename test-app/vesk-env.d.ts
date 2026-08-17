@@ -4119,6 +4119,18 @@ declare module '@vesk/browser' {
     close(): void;
   }
   
+  /** Router handle from useRouter() — react-router / Next.js style navigation.
+   * All methods go through the same NavController as navigate()/back(). */
+  export declare interface VeskRouter {
+    /** Navigate to a route path (history.pushState semantics). */
+    push(path: string): void;
+    /** Pop back to the previous route; a no-op at the root. */
+    back(): void;
+    /** Remount the current page from scratch (browser-reload semantics):
+     * all of the page's local state is rebuilt. */
+    refresh(): void;
+  }
+  
   /** Web Storage (localStorage / sessionStorage). Values are stored as strings
    * (null stores the literal string 'null'); getItem returns null for missing
    * keys; key(i) is the i-th key or null. localStorage persists across app
@@ -4244,6 +4256,15 @@ declare module '@vesk/browser' {
    * veskUseParams): the {id} segments of the path currently being shown, e.g.
    * useParams()['id'] on a /flight/{id} page. */
   export declare function useParams(): Record<string, string>;
+  /** A router handle for the current route (runtime veskUseRouter ->
+   * VeskRouter). react-router / Next.js style: router.push(path) navigates,
+   * router.back() pops the history, router.refresh() remounts the current
+   * page (browser-reload semantics). Same NavController as navigate()/back(). */
+  export declare function useRouter(): VeskRouter;
+  /** The current route's query string as a decoded string map (runtime
+   * veskUseQuery -> veskUseQuery): '/flight/123?seat=12A' gives
+   * useQuery()['seat'] === '12A'. Keys and values are percent-decoded. */
+  export declare function useQuery(): Record<string, string>;
   /** Persistent Web Storage (SharedPreferences 'vesk_web_storage').
    * Survives app restarts. See WebStorage for semantics. */
   export declare const localStorage: WebStorage;

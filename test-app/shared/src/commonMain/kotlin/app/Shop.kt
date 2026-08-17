@@ -119,7 +119,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				Button(
-					onClick = jsSafe({ filter.value = "All" }),
+					onClick = jsSafe({ filter.value = jsString("All") }),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
@@ -138,7 +138,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				}
 				}
 				Button(
-					onClick = jsSafe({ filter.value = "Parkas" }),
+					onClick = jsSafe({ filter.value = jsString("Parkas") }),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
@@ -157,7 +157,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				}
 				}
 				Button(
-					onClick = jsSafe({ filter.value = "Hoodies" }),
+					onClick = jsSafe({ filter.value = jsString("Hoodies") }),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
@@ -176,7 +176,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				}
 				}
 				Button(
-					onClick = jsSafe({ filter.value = "Shells" }),
+					onClick = jsSafe({ filter.value = jsString("Shells") }),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
@@ -195,7 +195,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				}
 				}
 				Button(
-					onClick = jsSafe({ filter.value = "Base layers" }),
+					onClick = jsSafe({ filter.value = jsString("Base layers") }),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
@@ -214,7 +214,7 @@ fun Shop(content: @Composable () -> Unit = {}) {
 				}
 				}
 				Button(
-					onClick = jsSafe({ filter.value = "Accessories" }),
+					onClick = jsSafe({ filter.value = jsString("Accessories") }),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {

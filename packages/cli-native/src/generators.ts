@@ -9,7 +9,7 @@ import type { ModifierParts } from '@compiler-native/tailwind';
 import { parse } from '@vesk/compiler';
 import { findComponentDecls, propsDataType, inferPropsFromUsage } from '@compiler-native/props';
 import type { ComponentDecl } from '@compiler-native/props';
-import { buildModuleRegistry, slugFor, toPosix } from '@compiler-native/modules';
+import { buildModuleRegistry, buildModuleSlugs, sanitizeIdent, slugFor, toPosix } from '@compiler-native/modules';
 import type { ModuleExport } from '@compiler-native/modules';
 import { compileProjectModule } from '@compiler-native/kotlin-codegen';
 import { compileNpmModules } from '@cli-native/npm';
@@ -923,6 +923,11 @@ export function generateRuntimeKt(
   bundledResources?: { imageResources: Map<string, string>; mediaResources: Map<string, string> },
 ): Set<string> {
   const used = collectRuntimeUsage(appDir);
+  // MainActivity.kt (generated in the app module, which usage scanning does
+  // not cover) calls app.jsSafe unconditionally on back-navigation. jsSafe is
+  // only emitted for onClick handlers, so a click-free app would otherwise
+  // fail the Kotlin compile with an unresolved reference.
+  used.add('jsSafe');
   const deviceApis = collectDeviceApiUsage(appDir);
   const broadcast = config.media?.broadcast ?? true;
   // The bundled-asset seams (veskBundledImage / veskBundledMediaUrl) map each
@@ -1095,22 +1100,41 @@ function collectProjectModules(dir: string): string[] {
 // Compile every project JS/TS module into Kotlin (Modules.kt) and its export
 // registry (rel path -> export name -> { pkg, name }). Errors are collected —
 // a module that fails to compile is a hard build failure, never a runtime
-// fallback.
-function compileProjectModules(appDir: string): { registry: Map<string, Map<string, ModuleExport>>; kt: string; errors: string[] } {
+// fallback. `slugs` is the shared project-wide slug map (from buildModuleSlugs
+// over the union of .vsk and JS/TS files): module declarations must use the
+// same deduped slug the registry assigns, otherwise a `.vsk` and a `.ts` that
+// base-slug to the same name would emit colliding Kotlin declarations.
+function compileProjectModules(appDir: string, slugs: Map<string, string>): { registry: Map<string, Map<string, ModuleExport>>; kt: string; errors: string[] } {
   const files = collectProjectModules(appDir);
   const registry = new Map<string, Map<string, ModuleExport>>();
   const blocks: string[] = [];
+  const imports = new Set<string>();
   const errors: string[] = [];
   for (const file of files) {
     const rel = toPosix(relative(appDir, file));
     const err = new KtErrors();
-    const compiled = compileProjectModule(readFileSync(file, 'utf8'), rel, err);
+    const slug = slugs.get(rel) ?? slugFor(rel);
+    const compiled = compileProjectModule(readFileSync(file, 'utf8'), rel, err, {
+      selfAlias: true,
+      kotlinName: (n: string): string => sanitizeIdent(`${slug}_${n}`),
+    });
     for (const e of err.errors) errors.push(`${rel}: ${e}`);
-    if (compiled.kt.trim()) blocks.push(compiled.kt);
+    if (compiled.kt.trim()) {
+      // Kotlin only allows imports at the top of a file, and each module
+      // block carries its own self-alias imports (import X as Y). Hoist them
+      // so the concatenated Modules.kt keeps one import section at the top.
+      const lines = compiled.kt.split('\n');
+      const body: string[] = [];
+      for (const line of lines) {
+        if (line.startsWith('import ')) imports.add(line);
+        else body.push(line);
+      }
+      blocks.push(body.join('\n'));
+    }
     if (compiled.registryEntry.size > 0) registry.set(rel, compiled.registryEntry);
     log('module', `${rel} -> ${compiled.registryEntry.size} export(s)`);
   }
-  return { registry, kt: blocks.join('\n\n'), errors };
+  return { registry, kt: [...imports].join('\n') + (imports.size > 0 && blocks.length > 0 ? '\n\n' : '') + blocks.join('\n\n'), errors };
 }
 
 export function compileVskFiles(appDir: string, config: VeskConfig, target: string): { imageResources: Map<string, string>; mediaResources: Map<string, string> } {
@@ -1155,14 +1179,21 @@ export function compileVskFiles(appDir: string, config: VeskConfig, target: stri
     if (names.length) componentNamesByFile.set(rel, names);
   }
 
-  const { registry: moduleRegistry, slugs: moduleSlugs } = buildModuleRegistry(appDir, vskFiles, componentNamesByFile);
+  // Slug assignment happens once over the union of .vsk and project JS/TS
+  // modules, so base-slug collisions across the two kinds (e.g. `lab.ts` vs
+  // `lab.vsk`) resolve deterministically instead of emitting two Kotlin
+  // declarations with the same name. The same map feeds buildModuleRegistry
+  // (vsk imports) and compileProjectModules (JS/TS module declarations).
+  const unionSlugs = buildModuleSlugs(appDir, [...vskFiles, ...collectProjectModules(appDir)]);
+
+  const { registry: moduleRegistry, slugs: moduleSlugs } = buildModuleRegistry(appDir, vskFiles, componentNamesByFile, unionSlugs);
 
   // Project JS/TS modules (imported from .vsk headers with relative paths)
   // compile to Kotlin declarations in Modules.kt; the registry maps each
   // module's rel path to its compiled exports so headers can import them.
   // The file itself is written after the page pass, to the source set that
   // actually imports it (commonMain when a portable page does).
-  const projectModules = compileProjectModules(appDir);
+  const projectModules = compileProjectModules(appDir, unionSlugs);
   for (const e of projectModules.errors) console.error(`  [compile] error in project module: ${e}`);
   if (projectModules.errors.length > 0) process.exit(1);
   const projectModuleRegistry = projectModules.registry;
@@ -1518,9 +1549,11 @@ function stripLeadingSlashes(path: string): string {
 // props take the raw value with an empty-string fallback and Any/Any? props
 // take the raw value as-is. Any other declared type (Int, Boolean, list,
 // custom) cannot be coerced from a runtime string — coercePropValue only maps
-// build-time literal values — so the binding is skipped with a warning
-// (fail closed, never guess).
-function routeParamBindings(page: { path: string; component: string; props: Array<{ name: string; type: string }>; hasProps: boolean; inferredProps: string[]; defaultProps: Record<string, unknown> }, paramNames: string[]): Map<string, string> {
+// build-time literal values — so the binding is a hard build error: skipping
+// it would render the page with its default value (e.g. id = 0) instead of
+// the URL's segment, i.e. wrong data on every visit. This never fires for
+// params the page does not declare (the browser passes them nowhere either).
+function routeParamBindings(page: { path: string; component: string; props: Array<{ name: string; type: string }>; hasProps: boolean; inferredProps: string[]; defaultProps: Record<string, unknown> }, paramNames: string[], errors: string[]): Map<string, string> {
   const typedByName = new Map(page.props.map((p) => [p.name, p.type]));
   const bindings = new Map<string, string>();
   for (const name of paramNames) {
@@ -1534,7 +1567,9 @@ function routeParamBindings(page: { path: string; component: string; props: Arra
     } else if (type === 'Any' || type === 'Any?') {
       bindings.set(name, `params["${name}"]`);
     } else {
-      log('warn', `route param {${name}} -> ${page.component}.${name}: string params cannot coerce to ${type} — skipped`);
+      errors.push(
+        `route ${page.path}: param {${name}} is a string in the URL but ${page.component} declares prop "${name}" as ${type} — the param would be dropped and the page would render its default value instead of the URL segment. Type the prop as string (or any) to receive it.`,
+      );
     }
   }
   return bindings;
@@ -1544,18 +1579,39 @@ function routeParamBindings(page: { path: string; component: string; props: Arra
 // MainViewController.kt: collect pages, resolve the effective route list from
 // config, render the Route(...) lines, and derive the exit-path/back-args.
 // Both entry points must present the identical AppRouter(start, routes, back)
-// call so navigation behaves the same on every platform.
-function computeRouteList(appDir: string, config: VeskConfig): { routeLines: string; backArgs: string; pages: ReturnType<typeof collectVskPages> } {
+// call so navigation behaves the same on every platform. Fail closed: a
+// config route referencing a component no .vsk declares, or a route param
+// that cannot reach the page's typed props, is a hard build error here —
+// never a Kotlin file that resolves to the wrong component or a page that
+// silently renders its default props.
+function computeRouteList(appDir: string, config: VeskConfig): { routeLines: string; backArgs: string; pages: ReturnType<typeof collectVskPages>; errors: string[] } {
   const pages = collectVskPages(appDir);
+  const errors: string[] = [];
 
   const routes = (config.routes && config.routes.length > 0)
     ? config.routes
     : pages;
 
+  // Every component name any .vsk file declares (in any position), so a
+  // config route can reference a secondary component of a page file (which
+  // compiles fine) while a truly missing component fails the build instead of
+  // emitting `Route(...) { MissingComp() }` — which would only fail later at
+  // the Kotlin compile (or worse, silently resolve to a same-named runtime
+  // composable like `Link`/`Outlet` in the app package).
+  const declaredComponents = new Set<string>();
+  for (const file of collectVskFiles(appDir)) {
+    const ast = parse(readFileSync(file, 'utf8')) as unknown as JsNode;
+    for (const d of findComponentDecls(ast)) declaredComponents.add(d.name);
+  }
+
   const routeLines = routes
     .map((p) => {
       const routePath = routePathToBraces(p.path || '');
       const page = pages.find((pg) => pg.component === p.component);
+      if (config.routes && config.routes.length > 0 && !page && !declaredComponents.has(p.component)) {
+        errors.push(`config.routes: component "${p.component}" (path "${routePath}") is not declared by any .vsk file`);
+        return '';
+      }
       const paramNames = routeParamNames(routePath);
       if (paramNames.length === 0) {
         const propsArg = page ? screenPropsArg(page, config) : '';
@@ -1565,24 +1621,29 @@ function computeRouteList(appDir: string, config: VeskConfig): { routeLines: str
         if (page) log('warn', `route params ignored: ${p.component} declares no props parameter`);
         return `Route("${routePath}") { ${p.component}() }`;
       }
-      const propsArg = screenPropsArg(page, config, routeParamBindings(page, paramNames));
+      const propsArg = screenPropsArg(page, config, routeParamBindings(page, paramNames, errors));
       return `Route("${routePath}") { params -> ${p.component}(${propsArg}) }`;
     })
+    .filter((l) => l.length > 0)
     .join(',\n        ');
 
   // Exit pages: the root, back.exitRoutes from config, routes flagged
-  // exitOnBack, and components declaring the exitBack prop.
+  // exitOnBack, and components declaring the exitBack prop. Every entry is
+  // normalized the same way (leading slash + [id]→{id} braces) because
+  // AppRouter matches exit routes against the ROUTE PATTERN, not the concrete
+  // URL — config.back.exitRoutes and file-derived exitBack paths go through
+  // the identical transform so all three sources agree.
   const exitPaths = new Set<string>(['/']);
-  for (const r of config.back?.exitRoutes ?? []) exitPaths.add(r);
+  for (const r of config.back?.exitRoutes ?? []) exitPaths.add('/' + stripLeadingSlashes(routePathToBraces(r)));
   for (const r of routes) {
     if ('exitOnBack' in r && r.exitOnBack) exitPaths.add('/' + stripLeadingSlashes(routePathToBraces(r.path || '')));
   }
-  for (const p of pages) if (p.exitBack) exitPaths.add(p.path);
+  for (const p of pages) if (p.exitBack) exitPaths.add('/' + stripLeadingSlashes(routePathToBraces(p.path)));
 
   const back = config.back ?? {};
   const backArgs = `\n            back = BackBehavior(mode = "${back.mode ?? 'stack'}", doubleBackToExit = ${back.doubleBackToExit ?? true}, exitDelayMs = ${back.exitDelayMs ?? 2000}, exitRoutes = listOf(${[...exitPaths].map((p) => `"${p}"`).join(', ')})),`;
 
-  return { routeLines, backArgs, pages };
+  return { routeLines, backArgs, pages, errors };
 }
 
 // Collect the .vsk page components under the app directory with the route
@@ -1636,7 +1697,11 @@ export function generateAppKt(appDir: string, config: VeskConfig): void {
     process.exit(1);
   }
 
-  const { routeLines, backArgs, pages } = computeRouteList(appDir, config);
+  const { routeLines, backArgs, pages, errors } = computeRouteList(appDir, config);
+  if (errors.length > 0) {
+    for (const e of errors) console.error(`  [gen] ${e}`);
+    process.exit(1);
+  }
 
   // Detect splash.vsk component
   const splashVskPath = join(appDir, 'splash.vsk');
@@ -1772,7 +1837,11 @@ ${padDeclNewline}${splashStateDecl}
 export function generateMainViewControllerKt(appDir: string, config: VeskConfig): void {
   const iosOutDir = sharedIosKotlinDir(dirname(appDir));
   mkdirSync(iosOutDir, { recursive: true });
-  const { routeLines, backArgs } = computeRouteList(appDir, config);
+  const { routeLines, backArgs, errors } = computeRouteList(appDir, config);
+  if (errors.length > 0) {
+    for (const e of errors) console.error(`  [gen] ${e}`);
+    process.exit(1);
+  }
 
   // Detect splash.vsk component (same logic as App.kt)
   const splashVskPath = join(appDir, 'splash.vsk');

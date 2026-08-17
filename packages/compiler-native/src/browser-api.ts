@@ -86,6 +86,18 @@ export declare interface VeskSqliteDb {
   close(): void;
 }
 
+/** Router handle from useRouter() — react-router / Next.js style navigation.
+ * All methods go through the same NavController as navigate()/back(). */
+export declare interface VeskRouter {
+  /** Navigate to a route path (history.pushState semantics). */
+  push(path: string): void;
+  /** Pop back to the previous route; a no-op at the root. */
+  back(): void;
+  /** Remount the current page from scratch (browser-reload semantics):
+   * all of the page's local state is rebuilt. */
+  refresh(): void;
+}
+
 /** Web Storage (localStorage / sessionStorage). Values are stored as strings
  * (null stores the literal string 'null'); getItem returns null for missing
  * keys; key(i) is the i-th key or null. localStorage persists across app
@@ -326,6 +338,29 @@ export declare function goBack(): void;`,
 export declare function useParams(): Record<string, string>;`,
     ],
   },
+  {
+    name: 'useRouter',
+    kind: 'function',
+    global: true,
+    decl: [
+      `/** A router handle for the current route (runtime veskUseRouter ->
+ * VeskRouter). react-router / Next.js style: router.push(path) navigates,
+ * router.back() pops the history, router.refresh() remounts the current
+ * page (browser-reload semantics). Same NavController as navigate()/back(). */
+export declare function useRouter(): VeskRouter;`,
+    ],
+  },
+  {
+    name: 'useQuery',
+    kind: 'function',
+    global: true,
+    decl: [
+      `/** The current route's query string as a decoded string map (runtime
+ * veskUseQuery -> veskUseQuery): '/flight/123?seat=12A' gives
+ * useQuery()['seat'] === '12A'. Keys and values are percent-decoded. */
+export declare function useQuery(): Record<string, string>;`,
+    ],
+  },
 ];
 
 const BROWSER_CONSTS: BrowserApiDecl[] = [
@@ -418,7 +453,7 @@ export function browserModuleDecl(): string {
 const BROWSER_GLOBAL_INTERFACES: string[] = BROWSER_INTERFACES.flatMap((d) =>
   d
     .split(/\n(?=export declare interface )/)
-    .filter((s) => /^export declare interface (VeskResponse|FetchInit|VeskSqliteDb|WebStorage) \{/.test(s)),
+    .filter((s) => /^export declare interface (VeskResponse|FetchInit|VeskSqliteDb|WebStorage|VeskRouter) \{/.test(s)),
 );
 
 export function browserGlobalDecl(): string {

@@ -865,7 +865,7 @@ actual object VeskAppContext
 // undefined) and shows asynchronously.
 actual fun jsAlert(message: Any?) {
     onMain {
-        showAlert(title = null, message = if (message == null) "" else message.toString())
+        showAlert(title = null, message = jsString(message))
     }
 }
 

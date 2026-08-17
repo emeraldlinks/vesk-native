@@ -288,6 +288,10 @@ export class Js2Kt {
    *  VeskSqliteDb method surface (exec/run/get/all/close) instead of the
    *  generic Map/regex member paths. */
   private sqliteVars = new Set<string>();
+  /** Identifiers initialized from `useRouter()`; member calls keep their
+   *  exact name (push/back/refresh) instead of the generic JS-array rewrites
+   *  (push would otherwise become add). */
+  private routerVars = new Set<string>();
   /** JS-visible library exports (`import { X } from '@vesk/...'`): constructors
    *  and enums with typed signatures, resolved by the JS name. */
   libraryExports = new Map<string, LibExportSig>();
@@ -518,6 +522,10 @@ export class Js2Kt {
         if (this.paramAliases && this.paramAliases.has(name)) {
           return this.id(this.paramAliases.get(name)!);
         }
+        // JS globals: `Infinity`/`NaN` are global identifiers (not Math
+        // members) and have direct Kotlin equivalents.
+        if (name === 'Infinity') return 'Double.POSITIVE_INFINITY';
+        if (name === 'NaN') return 'Double.NaN';
         return this.id(name);
       }
       case 'Literal': {
@@ -744,6 +752,7 @@ export class Js2Kt {
         const ct = a0.type === 'Identifier' ? this.cellTypes.get(a0.name as string) : undefined;
         if (ct === 'Int') return `${aStr}.value = num(${bStr}).toInt()`;
         if (ct === 'Double') return `${aStr}.value = num(${bStr})`;
+        if (ct === 'String') return `${aStr}.value = jsString(${bStr})`;
         return `${aStr}.value = ${bStr}`;
       }
       if (name === 'String') return args.length ? `jsString(${this.expr(a0!)})` : '""';
@@ -773,6 +782,8 @@ export class Js2Kt {
       if (name === 'navigate') return `veskNavigate(${a0 ? this.expr(a0) : this.ktString('')})`;
       if (name === 'back' || name === 'goBack') return 'veskGoBack()';
       if (name === 'useParams') return 'veskUseParams()';
+      if (name === 'useRouter') return 'veskUseRouter()';
+      if (name === 'useQuery') return 'veskUseQuery()';
       if (name === 'confirm' || name === 'prompt') {
         this.err.warn(callee, `${name}() needs a blocking dialog; Android cannot block the main thread`);
         return `error("vesk: ${name}() is not supported on Android (blocking dialogs would deadlock the main thread)")`;
@@ -937,6 +948,13 @@ export class Js2Kt {
         return `${receiver}${safe}${this.id(method ?? '')}(${this.argList(args)})`;
       }
 
+      // Router handles (from `useRouter()`) keep their exact method names —
+      // push/back/refresh are real VeskRouter methods, not JS-array members
+      // (push would otherwise be rewritten to add below).
+      if (member.object.type === 'Identifier' && this.routerVars.has(member.object.name as string)) {
+        return `${receiver}${safe}${this.id(method ?? '')}(${this.argList(args)})`;
+      }
+
       // Map / Set / Date instance methods. The receiver is usually a strongly
       // typed Kotlin collection, but it may arrive as Any? (e.g. from a
       // function parameter), so these go through casts in runtime helpers.
@@ -1029,7 +1047,9 @@ export class Js2Kt {
         return `${receiver}${safe}endsWith(${this.expr(a0)})`;
       }
       if (method === 'split' && a0) {
-        return `${receiver}${safe}split(${this.expr(a0)})`;
+        // JS arrays are mutable; Kotlin split() is an immutable List, so a
+        // mutable copy keeps `.push()`/`.add()` (and every read op) working.
+        return `${receiver}${safe}split(${this.expr(a0)}).toMutableList()`;
       }
       if (method === 'concat' && a0) {
         return `${receiver}${safe}plus(${this.expr(a0)})`;
@@ -2151,6 +2171,7 @@ export class Js2Kt {
           if (id.type === 'Identifier' && initNode && initNode.type === 'CallExpression') {
             const fn = initNode.callee as { type?: string; name?: string } | null;
             if (fn?.type === 'Identifier' && fn.name === 'openSqlite') this.sqliteVars.add(id.name as string);
+            if (fn?.type === 'Identifier' && fn.name === 'useRouter') this.routerVars.add(id.name as string);
           }
           if (!(id as unknown as { lazy?: boolean }).lazy && (id.type === 'ObjectPattern' || id.type === 'ArrayPattern')) {
             const bind = (name: string, value: string): string => `${ktKind} ${this.id(name)} = ${value}`;

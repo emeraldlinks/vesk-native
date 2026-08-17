@@ -2,6 +2,7 @@ package app.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
@@ -33,6 +34,15 @@ class NavController {
     // props injection and script access agree on the same values.
     private val _currentParams = mutableStateOf<Map<String, String>>(emptyMap())
     val currentParams: androidx.compose.runtime.State<Map<String, String>> = _currentParams
+    // Raw query string ('a=1&b=2') of the current route, kept in sync by
+    // AppRouter; veskUseQuery() (script-side useQuery()) parses and decodes it.
+    private val _currentQuery = mutableStateOf("")
+    val currentQuery: androidx.compose.runtime.State<String> = _currentQuery
+    // Bumped by refresh(): the current route is remounted through a key so
+    // its state is rebuilt from scratch — the native equivalent of a browser
+    // page reload / Next.js router.refresh().
+    private val _refreshCount = mutableStateOf(0)
+    val refreshCount: androidx.compose.runtime.State<Int> = _refreshCount
     // Scroll state per route currently reachable on the stack. A page's offset
     // lives in its own ScrollState instance, so back-navigation restores it
     // while forward navigation to a never-visited route starts at the top.
@@ -60,19 +70,23 @@ class NavController {
     // Navigate like a browser: routes already on the stack pop back to them
     // instead of pushing duplicates, tapping the current route is a no-op.
     // The routes popped away lose their scroll state; the revisited route
-    // restores the offset it had when it was left.
+    // restores the offset it had when it was left. A trailing slash is not
+    // part of the route identity ('/flight/12/' and '/flight/12' match the
+    // same pattern), so it is normalized away before the dedup check — two
+    // stack entries for the same page would make back appear to do nothing.
     fun navigate(path: String) {
-        if (path == _currentRoute.value) return
+        val normalized = if (path.length > 1 && path.endsWith('/')) path.dropLast(1) else path
+        if (normalized == _currentRoute.value) return
         val stack = _history.value.toMutableList()
-        val idx = stack.indexOf(path)
+        val idx = stack.indexOf(normalized)
         if (idx >= 0) {
             while (stack.size > idx + 1) stack.removeAt(stack.size - 1)
             pruneRoutes(stack.drop(idx + 1))
             _history.value = stack
-            _currentRoute.value = path
+            _currentRoute.value = normalized
         } else {
-            _history.value = stack + path
-            _currentRoute.value = path
+            _history.value = stack + normalized
+            _currentRoute.value = normalized
         }
     }
 
@@ -83,6 +97,20 @@ class NavController {
     // exact params of the route being shown.
     fun updateParams(params: Map<String, String>) {
         _currentParams.value = params
+    }
+
+    // AppRouter hands the current route's raw query string ('a=1&b=2')
+    // here just before the page composes; script-side useQuery()
+    // (veskUseQuery) parses it into a map.
+    fun updateQuery(query: String) {
+        _currentQuery.value = query
+    }
+
+    // Remount the current route from scratch (browser reload semantics):
+    // AppRouter keys the matched page on refreshCount, so a bump rebuilds
+    // all of the page's local state.
+    fun refresh() {
+        _refreshCount.value++
     }
 
     // Pop back to the previous route; returns false when already at the root.
@@ -137,9 +165,19 @@ fun AppRouter(start: String, routes: List<Route>, back: BackBehavior = BackBehav
     // Exit pages (root by default, or listed in back.exitRoutes / route-level
     // exitOnBack): a double back press exits the app, regardless of what is
     // underneath on the stack. Every other page pops the history first.
+    // exitRoutes holds ROUTE PATTERNS ('/flight/{id}'), so the current route
+    // is matched against the patterns — a concrete URL like '/flight/12' would
+    // never equal the pattern '/flight/{id}', silently disabling the
+    // configured exit. The stack bottom has nothing to pop, so it counts as an
+    // exit point even when the route is not listed: a deep link into an
+    // interior page must still be escapable with the back button.
     val exitRoutes = if (back.exitRoutes.isEmpty()) listOf(start) else back.exitRoutes
-    PlatformBackHandler(enabled = true) {
-        val exitHere = back.mode == "stack" && nav.currentRoute.value in exitRoutes
+    // mode "system" disables the in-app handler entirely so the press falls
+    // through to the system (which finishes the activity). Only "stack" mode
+    // intercepts back presses.
+    PlatformBackHandler(enabled = back.mode == "stack") {
+        val currentPattern = matchRoute(nav.currentRoute.value, routes)?.path
+        val exitHere = !nav.canPop() || (currentPattern != null && currentPattern in exitRoutes)
         if (!exitHere) {
             nav.pop()
             return@PlatformBackHandler
@@ -160,14 +198,26 @@ fun AppRouter(start: String, routes: List<Route>, back: BackBehavior = BackBehav
         // The matched route's parsed params ({id} segments) are handed to the
         // page's composable; pages that declared zero-arg lambdas ignore them.
         nav.updateParams(matched.params)
-        matched.composable(matched.params)
+        // A fragment ('#top') is browser-internal scroll state — it belongs to
+        // neither the query string nor the route pattern, so it is stripped.
+        nav.updateQuery(current.substringAfter('?', "").substringBefore('#', ""))
+        // Keying on refreshCount gives refresh() browser-reload semantics: a
+        // bump remounts the page so its local state is rebuilt from scratch.
+        key(nav.refreshCount.value) {
+            matched.composable(matched.params)
+        }
     }
 }
 
 fun matchRoute(current: String, routes: List<Route>): Route? {
+    // A query string ('?a=1') and a fragment ('#top') are not part of the
+    // route pattern: both are stripped before matching. The query is exposed
+    // separately through NavController.currentQuery for script-side useQuery();
+    // a fragment is browser-internal scroll state and is ignored entirely.
+    val path = current.substringBefore('?', current).substringBefore('#', current)
     for (route in routes) {
         val pattern = route.path.split('/').filter { it.isNotEmpty() }
-        val actual = current.split('/').filter { it.isNotEmpty() }
+        val actual = path.split('/').filter { it.isNotEmpty() }
         if (pattern.size != actual.size) continue
         val params = mutableMapOf<String, String>()
         var match = true

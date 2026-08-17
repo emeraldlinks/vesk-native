@@ -153,7 +153,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				Button(
-					onClick = jsSafe({ color.value = "Pine" }),
+					onClick = jsSafe({ color.value = jsString("Pine") }),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
@@ -170,7 +170,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 				}
 				}
 				Button(
-					onClick = jsSafe({ color.value = "Storm" }),
+					onClick = jsSafe({ color.value = jsString("Storm") }),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
@@ -187,7 +187,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 				}
 				}
 				Button(
-					onClick = jsSafe({ color.value = "Oat" }),
+					onClick = jsSafe({ color.value = jsString("Oat") }),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
@@ -219,7 +219,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				Button(
-					onClick = jsSafe({ size.value = "S" }),
+					onClick = jsSafe({ size.value = jsString("S") }),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
@@ -246,7 +246,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 				}
 				}
 				Button(
-					onClick = jsSafe({ size.value = "M" }),
+					onClick = jsSafe({ size.value = jsString("M") }),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
@@ -273,7 +273,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 				}
 				}
 				Button(
-					onClick = jsSafe({ size.value = "L" }),
+					onClick = jsSafe({ size.value = jsString("L") }),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {
@@ -300,7 +300,7 @@ fun ArcticHoodie(content: @Composable () -> Unit = {}) {
 				}
 				}
 				Button(
-					onClick = jsSafe({ size.value = "XL" }),
+					onClick = jsSafe({ size.value = jsString("XL") }),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
 					elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
 				) {

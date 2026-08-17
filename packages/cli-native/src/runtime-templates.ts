@@ -296,15 +296,46 @@ fun truthy(v: Any?): Boolean = when (v) {
     null -> false
     is Boolean -> v
     is String -> v.isNotEmpty()
-    is Number -> v != 0
+    is Number -> { val d = v.toDouble(); d != 0.0 && !d.isNaN() }
     else -> true
 }
 
+// JS ToNumber: unparseable strings, and objects/arrays (JS Number(object) ->
+// NaN except single-element arrays), produce NaN like the browser; "" and
+// whitespace-only are 0, "0x10" is 16, "Infinity" is Infinity.
 fun num(v: Any?): Double = when (v) {
     is Number -> v.toDouble()
-    is String -> v.toDoubleOrNull() ?: 0.0
+    is String -> jsToNumber(v)
     is Boolean -> if (v) 1.0 else 0.0
-    else -> 0.0
+    else -> Double.NaN
+}
+
+private fun jsToNumber(s: String): Double {
+    val t = s.trim()
+    if (t.isEmpty()) return 0.0
+    if (t == "Infinity" || t == "+Infinity") return Double.POSITIVE_INFINITY
+    if (t == "-Infinity") return Double.NEGATIVE_INFINITY
+    if (t[0] == '0' && t.length > 2 && (t[1] == 'x' || t[1] == 'X' || t[1] == 'b' || t[1] == 'B' || t[1] == 'o' || t[1] == 'O')) {
+        val base = when (t[1]) {
+            'x', 'X' -> 16
+            'b', 'B' -> 2
+            else -> 8
+        }
+        var d = 0.0
+        for (j in 2 until t.length) {
+            val c = t[j]
+            val dv = when (c) {
+                in '0'..'9' -> c - '0'
+                in 'a'..'f' -> c - 'a' + 10
+                in 'A'..'F' -> c - 'A' + 10
+                else -> return Double.NaN
+            }
+            if (dv >= base) return Double.NaN
+            d = d * base + dv
+        }
+        return d
+    }
+    return t.toDoubleOrNull() ?: Double.NaN
 }
 `;
 
@@ -3889,6 +3920,40 @@ fun veskGoBack() {
 // before the page composes, so this always reflects the route being shown.
 fun veskUseParams(): Map<String, String> = veskNavController?.currentParams?.value ?: emptyMap()
 ` },
+  'veskUseRouter': { deps: ['veskNavSync'], platform: 'common', src: `
+// useRouter(): a router handle with the react-router / Next.js surface users
+// know — push(path), back(), refresh(). All three go through the same
+// NavController the free navigate()/back() functions use, so the two styles
+// are interchangeable. The handle is created fresh per call and is only
+// valid while a router page is composed (fails closed otherwise).
+data class VeskRouter(private val nav: NavController) {
+    fun push(path: String) = nav.navigate(path)
+    fun back() { nav.pop() }
+    fun refresh() = nav.refresh()
+}
+
+fun veskUseRouter(): VeskRouter =
+    VeskRouter(veskNavController ?: error("vesk: useRouter() called outside a router page"))
+` },
+  'veskUseQuery': { deps: ['veskNavSync', 'jsDecodeURIComponent'], platform: 'common', src: `
+// useQuery(): the current route's query string as a Map<String, String>.
+// AppRouter mirrors the raw query into NavController.currentQuery before the
+// page composes; keys and values are percent-decoded (browser URLSearchParams
+// semantics), duplicates keep the last value, and keys without '=' map to "".
+fun veskUseQuery(): Map<String, String> {
+    val raw = veskNavController?.currentQuery?.value ?: return emptyMap()
+    if (raw.isEmpty()) return emptyMap()
+    val out = mutableMapOf<String, String>()
+    for (pair in raw.split('&')) {
+        if (pair.isEmpty()) continue
+        val eq = pair.indexOf('=')
+        val key = if (eq < 0) pair else pair.substring(0, eq)
+        val value = if (eq < 0) "" else pair.substring(eq + 1)
+        out[jsDecodeURIComponent(key)] = jsDecodeURIComponent(value)
+    }
+    return out
+}
+` },
   'jsString': { deps: [], platform: 'common', src: `
 fun jsString(v: Any?): String = when (v) {
     null -> "null"
@@ -3918,7 +3983,7 @@ actual fun jsHandleError(e: Throwable) {
   'jsSafe': { deps: ['jsHandleError'], platform: 'common', src: `
 // Wrap an event-handler lambda so a throw reports instead of crashing: the
 // browser fires window.onerror and the page keeps running, and so do we.
-fun jsSafe(fn: () -> Unit): () -> Unit = { try { fn() } catch (e: Throwable) { jsHandleError(e) } }
+fun jsSafe(fn: () -> Unit): () -> Unit = { try { fn() } catch (e: kotlin.coroutines.cancellation.CancellationException) { throw e } catch (e: Throwable) { jsHandleError(e) } }
 ` },
   'jsTypeof': { deps: [], platform: 'common', src: `
 fun jsTypeof(v: Any?): String = when (v) {
@@ -3932,23 +3997,19 @@ fun jsTypeof(v: Any?): String = when (v) {
 ` },
   'jsGlobalIsNaN': { deps: [], platform: 'common', src: `
 fun jsGlobalIsNaN(v: Any?): Boolean = when (v) {
-    is Double -> v.isNaN()
-    is Float -> v.isNaN()
-    is Number -> false
-    is Boolean -> false
     null -> false
-    is String -> { val t = v.trim(); t.isNotEmpty() && t.toDoubleOrNull() == null }
+    is Boolean -> false
+    is Number -> v.toDouble().isNaN()
+    is String -> num(v).isNaN()
     else -> true
 }
 ` },
   'jsGlobalIsFinite': { deps: [], platform: 'common', src: `
 fun jsGlobalIsFinite(v: Any?): Boolean = when (v) {
-    is Double -> v.isFinite()
-    is Float -> v.isFinite()
-    is Number -> true
-    is Boolean -> true
     null -> true
-    is String -> { val t = v.trim(); t.isEmpty() || t.toDoubleOrNull()?.isFinite() == true }
+    is Boolean -> true
+    is Number -> v.toDouble().isFinite()
+    is String -> num(v).isFinite()
     else -> false
 }
 ` },
@@ -3980,10 +4041,16 @@ fun jsParseInt(v: Any?, radix: Any? = null): Int {
     var sign = 1
     if (s.startsWith("-")) { sign = -1; s = s.substring(1) }
     else if (s.startsWith("+")) s = s.substring(1)
-    var r = when (radix) { is Number -> radix.toInt(); else -> 10 }
-    if (r == 0) r = 10
-    if (r == 16 && s.startsWith("0x")) s = s.substring(2)
-    else if (r == 16 && s.startsWith("0X")) s = s.substring(2)
+    val rv = num(radix)
+    // JS parseInt: radix goes through ToInt32 (NaN / ±Infinity -> 0), so a
+    // non-finite radix still triggers radix-0 (hex-detect) semantics.
+    var r = if (rv.isFinite()) rv.toInt() else 0
+    if (r == 0 || r == 16) {
+        if (s.startsWith("0x") || s.startsWith("0X")) {
+            r = 16
+            s = s.substring(2)
+        } else if (r == 0) r = 10
+    }
     if (r < 2 || r > 36) return 0
     var acc = 0L
     for (ch in s) {
@@ -4000,7 +4067,29 @@ fun jsParseInt(v: Any?, radix: Any? = null): Int {
 }
 ` },
   'jsParseFloat': { deps: ['jsString'], platform: 'common', src: `
-fun jsParseFloat(v: Any?): Double = jsString(v).trim().toDoubleOrNull() ?: 0.0
+// JS parseFloat: parse the longest valid numeric prefix, return NaN (Double)
+// when no digit is found — never a full-string parse.
+fun jsParseFloat(v: Any?): Double {
+    val s = jsString(v).trim()
+    if (s.isEmpty()) return Double.NaN
+    var i = 0
+    if (i < s.length && (s[i] == '+' || s[i] == '-')) i++
+    if (s.startsWith("Infinity", i)) return if (i > 0 && s[0] == '-') Double.NEGATIVE_INFINITY else Double.POSITIVE_INFINITY
+    val start = i
+    while (i < s.length && s[i].isDigit()) i++
+    var end = i
+    if (i < s.length && s[i] == '.') { i++; while (i < s.length && s[i].isDigit()) i++; end = i }
+    if (i < s.length && (s[i] == 'e' || s[i] == 'E')) {
+        val expPos = i
+        i++
+        if (i < s.length && (s[i] == '+' || s[i] == '-')) i++
+        val expStart = i
+        while (i < s.length && s[i].isDigit()) i++
+        if (i > expStart) end = i else i = expPos
+    }
+    if (end == start) return Double.NaN
+    return s.substring(0, end).toDoubleOrNull() ?: Double.NaN
+}
 ` },
   'jsEncodeURIComponent': {
     deps: ['jsString'],
@@ -4009,7 +4098,10 @@ fun jsParseFloat(v: Any?): Double = jsString(v).trim().toDoubleOrNull() ?: 0.0
 // java.net.URLEncoder; the iOS actual arrives with the CMP milestone.
 expect fun jsEncodeURIComponent(v: Any?): String`,
     src: `
-actual fun jsEncodeURIComponent(v: Any?): String = java.net.URLEncoder.encode(jsString(v), "UTF-8").replace("+", "%20")
+actual fun jsEncodeURIComponent(v: Any?): String = java.net.URLEncoder.encode(jsString(v), "UTF-8")
+    .replace("+", "%20")
+    .replace("%7E", "~")
+    .replace("%2A", "*")
 ` },
   'jsDecodeURIComponent': {
     deps: ['jsString'],
@@ -4018,7 +4110,7 @@ actual fun jsEncodeURIComponent(v: Any?): String = java.net.URLEncoder.encode(js
 // the JVM URLDecoder behavior; iOS actual arrives with the CMP milestone).
 expect fun jsDecodeURIComponent(v: Any?): String`,
     src: `
-actual fun jsDecodeURIComponent(v: Any?): String = java.net.URLDecoder.decode(jsString(v), "UTF-8")
+actual fun jsDecodeURIComponent(v: Any?): String = java.net.URLDecoder.decode(jsString(v).replace("+", "%2B"), "UTF-8")
 ` },
   'jsEncodeURI': {
     deps: ['jsString'],
@@ -4044,6 +4136,7 @@ actual fun jsEncodeURI(v: Any?): String = java.net.URLEncoder.encode(jsString(v)
     .replace("%28", "(")
     .replace("%29", ")")
     .replace("%7E", "~")
+    .replace("%2A", "*")
 ` },
   'jsDecodeURI': {
     deps: ['jsString'],
@@ -4052,7 +4145,7 @@ actual fun jsEncodeURI(v: Any?): String = java.net.URLEncoder.encode(jsString(v)
 // URLDecoder, unchanged; iOS actual arrives with the CMP milestone).
 expect fun jsDecodeURI(v: Any?): String`,
     src: `
-actual fun jsDecodeURI(v: Any?): String = java.net.URLDecoder.decode(jsString(v), "UTF-8")
+actual fun jsDecodeURI(v: Any?): String = java.net.URLDecoder.decode(jsString(v).replace("+", "%2B"), "UTF-8")
 ` },
   'jsRegexExec': { deps: ['jsString'], platform: 'common', src: `
 fun jsAsRegex(v: Any?): Regex = when (v) {
@@ -4072,7 +4165,7 @@ fun jsStringify(v: Any?): String = when (v) {
     null -> "null"
     is String -> "\\"$v\\""
     is Boolean -> v.toString()
-    is Number -> v.toString()
+    is Number -> if ((v is Double && (v.isNaN() || v.isInfinite())) || (v is Float && (v.isNaN() || v.isInfinite()))) "null" else v.toString()
     is List<*> -> v.joinToString(",", "[", "]") { jsStringify(it) }
     is Map<*, *> -> v.entries.joinToString(",", "{", "}") { "\\"\${it.key}\\": \${jsStringify(it.value)}" }
     else -> "\\"\${v.toString()}\\""
@@ -4240,19 +4333,22 @@ fun jsMapGet(map: Any?, key: Any?): Any? = (map as? Map<*, *>)?.get(key)
 // element type flow through from the expected use site (List<String> stays
 // String), like JS' dynamic typing.
 @Suppress("UNCHECKED_CAST")
-fun <T> jsIndex(coll: Any?, key: Any?): T? = when (coll) {
-    is Map<*, *> -> coll.get(key) as T?
-    is List<*> -> { val i = jsIndexKey(key); if (i != null && i >= 0 && i < coll.size) coll[i] as T? else null }
-    is Array<*> -> { val i = jsIndexKey(key); if (i != null && i >= 0 && i < coll.size) coll[i] as T? else null }
-    is String -> { val i = jsIndexKey(key); if (i != null && i >= 0 && i < coll.length) coll[i].toString() as T? else null }
+fun jsIndex(coll: Any?, key: Any?): Any? = when (coll) {
+    is Map<*, *> -> coll.get(key)
+    is List<*> -> { val i = jsIndexKey(key); if (i != null && i >= 0 && i < coll.size) coll[i] else null }
+    is Array<*> -> { val i = jsIndexKey(key); if (i != null && i >= 0 && i < coll.size) coll[i] else null }
+    is String -> { val i = jsIndexKey(key); if (i != null && i >= 0 && i < coll.length) coll[i].toString() else null }
     else -> null
 }
 
 fun jsIndexKey(key: Any?): Int? = when (key) {
     is Int -> key
     is Long -> if (key >= Int.MIN_VALUE.toLong() && key <= Int.MAX_VALUE.toLong()) key.toInt() else null
+    is Float -> if (key.toDouble() == Math.floor(key.toDouble()) && key >= Int.MIN_VALUE.toFloat() && key <= Int.MAX_VALUE.toFloat()) key.toInt() else null
     is Double -> if (key == Math.floor(key) && key >= Int.MIN_VALUE.toDouble() && key <= Int.MAX_VALUE.toDouble()) key.toInt() else null
-    is String -> key.toIntOrNull()
+    is Short -> key.toInt()
+    is Byte -> key.toInt()
+    is String -> { val i = key.toIntOrNull() ?: return null; if (i.toString() == key) i else null }
     else -> null
 }
 ` },
@@ -4265,7 +4361,10 @@ fun jsIndexSet(coll: Any?, key: Any?, value: Any?): Any? {
         is MutableMap<*, *> -> (coll as MutableMap<Any?, Any?>)[key] = value
         is MutableList<*> -> {
             val i = jsIndexKey(key)
-            if (i != null && i >= 0 && i < coll.size) (coll as MutableList<Any?>)[i] = value
+            if (i != null && i >= 0) {
+                if (i < coll.size) (coll as MutableList<Any?>)[i] = value
+                else if (i == coll.size) (coll as MutableList<Any?>).add(value)
+            }
         }
         is Array<*> -> {
             val i = jsIndexKey(key)
@@ -4349,7 +4448,17 @@ expect fun jsDateValue(v: Any?): Long`,
     src: `
 actual fun jsDateValue(v: Any?): Long = when (v) {
     is Number -> v.toLong()
-    is String -> try { java.time.Instant.parse(jsString(v)).toEpochMilli() } catch (_: Exception) { java.time.Instant.parse(jsString(v).replace(' ', 'T') + "Z").toEpochMilli() }
+    is String -> {
+        val s = jsString(v)
+        try { java.time.Instant.parse(s).toEpochMilli() }
+        catch (_: Exception) {
+            try { java.time.Instant.parse(s.replace(' ', 'T') + "Z").toEpochMilli() }
+            catch (_: Exception) {
+                try { java.time.Instant.parse(s + "T00:00:00Z").toEpochMilli() }
+                catch (_: Exception) { 0L }
+            }
+        }
+    }
     else -> 0L
 }
 ` },
@@ -4371,14 +4480,17 @@ object VeskTimers {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private val jobs = mutableMapOf<Int, Job>()
     private var nextId = 1
+    // JS clamps negative / NaN delays to 0; kotlinx.coroutines delay() throws
+    // on negatives (uncaught in the job -> app crash).
+    private fun clampDelay(ms: Any?): Long = (ms?.let { num(it) }?.toLong() ?: 0L).coerceAtLeast(0L)
     fun setTimeout(fn: () -> Unit, ms: Any? = 0): Int {
         val id = nextId++
-        jobs[id] = scope.launch { delay(ms?.let { num(it) }?.toLong() ?: 0L); jobs.remove(id); try { fn() } catch (e: Throwable) { jsHandleError(e) } }
+        jobs[id] = scope.launch { delay(clampDelay(ms)); jobs.remove(id); try { fn() } catch (e: Throwable) { jsHandleError(e) } }
         return id
     }
     fun setInterval(fn: () -> Unit, ms: Any? = 0): Int {
         val id = nextId++
-        jobs[id] = scope.launch { while (isActive) { delay(ms?.let { num(it) }?.toLong() ?: 0L); try { fn() } catch (e: Throwable) { jsHandleError(e) } } }
+        jobs[id] = scope.launch { while (isActive) { delay(clampDelay(ms)); try { fn() } catch (e: Throwable) { jsHandleError(e) } } }
         return id
     }
     fun clearTimeout(id: Any?) { jobs.remove(num(id).toInt())?.cancel() }
@@ -4440,7 +4552,7 @@ private fun showAlert(title: String?, message: String) {
     currentViewController()?.presentViewController(alert, animated = true, completion = null)
 }
 ` },
-  'jsAlert': { deps: ['VeskAppContext', 'iosUiKit'],
+  'jsAlert': { deps: ['VeskAppContext', 'iosUiKit', 'jsString'],
     expect: `
 expect fun jsAlert(message: Any?)
 `,
@@ -4451,7 +4563,7 @@ expect fun jsAlert(message: Any?)
 actual fun jsAlert(message: Any?) {
     val ctx = VeskAppContext.activity ?: return
     android.app.AlertDialog.Builder(ctx)
-        .setMessage(if (message == null) "" else message.toString())
+        .setMessage(jsString(message))
         .setPositiveButton("OK", null)
         .show()
 }
@@ -4462,7 +4574,7 @@ actual fun jsAlert(message: Any?) {
 // undefined) and shows asynchronously.
 actual fun jsAlert(message: Any?) {
     onMain {
-        showAlert(title = null, message = if (message == null) "" else message.toString())
+        showAlert(title = null, message = jsString(message))
     }
 }
 ` },
@@ -5081,7 +5193,7 @@ fun motionSpring(options: Any? = null): SpringSpec<Float> {
 
 fun motionTween(options: Any? = null): TweenSpec<Float> {
     val opts = options as? Map<*, *> ?: emptyMap<Any, Any>()
-    val duration = (num(jsMapGet(opts, "duration")) * 1000.0).toInt().let { if (it > 0) it else 300 }
+    val duration = (num(jsMapGet(opts, "duration")) * 1000.0).toInt().let { if (it >= 0) it else 300 }
     val delayMs = (num(jsMapGet(opts, "delay")) * 1000.0).toInt().coerceAtLeast(0)
     val ease = motionEase(jsMapGet(opts, "ease"))
     return TweenSpec(durationMillis = duration, delay = delayMs, easing = ease)
@@ -5412,7 +5524,7 @@ fun Modifier.motionFocus(
 ` },
 };
 
-export const RUNTIME_ORDER = ['veskVideo', 'veskAudio', 'veskFileImage', 'veskBundledImage', 'veskBundledMediaUrl', 'veskDeviceCore', 'veskFindActivity', 'veskDeviceApi', 'veskQr', 'veskYchartsLineChart', 'veskDragDrop', 'veskColorFilter', 'veskBrightness', 'veskContrast', 'veskGrayscale', 'veskSaturate', 'veskInvert', 'veskSepia', 'veskHueRotate', 'veskDashedBorder', 'veskSideBorder', 'veskDivideLine', 'veskSkew', 'rememberRouteScrollState', 'Link', 'NavLink', 'Outlet', 'veskNavSync', 'veskNavigate', 'veskGoBack', 'veskUseParams', 'jsString', 'jsHandleError', 'jsSafe', 'jsTypeof', 'jsGlobalIsNaN', 'jsGlobalIsFinite', 'jsStrictIsNaN', 'jsStrictIsFinite', 'jsIsInteger', 'jsParseInt', 'jsParseFloat', 'jsEncodeURIComponent', 'jsDecodeURIComponent', 'jsEncodeURI', 'jsDecodeURI', 'jsRegexExec', 'jsRegexSearch', 'jsStringify', 'jsParseJson', 'jsMapOf', 'jsSetOf', 'jsMapIterable', 'jsMapGet', 'jsMapSet', 'jsHas', 'jsDelete', 'jsClear', 'jsMapKeys', 'jsMapValues', 'jsMapEntries', 'jsIndex', 'jsIndexSet', 'jsSize', 'jsLength', 'jsForEach', 'jsDateValue', 'jsTagged', 'JsConsole', 'VeskTimers', 'VeskAppContext', 'jsAlert', 'VeskWebStorage', 'VeskFetch', 'VeskSqlite', 'VeskAuth', 'motionFocus', 'motionPress', 'motionHover', 'motionDrag', 'motionScroll', 'motionInView', 'motionStagger', 'motionCore'];
+export const RUNTIME_ORDER = ['veskVideo', 'veskAudio', 'veskFileImage', 'veskBundledImage', 'veskBundledMediaUrl', 'veskDeviceCore', 'veskFindActivity', 'veskDeviceApi', 'veskQr', 'veskYchartsLineChart', 'veskDragDrop', 'veskColorFilter', 'veskBrightness', 'veskContrast', 'veskGrayscale', 'veskSaturate', 'veskInvert', 'veskSepia', 'veskHueRotate', 'veskDashedBorder', 'veskSideBorder', 'veskDivideLine', 'veskSkew', 'rememberRouteScrollState', 'Link', 'NavLink', 'Outlet', 'veskNavSync', 'veskNavigate', 'veskGoBack', 'veskUseParams', 'veskUseRouter', 'veskUseQuery', 'jsString', 'jsHandleError', 'jsSafe', 'jsTypeof', 'jsGlobalIsNaN', 'jsGlobalIsFinite', 'jsStrictIsNaN', 'jsStrictIsFinite', 'jsIsInteger', 'jsParseInt', 'jsParseFloat', 'jsEncodeURIComponent', 'jsDecodeURIComponent', 'jsEncodeURI', 'jsDecodeURI', 'jsRegexExec', 'jsRegexSearch', 'jsStringify', 'jsParseJson', 'jsMapOf', 'jsSetOf', 'jsMapIterable', 'jsMapGet', 'jsMapSet', 'jsHas', 'jsDelete', 'jsClear', 'jsMapKeys', 'jsMapValues', 'jsMapEntries', 'jsIndex', 'jsIndexSet', 'jsSize', 'jsLength', 'jsForEach', 'jsDateValue', 'jsTagged', 'JsConsole', 'VeskTimers', 'VeskAppContext', 'jsAlert', 'VeskWebStorage', 'VeskFetch', 'VeskSqlite', 'VeskAuth', 'motionFocus', 'motionPress', 'motionHover', 'motionDrag', 'motionScroll', 'motionInView', 'motionStagger', 'motionCore'];
 
 // Function/composable names that come from a differently-named helper unit.
 export const BIOMETRIC_CHECK_BODY = `val pm = context.packageManager

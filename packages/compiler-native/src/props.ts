@@ -33,30 +33,39 @@ export function findComponentDecls(program: JsNode): ComponentDecl[] {
 }
 
 function typeRef(node: JsNode | null): string {
-  if (!node) return 'Any';
+  if (!node) return 'Any?';
   switch (node.type) {
     case 'TSNumberKeyword': return 'Int';
     case 'TSStringKeyword': return 'String';
     case 'TSBooleanKeyword': return 'Boolean';
     case 'TSAnyKeyword':
-    case 'TSUnknownKeyword': return 'Any';
+    case 'TSUnknownKeyword': return 'Any?';
     case 'TSNullKeyword': return 'Any?';
-    case 'TSUndefinedKeyword': return 'Unit?';
+    case 'TSUndefinedKeyword': return 'Any?';
     case 'TSArrayType': return `List<${typeRef(node.elementType as JsNode | null)}>`;
     case 'TSUnionType': {
       const types = (node.types as JsNode[]) ?? [];
       const inner = types.map((t) => typeRef(t)).join(' | ');
-      return inner.includes('|') ? `Any` : inner;
+      // A union of Kotlin types has no single non-nullable static type; the
+      // catch-all nullable Any keeps the generated props class compilable
+      // (default null) — the JS value is undefined-capable by construction.
+      return inner.includes('|') ? `Any?` : inner;
     }
     case 'TSTypeReference': {
       const name = node.typeName as JsNode;
-      const refName = name.type === 'Identifier' ? (name.name as string) : 'Any';
-      const args = (node.typeParameters as { params?: JsNode[] } | undefined)?.params;
+      const refName = name.type === 'Identifier' ? (name.name as string) : 'Any?';
+      // The web compiler's AST carries type args under `typeArguments`; the
+      // native parser (a TSTypeParameterInstantiation node) uses
+      // `typeParameters` — accept both shapes.
+      const args = ((node.typeArguments ?? node.typeParameters) as { params?: JsNode[] } | null | undefined)?.params;
+      // JS `Array<T>` is a JS array — the same List<T> shape TSArrayType maps to.
+      if (refName === 'Array' && args?.length) return `List<${args.map((a) => typeRef(a)).join(', ')}>`;
+      if (refName === 'Any' || refName === 'unknown') return 'Any?';
       if (args?.length) return `${refName}<${args.map((a) => typeRef(a)).join(', ')}>`;
       return refName;
     }
     default:
-      return 'Any';
+      return 'Any?';
   }
 }
 

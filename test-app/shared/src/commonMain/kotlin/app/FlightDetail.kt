@@ -72,9 +72,12 @@ data class FlightDetailProps(
 @Composable
 fun FlightDetail(props: FlightDetailProps = FlightDetailProps(), content: @Composable () -> Unit = {}) {
 	veskNavSync()
-	val params = remember { mutableStateOf("") }
-	val p = veskUseParams();
-	params.value = (jsIndex(p, "id") ?: "(none)");
+	val router = veskUseRouter();
+	val __vsk_d0 = veskUseParams()
+	val paramId = (__vsk_d0 as Map<String, Any?>)["id"]
+	val __vsk_d1 = veskUseQuery()
+	val id = (__vsk_d1 as Map<String, Any?>)["id"]
+	val seat = (__vsk_d1 as Map<String, Any?>)["seat"]
 	Column(
 		modifier = Modifier.fillMaxWidth().padding(16.dp),
 		verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -112,10 +115,21 @@ fun FlightDetail(props: FlightDetailProps = FlightDetailProps(), content: @Compo
 					style = TextStyle(fontFamily = FontFamily.Monospace),
 				)
 			}
-			Column(modifier = Modifier.fillMaxWidth()) {
-				Text("useParams()['id'] = ")
+			Column(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+				Text("const " + ("{ id }").toString() + " = useParams() → id = ")
 				Text(
-					text = (params.value).toString(),
+					text = (paramId).toString(),
+					style = TextStyle(fontFamily = FontFamily.Monospace),
+				)
+			}
+			Column(modifier = Modifier.fillMaxWidth()) {
+				Text("const " + ("{ id, seat }").toString() + " = useQuery() → id = " + ", seat = ")
+				Text(
+					text = (id).toString(),
+					style = TextStyle(fontFamily = FontFamily.Monospace),
+				)
+				Text(
+					text = (seat).toString(),
 					style = TextStyle(fontFamily = FontFamily.Monospace),
 				)
 			}
@@ -126,7 +140,7 @@ fun FlightDetail(props: FlightDetailProps = FlightDetailProps(), content: @Compo
 			horizontalArrangement = Arrangement.spacedBy(8.dp),
 		) {
 			Button(
-				onClick = jsSafe({ veskNavigate("/labs") }),
+				onClick = jsSafe({ router.push("/labs") }),
 				modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF4F46E5)),
 				shape = RoundedCornerShape(9999.dp),
 				colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -134,13 +148,13 @@ fun FlightDetail(props: FlightDetailProps = FlightDetailProps(), content: @Compo
 				contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
 			) {
 			Text(
-				text = " navigate('/labs') ",
+				text = " router.push('/labs') ",
 				modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF4F46E5)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
 				style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
 			)
 			}
 			Button(
-				onClick = jsSafe({ veskGoBack() }),
+				onClick = jsSafe({ router.back() }),
 				modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.11f)),
 				shape = RoundedCornerShape(9999.dp),
 				colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -148,9 +162,23 @@ fun FlightDetail(props: FlightDetailProps = FlightDetailProps(), content: @Compo
 				contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
 			) {
 			Text(
-				text = " back() ",
+				text = " router.back() ",
 				modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.11f)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
 				style = TextStyle(color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
+			)
+			}
+			Button(
+				onClick = jsSafe({ router.refresh() }),
+				modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF9333EA)),
+				shape = RoundedCornerShape(9999.dp),
+				colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
+				elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
+				contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+			) {
+			Text(
+				text = " router.refresh() ",
+				modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF9333EA)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
+				style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
 			)
 			}
 		}

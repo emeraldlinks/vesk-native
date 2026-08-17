@@ -594,8 +594,12 @@ export type ModuleRegistry = Map<string, Map<string, string>>;
 // come from the web compiler parse (the only parser that understands
 // `component`); script symbols come from the native header parse. Returns the
 // registry plus the per-file slug map so codegen uses identical mangling.
-export function buildModuleRegistry(appDir: string, files: string[], componentNames: Map<string, string[]>): { registry: ModuleRegistry; slugs: Map<string, string> } {
-  const slugs = buildModuleSlugs(appDir, files);
+// `slugs` may be precomputed by the caller (buildModuleSlugs over a wider
+// file set that also includes project JS/TS modules, so a `.vsk` and a `.ts`
+// that base-slug to the same name never collide in package app); when absent,
+// the slugs are computed over the .vsk files only.
+export function buildModuleRegistry(appDir: string, files: string[], componentNames: Map<string, string[]>, slugs?: Map<string, string>): { registry: ModuleRegistry; slugs: Map<string, string> } {
+  const slugsResolved = slugs ?? buildModuleSlugs(appDir, files);
   const registry: ModuleRegistry = new Map();
   const maps = new Map<string, Map<string, string>>();
   for (const file of files) {
@@ -614,7 +618,7 @@ export function buildModuleRegistry(appDir: string, files: string[], componentNa
     const { symbols, error } = collectHeaderSymbols(header);
     if (error) continue;
     const map = maps.get(rel) ?? new Map<string, string>();
-    const slug = slugs.get(rel) ?? slugFor(rel);
+    const slug = slugsResolved.get(rel) ?? slugFor(rel);
     for (const e of symbols.exportDecls) map.set(e.name, sanitizeIdent(`${slug}_${e.name}`));
     for (const a of symbols.aliasExports) map.set(a.exported, map.get(a.local) ?? sanitizeIdent(`${slug}_${a.local}`));
     if (symbols.reExports.length) reExports.set(rel, symbols.reExports);
@@ -625,19 +629,27 @@ export function buildModuleRegistry(appDir: string, files: string[], componentNa
       if (re.exported === '*') {
         const target = resolveVskTarget(re.source, rel, appDir);
         if (target) {
-          for (const [name, kt] of maps.get(target) ?? new Map()) map.set(name, kt);
+          for (const [name, kt] of maps.get(target) ?? new Map()) {
+            // JS semantics: a file's own explicit exports shadow `export *`
+            // re-exports of the same name, so never overwrite an existing entry.
+            if (!map.has(name)) map.set(name, kt);
+          }
         }
       } else {
         const target = resolveVskTarget(re.source, rel, appDir);
         if (target) {
           const kt = maps.get(target)?.get(re.local);
-          if (kt) map.set(re.exported, kt);
+          // A named re-export alongside an own export of the same name is a
+          // SyntaxError in real ESM; the file's own declaration is what its
+          // Kotlin actually emits, so it wins the registry too (never a
+          // silent shadowing of the emitted symbol).
+          if (kt && !map.has(re.exported)) map.set(re.exported, kt);
         }
       }
     }
   }
   for (const [rel, map] of maps) registry.set(rel, map);
-  return { registry, slugs };
+  return { registry, slugs: slugsResolved };
 }
 
 // Resolve a relative/absolute `.vsk` import specifier against the importing

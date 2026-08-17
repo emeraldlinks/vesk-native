@@ -358,6 +358,34 @@ check('js2kt: useParams maps to veskUseParams', (() => {
   const out = j2k.expr(initOf('let p = useParams();'));
   return out === 'veskUseParams()' && err.errors.length === 0;
 })());
+check('js2kt: const { id } = useParams() destructures the params map', (() => {
+  const err = new KtErrors();
+  const j2k = new Js2Kt(err);
+  const out = j2k.stmt(stmt0('const { id } = useParams();'));
+  return out.includes('val id = (__vsk_d') && out.includes('["id"]');
+})());
+check('js2kt: useRouter maps to veskUseRouter', kt('useRouter()') === 'veskUseRouter()');
+check('js2kt: useQuery maps to veskUseQuery', kt('useQuery()') === 'veskUseQuery()');
+check('js2kt: router.push keeps its name (not array add)', (() => {
+  const err = new KtErrors();
+  const j2k = new Js2Kt(err);
+  const block = program('{ const router = useRouter(); router.push("/shop"); }').body[0];
+  const out = block.body.map((s: JsNode) => j2k.stmt(s)).join('\n');
+  return out.includes('router.push("/shop")') && !out.includes('router.add');
+})());
+check('js2kt: router.back and router.refresh keep their names', (() => {
+  const err = new KtErrors();
+  const j2k = new Js2Kt(err);
+  const block = program('{ const router = useRouter(); router.back(); router.refresh(); }').body[0];
+  const out = block.body.map((s: JsNode) => j2k.stmt(s)).join('\n');
+  return out.includes('router.back()') && out.includes('router.refresh()');
+})());
+check('js2kt: const { q } = useQuery() destructures the query map', (() => {
+  const err = new KtErrors();
+  const j2k = new Js2Kt(err);
+  const out = j2k.stmt(stmt0('const { q } = useQuery();'));
+  return out.includes('val q = (__vsk_d') && out.includes('["q"]');
+})());
 check('js2kt: history.pushState maps to veskNavigate', kt('history.pushState(null, "", "/shop")') === 'veskNavigate("/shop")');
 check('js2kt: history.pushState dynamic url', kt('history.pushState({}, "", href)') === 'veskNavigate(href)');
 check('js2kt: history.back maps to veskGoBack', kt('history.back()') === 'veskGoBack()');

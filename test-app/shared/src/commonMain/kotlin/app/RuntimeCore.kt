@@ -64,15 +64,46 @@ fun truthy(v: Any?): Boolean = when (v) {
     null -> false
     is Boolean -> v
     is String -> v.isNotEmpty()
-    is Number -> v != 0
+    is Number -> { val d = v.toDouble(); d != 0.0 && !d.isNaN() }
     else -> true
 }
 
+// JS ToNumber: unparseable strings, and objects/arrays (JS Number(object) ->
+// NaN except single-element arrays), produce NaN like the browser; "" and
+// whitespace-only are 0, "0x10" is 16, "Infinity" is Infinity.
 fun num(v: Any?): Double = when (v) {
     is Number -> v.toDouble()
-    is String -> v.toDoubleOrNull() ?: 0.0
+    is String -> jsToNumber(v)
     is Boolean -> if (v) 1.0 else 0.0
-    else -> 0.0
+    else -> Double.NaN
+}
+
+private fun jsToNumber(s: String): Double {
+    val t = s.trim()
+    if (t.isEmpty()) return 0.0
+    if (t == "Infinity" || t == "+Infinity") return Double.POSITIVE_INFINITY
+    if (t == "-Infinity") return Double.NEGATIVE_INFINITY
+    if (t[0] == '0' && t.length > 2 && (t[1] == 'x' || t[1] == 'X' || t[1] == 'b' || t[1] == 'B' || t[1] == 'o' || t[1] == 'O')) {
+        val base = when (t[1]) {
+            'x', 'X' -> 16
+            'b', 'B' -> 2
+            else -> 8
+        }
+        var d = 0.0
+        for (j in 2 until t.length) {
+            val c = t[j]
+            val dv = when (c) {
+                in '0'..'9' -> c - '0'
+                in 'a'..'f' -> c - 'a' + 10
+                in 'A'..'F' -> c - 'A' + 10
+                else -> return Double.NaN
+            }
+            if (dv >= base) return Double.NaN
+            d = d * base + dv
+        }
+        return d
+    }
+    return t.toDoubleOrNull() ?: Double.NaN
 }
 
 
@@ -456,10 +487,48 @@ fun veskGoBack() {
 fun veskUseParams(): Map<String, String> = veskNavController?.currentParams?.value ?: emptyMap()
 
 
+// useRouter(): a router handle with the react-router / Next.js surface users
+// know — push(path), back(), refresh(). All three go through the same
+// NavController the free navigate()/back() functions use, so the two styles
+// are interchangeable. The handle is created fresh per call and is only
+// valid while a router page is composed (fails closed otherwise).
+data class VeskRouter(private val nav: NavController) {
+    fun push(path: String) = nav.navigate(path)
+    fun back() { nav.pop() }
+    fun refresh() = nav.refresh()
+}
+
+fun veskUseRouter(): VeskRouter =
+    VeskRouter(veskNavController ?: error("vesk: useRouter() called outside a router page"))
+
+
 fun jsString(v: Any?): String = when (v) {
     null -> "null"
     is String -> v
     else -> v.toString()
+}
+
+
+// Platform seam: browser decodeURIComponent semantics (android actual keeps
+// the JVM URLDecoder behavior; iOS actual arrives with the CMP milestone).
+expect fun jsDecodeURIComponent(v: Any?): String
+
+// useQuery(): the current route's query string as a Map<String, String>.
+// AppRouter mirrors the raw query into NavController.currentQuery before the
+// page composes; keys and values are percent-decoded (browser URLSearchParams
+// semantics), duplicates keep the last value, and keys without '=' map to "".
+fun veskUseQuery(): Map<String, String> {
+    val raw = veskNavController?.currentQuery?.value ?: return emptyMap()
+    if (raw.isEmpty()) return emptyMap()
+    val out = mutableMapOf<String, String>()
+    for (pair in raw.split('&')) {
+        if (pair.isEmpty()) continue
+        val eq = pair.indexOf('=')
+        val key = if (eq < 0) pair else pair.substring(0, eq)
+        val value = if (eq < 0) "" else pair.substring(eq + 1)
+        out[jsDecodeURIComponent(key)] = jsDecodeURIComponent(value)
+    }
+    return out
 }
 
 
@@ -471,14 +540,14 @@ expect fun jsHandleError(e: Throwable)
 
 // Wrap an event-handler lambda so a throw reports instead of crashing: the
 // browser fires window.onerror and the page keeps running, and so do we.
-fun jsSafe(fn: () -> Unit): () -> Unit = { try { fn() } catch (e: Throwable) { jsHandleError(e) } }
+fun jsSafe(fn: () -> Unit): () -> Unit = { try { fn() } catch (e: kotlin.coroutines.cancellation.CancellationException) { throw e } catch (e: Throwable) { jsHandleError(e) } }
 
 
 fun jsStringify(v: Any?): String = when (v) {
     null -> "null"
     is String -> "\"$v\""
     is Boolean -> v.toString()
-    is Number -> v.toString()
+    is Number -> if ((v is Double && (v.isNaN() || v.isInfinite())) || (v is Float && (v.isNaN() || v.isInfinite()))) "null" else v.toString()
     is List<*> -> v.joinToString(",", "[", "]") { jsStringify(it) }
     is Map<*, *> -> v.entries.joinToString(",", "{", "}") { "\"${it.key}\": ${jsStringify(it.value)}" }
     else -> "\"${v.toString()}\""
@@ -508,19 +577,22 @@ fun jsMapKeys(map: Any?): Set<Any?> = (map as Map<*, *>).keys
 // element type flow through from the expected use site (List<String> stays
 // String), like JS' dynamic typing.
 @Suppress("UNCHECKED_CAST")
-fun <T> jsIndex(coll: Any?, key: Any?): T? = when (coll) {
-    is Map<*, *> -> coll.get(key) as T?
-    is List<*> -> { val i = jsIndexKey(key); if (i != null && i >= 0 && i < coll.size) coll[i] as T? else null }
-    is Array<*> -> { val i = jsIndexKey(key); if (i != null && i >= 0 && i < coll.size) coll[i] as T? else null }
-    is String -> { val i = jsIndexKey(key); if (i != null && i >= 0 && i < coll.length) coll[i].toString() as T? else null }
+fun jsIndex(coll: Any?, key: Any?): Any? = when (coll) {
+    is Map<*, *> -> coll.get(key)
+    is List<*> -> { val i = jsIndexKey(key); if (i != null && i >= 0 && i < coll.size) coll[i] else null }
+    is Array<*> -> { val i = jsIndexKey(key); if (i != null && i >= 0 && i < coll.size) coll[i] else null }
+    is String -> { val i = jsIndexKey(key); if (i != null && i >= 0 && i < coll.length) coll[i].toString() else null }
     else -> null
 }
 
 fun jsIndexKey(key: Any?): Int? = when (key) {
     is Int -> key
     is Long -> if (key >= Int.MIN_VALUE.toLong() && key <= Int.MAX_VALUE.toLong()) key.toInt() else null
+    is Float -> if (key.toDouble() == Math.floor(key.toDouble()) && key >= Int.MIN_VALUE.toFloat() && key <= Int.MAX_VALUE.toFloat()) key.toInt() else null
     is Double -> if (key == Math.floor(key) && key >= Int.MIN_VALUE.toDouble() && key <= Int.MAX_VALUE.toDouble()) key.toInt() else null
-    is String -> key.toIntOrNull()
+    is Short -> key.toInt()
+    is Byte -> key.toInt()
+    is String -> { val i = key.toIntOrNull() ?: return null; if (i.toString() == key) i else null }
     else -> null
 }
 
@@ -549,14 +621,17 @@ object VeskTimers {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private val jobs = mutableMapOf<Int, Job>()
     private var nextId = 1
+    // JS clamps negative / NaN delays to 0; kotlinx.coroutines delay() throws
+    // on negatives (uncaught in the job -> app crash).
+    private fun clampDelay(ms: Any?): Long = (ms?.let { num(it) }?.toLong() ?: 0L).coerceAtLeast(0L)
     fun setTimeout(fn: () -> Unit, ms: Any? = 0): Int {
         val id = nextId++
-        jobs[id] = scope.launch { delay(ms?.let { num(it) }?.toLong() ?: 0L); jobs.remove(id); try { fn() } catch (e: Throwable) { jsHandleError(e) } }
+        jobs[id] = scope.launch { delay(clampDelay(ms)); jobs.remove(id); try { fn() } catch (e: Throwable) { jsHandleError(e) } }
         return id
     }
     fun setInterval(fn: () -> Unit, ms: Any? = 0): Int {
         val id = nextId++
-        jobs[id] = scope.launch { while (isActive) { delay(ms?.let { num(it) }?.toLong() ?: 0L); try { fn() } catch (e: Throwable) { jsHandleError(e) } } }
+        jobs[id] = scope.launch { while (isActive) { delay(clampDelay(ms)); try { fn() } catch (e: Throwable) { jsHandleError(e) } } }
         return id
     }
     fun clearTimeout(id: Any?) { jobs.remove(num(id).toInt())?.cancel() }
@@ -808,7 +883,7 @@ fun motionSpring(options: Any? = null): SpringSpec<Float> {
 
 fun motionTween(options: Any? = null): TweenSpec<Float> {
     val opts = options as? Map<*, *> ?: emptyMap<Any, Any>()
-    val duration = (num(jsMapGet(opts, "duration")) * 1000.0).toInt().let { if (it > 0) it else 300 }
+    val duration = (num(jsMapGet(opts, "duration")) * 1000.0).toInt().let { if (it >= 0) it else 300 }
     val delayMs = (num(jsMapGet(opts, "delay")) * 1000.0).toInt().coerceAtLeast(0)
     val ease = motionEase(jsMapGet(opts, "ease"))
     return TweenSpec(durationMillis = duration, delay = delayMs, easing = ease)
