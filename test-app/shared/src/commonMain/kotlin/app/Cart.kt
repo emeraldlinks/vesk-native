@@ -70,6 +70,10 @@ fun Cart(content: @Composable () -> Unit = {}) {
 	val qty2 = remember { mutableStateOf(2) }
 	val qty3 = remember { mutableStateOf(1) }
 	val promo = remember { mutableStateOf(false) }
+	val gone1 = remember { mutableStateOf(false) }
+	val gone2 = remember { mutableStateOf(false) }
+	val gone3 = remember { mutableStateOf(false) }
+	val removed = remember { mutableStateOf(0) }
 	Column(
 		modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(vertical = 8.dp),
 		verticalArrangement = Arrangement.spacedBy(24.dp),
@@ -83,7 +87,7 @@ fun Cart(content: @Composable () -> Unit = {}) {
 				style = TextStyle(fontSize = 24.sp, lineHeight = 32.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = -0.2.sp),
 			)
 			Text(
-				text = "3 items",
+				text = (3 - removed.value).toString() + " items · swipe an item to remove it",
 				modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
 				style = TextStyle(color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp, lineHeight = 20.sp),
 			)
@@ -92,218 +96,275 @@ fun Cart(content: @Composable () -> Unit = {}) {
 			modifier = Modifier.fillMaxWidth(),
 			verticalArrangement = Arrangement.spacedBy(16.dp),
 		) {
-			Row(
-				modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f)).padding(16.dp),
-				verticalAlignment = Alignment.CenterVertically,
-				horizontalArrangement = Arrangement.spacedBy(12.dp),
-			) {
-				Column(
-					modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Brush.linearGradient(listOf(Color(0xFF60A5FA), Color(0xFF4F46E5)), start = Offset(0f, 0f), end = Offset(1f, 1f))).width(64.dp).height(64.dp),
-				) {
-				}
-				Column(
-					modifier = Modifier.weight(1f),
-				) {
-					Text(
-						text = "Arctic Fleece Hoodie",
-						modifier = Modifier.fillMaxWidth(),
-						style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
-					)
-					Text(
-						text = "M · Pine green",
-						modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-						style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
-					)
-					Row(
-						modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-						verticalAlignment = Alignment.CenterVertically,
-						horizontalArrangement = Arrangement.SpaceBetween,
-					) {
+			SwipeToDismiss(
+				props = SwipeToDismissProps(onDismiss = jsSafe({ run __veskret0@ { gone1.value = true; removed.value = num(removed.value + 1).toInt() } }), modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))),
+				background = {
 						Row(
-							modifier = Modifier.shadow(1.dp).clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)).padding(4.dp),
+							modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(Color(0xFFEF4444)).fillMaxHeight().padding(horizontal = 24.dp),
 							verticalAlignment = Alignment.CenterVertically,
-							horizontalArrangement = Arrangement.spacedBy(4.dp),
+							horizontalArrangement = Arrangement.End,
 						) {
-							Button(
-								onClick = jsSafe({ run __veskret0@ { if (truthy(num(qty1.value) > num(1))) qty1.value = num(qty1.value + -1).toInt() } }),
-								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(28.dp).height(28.dp),
-								shape = RoundedCornerShape(9999.dp),
-								colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
-								elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
-							) {
 							Text(
-								text = "−",
-								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(28.dp).height(28.dp),
-								style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant),
+								text = "Remove",
+								style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
 							)
+						}
+				},
+			) {
+					if (truthy(!truthy(gone1.value))) {
+						Row(
+							modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f)).padding(16.dp),
+							verticalAlignment = Alignment.CenterVertically,
+							horizontalArrangement = Arrangement.spacedBy(12.dp),
+						) {
+							Column(
+								modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Brush.linearGradient(listOf(Color(0xFF60A5FA), Color(0xFF4F46E5)), start = Offset(0f, 0f), end = Offset(1f, 1f))).width(64.dp).height(64.dp),
+							) {
 							}
-							Text(
-								text = (qty1.value).toString(),
-								modifier = Modifier.width(24.dp),
-								style = TextStyle(textAlign = TextAlign.Center, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
-							)
-							Button(
-								onClick = jsSafe({ qty1.value = num(qty1.value + 1).toInt() }),
-								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)).width(28.dp).height(28.dp),
-								shape = RoundedCornerShape(9999.dp),
-								colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
-								elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
+							Column(
+								modifier = Modifier.weight(1f),
 							) {
-							Text(
-								text = "+",
-								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)).width(28.dp).height(28.dp),
-								style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFFFFFFFF)),
-							)
+								Text(
+									text = "Arctic Fleece Hoodie",
+									modifier = Modifier.fillMaxWidth(),
+									style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
+								)
+								Text(
+									text = "M · Pine green",
+									modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
+									style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
+								)
+								Row(
+									modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+									verticalAlignment = Alignment.CenterVertically,
+									horizontalArrangement = Arrangement.SpaceBetween,
+								) {
+									Row(
+										modifier = Modifier.shadow(1.dp).clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)).padding(4.dp),
+										verticalAlignment = Alignment.CenterVertically,
+										horizontalArrangement = Arrangement.spacedBy(4.dp),
+									) {
+										Button(
+											onClick = jsSafe({ run __veskret1@ { if (truthy(num(qty1.value) > num(1))) qty1.value = num(qty1.value + -1).toInt() } }),
+											modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(28.dp).height(28.dp),
+											shape = RoundedCornerShape(9999.dp),
+											colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
+											elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
+										) {
+										Text(
+											text = "−",
+											modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(28.dp).height(28.dp),
+											style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant),
+										)
+										}
+										Text(
+											text = (qty1.value).toString(),
+											modifier = Modifier.width(24.dp),
+											style = TextStyle(textAlign = TextAlign.Center, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
+										)
+										Button(
+											onClick = jsSafe({ qty1.value = num(qty1.value + 1).toInt() }),
+											modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)).width(28.dp).height(28.dp),
+											shape = RoundedCornerShape(9999.dp),
+											colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
+											elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
+										) {
+										Text(
+											text = "+",
+											modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)).width(28.dp).height(28.dp),
+											style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFFFFFFFF)),
+										)
+										}
+									}
+									Text(
+										text = "${'$'}89",
+										style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
+									)
+								}
 							}
 						}
-						Text(
-							text = "${'$'}89",
-							style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
-						)
+					} else {
 					}
-				}
 			}
-			Row(
-				modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f)).padding(16.dp),
-				verticalAlignment = Alignment.CenterVertically,
-				horizontalArrangement = Arrangement.spacedBy(12.dp),
-			) {
-				Column(
-					modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Brush.linearGradient(listOf(Color(0xFF34D399), Color(0xFF0D9488)), start = Offset(0f, 0f), end = Offset(1f, 1f))).width(64.dp).height(64.dp),
-				) {
-				}
-				Column(
-					modifier = Modifier.weight(1f),
-				) {
-					Text(
-						text = "Snowdrift Parka",
-						modifier = Modifier.fillMaxWidth(),
-						style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
-					)
-					Text(
-						text = "L · Storm gray",
-						modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-						style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
-					)
-					Row(
-						modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-						verticalAlignment = Alignment.CenterVertically,
-						horizontalArrangement = Arrangement.SpaceBetween,
-					) {
+			SwipeToDismiss(
+				props = SwipeToDismissProps(onDismiss = jsSafe({ run __veskret2@ { gone2.value = true; removed.value = num(removed.value + 1).toInt() } }), modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))),
+				background = {
 						Row(
-							modifier = Modifier.shadow(1.dp).clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)).padding(4.dp),
+							modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(Color(0xFFEF4444)).fillMaxHeight().padding(horizontal = 24.dp),
 							verticalAlignment = Alignment.CenterVertically,
-							horizontalArrangement = Arrangement.spacedBy(4.dp),
+							horizontalArrangement = Arrangement.End,
 						) {
-							Button(
-								onClick = jsSafe({ run __veskret1@ { if (truthy(num(qty2.value) > num(1))) qty2.value = num(qty2.value + -1).toInt() } }),
-								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(28.dp).height(28.dp),
-								shape = RoundedCornerShape(9999.dp),
-								colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
-								elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
-							) {
 							Text(
-								text = "−",
-								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(28.dp).height(28.dp),
-								style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant),
+								text = "Remove",
+								style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
 							)
+						}
+				},
+			) {
+					if (truthy(!truthy(gone2.value))) {
+						Row(
+							modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f)).padding(16.dp),
+							verticalAlignment = Alignment.CenterVertically,
+							horizontalArrangement = Arrangement.spacedBy(12.dp),
+						) {
+							Column(
+								modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Brush.linearGradient(listOf(Color(0xFF34D399), Color(0xFF0D9488)), start = Offset(0f, 0f), end = Offset(1f, 1f))).width(64.dp).height(64.dp),
+							) {
 							}
-							Text(
-								text = (qty2.value).toString(),
-								modifier = Modifier.width(24.dp),
-								style = TextStyle(textAlign = TextAlign.Center, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
-							)
-							Button(
-								onClick = jsSafe({ qty2.value = num(qty2.value + 1).toInt() }),
-								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)).width(28.dp).height(28.dp),
-								shape = RoundedCornerShape(9999.dp),
-								colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
-								elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
+							Column(
+								modifier = Modifier.weight(1f),
 							) {
-							Text(
-								text = "+",
-								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)).width(28.dp).height(28.dp),
-								style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFFFFFFFF)),
-							)
+								Text(
+									text = "Snowdrift Parka",
+									modifier = Modifier.fillMaxWidth(),
+									style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
+								)
+								Text(
+									text = "L · Storm gray",
+									modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
+									style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
+								)
+								Row(
+									modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+									verticalAlignment = Alignment.CenterVertically,
+									horizontalArrangement = Arrangement.SpaceBetween,
+								) {
+									Row(
+										modifier = Modifier.shadow(1.dp).clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)).padding(4.dp),
+										verticalAlignment = Alignment.CenterVertically,
+										horizontalArrangement = Arrangement.spacedBy(4.dp),
+									) {
+										Button(
+											onClick = jsSafe({ run __veskret3@ { if (truthy(num(qty2.value) > num(1))) qty2.value = num(qty2.value + -1).toInt() } }),
+											modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(28.dp).height(28.dp),
+											shape = RoundedCornerShape(9999.dp),
+											colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
+											elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
+										) {
+										Text(
+											text = "−",
+											modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(28.dp).height(28.dp),
+											style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant),
+										)
+										}
+										Text(
+											text = (qty2.value).toString(),
+											modifier = Modifier.width(24.dp),
+											style = TextStyle(textAlign = TextAlign.Center, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
+										)
+										Button(
+											onClick = jsSafe({ qty2.value = num(qty2.value + 1).toInt() }),
+											modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)).width(28.dp).height(28.dp),
+											shape = RoundedCornerShape(9999.dp),
+											colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
+											elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
+										) {
+										Text(
+											text = "+",
+											modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)).width(28.dp).height(28.dp),
+											style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFFFFFFFF)),
+										)
+										}
+									}
+									Text(
+										text = "${'$'}219",
+										style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
+									)
+								}
 							}
 						}
-						Text(
-							text = "${'$'}219",
-							style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
-						)
+					} else {
 					}
-				}
 			}
-			Row(
-				modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f)).padding(16.dp),
-				verticalAlignment = Alignment.CenterVertically,
-				horizontalArrangement = Arrangement.spacedBy(12.dp),
-			) {
-				Column(
-					modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Brush.linearGradient(listOf(Color(0xFFFBBF24), Color(0xFFEA580C)), start = Offset(0f, 0f), end = Offset(1f, 1f))).width(64.dp).height(64.dp),
-				) {
-				}
-				Column(
-					modifier = Modifier.weight(1f),
-				) {
-					Text(
-						text = "Merino Crew",
-						modifier = Modifier.fillMaxWidth(),
-						style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
-					)
-					Text(
-						text = "S · Oat",
-						modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-						style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
-					)
-					Row(
-						modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-						verticalAlignment = Alignment.CenterVertically,
-						horizontalArrangement = Arrangement.SpaceBetween,
-					) {
+			SwipeToDismiss(
+				props = SwipeToDismissProps(onDismiss = jsSafe({ run __veskret4@ { gone3.value = true; removed.value = num(removed.value + 1).toInt() } }), modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))),
+				background = {
 						Row(
-							modifier = Modifier.shadow(1.dp).clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)).padding(4.dp),
+							modifier = Modifier.clip(RoundedCornerShape(16.dp)).background(Color(0xFFEF4444)).fillMaxHeight().padding(horizontal = 24.dp),
 							verticalAlignment = Alignment.CenterVertically,
-							horizontalArrangement = Arrangement.spacedBy(4.dp),
+							horizontalArrangement = Arrangement.End,
 						) {
-							Button(
-								onClick = jsSafe({ run __veskret2@ { if (truthy(num(qty3.value) > num(1))) qty3.value = num(qty3.value + -1).toInt() } }),
-								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(28.dp).height(28.dp),
-								shape = RoundedCornerShape(9999.dp),
-								colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
-								elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
-							) {
 							Text(
-								text = "−",
-								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(28.dp).height(28.dp),
-								style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant),
+								text = "Remove",
+								style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
 							)
+						}
+				},
+			) {
+					if (truthy(!truthy(gone3.value))) {
+						Row(
+							modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f)).padding(16.dp),
+							verticalAlignment = Alignment.CenterVertically,
+							horizontalArrangement = Arrangement.spacedBy(12.dp),
+						) {
+							Column(
+								modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Brush.linearGradient(listOf(Color(0xFFFBBF24), Color(0xFFEA580C)), start = Offset(0f, 0f), end = Offset(1f, 1f))).width(64.dp).height(64.dp),
+							) {
 							}
-							Text(
-								text = (qty3.value).toString(),
-								modifier = Modifier.width(24.dp),
-								style = TextStyle(textAlign = TextAlign.Center, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
-							)
-							Button(
-								onClick = jsSafe({ qty3.value = num(qty3.value + 1).toInt() }),
-								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)).width(28.dp).height(28.dp),
-								shape = RoundedCornerShape(9999.dp),
-								colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
-								elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
+							Column(
+								modifier = Modifier.weight(1f),
 							) {
-							Text(
-								text = "+",
-								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)).width(28.dp).height(28.dp),
-								style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFFFFFFFF)),
-							)
+								Text(
+									text = "Merino Crew",
+									modifier = Modifier.fillMaxWidth(),
+									style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
+								)
+								Text(
+									text = "S · Oat",
+									modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
+									style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)),
+								)
+								Row(
+									modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+									verticalAlignment = Alignment.CenterVertically,
+									horizontalArrangement = Arrangement.SpaceBetween,
+								) {
+									Row(
+										modifier = Modifier.shadow(1.dp).clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)).padding(4.dp),
+										verticalAlignment = Alignment.CenterVertically,
+										horizontalArrangement = Arrangement.spacedBy(4.dp),
+									) {
+										Button(
+											onClick = jsSafe({ run __veskret5@ { if (truthy(num(qty3.value) > num(1))) qty3.value = num(qty3.value + -1).toInt() } }),
+											modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(28.dp).height(28.dp),
+											shape = RoundedCornerShape(9999.dp),
+											colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
+											elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
+										) {
+										Text(
+											text = "−",
+											modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)).width(28.dp).height(28.dp),
+											style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant),
+										)
+										}
+										Text(
+											text = (qty3.value).toString(),
+											modifier = Modifier.width(24.dp),
+											style = TextStyle(textAlign = TextAlign.Center, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold),
+										)
+										Button(
+											onClick = jsSafe({ qty3.value = num(qty3.value + 1).toInt() }),
+											modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)).width(28.dp).height(28.dp),
+											shape = RoundedCornerShape(9999.dp),
+											colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
+											elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
+										) {
+										Text(
+											text = "+",
+											modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)).width(28.dp).height(28.dp),
+											style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFFFFFFFF)),
+										)
+										}
+									}
+									Text(
+										text = "${'$'}75",
+										style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
+									)
+								}
 							}
 						}
-						Text(
-							text = "${'$'}75",
-							style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, fontWeight = FontWeight.Bold),
-						)
+					} else {
 					}
-				}
 			}
 		}
 		Column(

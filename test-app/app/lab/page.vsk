@@ -6,11 +6,16 @@ component Lab() {
     const &[count] = track(0)
     const &[tick] = track(0)
     const &[timerId] = track(0)
+    const &[liked] = track(0)
+    const &[passed] = track(0)
 
     <div class="p-4 flex-col gap-4">
         <div class="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-xl p-6">
             <h1 class="text-white text-2xl font-bold">Lab — vesk-native feature demo</h1>
             <p class="text-white text-sm mt-1">Every card below is a fixed compiler/runtime feature, labeled with what it proves.</p>
+            <NavLink href="/refresh">
+                <span class="inline-block bg-white/20 text-white text-xs font-semibold rounded-full px-3 py-1 mt-3">Pull-to-refresh demo →</span>
+            </NavLink>
         </div>
 
         <div class="bg-white rounded-xl p-4 border-2 border-purple-100">
@@ -114,6 +119,36 @@ component Lab() {
             <div class="bg-white rounded-lg p-4 shadow-xl mt-2">
                 <h3 class="font-semibold mb-1">Shadow card</h3>
                 <p class="text-gray-600 text-sm">Box shadows map to elevation.</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl p-4 border-2 border-pink-100">
+            <h3 class="font-semibold mb-1">Swipe card stack</h3>
+            <p class="text-xs text-gray-500 mb-3">CardStack: drag the top card — past the threshold it flies out (right = like, left = pass) and the next card surfaces. Counters are script cells fed by onLike / onPass.</p>
+            <div class="flex-col items-center gap-3">
+                <CardStack onLike={() => liked = liked + 1} onPass={() => passed = passed + 1} class="h-96 w-72">
+                    <div class="h-full w-full rounded-3xl bg-gradient-to-br from-pink-500 to-orange-400 p-6 flex-col justify-end shadow-xl">
+                        <p class="text-white text-2xl font-extrabold">Maya</p>
+                        <p class="text-white/80 text-sm">28 · Trail runner · Ridgeview</p>
+                        <p class="text-white/60 text-xs mt-1">Summits before breakfast, espresso after.</p>
+                    </div>
+                    <div class="h-full w-full rounded-3xl bg-gradient-to-br from-blue-500 to-cyan-400 p-6 flex-col justify-end shadow-xl">
+                        <p class="text-white text-2xl font-extrabold">Kofi</p>
+                        <p class="text-white/80 text-sm">31 · Product designer · North End</p>
+                        <p class="text-white/60 text-xs mt-1">Builds apps in the day, climbs at dusk.</p>
+                    </div>
+                    <div class="h-full w-full rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-400 p-6 flex-col justify-end shadow-xl">
+                        <p class="text-white text-2xl font-extrabold">Lena</p>
+                        <p class="text-white/80 text-sm">26 · Botanist · Lakeside</p>
+                        <p class="text-white/60 text-xs mt-1">Knows every fern on the east trail.</p>
+                    </div>
+                    <div class="h-full w-full rounded-3xl bg-gradient-to-br from-violet-500 to-purple-400 p-6 flex-col justify-end shadow-xl">
+                        <p class="text-white text-2xl font-extrabold">Rio</p>
+                        <p class="text-white/80 text-sm">29 · Street photographer · Old Town</p>
+                        <p class="text-white/60 text-xs mt-1">Chases golden hour around the harbor.</p>
+                    </div>
+                </CardStack>
+                <p class="text-sm text-gray-600">Liked {liked} · Passed {passed}</p>
             </div>
         </div>
 

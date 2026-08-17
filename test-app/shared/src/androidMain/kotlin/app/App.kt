@@ -41,6 +41,7 @@ fun App() {
         Route("/lib") { Lib() },
         Route("/media") { Media(props = MediaProps(heading = "Native media lab", blurb = "camera, recorder, pickers & media broadcast")) },
         Route("/") { Home(props = HomeProps(promo = "Members save 20% today", cta = "Shop the drop")) },
+        Route("/refresh") { Refresh() },
         Route("/shop/arctic-hoodie") { ArcticHoodie() },
         Route("/shop/merino-crew") { MerinoCrew() },
         Route("/shop") { Shop() },

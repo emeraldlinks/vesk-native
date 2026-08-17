@@ -43,7 +43,7 @@ import type { ModuleExport, ModuleRegistry } from '@compiler-native/modules';
 // through `componentCallLines` (their Props data classes live in the runtime
 // template). Everything else must be a custom component or an imported
 // `.vsklib` tag — anything else is a hard build error.
-const FRAMEWORK_COMPONENT_CALLS = new Set(['Link', 'NavLink', 'Outlet']);
+const FRAMEWORK_COMPONENT_CALLS = new Set(['Link', 'NavLink', 'Outlet', 'PullToRefresh', 'SwipeToDismiss', 'CardStack']);
 
 export interface CompileOptions {
   packageName?: string;
@@ -1262,13 +1262,142 @@ function navCallLines(node: ComponentCall, em: Emitter, level: number, parentAxi
   return out.join('\n');
 }
 
+function componentClassModifier(node: ComponentCall, em: Emitter, parentAxis: 'column' | 'row' | null, boxScope: boolean, inAutoWidth: boolean): string | null {
+  let cls = '';
+  for (const p of node.props) {
+    if (p.name === 'class' || p.name === 'className') {
+      const raw = (p.value.raw ?? '').trim();
+      cls = raw.length >= 2 && (raw[0] === '"' || raw[0] === "'") && raw[raw.length - 1] === raw[0]
+        ? raw.slice(1, -1)
+        : raw;
+    }
+  }
+  const classes = cls.split(/\s+/).filter(Boolean);
+  const parts = classify(classes, em.customClasses, elementAxis(classes), false);
+  emitTailwindWarnings(parts, em);
+  if (parentAxis === null) stripScopeMods(parts);
+  if (!boxScope) {
+    parts.posMod = parts.posMod.filter((s) => s.startsWith('fillMax') || s.startsWith('padding('));
+  } else stripWeight(parts);
+  let modifier = buildModifier(parts);
+  const fillWidth = fillMaxWidth(classes, 'div', parentAxis) && !inAutoWidth;
+  if (fillWidth) modifier = prependFill(modifier);
+  return modifier;
+}
+
+// PullToRefresh: script `refreshing` cell + `onRefresh` handler map straight
+// onto Material3's PullToRefreshBox; the class string styles the wrapper and
+// children render in the box's BoxScope content.
+function pullToRefreshCallLines(node: ComponentCall, em: Emitter, level: number, parentAxis: 'column' | 'row' | null, flowParent: boolean, boxScope: boolean, inAutoWidth: boolean): string {
+  const pad = '\t'.repeat(level);
+  const padIn = '\t'.repeat(level + 1);
+  const propBits: string[] = [];
+  for (const p of node.props) {
+    if (p.name === 'class' || p.name === 'className') continue;
+    if (p.name === 'onRefresh') {
+      propBits.push(`onRefresh = jsSafe(${em.exprOf(p.value).trimStart()})`);
+    } else {
+      propBits.push(`${ktIdent(p.name)} = ${em.exprOf(p.value)}`);
+    }
+  }
+  const modifier = componentClassModifier(node, em, parentAxis, boxScope, inAutoWidth);
+  if (modifier) propBits.push(`modifier = ${modifier}`);
+  const out = [pad + `PullToRefresh(props = PullToRefreshProps(${propBits.join(', ')}))`];
+  if (node.children.length > 0) {
+    out.push(padIn + '{');
+    for (const child of node.children) {
+      out.push(...emitChild(child, em, level + 2, parentAxis, null, flowParent, true, false, false, inAutoWidth));
+    }
+    out.push(padIn + '}');
+  }
+  return out.join('\n');
+}
+
+// SwipeToDismiss: the background zone is a child marked slot="background"
+// (Material3's backgroundContent, RowScope); everything else is the row
+// content. Script `onDismiss` maps to the Material3 onDismiss callback.
+function swipeDismissCallLines(node: ComponentCall, em: Emitter, level: number, parentAxis: 'column' | 'row' | null, flowParent: boolean, boxScope: boolean, inAutoWidth: boolean): string {
+  const pad = '\t'.repeat(level);
+  const padIn = '\t'.repeat(level + 1);
+  const propBits: string[] = [];
+  for (const p of node.props) {
+    if (p.name === 'class' || p.name === 'className') continue;
+    if (p.name === 'onDismiss') {
+      propBits.push(`onDismiss = jsSafe(${em.exprOf(p.value).trimStart()})`);
+    } else {
+      propBits.push(`${ktIdent(p.name)} = ${em.exprOf(p.value)}`);
+    }
+  }
+  const modifier = componentClassModifier(node, em, parentAxis, boxScope, inAutoWidth);
+  if (modifier) propBits.push(`modifier = ${modifier}`);
+  const background: string[] = [];
+  const content: string[] = [];
+  for (const child of node.children) {
+    if (child instanceof StaticNode && child.attributes.some((a) => a.name === 'slot' && a.value === 'background')) {
+      background.push(...emitChild(child, em, level + 3, 'row', null, flowParent, false, false, false, inAutoWidth));
+    } else if (child instanceof ComponentCall && child.props.some((p) => p.name === 'slot' && p.value.raw === '"background"')) {
+      const stripped: ComponentCall = { ...child, props: child.props.filter((p) => p.name !== 'slot') };
+      background.push(...emitChild(stripped, em, level + 3, 'row', null, flowParent, false, false, false, inAutoWidth));
+    } else {
+      content.push(...emitChild(child, em, level + 2, parentAxis, null, flowParent, boxScope, false, false, inAutoWidth));
+    }
+  }
+  const out = [pad + 'SwipeToDismiss('];
+  out.push(padIn + `props = SwipeToDismissProps(${propBits.join(', ')}),`);
+  if (background.length > 0) {
+    out.push(padIn + 'background = {');
+    out.push(...background);
+    out.push(padIn + '},');
+  }
+  out.push(pad + ') {');
+  out.push(...content);
+  out.push(pad + '}');
+  return out.join('\n');
+}
+
+// CardStack: each child becomes a swipeable card (web: a card stack / dating
+// swiper). Children are collected into the runtime's card list; the class
+// string styles the stack wrapper.
+function cardStackCallLines(node: ComponentCall, em: Emitter, level: number, parentAxis: 'column' | 'row' | null, flowParent: boolean, boxScope: boolean, inAutoWidth: boolean): string {
+  const pad = '\t'.repeat(level);
+  const propBits: string[] = [];
+  for (const p of node.props) {
+    if (p.name === 'class' || p.name === 'className') continue;
+    if (p.name === 'onLike' || p.name === 'onPass') {
+      propBits.push(`${ktIdent(p.name)} = jsSafe(${em.exprOf(p.value).trimStart()})`);
+    } else {
+      propBits.push(`${ktIdent(p.name)} = ${em.exprOf(p.value)}`);
+    }
+  }
+  const modifier = componentClassModifier(node, em, parentAxis, boxScope, inAutoWidth);
+  if (modifier) propBits.push(`modifier = ${modifier}`);
+  const cardStrings: string[] = [];
+  for (const child of node.children) {
+    const lines = ['{'];
+    lines.push(...emitChild(child, em, level + 3, 'column', null, flowParent, true, false, false, inAutoWidth));
+    lines.push('}');
+    cardStrings.push(lines.join('\n'));
+  }
+  propBits.push(`children = listOf(\n${cardStrings.join(',\n')}\n)`);
+  return pad + `CardStack(props = CardStackProps(${propBits.join(', ')}))`;
+}
+
+// Link/NavLink are anchor elements: the class string becomes the wrapper's
+// modifier (flex-1 weights in the parent's scope) and the children render
+// inside a matching flex container (web: class="flex-col ..." lays out the
+// anchor's content), filling the anchor edge-to-edge.
 function componentCallLines(node: ComponentCall, em: Emitter, level: number, parentAxis: 'column' | 'row' | null = null, flowParent = false, boxScope = false, inVertScroll = false, inHorizScroll = false, inAutoWidth = false): string {
-  // Link/NavLink are anchor elements: the class string becomes the wrapper's
-  // modifier (flex-1 weights in the parent's scope) and the children render
-  // inside a matching flex container (web: class="flex-col ..." lays out the
-  // anchor's content), filling the anchor edge-to-edge.
   if (node.componentName === 'Link' || node.componentName === 'NavLink') {
     return navCallLines(node, em, level, parentAxis, flowParent, boxScope, inAutoWidth);
+  }
+  if (node.componentName === 'PullToRefresh') {
+    return pullToRefreshCallLines(node, em, level, parentAxis, flowParent, boxScope, inAutoWidth);
+  }
+  if (node.componentName === 'SwipeToDismiss') {
+    return swipeDismissCallLines(node, em, level, parentAxis, flowParent, boxScope, inAutoWidth);
+  }
+  if (node.componentName === 'CardStack') {
+    return cardStackCallLines(node, em, level, parentAxis, flowParent, boxScope, inAutoWidth);
   }
   const propArgs = node.props.map((p) => `${ktIdent(p.name)} = ${em.exprOf(p.value)}`);
   for (const sp of node.spreadProps) {

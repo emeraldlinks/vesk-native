@@ -5,19 +5,29 @@ import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.SpringSpec
 import androidx.compose.animation.core.TweenSpec
+import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.animateTo
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
@@ -40,6 +50,7 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import app.navigation.LocalNavController
 import app.navigation.NavController
@@ -447,6 +458,110 @@ fun NavLink(props: NavLinkProps, content: @Composable () -> Unit = {}) {
     val nav = LocalNavController.current
     Box(modifier = props.modifier.clickable(indication = null, interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, onClick = { nav.navigate(props.href) })) {
         content()
+    }
+}
+
+
+data class PullToRefreshProps(
+    val refreshing: Boolean = false,
+    val onRefresh: () -> Unit = {},
+    val modifier: Modifier = Modifier,
+)
+
+@Composable
+fun PullToRefresh(props: PullToRefreshProps, content: @Composable () -> Unit = {}) {
+    PullToRefreshBox(isRefreshing = props.refreshing, onRefresh = props.onRefresh, modifier = props.modifier) {
+        content()
+    }
+}
+
+
+data class SwipeToDismissProps(
+    val onDismiss: () -> Unit = {},
+    val enableStartToEnd: Boolean = true,
+    val enableEndToStart: Boolean = true,
+    val gesturesEnabled: Boolean = true,
+    val modifier: Modifier = Modifier,
+)
+
+@Composable
+fun SwipeToDismiss(props: SwipeToDismissProps, background: @Composable () -> Unit = {}, content: @Composable () -> Unit = {}) {
+    val state = rememberSwipeToDismissBoxState()
+    SwipeToDismissBox(
+        state = state,
+        backgroundContent = { background() },
+        modifier = props.modifier,
+        enableDismissFromStartToEnd = props.enableStartToEnd,
+        enableDismissFromEndToStart = props.enableEndToStart,
+        gesturesEnabled = props.gesturesEnabled,
+        onDismiss = { props.onDismiss() },
+    ) {
+        content()
+    }
+}
+
+
+data class CardStackProps(
+    val children: List<@Composable () -> Unit> = emptyList(),
+    val onLike: () -> Unit = {},
+    val onPass: () -> Unit = {},
+    val modifier: Modifier = Modifier,
+)
+
+@Composable
+fun CardStack(props: CardStackProps, content: @Composable () -> Unit = {}) {
+    val scope = rememberCoroutineScope()
+    val offset = remember { Animatable(Offset.Zero, Offset.VectorConverter) }
+    val top = remember { mutableIntStateOf(0) }
+    BoxWithConstraints(modifier = props.modifier) {
+        val widthPx = with(LocalDensity.current) { maxWidth.toPx() }
+        val cards = props.children
+        for (i in cards.indices.reversed()) {
+            if (i < top.value) continue
+            val rel = i - top.value
+            val isTop = rel == 0
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .graphicsLayer {
+                        scaleX = 1f - rel * 0.06f
+                        scaleY = 1f - rel * 0.06f
+                        translationY = rel * 22f
+                        rotationZ = if (isTop) offset.value.x / widthPx * 14f else -rel * 3f
+                    }
+                    .then(
+                        if (isTop) Modifier.pointerInput(cards.size) {
+                            detectDragGestures(
+                                onDragStart = { },
+                                onDragEnd = {
+                                    val x = offset.value.x
+                                    val w = widthPx
+                                    val dismissed = x > w * 0.28f || x < -w * 0.28f
+                                    scope.launch {
+                                        if (dismissed) {
+                                            val dir = if (x > 0) 1f else -1f
+                                            if (dir > 0) props.onLike() else props.onPass()
+                                            offset.animateTo(Offset(w * 1.6f * dir, offset.value.y + 120f), tween(220))
+                                            top.value += 1
+                                            offset.snapTo(Offset.Zero)
+                                        } else {
+                                            offset.animateTo(Offset.Zero, spring(stiffness = Spring.StiffnessMediumLow, dampingRatio = Spring.DampingRatioMediumBouncy))
+                                        }
+                                    }
+                                },
+                                onDragCancel = {
+                                    scope.launch { offset.animateTo(Offset.Zero, spring(stiffness = Spring.StiffnessMediumLow, dampingRatio = Spring.DampingRatioMediumBouncy)) }
+                                },
+                                onDrag = { _, amount ->
+                                    scope.launch { offset.snapTo(offset.value + amount) }
+                                },
+                            )
+                        } else Modifier,
+                    ),
+            ) {
+                cards[i]()
+            }
+        }
     }
 }
 

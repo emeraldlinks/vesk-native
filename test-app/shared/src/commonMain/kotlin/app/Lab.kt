@@ -77,6 +77,8 @@ fun Lab(content: @Composable () -> Unit = {}) {
 	val count = remember { mutableStateOf(0) }
 	val tick = remember { mutableStateOf(0) }
 	val timerId = remember { mutableStateOf(0) }
+	val liked = remember { mutableStateOf(0) }
+	val passed = remember { mutableStateOf(0) }
 	Column(
 		modifier = Modifier.fillMaxWidth().padding(16.dp),
 		verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -94,6 +96,17 @@ fun Lab(content: @Composable () -> Unit = {}) {
 				modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
 				style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 14.sp, lineHeight = 20.sp),
 			)
+			NavLink(props = NavLinkProps(href = "/refresh", modifier = Modifier.fillMaxWidth()))
+				{
+					Column(
+					) {
+						Text(
+							text = "Pull-to-refresh demo →",
+							modifier = Modifier.padding(top = 12.dp).clip(RoundedCornerShape(9999.dp)).background(Color(0x33FFFFFF)).padding(horizontal = 12.dp).padding(vertical = 4.dp),
+							style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold),
+						)
+					}
+				}
 		}
 		Column(
 			modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surface).border(2.dp, Color(0xFFF3E8FF)).padding(16.dp),
@@ -583,6 +596,121 @@ fun Lab(content: @Composable () -> Unit = {}) {
 					text = "Box shadows map to elevation.",
 					modifier = Modifier.fillMaxWidth(),
 					style = TextStyle(color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp, lineHeight = 20.sp),
+				)
+			}
+		}
+		Column(
+			modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surface).border(2.dp, Color(0xFFFCE7F3)).padding(16.dp),
+		) {
+			Text(
+				text = "Swipe card stack",
+				modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
+				style = TextStyle(fontWeight = FontWeight.SemiBold),
+			)
+			Text(
+				text = "CardStack: drag the top card — past the threshold it flies out (right = like, left = pass) and the next card surfaces. Counters are script cells fed by onLike / onPass.",
+				modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+				style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant),
+			)
+			Column(
+				modifier = Modifier.fillMaxWidth(),
+				horizontalAlignment = Alignment.CenterHorizontally,
+				verticalArrangement = Arrangement.spacedBy(12.dp),
+			) {
+				CardStack(props = CardStackProps(onLike = jsSafe({ liked.value = num(liked.value + 1).toInt() }), onPass = jsSafe({ passed.value = num(passed.value + 1).toInt() }), modifier = Modifier.height(384.dp).width(288.dp), children = listOf(
+{
+							Column(
+								modifier = Modifier.shadow(20.dp).clip(RoundedCornerShape(24.dp)).background(Brush.linearGradient(listOf(Color(0xFFEC4899), Color(0xFFFB923C)), start = Offset(0f, 0f), end = Offset(1f, 1f))).fillMaxHeight().fillMaxWidth().padding(24.dp),
+								verticalArrangement = Arrangement.Bottom,
+							) {
+								Text(
+									text = "Maya",
+									modifier = Modifier.fillMaxWidth(),
+									style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 24.sp, lineHeight = 32.sp, fontWeight = FontWeight.ExtraBold),
+								)
+								Text(
+									text = "28 · Trail runner · Ridgeview",
+									modifier = Modifier.fillMaxWidth(),
+									style = TextStyle(color = Color(0xCCFFFFFF), fontSize = 14.sp, lineHeight = 20.sp),
+								)
+								Text(
+									text = "Summits before breakfast, espresso after.",
+									modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+									style = TextStyle(color = Color(0x99FFFFFF), fontSize = 12.sp, lineHeight = 16.sp),
+								)
+							}
+},
+{
+							Column(
+								modifier = Modifier.shadow(20.dp).clip(RoundedCornerShape(24.dp)).background(Brush.linearGradient(listOf(Color(0xFF3B82F6), Color(0xFF22D3EE)), start = Offset(0f, 0f), end = Offset(1f, 1f))).fillMaxHeight().fillMaxWidth().padding(24.dp),
+								verticalArrangement = Arrangement.Bottom,
+							) {
+								Text(
+									text = "Kofi",
+									modifier = Modifier.fillMaxWidth(),
+									style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 24.sp, lineHeight = 32.sp, fontWeight = FontWeight.ExtraBold),
+								)
+								Text(
+									text = "31 · Product designer · North End",
+									modifier = Modifier.fillMaxWidth(),
+									style = TextStyle(color = Color(0xCCFFFFFF), fontSize = 14.sp, lineHeight = 20.sp),
+								)
+								Text(
+									text = "Builds apps in the day, climbs at dusk.",
+									modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+									style = TextStyle(color = Color(0x99FFFFFF), fontSize = 12.sp, lineHeight = 16.sp),
+								)
+							}
+},
+{
+							Column(
+								modifier = Modifier.shadow(20.dp).clip(RoundedCornerShape(24.dp)).background(Brush.linearGradient(listOf(Color(0xFF10B981), Color(0xFF2DD4BF)), start = Offset(0f, 0f), end = Offset(1f, 1f))).fillMaxHeight().fillMaxWidth().padding(24.dp),
+								verticalArrangement = Arrangement.Bottom,
+							) {
+								Text(
+									text = "Lena",
+									modifier = Modifier.fillMaxWidth(),
+									style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 24.sp, lineHeight = 32.sp, fontWeight = FontWeight.ExtraBold),
+								)
+								Text(
+									text = "26 · Botanist · Lakeside",
+									modifier = Modifier.fillMaxWidth(),
+									style = TextStyle(color = Color(0xCCFFFFFF), fontSize = 14.sp, lineHeight = 20.sp),
+								)
+								Text(
+									text = "Knows every fern on the east trail.",
+									modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+									style = TextStyle(color = Color(0x99FFFFFF), fontSize = 12.sp, lineHeight = 16.sp),
+								)
+							}
+},
+{
+							Column(
+								modifier = Modifier.shadow(20.dp).clip(RoundedCornerShape(24.dp)).background(Brush.linearGradient(listOf(Color(0xFF8B5CF6), Color(0xFFC084FC)), start = Offset(0f, 0f), end = Offset(1f, 1f))).fillMaxHeight().fillMaxWidth().padding(24.dp),
+								verticalArrangement = Arrangement.Bottom,
+							) {
+								Text(
+									text = "Rio",
+									modifier = Modifier.fillMaxWidth(),
+									style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 24.sp, lineHeight = 32.sp, fontWeight = FontWeight.ExtraBold),
+								)
+								Text(
+									text = "29 · Street photographer · Old Town",
+									modifier = Modifier.fillMaxWidth(),
+									style = TextStyle(color = Color(0xCCFFFFFF), fontSize = 14.sp, lineHeight = 20.sp),
+								)
+								Text(
+									text = "Chases golden hour around the harbor.",
+									modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+									style = TextStyle(color = Color(0x99FFFFFF), fontSize = 12.sp, lineHeight = 16.sp),
+								)
+							}
+}
+)))
+				Text(
+					text = "Liked " + (liked.value).toString() + " · Passed " + (passed.value).toString(),
+					modifier = Modifier.fillMaxWidth(),
+					style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, color = MaterialTheme.colorScheme.onSurfaceVariant),
 				)
 			}
 		}
