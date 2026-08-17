@@ -11,4 +11,6 @@ export {
   type VeskIosSigning,
   type VeskIosBundle,
   type VeskBundle,
+  type VeskIcon,
+  type VeskSplash,
 } from './config.ts';

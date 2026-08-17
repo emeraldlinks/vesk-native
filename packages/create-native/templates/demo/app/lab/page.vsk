@@ -1,0 +1,246 @@
+import { Badge } from './badge.vsk'
+import { titleCase, clamp, shippedFrom } from './utils.ts'
+import { jsTagline, jsMotto, jsYear } from './js-helper.js'
+
+component Lab() {
+    const &[count] = track(0)
+    const &[tick] = track(0)
+    const &[timerId] = track(0)
+
+    <div class="p-4 flex-col gap-4">
+        <div class="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-xl p-6">
+            <h1 class="text-white text-2xl font-bold">Lab — vesk-native feature demo</h1>
+            <p class="text-white text-sm mt-1">Every card below is a fixed compiler/runtime feature, labeled with what it proves.</p>
+        </div>
+
+        <div class="bg-white rounded-xl p-4 border-2 border-purple-100">
+            <h3 class="font-semibold mb-1">Module imports</h3>
+            <p class="text-xs text-gray-500 mb-2">Header imports resolve .vsk components, .ts modules and .js modules to Kotlin declarations (import app.&lt;slug&gt;_&lt;name&gt;).</p>
+            <div class="flex flex-wrap gap-2 items-center mb-2">
+                <Badge />
+                <span class="text-sm text-gray-600">← component imported from ./badge.vsk</span>
+            </div>
+            <p class="text-sm mb-1">TS: {titleCase('imported from utils.ts')}</p>
+            <p class="text-sm mb-1">TS: clamp(5.0, 1.0, 3.0) = {clamp(5.0, 1.0, 3.0)}</p>
+            <p class="text-sm mb-1">TS: shippedFrom = {shippedFrom}</p>
+            <p class="text-sm mb-1">JS: {jsTagline} — {jsMotto}</p>
+            <p class="text-sm">JS: jsYear() = {jsYear()}</p>
+        </div>
+
+        <div class="bg-white rounded-xl p-4 border-2 border-blue-100">
+            <h3 class="font-semibold mb-1">Tracked state</h3>
+            <p class="text-xs text-gray-500 mb-2">track(0) + &amp;[count] sugar: reads/writes rewrite to get()/set() → Compose MutableState.</p>
+            <p class="text-sm mb-2">count = {count}</p>
+            <div class="flex gap-2">
+                <button class="bg-blue-500 text-white rounded-lg px-4 py-2 text-sm" onClick={() => count = count + 1}>count + 1</button>
+                <button class="bg-gray-200 text-gray-700 rounded-lg px-4 py-2 text-sm" onClick={() => count = 0}>Reset</button>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl p-4 border-2 border-cyan-100">
+            <h3 class="font-semibold mb-1">Timers</h3>
+            <p class="text-xs text-gray-500 mb-2">setTimeout / setInterval / clearTimeout / clearInterval map to VeskTimers (coroutine jobs, Int handles).</p>
+            <p class="text-sm mb-2">tick = {tick}</p>
+            <div class="flex flex-wrap gap-2">
+                <button class="bg-cyan-500 text-white rounded-lg px-4 py-2 text-sm" onClick={() => { if (timerId === 0) { timerId = setInterval(() => tick = tick + 1, 1000) } }}>Start interval</button>
+                <button class="bg-gray-200 text-gray-700 rounded-lg px-4 py-2 text-sm" onClick={() => clearInterval(timerId)}>Stop interval</button>
+                <button class="bg-gray-200 text-gray-700 rounded-lg px-4 py-2 text-sm" onClick={() => setTimeout(() => tick = tick + 1, 500)}>Timeout +1</button>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl p-4 border-2 border-red-100">
+            <h3 class="font-semibold mb-1">Native alert()</h3>
+            <p class="text-xs text-gray-500 mb-2">window.alert maps to a non-blocking Android AlertDialog via the VeskAppContext activity anchor.</p>
+            <button class="bg-red-500 text-white rounded-lg px-4 py-2 text-sm" onClick={() => alert('Hello from vesk-native — count is ' + count)}>Show alert</button>
+        </div>
+
+        <div class="bg-white rounded-xl p-4 border-2 border-amber-100">
+            <h3 class="font-semibold mb-1">Layout &amp; style features</h3>
+            <p class="text-xs text-gray-500 mb-3">Gradient, ring, aspect ratio, line-clamp, transforms, scroll, divide, grid, absolute/inset positioning, wrap + text case.</p>
+            <div class="flex divide-x divide-gray-300 rounded-lg bg-gray-50 p-2">
+                <div class="p-2 flex-1 text-sm">A</div>
+                <div class="p-2 flex-1 text-sm">B</div>
+                <div class="p-2 flex-1 text-sm">C</div>
+            </div>
+            <div class="bg-white border-t-2 border-gray-200 rounded-lg p-3 mt-2">
+                <p class="text-sm font-semibold">Top border only</p>
+            </div>
+            <div class="flex items-center gap-3 mt-2">
+                <div class="bg-blue-500 rounded-full w-14 h-14 flex items-center justify-center ring-2 ring-blue-300">
+                    <span class="text-white text-xs font-bold">ring</span>
+                </div>
+                <div class="bg-green-500 rounded-lg p-3 rotate-45">rot</div>
+                <div class="bg-orange-500 rounded-lg p-3 scale-125">big</div>
+                <div class="bg-purple-500 rounded-lg p-3 translate-x-2">x2</div>
+            </div>
+            <div class="w-full aspect-video bg-cyan-200 rounded-xl mt-2"></div>
+            <p class="text-sm text-gray-700 line-clamp-2 mt-2">
+                This paragraph is clamped to two lines with an ellipsis even though it keeps going and going and going and going and going and going and going and going.
+            </p>
+            <div class="h-24 overflow-y-auto bg-gray-50 rounded-lg p-3 mt-2">
+                <div class="mb-2 text-sm">Item one</div>
+                <div class="mb-2 text-sm">Item two</div>
+                <div class="mb-2 text-sm">Item three</div>
+                <div class="mb-2 text-sm">Item four</div>
+                <div class="mb-2 text-sm">Item five</div>
+                <div class="mb-2 text-sm">Item six</div>
+            </div>
+            <div class="grid grid-cols-3 gap-2 mt-2">
+                <div class="bg-blue-100 rounded p-2 text-sm">g1</div>
+                <div class="bg-blue-100 rounded p-2 text-sm">g2</div>
+                <div class="bg-blue-100 rounded p-2 text-sm">g3</div>
+                <div class="bg-blue-100 rounded p-2 text-sm">g4</div>
+                <div class="bg-blue-100 rounded p-2 text-sm">g5</div>
+                <div class="bg-blue-100 rounded p-2 text-sm">g6</div>
+            </div>
+            <div class="flex flex-wrap gap-2 mt-2">
+                <div class="bg-blue-100 rounded px-3 py-1 text-sm">one</div>
+                <div class="bg-blue-100 rounded px-3 py-1 text-sm">two</div>
+                <div class="bg-blue-100 rounded px-3 py-1 text-sm">three</div>
+                <div class="bg-blue-100 rounded px-3 py-1 text-sm -mt-4">lifted</div>
+            </div>
+            <p class="text-sm text-gray-600 uppercase mt-2">shout this</p>
+            <p class="text-sm text-gray-600 capitalize">capital me</p>
+            <div class="relative bg-amber-100 rounded-xl p-8 mt-2">
+                <p class="text-sm font-medium text-amber-900">Positioned container</p>
+                <div class="absolute top-2 right-2 bg-amber-500 text-white text-xs font-bold rounded-full px-2 py-0.5">badge</div>
+                <div class="absolute bottom-1 left-2 bg-amber-300 rounded px-2 text-xs">bottom-left</div>
+            </div>
+            <div class="relative h-32 bg-gray-200 rounded-xl overflow-hidden mt-2">
+                <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <span class="text-white font-bold">inset-0 overlay</span>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg p-4 shadow-xl mt-2">
+                <h3 class="font-semibold mb-1">Shadow card</h3>
+                <p class="text-gray-600 text-sm">Box shadows map to elevation.</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl p-4 border-2 border-indigo-100">
+            <h3 class="font-semibold mb-1">Statements in markup</h3>
+            <p class="text-xs text-gray-500">if/else, ternary, switch, loops, for-of (bounded list), for-in, labeled block and try/catch — each demo component keeps its statements at component top level.</p>
+        </div>
+        <StatementsIf />
+        <StatementsSwitch />
+        <StatementsLoops />
+        <StatementsMisc />
+        <ErrorBoundaryCard />
+    </div>
+}
+
+component StatementsIf() {
+    <h2 class="text-lg font-semibold">if / else + ternary</h2>
+    const score = 7
+    if (score > 5) {
+        <p class="text-green-600">Score {score} is above the threshold</p>
+    } else {
+        <p class="text-red-600">Score {score} is low</p>
+    }
+    <p>{score % 2 === 0 ? 'even' : 'odd'}</p>
+}
+
+component StatementsSwitch() {
+    <h2 class="text-lg font-semibold">switch</h2>
+    const score = 7
+    switch (score) {
+        case 1:
+            <p>One</p>
+            break
+        case 7:
+            <p>Seven</p>
+            break
+        default:
+            <p>Something else</p>
+    }
+}
+
+component StatementsLoops() {
+    <h2 class="text-lg font-semibold">Loops</h2>
+
+    <h3 class="text-sm font-semibold mt-2">for (classic)</h3>
+    for (let i = 0; i < 3; i++) {
+        <span class="mr-2">{i}</span>
+    }
+
+    <h3 class="text-sm font-semibold mt-2">for-of (array, bounded-height list)</h3>
+    const itemsList: string[] = ['alpha', 'beta', 'gamma']
+    <div class="h-28 bg-gray-50 rounded-lg p-3">
+        for (const item of itemsList) {
+            <div class="mb-2 text-sm">{item}</div>
+        }
+    </div>
+
+    <h3 class="text-sm font-semibold mt-2">for-in (object keys)</h3>
+    const obj = { a: 1, b: 2, c: 3 }
+    for (const key in obj) {
+        <span class="mr-2">{key}</span>
+    }
+
+    <h3 class="text-sm font-semibold mt-2">while</h3>
+    let n = 0
+    while (n < 3) {
+        <span class="mr-2">{n}</span>
+        n = n + 1
+    }
+
+    <h3 class="text-sm font-semibold mt-2">do-while</h3>
+    do {
+        <span class="mr-2">{n}</span>
+        n = n + 1
+    } while (n < 5)
+}
+
+component StatementsMisc() {
+    <h2 class="text-lg font-semibold">Expressions</h2>
+
+    <h3 class="text-sm font-semibold mt-2">labeled block</h3>
+    summary: {
+        <p class="text-gray-500">This paragraph lives inside a labeled block.</p>
+    }
+
+    <h3 class="text-sm font-semibold mt-2">template literals</h3>
+    const post = { name: 'Vesk', year: 2026 }
+    <p class="text-sm">{`Built in ${post.year} by ${post.name}`}</p>
+
+    <h3 class="text-sm font-semibold mt-2">optional chaining + nullish</h3>
+    const maybe = null
+    <p class="text-sm">{maybe?.user?.name ?? 'anon'}</p>
+
+    <h3 class="text-sm font-semibold mt-2">regex</h3>
+    <p class="text-sm">{/ab+c/gi.test('xxabbbc') ? 'regex matched' : 'regex missed'}</p>
+
+    <h3 class="text-sm font-semibold mt-2">Math</h3>
+    <p class="text-sm">{`max(3, 7) = ${Math.max(3, 7)}, sqrt(81) = ${Math.sqrt(81)}, floor(3.7) = ${Math.floor(3.7)}`}</p>
+
+    <h3 class="text-sm font-semibold mt-2">JSON</h3>
+    <p class="text-sm">{JSON.stringify({ a: 1 })}</p>
+
+    <h3 class="text-sm font-semibold mt-2">Map + Set</h3>
+    const lookup = new Map([['a', 1], ['b', 2]])
+    const uniq = new Set([1, 2, 2, 3])
+    <p class="text-sm">{`lookup.get('a') = ${lookup.get('a')}, lookup.size = ${lookup.size}`}</p>
+    <p class="text-sm">{`uniq.size = ${uniq.size}, uniq.has(2) = ${uniq.has(2)}`}</p>
+
+    <h3 class="text-sm font-semibold mt-2">array operations</h3>
+    const nums = [1, 2, 3, 4, 5]
+    <p class="text-sm">{`doubled = ${nums.map(x => x * 2).join(', ')}`}</p>
+    <p class="text-sm">{`evens = ${nums.filter(x => x % 2 === 0).join(', ')}`}</p>
+}
+
+component ErrorBoundaryCard() {
+    const &[boomCount] = track(0)
+
+    <h2 class="text-lg font-semibold">try / catch / throw</h2>
+    <p class="text-xs text-gray-500 mb-2">Markup try body renders when healthy; a throw switches the render to the catch fallback — no crash.</p>
+    <div class="flex gap-2 mb-2">
+        <button class="bg-red-500 text-white rounded-lg px-4 py-2 text-sm" onClick={() => boomCount = boomCount + 1}>Arm the failure</button>
+        <button class="bg-gray-200 text-gray-700 rounded-lg px-4 py-2 text-sm" onClick={() => boomCount = 0}>Reset</button>
+    </div>
+    try {
+        if (boomCount > 0) { throw new Error('Boom #' + boomCount) }
+        <p class="text-green-700 bg-green-50 rounded-lg p-2 text-sm">Healthy — no failures triggered.</p>
+    } catch (e) {
+        <p class="text-red-700 bg-red-50 rounded-lg p-2 text-sm">Caught: {(e as Error).message}</p>
+    }
+}

@@ -157,6 +157,29 @@ export interface VeskEdgeToEdge {
   navigationBarStyle?: VeskSystemBarStyle;
 }
 
+export interface VeskIcon {
+  /** Path to icon foreground image (PNG, 432x432 recommended for adaptive icons).
+   * Relative to the project root directory. When omitted a default icon
+   * (first letter of appName on primary-color background) is generated. */
+  foreground?: string;
+  /** Background color for the adaptive icon (hex, e.g. '#3B82F6').
+   * Defaults to config.colors.primary. */
+  backgroundColor?: string;
+}
+
+export interface VeskSplash {
+  /** Enable the splash screen (default: false). On Android 12+ uses the
+   * system SplashScreen; on older devices uses core-splashscreen. */
+  enabled?: boolean;
+  /** Background color (hex). Defaults to config.colors.background. */
+  backgroundColor?: string;
+  /** Path to a logo shown in the center of the splash screen.
+   * Falls back to the adaptive icon foreground when omitted. */
+  logo?: string;
+  /** Splash screen exit animation duration in ms (default: 0). */
+  animationDurationMs?: number;
+}
+
 export interface VeskConfig {
   appId: string;
   appName: string;
@@ -193,6 +216,10 @@ export interface VeskConfig {
   signing?: VeskSigning;
   // Release packaging options (artifacts, iOS export method).
   bundle?: VeskBundle;
+  /** App launcher icon. When omitted, a default icon is generated. */
+  icon?: VeskIcon;
+  /** Splash screen. When omitted or enabled: false, no splash screen. */
+  splash?: VeskSplash;
 }
 
 // Identity helper giving full autocompletion and type checking in

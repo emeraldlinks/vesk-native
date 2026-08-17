@@ -1,0 +1,76 @@
+component ArcticHoodie() {
+    const &[qty] = track(1)
+    const &[size] = track('M')
+    const &[color] = track('Pine')
+    const &[added] = track(false)
+
+    <div class="flex-col gap-6 px-4 py-2">
+        <div class="bg-gradient-to-br from-blue-400 to-indigo-600 rounded-2xl h-72 flex items-center justify-center">
+            <p class="bg-white/20 text-white text-xs font-bold px-3 py-1.5 rounded-full">Fleece · 330 gsm</p>
+        </div>
+        <section class="flex-col gap-2">
+            <p class="text-xs font-semibold text-blue-700 tracking-wide uppercase">Outerwear / Hoodies</p>
+            <h1 class="text-2xl font-extrabold leading-7 tracking-tight">Arctic Fleece Hoodie</h1>
+            <div class="flex items-center gap-2 text-sm">
+                <span class="text-amber-500 tracking-wider font-medium">★★★★★</span>
+                <span class="text-gray-500">4.5 (212 reviews)</span>
+            </div>
+            <div class="flex items-end gap-2 mt-1">
+                <p class="text-2xl font-extrabold">$89</p>
+                <p class="text-sm text-gray-400 line-through mb-1">$120</p>
+                <p class="text-xs text-green-600 font-semibold mb-1.5">save 26%</p>
+            </div>
+            <p class="text-sm text-gray-600 leading-6 mt-2">
+                Brushed-back polar fleece with a storm hood and zippered chest
+                pocket. The classic layer for everything from trail to town.
+            </p>
+        </section>
+
+        <section class="flex-col gap-2">
+            <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">Color — {color}</p>
+            <div class="flex gap-2">
+                <button onClick={() => color = 'Pine'}>
+                    {color === 'Pine' ? <div class="w-9 h-9 rounded-full bg-emerald-700 ring-2 ring-blue-600 ring-offset-2"></div> : <div class="w-9 h-9 rounded-full bg-emerald-700"></div>}
+                </button>
+                <button onClick={() => color = 'Storm'}>
+                    {color === 'Storm' ? <div class="w-9 h-9 rounded-full bg-gray-600 ring-2 ring-blue-600 ring-offset-2"></div> : <div class="w-9 h-9 rounded-full bg-gray-600"></div>}
+                </button>
+                <button onClick={() => color = 'Oat'}>
+                    {color === 'Oat' ? <div class="w-9 h-9 rounded-full bg-amber-100 ring-2 ring-blue-600 ring-offset-2 border border-gray-200"></div> : <div class="w-9 h-9 rounded-full bg-amber-100 border border-gray-200"></div>}
+                </button>
+            </div>
+        </section>
+
+        <section class="flex-col gap-2">
+            <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">Size — {size}</p>
+            <div class="flex gap-2">
+                <button onClick={() => size = 'S'}>
+                    {size === 'S' ? <div class="w-11 h-11 rounded-xl bg-blue-600 text-white font-bold text-sm flex items-center justify-center">S</div> : <div class="w-11 h-11 rounded-xl bg-gray-100 text-gray-700 font-bold text-sm flex items-center justify-center">S</div>}
+                </button>
+                <button onClick={() => size = 'M'}>
+                    {size === 'M' ? <div class="w-11 h-11 rounded-xl bg-blue-600 text-white font-bold text-sm flex items-center justify-center">M</div> : <div class="w-11 h-11 rounded-xl bg-gray-100 text-gray-700 font-bold text-sm flex items-center justify-center">M</div>}
+                </button>
+                <button onClick={() => size = 'L'}>
+                    {size === 'L' ? <div class="w-11 h-11 rounded-xl bg-blue-600 text-white font-bold text-sm flex items-center justify-center">L</div> : <div class="w-11 h-11 rounded-xl bg-gray-100 text-gray-700 font-bold text-sm flex items-center justify-center">L</div>}
+                </button>
+                <button onClick={() => size = 'XL'}>
+                    {size === 'XL' ? <div class="w-11 h-11 rounded-xl bg-blue-600 text-white font-bold text-sm flex items-center justify-center">XL</div> : <div class="w-11 h-11 rounded-xl bg-gray-100 text-gray-700 font-bold text-sm flex items-center justify-center">XL</div>}
+                </button>
+            </div>
+        </section>
+
+        <section class="flex items-center gap-3">
+            <div class="flex items-center gap-1 rounded-full border border-gray-200 bg-white p-1 shadow-sm">
+                <button class="w-9 h-9 rounded-full bg-gray-100 text-lg font-bold text-gray-600" onClick={() => { if (qty > 1) qty-- }}>−</button>
+                <span class="w-8 text-center text-sm font-bold">{qty}</span>
+                <button class="w-9 h-9 rounded-full bg-gray-900 text-lg font-bold text-white" onClick={() => qty++}>+</button>
+            </div>
+            <button class="flex-1 bg-blue-600 text-white font-bold text-sm rounded-full py-3.5 shadow-sm" onClick={() => added = !added}>
+                {added ? 'Added to bag ✓' : 'Add to cart · $' + 89 * qty}
+            </button>
+        </section>
+        <NavLink href="/cart">
+            <div class="bg-gray-900 text-white text-center font-bold text-sm rounded-full py-3.5">Go to bag</div>
+        </NavLink>
+    </div>
+}

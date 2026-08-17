@@ -163,6 +163,21 @@ function forEachNode(node: unknown, cb: (n: JsNode) => void): void {
   }
 }
 
+/** Extract property names from an ObjectPattern param like `{ onReady }`. */
+export function objectPatternNames(param: JsNode | null): string[] {
+  if (!param || param.type !== 'ObjectPattern') return [];
+  const props = (param.properties as JsNode[]) ?? [];
+  const names: string[] = [];
+  for (const p of props) {
+    if (p.type === 'Property') {
+      const key = p.key as JsNode | null;
+      if (key?.type === 'Identifier') names.push(key.name as string);
+      else if (key?.type === 'StringLiteral') names.push(key.value as string);
+    }
+  }
+  return names;
+}
+
 export function inferPropsFromUsage(body: JsNode | null): string[] {
   const names = new Set<string>();
   if (!body) return [];
@@ -180,8 +195,31 @@ export function inferPropsFromUsage(body: JsNode | null): string[] {
   return [...names];
 }
 
-export function generateInferredPropsClass(componentName: string, names: string[]): string {
+export function generateInferredPropsClass(componentName: string, names: string[], callables: Set<string> = new Set()): string {
   if (names.length === 0) return `data class ${componentName}Props(\n)\n`;
-  const lines = names.map((n) => `\tval ${ktIdent(n)}: Any? = null,`);
+  const lines = names.map((n) => {
+    const kt = ktIdent(n);
+    if (callables.has(n)) return `\tval ${kt}: () -> Unit = {},`;
+    return `\tval ${kt}: Any? = null,`;
+  });
   return `data class ${componentName}Props(\n${lines.join('\n')}\n)\n`;
+}
+
+/** Prop names invoked as functions in the component body (`onReady()`). */
+export function collectCallableNames(body: JsNode | null): Set<string> {
+  const names = new Set<string>();
+  forEachNode(body, (n) => {
+    if (n.type !== 'CallExpression') return;
+    const callee = n.callee as JsNode | null;
+    if (callee?.type === 'Identifier') {
+      names.add(callee.name as string);
+    } else if (callee?.type === 'MemberExpression') {
+      const obj = callee.object as JsNode | null;
+      const prop = callee.property as JsNode | null;
+      if (obj?.type === 'Identifier' && obj.name === 'props' && prop?.type === 'Identifier') {
+        names.add(prop.name as string);
+      }
+    }
+  });
+  return names;
 }

@@ -7,11 +7,13 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.ComposeUIViewController
 import platform.UIKit.UIViewController
+import androidx.compose.runtime.LaunchedEffect
 import app.navigation.*
 
 @Composable
 fun App() {
     val nav = rememberNavController()
+
     CompositionLocalProvider(LocalNavController provides nav) {
                 Box(modifier = Modifier.fillMaxSize()) {
                     Layout {

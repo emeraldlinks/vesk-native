@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import type { VeskConfig } from '@vesk/native';
 import { collectDeviceApiUsage, iosUsageStrings } from './usage.js';
@@ -52,18 +52,78 @@ export function generateIosProject(target: string, config: VeskConfig): void {
 
   mkdirSync(join(iosDir, 'VeskApp.xcodeproj'), { recursive: true });
   mkdirSync(appDir, { recursive: true });
+
+  // Assets.xcassets for app icon + accent color
+  const assetsDir = join(appDir, 'Assets.xcassets');
+  const iconDir = join(assetsDir, 'AppIcon.appiconset');
+  const colorDir = join(assetsDir, 'AccentColor.colorset');
+  mkdirSync(iconDir, { recursive: true });
+  mkdirSync(colorDir, { recursive: true });
+
+  // Root asset catalog manifest
+  writeFileSync(join(assetsDir, 'Contents.json'), '{\n  "info" : { "version" : 1, "author" : "xcode" }\n}\n');
+
+  // App icon set — auto-detect assets/icon.png or use config.icon.foreground
+  const iconSource = config.icon?.foreground ?? (existsSync(join(target, 'assets', 'icon.png')) ? 'assets/icon.png' : undefined);
+  if (iconSource) {
+    const srcPath = resolve(target, iconSource);
+    if (existsSync(srcPath)) {
+      cpSync(srcPath, join(iconDir, 'icon.png'));
+      writeFileSync(join(iconDir, 'Contents.json'),
+        '{\n  "images" : [\n    { "idiom" : "universal", "platform" : "ios", "size" : "1024x1024", "filename" : "icon.png" }\n  ],\n  "info" : { "version" : 1, "author" : "xcode" }\n}\n'
+      );
+    }
+  } else {
+    // Empty icon set — user drags in Xcode
+    writeFileSync(join(iconDir, 'Contents.json'),
+      '{\n  "images" : [\n    { "idiom" : "universal", "platform" : "ios", "size" : "1024x1024" }\n  ],\n  "info" : { "version" : 1, "author" : "xcode" }\n}\n'
+    );
+  }
+
+  // Accent color from config
+  const primaryColor = config.colors.primary.replace('#', '');
+  writeFileSync(join(colorDir, 'Contents.json'),
+    `{\n  "colors" : [{ "idiom" : "universal", "color" : {\n    "color-space" : "srgb",\n    "components" : {\n      "red" : "0x${primaryColor.slice(0, 2)}", "green" : "0x${primaryColor.slice(2, 4)}", "blue" : "0x${primaryColor.slice(4, 6)}", "alpha" : "1.000"\n    }\n  }}],\n  "info" : { "version" : 1, "author" : "xcode" }\n}\n`
+  );
+
+  // Auto-detect splash.png for LaunchScreen
+  const hasSplashImage = existsSync(join(target, 'assets', 'splash.png'));
+  const hasSplashVsk = existsSync(join(target, 'app', 'splash.vsk'));
+  const splashEnabled = config.splash?.enabled ?? (hasSplashImage || hasSplashVsk);
+
+  if (splashEnabled) {
+    const splashBg = config.splash?.backgroundColor ?? config.colors.background;
+    // Copy splash.png to asset catalog if present
+    let splashImageName = 'AppIcon';
+    if (hasSplashImage) {
+      cpSync(join(target, 'assets', 'splash.png'), join(assetsDir, 'splash.png'));
+      splashImageName = 'splash';
+      // Update asset catalog to include splash image
+      const splashImgDir = join(assetsDir, 'splash.imageset');
+      mkdirSync(splashImgDir, { recursive: true });
+      cpSync(join(target, 'assets', 'splash.png'), join(splashImgDir, 'splash.png'));
+      writeFileSync(join(splashImgDir, 'Contents.json'),
+        '{\n  "images" : [\n    { "idiom" : "universal", "filename" : "splash.png", "scale" : "1x" },\n    { "idiom" : "universal", "scale" : "2x" },\n    { "idiom" : "universal", "scale" : "3x" }\n  ],\n  "info" : { "version" : 1, "author" : "xcode" }\n}\n'
+      );
+    }
+
+    writeFileSync(join(appDir, 'LaunchScreen.storyboard'),
+      `<?xml version="1.0" encoding="UTF-8"?>\n<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="21701" targetRuntime="AppleSDK" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="01J-lp-oVM">\n    <scenes>\n        <scene sceneID="EHf-IW-A2E">\n            <objects>\n                <viewController id="01J-lp-oVM" sceneMemberID="viewController">\n                    <view key="view" contentMode="scaleToFill" id="Ze5-6b-2t3">\n                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>\n                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>\n                        <subviews>\n                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" image="${splashImageName}" translatesAutoresizingMaskIntoConstraints="NO" id="YRO-k0-Aw4">\n                                <rect key="frame" x="156.5" y="346" width="80" height="80"/>\n                                <constraints>\n                                    <constraint firstAttribute="width" constant="80" id="w1"/>\n                                    <constraint firstAttribute="height" constant="80" id="h1"/>\n                                </constraints>\n                            </imageView>\n                        </subviews>\n                        <color key="backgroundColor" red="${parseInt(splashBg.slice(1, 3), 16) / 255}" green="${parseInt(splashBg.slice(3, 5), 16) / 255}" blue="${parseInt(splashBg.slice(5, 7), 16) / 255}" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>\n                        <constraints>\n                            <constraint firstItem="YRO-k0-Aw4" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="cx"/>\n                            <constraint firstItem="YRO-k0-Aw4" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" id="cy"/>\n                        </constraints>\n                    </view>\n                </viewController>\n                <placeholder placeholderIdentifier="IBFirstResponder" id="iYj-Kq-Ea1" userLabel="First Responder" sceneMemberID="firstResponder"/>\n            </objects>\n            <point key="canvasLocation" x="53" y="375"/>\n        </scene>\n    </scenes>\n</document>\n`
+    );
+  }
+
   if (config.signing?.ios?.style === 'manual') {
     mkdirSync(join(iosDir, 'profiles'), { recursive: true });
   }
 
-  writeFileSync(join(appDir, 'Info.plist'), iosInfoPlist(config, iosUsageStrings(collectDeviceApiUsage(join(target, 'app')))));
+  writeFileSync(join(appDir, 'Info.plist'), iosInfoPlist(config, iosUsageStrings(collectDeviceApiUsage(join(target, 'app'))), target));
   writeFileSync(join(appDir, 'VeskApp.entitlements'), iosEntitlements());
   writeFileSync(join(appDir, 'VeskApp.swift'), iosAppSwift());
   writeFileSync(join(appDir, 'ContentView.swift'), iosContentView());
   writeFileSync(join(iosDir, 'VeskApp.xcodeproj', 'project.pbxproj'), iosPbxproj(config, teamId, signingStyle, deploymentTarget));
 }
 
-function iosInfoPlist(config: VeskConfig, usageStrings: Map<string, string> = new Map()): string {
+function iosInfoPlist(config: VeskConfig, usageStrings: Map<string, string> = new Map(), target?: string): string {
   // Usage-derived privacy strings: only keys the app's device-API calls need
   // (capture/scan -> camera, record -> microphone, ...), verified against
   // Apple's Info.plist keys. Never emitted "just in case".
@@ -72,6 +132,12 @@ function iosInfoPlist(config: VeskConfig, usageStrings: Map<string, string> = ne
 	<string>${purpose}</string>`)
     .join('\n');
   const usageSection = usageBlock ? `\n${usageBlock}\n` : '';
+
+  // Detect splash screen auto-detection
+  const hasSplashVsk = target ? existsSync(join(target, 'app', 'splash.vsk')) : false;
+  const hasSplashImage = target ? existsSync(join(target, 'assets', 'splash.png')) : false;
+  const splashEnabled = config.splash?.enabled ?? (hasSplashVsk || hasSplashImage);
+
   return `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -101,8 +167,8 @@ function iosInfoPlist(config: VeskConfig, usageStrings: Map<string, string> = ne
 		<key>UIApplicationSupportsMultipleScenes</key>
 		<false/>
 	</dict>
-	<key>UILaunchScreen</key>
-	<dict/>
+	<key>${splashEnabled ? 'UILaunchStoryboardName' : 'UILaunchScreen'}</key>
+	${splashEnabled ? '<string>LaunchScreen</string>' : '<dict/>'}
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
 		<string>arm64</string>
@@ -211,6 +277,8 @@ function iosPbxproj(config: VeskConfig, teamId: string, signingStyle: string, de
   const buildConfigReleaseTarget = pbxUuid();
   const buildConfigDebugProject = pbxUuid();
   const buildConfigReleaseProject = pbxUuid();
+  const assetsBuildFile = pbxUuid();
+  const assetsFileRef = pbxUuid();
 
   const codeSignStyle = signingStyle === 'manual' ? '"Manual"' : '"Automatic"';
   const team = teamId !== 'XXXXXXXXXX' ? `\t\t\t\tDEVELOPMENT_TEAM = ${teamId};\n` : '';
@@ -226,6 +294,7 @@ function iosPbxproj(config: VeskConfig, teamId: string, signingStyle: string, de
 /* Begin PBXBuildFile section */
 		${appSwift} /* VeskApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = ${fileRefApp} /* VeskApp.swift */; };
 		${contentSwift} /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ${fileRefContent} /* ContentView.swift */; };
+		${assetsBuildFile} /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = ${assetsFileRef} /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -234,6 +303,7 @@ function iosPbxproj(config: VeskConfig, teamId: string, signingStyle: string, de
 		${fileRefInfo} /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		${fileRefEntitlements} /* VeskApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = VeskApp.entitlements; sourceTree = "<group>"; };
 		${fileRefProduct} /* VeskApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VeskApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		${assetsFileRef} /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -262,6 +332,7 @@ function iosPbxproj(config: VeskConfig, teamId: string, signingStyle: string, de
 				${fileRefContent} /* ContentView.swift */,
 				${fileRefInfo} /* Info.plist */,
 				${fileRefEntitlements} /* VeskApp.entitlements */,
+				${assetsFileRef} /* Assets.xcassets */,
 			);
 			path = VeskApp;
 			sourceTree = "<group>";
@@ -333,6 +404,7 @@ function iosPbxproj(config: VeskConfig, teamId: string, signingStyle: string, de
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				${assetsBuildFile} /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

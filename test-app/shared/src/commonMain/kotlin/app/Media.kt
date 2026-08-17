@@ -585,10 +585,10 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				VeskApps(
-					onDone = { list -> run __veskret22@ { firstApp.value = (list[0] ?: "none") } },
+					onDone = { list -> run __veskret22@ { firstApp.value = (jsIndex(list, 0) ?: "none") } },
 				)
 				Button(
-					onClick = jsSafe({ run __veskret23@ { device.listApps( { list -> run __veskret24@ { firstApp.value = (list[0] ?: "none") } }) } }),
+					onClick = jsSafe({ run __veskret23@ { device.listApps( { list -> run __veskret24@ { firstApp.value = (jsIndex(list, 0) ?: "none") } }) } }),
 					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)),
 					shape = RoundedCornerShape(9999.dp),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -630,16 +630,16 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				VeskContacts(
-					onDone = { list -> run __veskret25@ { recentContact.value = (list[0] ?: "none") } },
+					onDone = { list -> run __veskret25@ { recentContact.value = (jsIndex(list, 0) ?: "none") } },
 				)
 				VeskCallLog(
-					onDone = { list -> run __veskret26@ { callRow.value = (list[0] ?: "none") } },
+					onDone = { list -> run __veskret26@ { callRow.value = (jsIndex(list, 0) ?: "none") } },
 				)
 				VeskMessages(
-					onDone = { list -> run __veskret27@ { msgRow.value = (list[0] ?: "none") } },
+					onDone = { list -> run __veskret27@ { msgRow.value = (jsIndex(list, 0) ?: "none") } },
 				)
 				VeskAccounts(
-					onDone = { list -> run __veskret28@ { acctRow.value = (list[0] ?: "none") } },
+					onDone = { list -> run __veskret28@ { acctRow.value = (jsIndex(list, 0) ?: "none") } },
 				)
 			}
 			Text(
@@ -771,12 +771,12 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				VeskBluetooth(
-					onDone = { enabled, list -> run __veskret34@ { btInfo.value = ((if (truthy(enabled)) "on" else "off") + " · ") + ((list[0] ?: "no paired devices")) } },
+					onDone = { enabled, list -> run __veskret34@ { btInfo.value = ((if (truthy(enabled)) "on" else "off") + " · ") + ((jsIndex(list, 0) ?: "no paired devices")) } },
 				)
 				VeskBluetoothToggle(
 				)
 				VeskBluetoothScan(
-					onDone = { list -> run __veskret35@ { btInfo.value = "scan: " + ((list[0] ?: "nothing found")) } },
+					onDone = { list -> run __veskret35@ { btInfo.value = "scan: " + ((jsIndex(list, 0) ?: "nothing found")) } },
 				)
 			}
 			Text(
@@ -979,7 +979,7 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				VeskCalendar(
-					onDone = { list -> run __veskret47@ { calTxt.value = (list[0] ?: "no upcoming events") } },
+					onDone = { list -> run __veskret47@ { calTxt.value = (jsIndex(list, 0) ?: "no upcoming events") } },
 				)
 				VeskNfc(
 					onDone = { available, enabled -> run __veskret48@ { calTxt.value = "nfc " + (if (truthy(available)) if (truthy(enabled)) "on" else "off" else "absent") } },
@@ -1011,7 +1011,8 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 					style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF6B7280)),
 				)
 			}
-			Row(
+			@OptIn(ExperimentalLayoutApi::class)
+			FlowRow(
 				modifier = Modifier.fillMaxWidth(),
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
@@ -1036,7 +1037,8 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 					query = "Berlin",
 				)
 			}
-			Row(
+			@OptIn(ExperimentalLayoutApi::class)
+			FlowRow(
 				modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
@@ -1135,7 +1137,7 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				)
 				}
 				Button(
-					onClick = jsSafe({ run __veskret56@ { device.listFiles("",  { list -> run __veskret57@ { fileTxt.value = "files: " + ((list[0] ?: "none")) } }) } }),
+					onClick = jsSafe({ run __veskret56@ { device.listFiles("",  { list -> run __veskret57@ { fileTxt.value = "files: " + ((jsIndex(list, 0) ?: "none")) } }) } }),
 					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)),
 					shape = RoundedCornerShape(9999.dp),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),

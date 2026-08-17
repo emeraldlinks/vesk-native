@@ -1,0 +1,31 @@
+component Layout(props) {
+    <head>
+        <link rel="stylesheet" href="./theme.css" />
+    </head>
+    <div class="flex-col w-full h-full">
+        <nav class="bg-white px-4 py-2 border-b">
+            <div class="flex items-center gap-3">
+                <NavLink href="/">
+                    <div class="flex items-center gap-2">
+                        <div class="bg-blue-600 rounded-md w-6 h-6 flex items-center justify-center">
+                            <span class="text-white font-bold text-xs">N</span>
+                        </div>
+                        <span class="text-base font-extrabold tracking-tight">Nordi</span>
+                    </div>
+                </NavLink>
+                <div class="flex-1"></div>
+                <NavLink href="/shop" class="text-sm font-semibold text-gray-600">Shop</NavLink>
+                <NavLink href="/anim" class="text-sm font-semibold text-gray-600">Anim</NavLink>
+                <NavLink href="/cart" class="text-lg leading-6">🛒</NavLink>
+            </div>
+        </nav>
+        <div class="flex-col w-full flex-1 overflow-y-auto">
+            <main class="w-full">
+                {props.children}
+            </main>
+            <footer class="bg-white px-4 py-4 border-t">
+                <p class="tagline text-center">Nordi Clothing Co — built with vesk-native</p>
+            </footer>
+        </div>
+    </div>
+}

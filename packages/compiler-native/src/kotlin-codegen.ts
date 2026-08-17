@@ -26,7 +26,7 @@ import type { TrackedInfo } from '@vesk/compiler/src/client-codegen';
 import { Js2Kt, KtErrors } from '@compiler-native/js2kt';
 import type { JsNode } from '@compiler-native/js2kt';
 import { ktIdent } from '@compiler-native/js2kt';
-import { findComponentDecls, generatePropsClass, inferPropsFromUsage, generateInferredPropsClass } from '@compiler-native/props';
+import { findComponentDecls, generatePropsClass, inferPropsFromUsage, generateInferredPropsClass, objectPatternNames, collectCallableNames } from '@compiler-native/props';
 import { elementInfo, CONTAINER_TAGS } from '@compiler-native/elements';
 import { BROWSER_API_EXPORTS } from '@compiler-native/browser-api';
 import type { LibExportSig, LibParamSig, VskLibTag, VskLibSurface } from '@compiler-native/elements';
@@ -146,6 +146,7 @@ function imageLines(node: StaticNode, em: Emitter, level: number, parentAxis: 'c
   const pad = '\t'.repeat(level);
   const padIn = '\t'.repeat(level + 1);
   const parts = classify(classes, em.customClasses, parentAxis === 'row' ? 'row' : 'column');
+  emitTailwindWarnings(parts, em);
   if (parentAxis === null) stripScopeMods(parts);
   if (!boxScope) parts.posMod = [];
   let modifier = buildModifier(parts);
@@ -153,7 +154,7 @@ function imageLines(node: StaticNode, em: Emitter, level: number, parentAxis: 'c
 
   let painterArg: string | null = null;
   let bitmapArg: string | null = null;
-  const staticSrc = node.attributes.find((a) => a.name === 'src')?.value;
+  const staticSrc = node.attributes.find((a) => a.name.toLowerCase() === 'src')?.value;
   const dynSrc = em.dynamicAttrs(node).get('src');
   if (staticSrc !== undefined && staticSrc.length > 0) {
     if (isFileImageSrc(staticSrc)) {
@@ -201,7 +202,7 @@ export function extractMediaSources(source: string): Array<{ src: string; elemen
         if (node instanceof StaticNode) {
           const tag = node.tag.toLowerCase();
           if (tag === 'img' || tag === 'video' || tag === 'audio') {
-            const src = node.attributes.find((a) => a.name === 'src')?.value;
+            const src = node.attributes.find((a) => a.name.toLowerCase() === 'src')?.value;
             if (src) out.push({ src, element: tag, component: comp.name });
           }
         }
@@ -223,6 +224,7 @@ function mediaLines(node: StaticNode, em: Emitter, level: number, parentAxis: 'c
   const pad = '\t'.repeat(level);
   const padIn = '\t'.repeat(level + 1);
   const parts = classify(classes, em.customClasses, parentAxis === 'row' ? 'row' : 'column');
+  emitTailwindWarnings(parts, em);
   if (parentAxis === null) stripScopeMods(parts);
   if (!boxScope) parts.posMod = [];
   let modifier = buildModifier(parts);
@@ -231,7 +233,7 @@ function mediaLines(node: StaticNode, em: Emitter, level: number, parentAxis: 'c
 
   const has = (name: string) => node.attributes.some((a) => a.name === name);
   let urlArg: string | null = null;
-  const staticSrc = node.attributes.find((a) => a.name === 'src')?.value;
+  const staticSrc = node.attributes.find((a) => a.name.toLowerCase() === 'src')?.value;
   const dynSrc = em.dynamicAttrs(node).get('src');
   if (staticSrc !== undefined && staticSrc.length > 0) {
     if (isFileImageSrc(staticSrc)) {
@@ -337,6 +339,7 @@ function deviceApiLines(node: StaticNode, em: Emitter, level: number, extraModif
   const fnName = DEVICE_TAGS[node.tag]!;
   const classes = em.classList(node);
   const parts = classify(classes, em.customClasses, undefined);
+  emitTailwindWarnings(parts, em);
   stripScopeMods(parts);
   if (!boxScope) parts.posMod = [];
   let modifier = buildModifier(parts);
@@ -371,23 +374,23 @@ function deviceApiLines(node: StaticNode, em: Emitter, level: number, extraModif
 
   switch (fnName) {
     case 'VeskPhotoPicker': {
-      const onPick = attrs.get('onPick');
+      const onPick = attrs.get('onpick');
       args.push(`${padIn}onPick = ${onPick ? em.j2k.expr(onPick).trimStart() : '{ _ -> }'},`);
       break;
     }
     case 'VeskCamera': {
-      const onDone = attrs.get('onDone');
+      const onDone = attrs.get('ondone');
       args.push(`${padIn}onDone = ${onDone ? em.j2k.expr(onDone).trimStart() : '{ _ -> }'},`);
       if (has('video')) args.push(`${padIn}video = true,`);
       break;
     }
     case 'VeskRecorder': {
-      const onDone = attrs.get('onDone');
+      const onDone = attrs.get('ondone');
       args.push(`${padIn}onDone = ${onDone ? em.j2k.expr(onDone).trimStart() : '{ _ -> }'},`);
       break;
     }
     case 'VeskFileInput': {
-      const onDone = attrs.get('onDone');
+      const onDone = attrs.get('ondone');
       args.push(`${padIn}onDone = ${onDone ? em.j2k.expr(onDone).trimStart() : '{ _, _ -> }'},`);
       const mime = textAttr('mime', null);
       if (mime) args.push(`${padIn}mime = ${mime},`);
@@ -396,19 +399,19 @@ function deviceApiLines(node: StaticNode, em: Emitter, level: number, extraModif
     case 'VeskNotification': {
       args.push(`${padIn}title = ${textAttr('title', '""')},`);
       args.push(`${padIn}text = ${textAttr('text', '""')},`);
-      const onTap = attrs.get('onTap');
+      const onTap = attrs.get('ontap');
       if (onTap) args.push(`${padIn}onTap = ${em.j2k.expr(onTap).trimStart()},`);
       break;
     }
     case 'VeskCopyToClipboard': {
       args.push(`${padIn}value = ${textAttr('value', '""')},`);
-      const onDone = attrs.get('onDone');
+      const onDone = attrs.get('ondone');
       args.push(`${padIn}onDone = ${onDone ? em.j2k.expr(onDone).trimStart() : '{ _ -> }'},`);
       break;
     }
     case 'VeskShareText': {
       args.push(`${padIn}text = ${textAttr('text', '""')},`);
-      const onDone = attrs.get('onDone');
+      const onDone = attrs.get('ondone');
       if (onDone) args.push(`${padIn}onDone = ${em.j2k.expr(onDone).trimStart()},`);
       break;
     }
@@ -417,14 +420,14 @@ function deviceApiLines(node: StaticNode, em: Emitter, level: number, extraModif
       if (path) args.push(`${padIn}path = ${path},`);
       const mime = textAttr('mime', null);
       if (mime) args.push(`${padIn}mime = ${mime},`);
-      const onDone = attrs.get('onDone');
+      const onDone = attrs.get('ondone');
       if (onDone) args.push(`${padIn}onDone = ${em.j2k.expr(onDone).trimStart()},`);
       break;
     }
     case 'VeskVibrate': {
       const duration = intAttr('duration', null);
       if (duration) args.push(`${padIn}duration = ${duration},`);
-      const onDone = attrs.get('onDone');
+      const onDone = attrs.get('ondone');
       if (onDone) args.push(`${padIn}onDone = ${em.j2k.expr(onDone).trimStart()},`);
       break;
     }
@@ -438,7 +441,7 @@ function deviceApiLines(node: StaticNode, em: Emitter, level: number, extraModif
       // Numeric actions: <set-volume value="60"> / <brightness value="80">.
       const value = intAttr('value', null);
       if (value) args.push(`${padIn}value = ${value},`);
-      const onDone = attrs.get('onDone');
+      const onDone = attrs.get('ondone');
       if (onDone) args.push(`${padIn}onDone = ${em.j2k.expr(onDone).trimStart()},`);
       break;
     }
@@ -447,7 +450,7 @@ function deviceApiLines(node: StaticNode, em: Emitter, level: number, extraModif
       const staticVal = em.staticAttr(node, 'value');
       const value = staticVal !== null ? (staticVal === 'false' ? 'false' : 'true') : 'true';
       args.push(`${padIn}value = ${value},`);
-      const onDone = attrs.get('onDone');
+      const onDone = attrs.get('ondone');
       if (onDone) args.push(`${padIn}onDone = ${em.j2k.expr(onDone).trimStart()},`);
       break;
     }
@@ -459,7 +462,7 @@ function deviceApiLines(node: StaticNode, em: Emitter, level: number, extraModif
       if (minute) args.push(`${padIn}minute = ${minute},`);
       const title = textAttr('title', null);
       if (title) args.push(`${padIn}title = ${title},`);
-      const onDone = attrs.get('onDone');
+      const onDone = attrs.get('ondone');
       if (onDone) args.push(`${padIn}onDone = ${em.j2k.expr(onDone).trimStart()},`);
       break;
     }
@@ -488,7 +491,7 @@ function deviceApiLines(node: StaticNode, em: Emitter, level: number, extraModif
 }
 
 function emitButton(node: StaticNode, classes: string[], attrs: Map<string, JsNode>, em: Emitter, level: number, parentAxis: 'column' | 'row' | null, extraModifier: string | null, boxScope = false): string[] {
-  const onClick = attrs.get('onClick');
+  const onClick = attrs.get('onclick');
   const onClickKt = onClick ? em.j2k.expr(onClick).trimStart() : '{}';
   const pad = '\t'.repeat(level);
   const padIn = '\t'.repeat(level + 1);
@@ -533,6 +536,7 @@ function emitButton(node: StaticNode, classes: string[], attrs: Map<string, JsNo
 const IMPORTS = `import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
@@ -793,19 +797,20 @@ class Emitter {
   }
 
   classList(node: StaticNode): string[] {
-    const attr = node.attributes.find((a) => CLASS_ATTRS.has(a.name));
+    const attr = node.attributes.find((a) => CLASS_ATTRS.has(a.name.toLowerCase()));
     if (!attr) return [];
     return attr.value.split(/\s+/).filter(Boolean);
   }
 
   staticAttr(node: StaticNode, name: string): string | null {
-    const attr = node.attributes.find((a) => a.name === name);
+    const lower = name.toLowerCase();
+    const attr = node.attributes.find((a) => a.name.toLowerCase() === lower);
     return attr ? attr.value : null;
   }
 
   bindRefVar(node: StaticNode): string | null {
     const ref = node.children.find(
-      (c) => c instanceof DynamicBinding && c.kind === 'attribute' && c.target === 'ref'
+      (c) => c instanceof DynamicBinding && c.kind === 'attribute' && c.target?.toLowerCase() === 'ref'
     ) as DynamicBinding | undefined;
     if (!ref) return null;
     const ast = this.ensureAst(ref.expression);
@@ -837,7 +842,7 @@ class Emitter {
           };
           const exprAst = program.body[0]?.declarations[0]?.init;
           if (exprAst) {
-            out.set(child.target, exprAst);
+            out.set(child.target.toLowerCase(), exprAst);
           } else {
             this.err.warn(null, `could not parse dynamic attribute: ${transformed}`);
           }
@@ -876,7 +881,7 @@ class Emitter {
   refCount = 0;
   motionRefBinding(node: StaticNode): string | null {
     const ref = node.children.find(
-      (c) => c instanceof DynamicBinding && c.kind === 'attribute' && c.target === 'ref'
+      (c) => c instanceof DynamicBinding && c.kind === 'attribute' && c.target?.toLowerCase() === 'ref'
     ) as DynamicBinding | undefined;
     if (!ref) return null;
     const ast = this.ensureAst(ref.expression);
@@ -930,8 +935,17 @@ function stripScopeMods(parts: ModifierParts): void {
   parts.align = parts.align.filter((s) => !s.startsWith('align(') && !s.startsWith('fillMax'));
 }
 
+function emitTailwindWarnings(parts: ModifierParts, em: Emitter): void {
+  if (parts.warnings) {
+    for (const cls of parts.warnings) {
+      em.err.warn(null, `CSS animation class "${cls}" is not supported in native — use motion.animate() instead`);
+    }
+  }
+}
+
 function modifierFor(classes: string[], em: Emitter, parentAxis: 'column' | 'row' | null, fillWidth: boolean, extraModifier: string | null = null, boxScope = false): string | null {
   const parts = classify(classes, em.customClasses, parentAxis === 'row' ? 'row' : 'column');
+  emitTailwindWarnings(parts, em);
   if (parentAxis === null) stripScopeMods(parts);
   if (!boxScope) parts.posMod = [];
   let modifier = buildModifier(parts);
@@ -993,6 +1007,7 @@ function textContent(children: IRNode[], em: Emitter): string {
 function makeTextCall(text: string, classes: string[], level: number, em: Emitter, fillWidth = false, parentAxis: 'column' | 'row' | null = null, extraModifier: string | null = null, defaultColor: string | null = null, flowParent = false, boxScope = false): string {
   const pad = '\t'.repeat(level);
   const parts = classify(classes, em.customClasses, parentAxis === 'row' ? 'row' : 'column');
+  emitTailwindWarnings(parts, em);
   if (parentAxis === null || flowParent) stripScopeMods(parts);
   if (!boxScope) parts.posMod = [];
   let modifier = buildModifier(parts);
@@ -1145,7 +1160,7 @@ function componentCallLines(node: ComponentCall, em: Emitter, level: number, par
 // as (String?). The modifiers chain onto the element's computed modifier.
 function dragModifier(node: StaticNode, em: Emitter): string | null {
   let m = '';
-  const draggable = node.attributes.some((a) => a.name === 'draggable');
+  const draggable = node.attributes.some((a) => a.name.toLowerCase() === 'draggable');
   if (draggable) {
     const attrs = em.dynamicAttrs(node);
     const staticData = em.staticAttr(node, 'dragdata');
@@ -1183,6 +1198,11 @@ function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: '
   const classes = em.classList(node);
   if (isHidden(classes, em.customClasses)) return [];
   const attrs = em.dynamicAttrs(node);
+  const onclick = attrs.get('onclick');
+  if (onclick && info.kind !== 'button') {
+    const clickMod = `Modifier.clickable { jsSafe(${em.j2k.expr(onclick).trimStart()}) }`;
+    extraModifier = prependModifier(extraModifier, clickMod);
+  }
   const pad = '\t'.repeat(level);
   const padIn = '\t'.repeat(level + 1);
   // motion element refs: `ref={tracked}` replaces the cell value with a
@@ -1275,6 +1295,7 @@ function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: '
 
   const argLines: string[] = [];
   const containerParts = classify(classes, em.customClasses, axis, containsSlot(node));
+  emitTailwindWarnings(containerParts, em);
   const flow = containerParts.flow === true;
   if (parentAxis === null || flow || flowParent) stripScopeMods(containerParts); // Flow layouts have no align/weight scope
   if (!boxScope) containerParts.posMod = [];
@@ -1427,7 +1448,15 @@ function emitChild(child: IRNode, em: Emitter, level: number, parentAxis: 'colum
     return splitLines(makeTextCall(em.ktString(child.value), [], level, em, false, parentAxis, extraModifier, null, flowParent, boxScope));
   }
   if (child instanceof DynamicBinding) {
-    if (child.kind === 'text') return splitLines(makeTextCall(dynamicText(em.exprOf(child.expression)), [], level, em, false, parentAxis, extraModifier, null, flowParent, boxScope));
+    if (child.kind === 'text') {
+      const raw = child.expression.raw ?? '';
+      // Motion side-effects (inView, scroll, animate) return Unit — render
+      // them as LaunchedEffect blocks instead of Text(text = "kotlin.Unit").
+      if (raw.includes('motionInView(') || raw.includes('motionScroll(') || raw.includes('motionAnimate(') || raw.includes('motionStagger(')) {
+        return [pad + `LaunchedEffect(Unit) { ${em.exprOf(child.expression)} }`];
+      }
+      return splitLines(makeTextCall(dynamicText(em.exprOf(child.expression)), [], level, em, false, parentAxis, extraModifier, null, flowParent, boxScope));
+    }
     return [];
   }
   if (child instanceof OpaqueDynamicRegion) {
@@ -2059,11 +2088,21 @@ function runCompile(source: string, filename: string, options: CompileOptions): 
     if (propsParam?.type === 'Identifier' && propsParam.name === 'content') propsParam = null;
     let propsClass = '';
     let propsParamDefault = false;
+    const destructuredNames: string[] = [];
+    const bodyNode = (decl?.node.body as JsNode | undefined) ?? null;
     if (propsParam) {
       propsClass = generatePropsClass(comp.name, propsParam);
       if (!propsClass) {
-        const names = inferPropsFromUsage((decl?.node.body as JsNode | undefined) ?? null);
-        propsClass = generateInferredPropsClass(comp.name, names);
+        const callables = collectCallableNames(bodyNode);
+        // ObjectPattern like `{ onReady }` — extract property names directly
+        const opNames = objectPatternNames(propsParam);
+        if (opNames.length > 0) {
+          destructuredNames.push(...opNames);
+          propsClass = generateInferredPropsClass(comp.name, opNames, callables);
+        } else {
+          const names = inferPropsFromUsage(bodyNode);
+          propsClass = generateInferredPropsClass(comp.name, names, callables);
+        }
       }
       propsParamDefault = true;
     }
@@ -2088,7 +2127,7 @@ function runCompile(source: string, filename: string, options: CompileOptions): 
     walkIR(comp.body, (node) => {
       if (node instanceof StaticNode) {
         for (const c of node.children) {
-          if (c instanceof DynamicBinding && c.kind === 'attribute' && c.target === 'ref' && c.expression.raw) {
+          if (c instanceof DynamicBinding && c.kind === 'attribute' && c.target?.toLowerCase() === 'ref' && c.expression.raw) {
             const name = c.expression.raw.trim();
             if (tracked.has(name)) refCells.add(name);
           }
@@ -2106,6 +2145,13 @@ function runCompile(source: string, filename: string, options: CompileOptions): 
     const propsArg = propsClass ? `props: ${comp.name}Props${propsParamDefault ? ` = ${comp.name}Props()` : ''}` : '';
     const params = [propsArg, 'content: @Composable () -> Unit = {}'].filter(Boolean).join(', ');
     out.push('@Composable', `fun ${comp.name}(${params}) {`);
+
+    // Destructure ObjectPattern props into local vals
+    if (destructuredNames.length > 0) {
+      for (const name of destructuredNames) {
+        out.push(`\tval ${ktIdent(name)} = props.${ktIdent(name)}`);
+      }
+    }
 
     const isRoot = comp.name === options.rootName;
     const bodyLines: string[] = [];

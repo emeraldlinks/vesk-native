@@ -138,6 +138,9 @@ function scanKtCalls(src: string): Set<string> {
 
 export function collectRuntimeUsage(appDir: string): Set<string> {
   const used = new Set<string>();
+  // MainActivity.kt (app module) unconditionally references VeskDeviceSession
+  // for notification-tap handling, so its helper is always emitted.
+  used.add('veskDeviceCore');
   // Generated page Kotlin lives in the :shared module — portable pages land in
   // commonMain, android-only pages (and the runtime actuals) in androidMain.
   // The usage scan follows them both.

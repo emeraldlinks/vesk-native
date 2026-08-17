@@ -65,6 +65,8 @@
     </queries>
     <application
         android:label="Vesk Demo 3"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:theme="@style/Theme.VeskApp"
         android:allowBackup="false">
     <receiver android:name="app.VeskMediaReceiver" android:exported="true">

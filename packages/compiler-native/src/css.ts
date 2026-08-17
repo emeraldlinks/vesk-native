@@ -8,11 +8,60 @@ export interface CssParseResult {
 
 function lenToDp(value: string): number | null {
   const v = value.trim().toLowerCase();
-  if (v.endsWith('px')) return Number.parseFloat(v);
-  if (v.endsWith('rem')) return Number.parseFloat(v) * 16;
-  if (v.endsWith('em')) return Number.parseFloat(v) * 16;
+  // A single length token only — multi-token shorthands (margin: a b c d) are
+  // expanded by the callers. parseFloat alone would silently read the leading
+  // number of "-40px 16px 16px" and emit a negative padding.
+  if (!v || /\s/.test(v)) return null;
+  if (v.endsWith('px')) {
+    const n = v.slice(0, -2);
+    if (!/^-?\d+(\.\d+)?$/.test(n)) return null;
+    return Number.parseFloat(n);
+  }
+  if (v.endsWith('rem')) {
+    const n = v.slice(0, -3);
+    if (!/^-?\d+(\.\d+)?$/.test(n)) return null;
+    return Number.parseFloat(n) * 16;
+  }
+  if (v.endsWith('em')) {
+    const n = v.slice(0, -2);
+    if (!/^-?\d+(\.\d+)?$/.test(n)) return null;
+    return Number.parseFloat(n) * 16;
+  }
   if (/^-?\d+(\.\d+)?$/.test(v)) return Number.parseFloat(v);
   return null;
+}
+
+// Expand a 1-4 value box shorthand into per-side lengths (top/right/bottom/
+// left). Returns null unless every token is a single length.
+function expandShorthand(value: string): { top: number; right: number; bottom: number; left: number } | null {
+  const toks = value.trim().split(/\s+/);
+  if (toks.length === 0 || toks.length > 4) return null;
+  const dps = toks.map((t) => lenToDp(t));
+  if (dps.some((n) => n === null)) return null;
+  const a = dps[0] as number;
+  const b = (dps[1] ?? a) as number;
+  const c = (dps[2] ?? a) as number;
+  const d = (dps[3] ?? b) as number;
+  return { top: a, right: b, bottom: c, left: d };
+}
+
+const MARGIN_SIDE_TPL: Record<string, string> = {
+  top: 'padding(top = ${dp}.dp)',
+  end: 'padding(end = ${dp}.dp)',
+  bottom: 'padding(bottom = ${dp}.dp)',
+  start: 'padding(start = ${dp}.dp)',
+};
+
+const NEG_MARGIN_SIDE_TPL: Record<string, string> = {
+  top: 'offset(y = -${dp}.dp)',
+  end: 'offset(x = -${dp}.dp)',
+  bottom: 'offset(y = -${dp}.dp)',
+  start: 'offset(x = -${dp}.dp)',
+};
+
+function pushMargin(parts: ModifierParts, side: string, dp: number): void {
+  const tpl = dp < 0 ? NEG_MARGIN_SIDE_TPL[side] : MARGIN_SIDE_TPL[side];
+  if (tpl) parts.margin.push(tpl.replaceAll('${dp}', String(Math.abs(dp))));
 }
 
 const CSS_FONT_WEIGHT: Record<string, string> = {
@@ -101,23 +150,36 @@ function parseDeclarations(decls: string, skipped: string[], cls: string): Modif
       continue;
     }
     if (prop === 'padding') {
-      const n = lenToDp(value);
-      if (n !== null) parts.padding.push(`padding(${n}.dp)`);
+      const s = expandShorthand(value);
+      if (s && s.top >= 0 && s.right >= 0 && s.bottom >= 0 && s.left >= 0) {
+        if (s.top === s.right && s.right === s.bottom && s.bottom === s.left) parts.padding.push(`padding(${s.top}.dp)`);
+        else {
+          if (s.top > 0) parts.padding.push(`padding(top = ${s.top}.dp)`);
+          if (s.right > 0) parts.padding.push(`padding(end = ${s.right}.dp)`);
+          if (s.bottom > 0) parts.padding.push(`padding(bottom = ${s.bottom}.dp)`);
+          if (s.left > 0) parts.padding.push(`padding(start = ${s.left}.dp)`);
+        }
+      }
       continue;
     }
-    if (prop === 'padding-top') { const n = lenToDp(value); if (n !== null) parts.padding.push(`padding(top = ${n}.dp)`); continue; }
-    if (prop === 'padding-right') { const n = lenToDp(value); if (n !== null) parts.padding.push(`padding(end = ${n}.dp)`); continue; }
-    if (prop === 'padding-bottom') { const n = lenToDp(value); if (n !== null) parts.padding.push(`padding(bottom = ${n}.dp)`); continue; }
-    if (prop === 'padding-left') { const n = lenToDp(value); if (n !== null) parts.padding.push(`padding(start = ${n}.dp)`); continue; }
+    if (prop === 'padding-top') { const n = lenToDp(value); if (n !== null && n >= 0) parts.padding.push(`padding(top = ${n}.dp)`); continue; }
+    if (prop === 'padding-right') { const n = lenToDp(value); if (n !== null && n >= 0) parts.padding.push(`padding(end = ${n}.dp)`); continue; }
+    if (prop === 'padding-bottom') { const n = lenToDp(value); if (n !== null && n >= 0) parts.padding.push(`padding(bottom = ${n}.dp)`); continue; }
+    if (prop === 'padding-left') { const n = lenToDp(value); if (n !== null && n >= 0) parts.padding.push(`padding(start = ${n}.dp)`); continue; }
     if (prop === 'margin') {
-      const n = lenToDp(value);
-      if (n !== null) parts.margin.push(`padding(${n}.dp)`);
+      const s = expandShorthand(value);
+      if (s) {
+        pushMargin(parts, 'top', s.top);
+        pushMargin(parts, 'end', s.right);
+        pushMargin(parts, 'bottom', s.bottom);
+        pushMargin(parts, 'start', s.left);
+      }
       continue;
     }
-    if (prop === 'margin-top') { const n = lenToDp(value); if (n !== null) parts.margin.push(`padding(top = ${n}.dp)`); continue; }
-    if (prop === 'margin-right') { const n = lenToDp(value); if (n !== null) parts.margin.push(`padding(end = ${n}.dp)`); continue; }
-    if (prop === 'margin-bottom') { const n = lenToDp(value); if (n !== null) parts.margin.push(`padding(bottom = ${n}.dp)`); continue; }
-    if (prop === 'margin-left') { const n = lenToDp(value); if (n !== null) parts.margin.push(`padding(start = ${n}.dp)`); continue; }
+    if (prop === 'margin-top') { const n = lenToDp(value); if (n !== null) pushMargin(parts, 'top', n); continue; }
+    if (prop === 'margin-right') { const n = lenToDp(value); if (n !== null) pushMargin(parts, 'end', n); continue; }
+    if (prop === 'margin-bottom') { const n = lenToDp(value); if (n !== null) pushMargin(parts, 'bottom', n); continue; }
+    if (prop === 'margin-left') { const n = lenToDp(value); if (n !== null) pushMargin(parts, 'start', n); continue; }
     if (prop === 'font-size') {
       const n = lenToDp(value);
       if (n !== null) parts.textStyle.push(`fontSize = ${n}.sp`);

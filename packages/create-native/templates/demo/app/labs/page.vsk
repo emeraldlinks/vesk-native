@@ -1,0 +1,194 @@
+component Labs() {
+    const &[lsKey] = track('note')
+    const &[lsValue] = track('hello native')
+    const &[lsOut] = track('Nothing stored yet')
+
+    const &[ssKey] = track('page')
+    const &[ssValue] = track('open')
+    const &[ssOut] = track('Nothing stored yet')
+
+    const &[authUser] = track('alice')
+    const &[authPass] = track('secret')
+    const &[authOut] = track('No session')
+    const &[session] = track('')
+
+    const &[fetchUrl] = track('https://jsonplaceholder.typicode.com/todos/1')
+    const &[fetchOut] = track('Press Fetch to load')
+    const &[fetchBody] = track('')
+
+    const &[sqlItem] = track('alpha')
+    const &[sqlOut] = track('No rows yet')
+
+    const c = currentUser()
+    session = c ? String(c.username) : ''
+
+    <style>
+        .labs-card { background: rgb(250, 250, 250); border-radius: 16px; padding: 16px; }
+        .labs-note { font-size: 12px; color: rgb(107, 114, 128); line-height: 18px; }
+        .labs-input { margin-top: 2px; }
+    </style>
+
+    <div class="flex-col gap-4 px-4 py-4">
+
+        <section class="labs-card">
+            <p class="text-xs font-bold uppercase tracking-widest text-indigo-600">Web storage</p>
+            <h2 class="text-lg font-extrabold mt-1">localStorage · sessionStorage</h2>
+            <div class="flex-col gap-1.5 mt-3">
+                <input ref={bindValue(lsKey)} placeholder="key" />
+                <input ref={bindValue(lsValue)} placeholder="value" />
+                <div class="flex gap-2 flex-wrap mt-1">
+                    <button class="bg-indigo-600 text-white text-sm font-semibold px-4 py-2 rounded-full" onClick={() => {
+                        localStorage.setItem(lsKey, lsValue)
+                        lsOut = 'Saved "' + lsValue + '" under "' + lsKey + '"'
+                    }}>Save</button>
+                    <button class="bg-gray-900 text-white text-sm font-semibold px-4 py-2 rounded-full" onClick={() => {
+                        const v = localStorage.getItem(lsKey)
+                        lsOut = v === null ? 'No value for "' + lsKey + '"' : 'Got: ' + v
+                    }}>Get</button>
+                    <button class="bg-gray-100 text-gray-700 text-sm font-medium px-4 py-2 rounded-full" onClick={() => {
+                        localStorage.removeItem(lsKey)
+                        lsOut = 'Removed "' + lsKey + '"'
+                    }}>Remove</button>
+                    <button class="bg-gray-100 text-gray-700 text-sm font-medium px-4 py-2 rounded-full" onClick={() => {
+                        localStorage.clear()
+                        lsOut = 'Cleared · length ' + localStorage.length
+                    }}>Clear</button>
+                </div>
+                <p class="labs-note">localStorage — {lsOut}</p>
+            </div>
+            <div class="flex-col gap-1.5 mt-4">
+                <input ref={bindValue(ssKey)} placeholder="key" />
+                <input ref={bindValue(ssValue)} placeholder="value" />
+                <div class="flex gap-2 flex-wrap mt-1">
+                    <button class="bg-indigo-600 text-white text-sm font-semibold px-4 py-2 rounded-full" onClick={() => {
+                        sessionStorage.setItem(ssKey, ssValue)
+                        ssOut = 'Saved "' + ssValue + '" under "' + ssKey + '"'
+                    }}>Save</button>
+                    <button class="bg-gray-900 text-white text-sm font-semibold px-4 py-2 rounded-full" onClick={() => {
+                        const v = sessionStorage.getItem(ssKey)
+                        ssOut = v === null ? 'No value for "' + ssKey + '"' : 'Got: ' + v
+                    }}>Get</button>
+                    <button class="bg-gray-100 text-gray-700 text-sm font-medium px-4 py-2 rounded-full" onClick={() => {
+                        sessionStorage.clear()
+                        ssOut = 'Cleared · length ' + sessionStorage.length
+                    }}>Clear</button>
+                </div>
+                <p class="labs-note">sessionStorage — {ssOut}</p>
+            </div>
+        </section>
+
+        <section class="labs-card">
+            <p class="text-xs font-bold uppercase tracking-widest text-emerald-600">Auth &amp; sessions</p>
+            <h2 class="text-lg font-extrabold mt-1">signUp · signIn · signOut</h2>
+            <p class="labs-note">Users live in native sqlite; the session persists in localStorage.</p>
+            <div class="flex-col gap-1.5 mt-3">
+                <input ref={bindValue(authUser)} placeholder="username" />
+                <input ref={bindValue(authPass)} placeholder="password" />
+                <div class="flex gap-2 flex-wrap mt-1">
+                    <button class="bg-emerald-600 text-white text-sm font-semibold px-4 py-2 rounded-full" onClick={() => {
+                        try {
+                            const u = signUp(authUser, authPass)
+                            session = u ? String(u.username) : ''
+                            authOut = u ? 'Created "' + u.username + '" and signed in' : 'Sign up failed (taken or invalid)'
+                        } catch (e) {
+                            authOut = 'Sign up error: ' + (e as Error).message
+                        }
+                    }}>Sign up</button>
+                    <button class="bg-gray-900 text-white text-sm font-semibold px-4 py-2 rounded-full" onClick={() => {
+                        try {
+                            const u = signIn(authUser, authPass)
+                            session = u ? String(u.username) : ''
+                            authOut = u ? 'Signed in as ' + u.username : 'Invalid credentials'
+                        } catch (e) {
+                            authOut = 'Sign in error: ' + (e as Error).message
+                        }
+                    }}>Sign in</button>
+                    <button class="bg-gray-100 text-gray-700 text-sm font-medium px-4 py-2 rounded-full" onClick={() => {
+                        signOut()
+                        session = ''
+                        authOut = 'Signed out'
+                    }}>Sign out</button>
+                    <button class="bg-gray-100 text-gray-700 text-sm font-medium px-4 py-2 rounded-full" onClick={() => {
+                        const u = currentUser()
+                        session = u ? String(u.username) : ''
+                        authOut = u ? 'Session user: ' + u.username : 'No active session'
+                    }}>Who am I?</button>
+                </div>
+                <p class="labs-note">{session ? 'Active session: ' + session : 'No session'} · {isSignedIn() ? 'signed in' : 'signed out'}</p>
+                <p class="labs-note">{authOut}</p>
+            </div>
+        </section>
+
+        <section class="labs-card">
+            <p class="text-xs font-bold uppercase tracking-widest text-sky-600">Fetch</p>
+            <h2 class="text-lg font-extrabold mt-1">native HTTP · fetch</h2>
+            <p class="labs-note">Blocking native request on the IO dispatcher — the response is a browser-shaped VeskResponse.</p>
+            <div class="flex-col gap-1.5 mt-3">
+                <input ref={bindValue(fetchUrl)} placeholder="https://..." />
+                <div class="flex gap-2 flex-wrap mt-1">
+                    <button class="bg-sky-600 text-white text-sm font-semibold px-4 py-2 rounded-full" onClick={() => {
+                        try {
+                            const res = fetch(fetchUrl)
+                            if (res.status === 0) {
+                                fetchOut = 'Network error: ' + res.statusText
+                                fetchBody = '(no response)'
+                            } else {
+                                fetchOut = 'HTTP ' + res.status + (res.ok ? ' OK' : ' failed')
+                                const data = res.ok ? res.json() : null
+                                fetchBody = data ? String(data.title) : '(no title)'
+                            }
+                        } catch (e) {
+                            fetchOut = 'Fetch error: ' + (e as Error).message
+                            fetchBody = ''
+                        }
+                    }}>Fetch</button>
+                </div>
+                <p class="labs-note">{fetchOut}</p>
+                <p class="labs-note">title: {fetchBody}</p>
+            </div>
+        </section>
+
+        <section class="labs-card">
+            <p class="text-xs font-bold uppercase tracking-widest text-amber-600">SQLite</p>
+            <h2 class="text-lg font-extrabold mt-1">openSqlite · native tables</h2>
+            <p class="labs-note">better-sqlite3-style surface: exec / run / all. Rows are maps with computed-key reads.</p>
+            <div class="flex-col gap-1.5 mt-3">
+                <input ref={bindValue(sqlItem)} placeholder="item name" />
+                <div class="flex gap-2 flex-wrap mt-1">
+                    <button class="bg-amber-600 text-white text-sm font-semibold px-4 py-2 rounded-full" onClick={() => {
+                        try {
+                            const db = openSqlite('labs')
+                            db.exec('CREATE TABLE IF NOT EXISTS items (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, qty INTEGER NOT NULL)')
+                            db.run('INSERT INTO items (name, qty) VALUES (?, ?)', [sqlItem, 1])
+                            const rows = db.all('SELECT id, name, qty FROM items ORDER BY id')
+                            sqlOut = 'rows: ' + rows.length + ' → ' + rows.map((row) => '#' + row['id'] + ' ' + row['name'] + ' x' + row['qty']).toString()
+                        } catch (e) {
+                            sqlOut = 'Error: ' + (e as Error).message
+                        }
+                    }}>Insert &amp; list</button>
+                    <button class="bg-gray-900 text-white text-sm font-semibold px-4 py-2 rounded-full" onClick={() => {
+                        try {
+                            const db = openSqlite('labs')
+                            const rows = db.all('SELECT id, name, qty FROM items ORDER BY id')
+                            sqlOut = 'rows: ' + rows.length + ' → ' + rows.map((row) => '#' + row['id'] + ' ' + row['name'] + ' x' + row['qty']).toString()
+                        } catch (e) {
+                            sqlOut = 'Error: ' + (e as Error).message
+                        }
+                    }}>List rows</button>
+                    <button class="bg-gray-100 text-gray-700 text-sm font-medium px-4 py-2 rounded-full" onClick={() => {
+                        try {
+                            const db = openSqlite('labs')
+                            db.exec('DROP TABLE IF EXISTS items')
+                            sqlOut = 'Table dropped'
+                        } catch (e) {
+                            sqlOut = 'Error: ' + (e as Error).message
+                        }
+                    }}>Drop table</button>
+                </div>
+                <p class="labs-note">{sqlOut}</p>
+            </div>
+        </section>
+
+        <p class="text-xs text-center text-gray-400">storage · auth · fetch · sqlite — all native Kotlin, no JS</p>
+    </div>
+}

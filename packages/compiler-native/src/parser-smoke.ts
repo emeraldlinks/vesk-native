@@ -210,6 +210,10 @@ check('js2kt: new Date(ms)', kt('new Date(0)') === 'java.util.Date(0.toLong())')
 check('js2kt: Date.now()', kt('Date.now()') === 'System.currentTimeMillis()');
 check('js2kt: Date.parse()', kt('Date.parse("2020-01-01T00:00:00Z")') === 'jsDateValue("2020-01-01T00:00:00Z")');
 check('js2kt: map.get()', kt('m.get(k)') === 'jsMapGet(m, k)');
+check('js2kt: computed index via jsIndex', kt('arr[0]') === 'jsIndex(arr, 0)');
+check('js2kt: optional computed index via jsIndex', kt('arr?.[0]') === 'jsIndex(arr, 0)');
+check('js2kt: computed string key via jsIndex', kt('obj["key"]') === 'jsIndex(obj, "key")');
+check('js2kt: computed write via jsIndexSet', ktStmt('arr[0] = v') === 'jsIndexSet(arr, 0, v);');
 check('js2kt: map.set()', kt('m.set(k, v)') === 'jsMapSet(m, k, v)');
 check('js2kt: map.has()', kt('m.has(k)') === 'jsHas(m, k)');
 check('js2kt: map.delete()', kt('m.delete(k)') === 'jsDelete(m, k)');

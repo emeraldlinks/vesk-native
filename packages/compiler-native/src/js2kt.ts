@@ -669,7 +669,12 @@ export class Js2Kt {
     }
     const obj = this.expr(object);
     if (computed) {
-      return optional ? `${obj}?.get(${this.expr(prop)})` : `${obj}[${this.expr(prop)}]`;
+      // JS bracket access must not throw: out-of-range index / missing key
+      // yields undefined (null), and numeric-string keys coerce. jsIndex
+      // dispatches on the receiver (Map -> get, List/Array/String -> bounds
+      // checked), so `list[0] ?? default` on an empty list resolves to default
+      // instead of crashing the app.
+      return `jsIndex(${obj}, ${this.expr(prop)})`;
     }
     if (prop.type === 'Identifier' && prop.name === 'size') return `jsSize(${obj})`;
     if (prop.type === 'Identifier' && prop.name === 'length') return `jsLength(${obj})`;
@@ -1404,6 +1409,19 @@ export class Js2Kt {
     if (op === '??=') return this.evalOnce(left, (l) => `${this.expr(left)} = ${l} ?: ${this.expr(right)}`);
     if (op === '||=') return this.evalOnce(left, (l) => `${this.expr(left)} = if (truthy(${l})) ${l} else ${this.expr(right)}`);
     if (op === '&&=') return this.evalOnce(left, (l) => `${this.expr(left)} = if (truthy(${l})) ${this.expr(right)} else ${l}`);
+    // Computed writes (`arr[i] = v`, `map[key] = v`) go through jsIndexSet so
+    // the JS bracket-assignment semantics hold for the same receivers jsIndex
+    // reads (out-of-range index writes are no-ops, like JS).
+    if (left.type === 'MemberExpression' && left.computed) {
+      const member = left as unknown as { object: JsNode; property: JsNode; computed: boolean };
+      const receiver = this.expr(member.object);
+      const key = this.expr(member.property);
+      if (op !== '=') {
+        const binary = this.binaryExpr({ type: 'BinaryExpression', operator: op.slice(0, -1) as string, left, right } as JsNode);
+        return `jsIndexSet(${receiver}, ${key}, ${binary})`;
+      }
+      return `jsIndexSet(${receiver}, ${key}, ${this.expr(right)})`;
+    }
     const opKt = op === '=' ? '' : ` ${op.slice(0, -1)}`;
     return `${this.expr(left)}${opKt}= ${this.expr(right)}`;
   }

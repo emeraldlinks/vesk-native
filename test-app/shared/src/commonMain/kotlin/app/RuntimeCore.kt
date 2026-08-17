@@ -464,6 +464,29 @@ fun jsHas(coll: Any?, key: Any?): Boolean = when (coll) {
 fun jsMapKeys(map: Any?): Set<Any?> = (map as Map<*, *>).keys
 
 
+// JS bracket access (arr[i], str[i], map[key]): out-of-range / missing keys
+// yield null (JS undefined) instead of throwing, and numeric-string indices
+// coerce like JS property keys ("0" indexes a list). The generic T lets the
+// element type flow through from the expected use site (List<String> stays
+// String), like JS' dynamic typing.
+@Suppress("UNCHECKED_CAST")
+fun <T> jsIndex(coll: Any?, key: Any?): T? = when (coll) {
+    is Map<*, *> -> coll.get(key) as T?
+    is List<*> -> { val i = jsIndexKey(key); if (i != null && i >= 0 && i < coll.size) coll[i] as T? else null }
+    is Array<*> -> { val i = jsIndexKey(key); if (i != null && i >= 0 && i < coll.size) coll[i] as T? else null }
+    is String -> { val i = jsIndexKey(key); if (i != null && i >= 0 && i < coll.length) coll[i].toString() as T? else null }
+    else -> null
+}
+
+fun jsIndexKey(key: Any?): Int? = when (key) {
+    is Int -> key
+    is Long -> if (key >= Int.MIN_VALUE.toLong() && key <= Int.MAX_VALUE.toLong()) key.toInt() else null
+    is Double -> if (key == Math.floor(key) && key >= Int.MIN_VALUE.toDouble() && key <= Int.MAX_VALUE.toDouble()) key.toInt() else null
+    is String -> key.toIntOrNull()
+    else -> null
+}
+
+
 fun jsSize(coll: Any?): Int = when (coll) {
     is List<*> -> coll.size
     is Set<*> -> coll.size
@@ -614,6 +637,13 @@ class MotionRef {
     var translateX: Float by mutableStateOf(0f)
     var translateY: Float by mutableStateOf(0f)
     var rotate: Float by mutableStateOf(0f)
+    var width: Float by mutableStateOf(0f)
+    var height: Float by mutableStateOf(0f)
+    var skewX: Float by mutableStateOf(0f)
+    var skewY: Float by mutableStateOf(0f)
+    var blur: Float by mutableStateOf(0f)
+    var brightness: Float by mutableStateOf(1f)
+    var contrast: Float by mutableStateOf(1f)
     var bounds: Rect? = null
     var visible: Boolean by mutableStateOf(false)
     var entered: Boolean by mutableStateOf(false)
@@ -659,6 +689,10 @@ fun Modifier.motionGraphics(ref: MotionRef): Modifier = composed {
         translationX = ref.translateX
         translationY = ref.translateY
         rotationZ = ref.rotate
+        // skew and render-effect properties (blur/brightness/contrast) are
+        // stored on MotionRef and animated, but not applied via graphicsLayer
+        // which only handles affine transforms.  Width/height affect layout,
+        // not drawing, so they are also stored-only for now.
     }.onGloballyPositioned { ref.onPositioned(it.boundsInRoot()) }
 }
 
@@ -768,11 +802,12 @@ class MotionControls {
     internal var job: Job? = null
     var time: Double = 0.0
     var speed: Double = 1.0
+    var paused: Boolean = false
     var finished: kotlinx.coroutines.Deferred<Boolean>? = null
     fun bind(j: Job, f: kotlinx.coroutines.Deferred<Boolean>) { job = j; finished = f }
     fun stop() { job?.cancel() }
-    fun pause() { job?.cancel() }
-    fun play() { }
+    fun pause() { paused = true }
+    fun play() { paused = false }
     fun complete() { job?.cancel() }
     fun cancel() { job?.cancel() }
 }
@@ -801,6 +836,7 @@ private fun motionAnimateNumber(from: Any?, to: Any?, options: Any?): MotionCont
         val t0 = TimeSource.Monotonic.markNow()
         var iteration = 0
         while (isActive && (repeat == Double.POSITIVE_INFINITY || iteration <= repeat)) {
+            while (controls.paused) { delay(50) }
             val isReversed = repeatType != "loop" && iteration % 2 == 1
             val cur = if (isReversed) target else start
             val dst = if (isReversed) start else target
@@ -849,6 +885,13 @@ private fun motionAnimateElement(ref: MotionRef, props: Any?, options: Any?): Mo
             "translateX", "x" -> { get = { ref.translateX }; set = { ref.translateX = it } }
             "translateY", "y" -> { get = { ref.translateY }; set = { ref.translateY = it } }
             "rotate" -> { get = { ref.rotate }; set = { ref.rotate = it } }
+            "width" -> { get = { ref.width }; set = { ref.width = it } }
+            "height" -> { get = { ref.height }; set = { ref.height = it } }
+            "skewX" -> { get = { ref.skewX }; set = { ref.skewX = it } }
+            "skewY" -> { get = { ref.skewY }; set = { ref.skewY = it } }
+            "blur" -> { get = { ref.blur }; set = { ref.blur = it } }
+            "brightness" -> { get = { ref.brightness }; set = { ref.brightness = it } }
+            "contrast" -> { get = { ref.contrast }; set = { ref.contrast = it } }
         }
         if (get == null || set == null) return@mapNotNull null
         val frames = (v as? List<*>)?.map { num(it).toFloat() } ?: listOf(num(v).toFloat())
@@ -879,6 +922,7 @@ private fun motionAnimateElement(ref: MotionRef, props: Any?, options: Any?): Mo
                 val targets = if (isKeyframes) p.frames.drop(1) else p.frames
                 var iteration = 0
                 while (isActive && (repeat == Double.POSITIVE_INFINITY || iteration <= repeat)) {
+                    while (controls.paused) { delay(50) }
                     val isReversed = repeatType != "loop" && iteration % 2 == 1
                     val anim = Animatable(if (isReversed) (targets.lastOrNull() ?: start) else start)
                     if (isReversed) {

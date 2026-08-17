@@ -375,7 +375,7 @@ object VeskFocus {
     }
 }
 ` },
-  'veskDeviceCore': { deps: [], src: `
+  'veskDeviceCore': { deps: ['veskFindActivity'], src: `
 // Shared device primitives: result naming, camera capture URIs, notifications,
 // and the tap registry. They live outside any composable so the script API
 // (option A state / option B callbacks) and the declarative elements (option
@@ -437,8 +437,16 @@ private fun veskNotify(context: Context, title: String, text: String, onTap: (()
     NotificationManagerCompat.from(context).notify(System.currentTimeMillis().toInt(), n)
 }
 ` },
+  'veskFindActivity': { deps: [], src: `
+// The hosting Activity for window-level work (screenshot capture).
+private fun findActivity(context: Context): Activity? = when (context) {
+    is Activity -> context
+    is ContextWrapper -> findActivity(context.baseContext)
+    else -> null
+}
+` },
   'veskDeviceApi': {
-    deps: ['veskDeviceCore', 'iosUiKit'],
+    deps: ['veskDeviceCore', 'veskFindActivity', 'iosUiKit'],
     expect: `
 // Platform seam (Phase 3 slice 1): the portable DeviceApi surface — the
 // composable factory plus the full public property/method set with the
@@ -971,6 +979,16 @@ actual class DeviceApi internal constructor(
     private var recorder: MediaRecorder? = null
     private var recordingFile: java.io.File? = null
 
+    // Diagnostics: appends a line to vesk-debug.txt in Downloads so on-device
+    // testing can confirm which device calls actually fire (launchSafe failure
+    // lines use the same file). Writes are best-effort and never throw.
+    private fun debugLog(line: String) {
+        runCatching {
+            java.io.File(android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS), "vesk-debug.txt")
+                .appendText("\${java.util.Date()}\\n\$line\\n")
+        }
+    }
+
     // Style B: pass an optional callback to receive the result directly,
     //     device.pickImage { uri -> photo = uri }
     // or rely on the observable fields above (style A):
@@ -985,7 +1003,13 @@ actual class DeviceApi internal constructor(
     // the system prompt shows on first use. onStarted receives the output
     // path (null if recording could not start).
     actual fun startRecording(onStarted: ((String?) -> Unit)?) {
-        permissionRunner(android.Manifest.permission.RECORD_AUDIO) { onStarted?.invoke(beginRecording()) }
+        debugLog("RECORD start requested")
+        permissionRunner(android.Manifest.permission.RECORD_AUDIO) {
+            debugLog("RECORD permission granted")
+            val path = beginRecording()
+            debugLog("RECORD beginRecording path=\$path")
+            onStarted?.invoke(path)
+        }
     }
 
     // Stops the recorder and returns the path of the saved file.
@@ -1196,9 +1220,10 @@ actual class DeviceApi internal constructor(
 
     // Pulses the vibrator (VIBRATE is a normal permission, granted at install).
     actual fun vibrate(millis: Long, onDone: ((Boolean) -> Unit)?) {
+        debugLog("VIBRATE start millis=\$millis")
         val v = ContextCompat.getSystemService(context, Vibrator::class.java)
         if (v == null) {
-            runCatching { java.io.File(android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS), "vesk-debug.txt").appendText("\${java.util.Date()}\\nVIBRATE: no Vibrator service\\n") }
+            debugLog("VIBRATE: no Vibrator service")
             onDone?.invoke(false)
             return
         }
@@ -1210,8 +1235,9 @@ actual class DeviceApi internal constructor(
                 v.vibrate(millis)
             }
         }.onFailure {
-            runCatching { java.io.File(android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS), "vesk-debug.txt").appendText("\${java.util.Date()}\\nVIBRATE FAIL: \$it\\n") }
+            debugLog("VIBRATE FAIL: \$it")
         }
+        debugLog("VIBRATE done")
         onDone?.invoke(true)
     }
 
@@ -1356,10 +1382,12 @@ actual class DeviceApi internal constructor(
     // Discovers nearby devices for a few seconds; BLUETOOTH_SCAN on 12+.
     // Results ("name · address") land in bluetoothDevices too.
     actual fun scanBluetooth(seconds: Int, onDone: ((List<String>) -> Unit)?) {
+        debugLog("BLUETOOTH scan start seconds=\$seconds")
         permissionRunner(android.Manifest.permission.BLUETOOTH_SCAN) {
             permissionRunner(android.Manifest.permission.BLUETOOTH_CONNECT) {
                 val ba = context.getSystemService(BluetoothManager::class.java)?.adapter
                 if (ba == null || runCatching { !ba.isEnabled }.getOrDefault(true)) {
+                    debugLog("BLUETOOTH scan adapter=\${ba != null} enabled=\${runCatching { ba?.isEnabled }}")
                     onDone?.invoke(emptyList())
                     return@permissionRunner
                 }
@@ -1550,8 +1578,9 @@ actual class DeviceApi internal constructor(
     // ---- Intent launchers --------------------------------------------------
     private fun launchSafe(intent: Intent): Boolean {
         val failure = runCatching { context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.exceptionOrNull()
+        debugLog("LAUNCH intent action=\${intent.action} data=\${intent.data} failure=\$failure")
         if (failure != null) {
-            runCatching { java.io.File(android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS), "vesk-debug.txt").appendText("\${java.util.Date()}\\nINTENT FAIL: \${intent.action} \${intent.data}\\n\$failure\\n") }
+            debugLog("LAUNCH FAIL: \${intent.action} \${intent.data}\\n\$failure")
         }
         return failure == null
     }
@@ -1622,12 +1651,14 @@ actual class DeviceApi internal constructor(
     // ---- Misc system -------------------------------------------------------
     // Android toast (short/long).
     actual fun toast(text: String, long: Boolean, onDone: ((Boolean) -> Unit)?) {
+        debugLog("TOAST text=\$text")
         Toast.makeText(context, text, if (long) Toast.LENGTH_LONG else Toast.LENGTH_SHORT).show()
         onDone?.invoke(true)
     }
 
     // Plays a system sound: "notification" / "alarm" / "ringtone" / null.
     actual fun playSound(kind: String?, onDone: ((Boolean) -> Unit)?) {
+        debugLog("PLAYSOUND kind=\$kind")
         val uri = when (kind) {
             "notification" -> RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
             "alarm" -> RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
@@ -1635,17 +1666,20 @@ actual class DeviceApi internal constructor(
             else -> null
         }
         val tone = RingtoneManager.getRingtone(context, uri)
-        if (tone == null) { onDone?.invoke(false); return }
+        if (tone == null) { debugLog("PLAYSOUND no ringtone for uri=\$uri"); onDone?.invoke(false); return }
         tone.play()
+        debugLog("PLAYSOUND played")
         onDone?.invoke(true)
     }
 
     // Sets the home/lock wallpaper from an image file path.
     actual fun setWallpaper(path: String, onDone: ((Boolean) -> Unit)?) {
+        debugLog("WALLPAPER path=\$path")
         val f = java.io.File(path)
-        if (!f.exists()) { onDone?.invoke(false); return }
+        if (!f.exists()) { debugLog("WALLPAPER file missing"); onDone?.invoke(false); return }
         val wm = WallpaperManager.getInstance(context)
         val ok = runCatching { java.io.FileInputStream(f).use { wm.setStream(it) } }.isSuccess
+        debugLog("WALLPAPER ok=\$ok")
         onDone?.invoke(ok)
     }
 
@@ -1714,6 +1748,7 @@ actual class DeviceApi internal constructor(
 
     // Speaks text with the system TTS engine (callback fires when ready/used).
     actual fun speak(text: String, onDone: ((Boolean) -> Unit)?) {
+        debugLog("SPEAK text=\$text")
         var tts: TextToSpeech? = null
         tts = TextToSpeech(context) { status ->
             val engine = tts
@@ -1721,8 +1756,10 @@ actual class DeviceApi internal constructor(
                 val langOk = engine.setLanguage(java.util.Locale.getDefault()) != TextToSpeech.LANG_MISSING_DATA &&
                     engine.setLanguage(java.util.Locale.getDefault()) != TextToSpeech.LANG_NOT_SUPPORTED
                 if (langOk) engine.speak(text, TextToSpeech.QUEUE_FLUSH, null, "vesk")
+                debugLog("SPEAK init status=\$status langOk=\$langOk")
                 onDone?.invoke(langOk)
             } else {
+                debugLog("SPEAK init failed status=\$status")
                 onDone?.invoke(false)
             }
         }
@@ -1751,13 +1788,6 @@ actual class DeviceApi internal constructor(
             f.absolutePath
         }.getOrNull()
     }
-}
-
-// The hosting Activity for window-level work (screenshot capture).
-private fun findActivity(context: Context): Activity? = when (context) {
-    is Activity -> context
-    is ContextWrapper -> findActivity(context.baseContext)
-    else -> null
 }
 
 // Best-effort MIME type from a file path (share sheet).
@@ -4165,6 +4195,49 @@ fun jsMapIterable(map: Any?): List<List<Any?>> = (map as Map<*, *>).map { (k, v)
   'jsMapGet': { deps: [], platform: 'common', src: `
 fun jsMapGet(map: Any?, key: Any?): Any? = (map as? Map<*, *>)?.get(key)
 ` },
+  'jsIndex': { deps: [], platform: 'common', src: `
+// JS bracket access (arr[i], str[i], map[key]): out-of-range / missing keys
+// yield null (JS undefined) instead of throwing, and numeric-string indices
+// coerce like JS property keys ("0" indexes a list). The generic T lets the
+// element type flow through from the expected use site (List<String> stays
+// String), like JS' dynamic typing.
+@Suppress("UNCHECKED_CAST")
+fun <T> jsIndex(coll: Any?, key: Any?): T? = when (coll) {
+    is Map<*, *> -> coll.get(key) as T?
+    is List<*> -> { val i = jsIndexKey(key); if (i != null && i >= 0 && i < coll.size) coll[i] as T? else null }
+    is Array<*> -> { val i = jsIndexKey(key); if (i != null && i >= 0 && i < coll.size) coll[i] as T? else null }
+    is String -> { val i = jsIndexKey(key); if (i != null && i >= 0 && i < coll.length) coll[i].toString() as T? else null }
+    else -> null
+}
+
+fun jsIndexKey(key: Any?): Int? = when (key) {
+    is Int -> key
+    is Long -> if (key >= Int.MIN_VALUE.toLong() && key <= Int.MAX_VALUE.toLong()) key.toInt() else null
+    is Double -> if (key == Math.floor(key) && key >= Int.MIN_VALUE.toDouble() && key <= Int.MAX_VALUE.toDouble()) key.toInt() else null
+    is String -> key.toIntOrNull()
+    else -> null
+}
+` },
+  'jsIndexSet': { deps: [], platform: 'common', src: `
+// JS bracket write (arr[i] = v, map[key] = v): mutates a MutableMap /
+// MutableList / Array in place, matching JS assignment semantics.
+@Suppress("UNCHECKED_CAST")
+fun jsIndexSet(coll: Any?, key: Any?, value: Any?): Any? {
+    when (coll) {
+        is MutableMap<*, *> -> (coll as MutableMap<Any?, Any?>)[key] = value
+        is MutableList<*> -> {
+            val i = jsIndexKey(key)
+            if (i != null && i >= 0 && i < coll.size) (coll as MutableList<Any?>)[i] = value
+        }
+        is Array<*> -> {
+            val i = jsIndexKey(key)
+            if (i != null && i >= 0 && i < coll.size) (coll as Array<Any?>)[i] = value
+        }
+        else -> {}
+    }
+    return coll
+}
+` },
   'jsMapSet': { deps: [], platform: 'common', src: `
 @Suppress("UNCHECKED_CAST")
 fun jsMapSet(map: Any?, key: Any?, value: Any?): Any? { (map as MutableMap<Any?, Any?>)[key] = value; return map }
@@ -4837,6 +4910,13 @@ class MotionRef {
     var translateX: Float by mutableStateOf(0f)
     var translateY: Float by mutableStateOf(0f)
     var rotate: Float by mutableStateOf(0f)
+    var width: Float by mutableStateOf(0f)
+    var height: Float by mutableStateOf(0f)
+    var skewX: Float by mutableStateOf(0f)
+    var skewY: Float by mutableStateOf(0f)
+    var blur: Float by mutableStateOf(0f)
+    var brightness: Float by mutableStateOf(1f)
+    var contrast: Float by mutableStateOf(1f)
     var bounds: Rect? = null
     var visible: Boolean by mutableStateOf(false)
     var entered: Boolean by mutableStateOf(false)
@@ -4882,6 +4962,10 @@ fun Modifier.motionGraphics(ref: MotionRef): Modifier = composed {
         translationX = ref.translateX
         translationY = ref.translateY
         rotationZ = ref.rotate
+        // skew and render-effect properties (blur/brightness/contrast) are
+        // stored on MotionRef and animated, but not applied via graphicsLayer
+        // which only handles affine transforms.  Width/height affect layout,
+        // not drawing, so they are also stored-only for now.
     }.onGloballyPositioned { ref.onPositioned(it.boundsInRoot()) }
 }
 
@@ -4991,11 +5075,12 @@ class MotionControls {
     internal var job: Job? = null
     var time: Double = 0.0
     var speed: Double = 1.0
+    var paused: Boolean = false
     var finished: kotlinx.coroutines.Deferred<Boolean>? = null
     fun bind(j: Job, f: kotlinx.coroutines.Deferred<Boolean>) { job = j; finished = f }
     fun stop() { job?.cancel() }
-    fun pause() { job?.cancel() }
-    fun play() { }
+    fun pause() { paused = true }
+    fun play() { paused = false }
     fun complete() { job?.cancel() }
     fun cancel() { job?.cancel() }
 }
@@ -5024,6 +5109,7 @@ private fun motionAnimateNumber(from: Any?, to: Any?, options: Any?): MotionCont
         val t0 = TimeSource.Monotonic.markNow()
         var iteration = 0
         while (isActive && (repeat == Double.POSITIVE_INFINITY || iteration <= repeat)) {
+            while (controls.paused) { delay(50) }
             val isReversed = repeatType != "loop" && iteration % 2 == 1
             val cur = if (isReversed) target else start
             val dst = if (isReversed) start else target
@@ -5072,6 +5158,13 @@ private fun motionAnimateElement(ref: MotionRef, props: Any?, options: Any?): Mo
             "translateX", "x" -> { get = { ref.translateX }; set = { ref.translateX = it } }
             "translateY", "y" -> { get = { ref.translateY }; set = { ref.translateY = it } }
             "rotate" -> { get = { ref.rotate }; set = { ref.rotate = it } }
+            "width" -> { get = { ref.width }; set = { ref.width = it } }
+            "height" -> { get = { ref.height }; set = { ref.height = it } }
+            "skewX" -> { get = { ref.skewX }; set = { ref.skewX = it } }
+            "skewY" -> { get = { ref.skewY }; set = { ref.skewY = it } }
+            "blur" -> { get = { ref.blur }; set = { ref.blur = it } }
+            "brightness" -> { get = { ref.brightness }; set = { ref.brightness = it } }
+            "contrast" -> { get = { ref.contrast }; set = { ref.contrast = it } }
         }
         if (get == null || set == null) return@mapNotNull null
         val frames = (v as? List<*>)?.map { num(it).toFloat() } ?: listOf(num(v).toFloat())
@@ -5102,6 +5195,7 @@ private fun motionAnimateElement(ref: MotionRef, props: Any?, options: Any?): Mo
                 val targets = if (isKeyframes) p.frames.drop(1) else p.frames
                 var iteration = 0
                 while (isActive && (repeat == Double.POSITIVE_INFINITY || iteration <= repeat)) {
+                    while (controls.paused) { delay(50) }
                     val isReversed = repeatType != "loop" && iteration % 2 == 1
                     val anim = Animatable(if (isReversed) (targets.lastOrNull() ?: start) else start)
                     if (isReversed) {
@@ -5280,7 +5374,7 @@ fun Modifier.motionFocus(
 ` },
 };
 
-export const RUNTIME_ORDER = ['veskVideo', 'veskAudio', 'veskFileImage', 'veskBundledImage', 'veskBundledMediaUrl', 'veskDeviceCore', 'veskDeviceApi', 'veskQr', 'veskYchartsLineChart', 'veskDragDrop', 'veskColorFilter', 'veskBrightness', 'veskContrast', 'veskGrayscale', 'veskSaturate', 'veskInvert', 'veskSepia', 'veskHueRotate', 'veskDashedBorder', 'veskSideBorder', 'veskDivideLine', 'veskSkew', 'rememberRouteScrollState', 'Link', 'NavLink', 'Outlet', 'jsString', 'jsHandleError', 'jsSafe', 'jsTypeof', 'jsGlobalIsNaN', 'jsGlobalIsFinite', 'jsStrictIsNaN', 'jsStrictIsFinite', 'jsIsInteger', 'jsParseInt', 'jsParseFloat', 'jsEncodeURIComponent', 'jsDecodeURIComponent', 'jsEncodeURI', 'jsDecodeURI', 'jsRegexExec', 'jsRegexSearch', 'jsStringify', 'jsParseJson', 'jsMapOf', 'jsSetOf', 'jsMapIterable', 'jsMapGet', 'jsMapSet', 'jsHas', 'jsDelete', 'jsClear', 'jsMapKeys', 'jsMapValues', 'jsMapEntries', 'jsSize', 'jsLength', 'jsForEach', 'jsDateValue', 'jsTagged', 'JsConsole', 'VeskTimers', 'VeskAppContext', 'jsAlert', 'VeskWebStorage', 'VeskFetch', 'VeskSqlite', 'VeskAuth', 'motionFocus', 'motionPress', 'motionHover', 'motionDrag', 'motionScroll', 'motionInView', 'motionStagger', 'motionCore'];
+export const RUNTIME_ORDER = ['veskVideo', 'veskAudio', 'veskFileImage', 'veskBundledImage', 'veskBundledMediaUrl', 'veskDeviceCore', 'veskFindActivity', 'veskDeviceApi', 'veskQr', 'veskYchartsLineChart', 'veskDragDrop', 'veskColorFilter', 'veskBrightness', 'veskContrast', 'veskGrayscale', 'veskSaturate', 'veskInvert', 'veskSepia', 'veskHueRotate', 'veskDashedBorder', 'veskSideBorder', 'veskDivideLine', 'veskSkew', 'rememberRouteScrollState', 'Link', 'NavLink', 'Outlet', 'jsString', 'jsHandleError', 'jsSafe', 'jsTypeof', 'jsGlobalIsNaN', 'jsGlobalIsFinite', 'jsStrictIsNaN', 'jsStrictIsFinite', 'jsIsInteger', 'jsParseInt', 'jsParseFloat', 'jsEncodeURIComponent', 'jsDecodeURIComponent', 'jsEncodeURI', 'jsDecodeURI', 'jsRegexExec', 'jsRegexSearch', 'jsStringify', 'jsParseJson', 'jsMapOf', 'jsSetOf', 'jsMapIterable', 'jsMapGet', 'jsMapSet', 'jsHas', 'jsDelete', 'jsClear', 'jsMapKeys', 'jsMapValues', 'jsMapEntries', 'jsIndex', 'jsIndexSet', 'jsSize', 'jsLength', 'jsForEach', 'jsDateValue', 'jsTagged', 'JsConsole', 'VeskTimers', 'VeskAppContext', 'jsAlert', 'VeskWebStorage', 'VeskFetch', 'VeskSqlite', 'VeskAuth', 'motionFocus', 'motionPress', 'motionHover', 'motionDrag', 'motionScroll', 'motionInView', 'motionStagger', 'motionCore'];
 
 // Function/composable names that come from a differently-named helper unit.
 export const BIOMETRIC_CHECK_BODY = `val pm = context.packageManager

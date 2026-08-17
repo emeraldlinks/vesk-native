@@ -477,7 +477,7 @@ catch (e: Exception) {
 				) {
 					Button(
 						onClick = jsSafe({ run __veskret12@ { try {
-	val db = VeskSqlite.openDatabase("labs"); 	db.exec("CREATE TABLE IF NOT EXISTS items (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, qty INTEGER NOT NULL)"); 	db.run("INSERT INTO items (name, qty) VALUES (?, ?)", listOf(sqlItem.value, 1)); 	val rows = db.all("SELECT id, name, qty FROM items ORDER BY id"); 	sqlOut.value = (("rows: " + jsLength(rows)) + " → ") + rows.map { row -> (((("#" + row["id"]) + " ") + row["name"]) + " x") + row["qty"] }.toString(); }
+	val db = VeskSqlite.openDatabase("labs"); 	db.exec("CREATE TABLE IF NOT EXISTS items (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, qty INTEGER NOT NULL)"); 	db.run("INSERT INTO items (name, qty) VALUES (?, ?)", listOf(sqlItem.value, 1)); 	val rows = db.all("SELECT id, name, qty FROM items ORDER BY id"); 	sqlOut.value = (("rows: " + jsLength(rows)) + " → ") + rows.map { row -> (((("#" + jsIndex(row, "id")) + " ") + jsIndex(row, "name")) + " x") + jsIndex(row, "qty") }.toString(); }
 catch (e: Exception) {
 	sqlOut.value = "Error: " + e.message; } } }),
 						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFFD97706)),
@@ -494,7 +494,7 @@ catch (e: Exception) {
 					}
 					Button(
 						onClick = jsSafe({ run __veskret13@ { try {
-	val db = VeskSqlite.openDatabase("labs"); 	val rows = db.all("SELECT id, name, qty FROM items ORDER BY id"); 	sqlOut.value = (("rows: " + jsLength(rows)) + " → ") + rows.map { row -> (((("#" + row["id"]) + " ") + row["name"]) + " x") + row["qty"] }.toString(); }
+	val db = VeskSqlite.openDatabase("labs"); 	val rows = db.all("SELECT id, name, qty FROM items ORDER BY id"); 	sqlOut.value = (("rows: " + jsLength(rows)) + " → ") + rows.map { row -> (((("#" + jsIndex(row, "id")) + " ") + jsIndex(row, "name")) + " x") + jsIndex(row, "qty") }.toString(); }
 catch (e: Exception) {
 	sqlOut.value = "Error: " + e.message; } } }),
 						modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)),

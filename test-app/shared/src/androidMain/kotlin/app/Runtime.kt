@@ -1086,6 +1086,16 @@ actual class DeviceApi internal constructor(
     private var recorder: MediaRecorder? = null
     private var recordingFile: java.io.File? = null
 
+    // Diagnostics: appends a line to vesk-debug.txt in Downloads so on-device
+    // testing can confirm which device calls actually fire (launchSafe failure
+    // lines use the same file). Writes are best-effort and never throw.
+    private fun debugLog(line: String) {
+        runCatching {
+            java.io.File(android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS), "vesk-debug.txt")
+                .appendText("${java.util.Date()}\n$line\n")
+        }
+    }
+
     // Style B: pass an optional callback to receive the result directly,
     //     device.pickImage { uri -> photo = uri }
     // or rely on the observable fields above (style A):
@@ -1100,7 +1110,13 @@ actual class DeviceApi internal constructor(
     // the system prompt shows on first use. onStarted receives the output
     // path (null if recording could not start).
     actual fun startRecording(onStarted: ((String?) -> Unit)?) {
-        permissionRunner(android.Manifest.permission.RECORD_AUDIO) { onStarted?.invoke(beginRecording()) }
+        debugLog("RECORD start requested")
+        permissionRunner(android.Manifest.permission.RECORD_AUDIO) {
+            debugLog("RECORD permission granted")
+            val path = beginRecording()
+            debugLog("RECORD beginRecording path=$path")
+            onStarted?.invoke(path)
+        }
     }
 
     // Stops the recorder and returns the path of the saved file.
@@ -1311,9 +1327,10 @@ actual class DeviceApi internal constructor(
 
     // Pulses the vibrator (VIBRATE is a normal permission, granted at install).
     actual fun vibrate(millis: Long, onDone: ((Boolean) -> Unit)?) {
+        debugLog("VIBRATE start millis=$millis")
         val v = ContextCompat.getSystemService(context, Vibrator::class.java)
         if (v == null) {
-            runCatching { java.io.File(android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS), "vesk-debug.txt").appendText("${java.util.Date()}\nVIBRATE: no Vibrator service\n") }
+            debugLog("VIBRATE: no Vibrator service")
             onDone?.invoke(false)
             return
         }
@@ -1325,8 +1342,9 @@ actual class DeviceApi internal constructor(
                 v.vibrate(millis)
             }
         }.onFailure {
-            runCatching { java.io.File(android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS), "vesk-debug.txt").appendText("${java.util.Date()}\nVIBRATE FAIL: $it\n") }
+            debugLog("VIBRATE FAIL: $it")
         }
+        debugLog("VIBRATE done")
         onDone?.invoke(true)
     }
 
@@ -1527,10 +1545,12 @@ actual class DeviceApi internal constructor(
     // Discovers nearby devices for a few seconds; BLUETOOTH_SCAN on 12+.
     // Results ("name · address") land in bluetoothDevices too.
     actual fun scanBluetooth(seconds: Int, onDone: ((List<String>) -> Unit)?) {
+        debugLog("BLUETOOTH scan start seconds=$seconds")
         permissionRunner(android.Manifest.permission.BLUETOOTH_SCAN) {
             permissionRunner(android.Manifest.permission.BLUETOOTH_CONNECT) {
                 val ba = context.getSystemService(BluetoothManager::class.java)?.adapter
                 if (ba == null || runCatching { !ba.isEnabled }.getOrDefault(true)) {
+                    debugLog("BLUETOOTH scan adapter=${ba != null} enabled=${runCatching { ba?.isEnabled }}")
                     onDone?.invoke(emptyList())
                     return@permissionRunner
                 }
@@ -1735,8 +1755,9 @@ actual class DeviceApi internal constructor(
     // ---- Intent launchers --------------------------------------------------
     private fun launchSafe(intent: Intent): Boolean {
         val failure = runCatching { context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.exceptionOrNull()
+        debugLog("LAUNCH intent action=${intent.action} data=${intent.data} failure=$failure")
         if (failure != null) {
-            runCatching { java.io.File(android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS), "vesk-debug.txt").appendText("${java.util.Date()}\nINTENT FAIL: ${intent.action} ${intent.data}\n$failure\n") }
+            debugLog("LAUNCH FAIL: ${intent.action} ${intent.data}\n$failure")
         }
         return failure == null
     }
@@ -1807,12 +1828,14 @@ actual class DeviceApi internal constructor(
     // ---- Misc system -------------------------------------------------------
     // Android toast (short/long).
     actual fun toast(text: String, long: Boolean, onDone: ((Boolean) -> Unit)?) {
+        debugLog("TOAST text=$text")
         Toast.makeText(context, text, if (long) Toast.LENGTH_LONG else Toast.LENGTH_SHORT).show()
         onDone?.invoke(true)
     }
 
     // Plays a system sound: "notification" / "alarm" / "ringtone" / null.
     actual fun playSound(kind: String?, onDone: ((Boolean) -> Unit)?) {
+        debugLog("PLAYSOUND kind=$kind")
         val uri = when (kind) {
             "notification" -> RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
             "alarm" -> RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
@@ -1820,17 +1843,20 @@ actual class DeviceApi internal constructor(
             else -> null
         }
         val tone = RingtoneManager.getRingtone(context, uri)
-        if (tone == null) { onDone?.invoke(false); return }
+        if (tone == null) { debugLog("PLAYSOUND no ringtone for uri=$uri"); onDone?.invoke(false); return }
         tone.play()
+        debugLog("PLAYSOUND played")
         onDone?.invoke(true)
     }
 
     // Sets the home/lock wallpaper from an image file path.
     actual fun setWallpaper(path: String, onDone: ((Boolean) -> Unit)?) {
+        debugLog("WALLPAPER path=$path")
         val f = java.io.File(path)
-        if (!f.exists()) { onDone?.invoke(false); return }
+        if (!f.exists()) { debugLog("WALLPAPER file missing"); onDone?.invoke(false); return }
         val wm = WallpaperManager.getInstance(context)
         val ok = runCatching { java.io.FileInputStream(f).use { wm.setStream(it) } }.isSuccess
+        debugLog("WALLPAPER ok=$ok")
         onDone?.invoke(ok)
     }
 
@@ -1899,6 +1925,7 @@ actual class DeviceApi internal constructor(
 
     // Speaks text with the system TTS engine (callback fires when ready/used).
     actual fun speak(text: String, onDone: ((Boolean) -> Unit)?) {
+        debugLog("SPEAK text=$text")
         var tts: TextToSpeech? = null
         tts = TextToSpeech(context) { status ->
             val engine = tts
@@ -1906,8 +1933,10 @@ actual class DeviceApi internal constructor(
                 val langOk = engine.setLanguage(java.util.Locale.getDefault()) != TextToSpeech.LANG_MISSING_DATA &&
                     engine.setLanguage(java.util.Locale.getDefault()) != TextToSpeech.LANG_NOT_SUPPORTED
                 if (langOk) engine.speak(text, TextToSpeech.QUEUE_FLUSH, null, "vesk")
+                debugLog("SPEAK init status=$status langOk=$langOk")
                 onDone?.invoke(langOk)
             } else {
+                debugLog("SPEAK init failed status=$status")
                 onDone?.invoke(false)
             }
         }

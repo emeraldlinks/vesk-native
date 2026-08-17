@@ -263,6 +263,8 @@ export function generateAppBuildGradleKts(target: string, config: VeskConfig, li
     // androidx.biometric; this pins the same 1.2.5 on the app chrome's own
     // compile classpath so both modules resolve identically.
     'implementation("androidx.fragment:fragment:1.2.5")',
+    // Splash screen backward-compat (only when splash is enabled).
+    ...(config.splash?.enabled ? ['implementation("androidx.core:core-splashscreen:1.0.1")'] : []),
   ];
   // Release signing is driven by veskconfig.signing.android (upload key for
   // Play App Signing). Passwords may reference environment variables with
@@ -456,11 +458,13 @@ export function generateManifest(target: string, config: VeskConfig, mediaReadPe
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 ${autoPermsBlock}${queriesBlock}    <application
         android:label="${config.appName}"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:theme="@style/Theme.VeskApp"
         android:allowBackup="false">
 ${receiverBlock}${providerBlock}${screenRecordBlock}        <activity
             android:name=".MainActivity"
-            android:exported="true"
+            android:exported="true"${config.splash?.enabled ? '\n            android:theme="@style/Theme.VeskApp.Splash"' : ''}
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|keyboard"${orientationAttr}>
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -530,15 +534,120 @@ export function generateThemes(target: string, config: VeskConfig): void {
   log('gen', 'themes.xml (colors, system-bar contrast from config)');
 }
 
+export function generateIconResources(target: string, config: VeskConfig): void {
+  const resDir = join(target, 'app', 'src', 'main', 'res');
+  const icon = config.icon;
+  const bgColor = icon?.backgroundColor ?? config.colors.primary;
+  // Auto-detect assets/icon.png if no explicit config
+  const foreground = icon?.foreground ?? (existsSync(join(target, 'assets', 'icon.png')) ? 'assets/icon.png' : undefined);
+
+  // Adaptive icon XML (API 26+)
+  const anydpiDir = join(resDir, 'mipmap-anydpi-v26');
+  mkdirSync(anydpiDir, { recursive: true });
+
+  const fgRef = foreground ? '@mipmap/ic_launcher_foreground' : '@drawable/ic_launcher_foreground';
+  const adaptiveXml = `<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/ic_launcher_background"/>
+    <foreground android:drawable="${fgRef}"/>
+</adaptive-icon>`;
+
+  writeFileSync(join(anydpiDir, 'ic_launcher.xml'), adaptiveXml);
+  writeFileSync(join(anydpiDir, 'ic_launcher_round.xml'), adaptiveXml);
+
+  // Background color resource
+  const valuesDir = join(resDir, 'values');
+  mkdirSync(valuesDir, { recursive: true });
+  writeFileSync(join(valuesDir, 'ic_launcher_background.xml'),
+    `<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="ic_launcher_background">${bgColor}</color>\n</resources>\n`
+  );
+
+  if (foreground) {
+    // Copy user's foreground PNG into mipmap buckets
+    const srcPath = resolve(target, foreground);
+    if (existsSync(srcPath)) {
+      const densities: Array<[string, number]> = [
+        ['mipmap-mdpi', 48], ['mipmap-hdpi', 72], ['mipmap-xhdpi', 96],
+        ['mipmap-xxhdpi', 144], ['mipmap-xxxhdpi', 192],
+      ];
+      for (const [dir] of densities) {
+        const outDir = join(resDir, dir);
+        mkdirSync(outDir, { recursive: true });
+        cpSync(srcPath, join(outDir, 'ic_launcher.png'));
+        cpSync(srcPath, join(outDir, 'ic_launcher_round.png'));
+      }
+      // Full-size for adaptive
+      cpSync(srcPath, join(anydpiDir, 'ic_launcher_foreground.png'));
+    }
+  } else {
+    // Default: letter-on-color vector drawable
+    const drawableDir = join(resDir, 'drawable');
+    mkdirSync(drawableDir, { recursive: true });
+    writeFileSync(join(drawableDir, 'ic_launcher_foreground.xml'),
+      `<?xml version="1.0" encoding="utf-8"?>\n<vector xmlns:android="http://schemas.android.com/apk/res/android"\n    android:width="108dp" android:height="108dp"\n    android:viewportWidth="108" android:viewportHeight="108">\n    <group android:translateX="22" android:translateY="22">\n        <path\n            android:fillColor="#FFFFFF"\n            android:pathData="M32,0 L64,0 A32,32 0 1,1 0,32 L0,0 Z"/>\n    </group>\n</vector>\n`
+    );
+  }
+  log('gen', 'icon resources (adaptive icon + background color)');
+}
+
+export function generateSplashTheme(target: string, config: VeskConfig): void {
+  // Auto-detect assets/splash.png or splash.vsk — enable splash if either exists
+  const hasSplashImage = existsSync(join(target, 'assets', 'splash.png'));
+  const hasSplashVsk = existsSync(join(target, 'app', 'splash.vsk'));
+  const splashEnabled = config.splash?.enabled ?? (hasSplashImage || hasSplashVsk);
+  if (!splashEnabled && !hasSplashImage && !hasSplashVsk) return;
+
+  const resDir = join(target, 'app', 'src', 'main', 'res');
+  mkdirSync(join(resDir, 'values'), { recursive: true });
+
+  const bgColor = config.splash?.backgroundColor ?? config.colors.background;
+
+  // Determine the splash logo reference
+  let logoRef: string;
+  if (config.splash?.logo) {
+    // Explicit config takes priority
+    logoRef = '@drawable/splash_logo';
+  } else if (hasSplashImage) {
+    // Auto-detected assets/splash.png
+    logoRef = '@drawable/splash_bg';
+  } else if (config.icon?.foreground) {
+    logoRef = '@mipmap/ic_launcher_foreground';
+  } else {
+    logoRef = '@drawable/ic_launcher_foreground';
+  }
+
+  // Copy splash.png to drawable resources if present
+  if (hasSplashImage) {
+    const drawableDir = join(resDir, 'drawable');
+    mkdirSync(drawableDir, { recursive: true });
+    cpSync(join(target, 'assets', 'splash.png'), join(drawableDir, 'splash_bg.png'));
+  }
+
+  writeFileSync(join(resDir, 'splash_theme.xml'),
+    `<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <style name="Theme.VeskApp.Splash" parent="Theme.SplashScreen">\n        <item name="windowSplashScreenBackground">${bgColor}</item>\n        <item name="windowSplashScreenAnimatedIcon">${logoRef}</item>\n        <item name="postSplashScreenTheme">@style/Theme.VeskApp</item>\n    </style>\n</resources>\n`
+  );
+  log('gen', `splash_theme.xml (${hasSplashImage ? 'auto-detected splash.png' : hasSplashVsk ? 'splash.vsk component' : 'config.splash'})`);
+}
+
 export function generateMainActivity(target: string, config: VeskConfig, mediaReadPerms: boolean, mediaNotifyPerms: boolean): void {
   const pkgPath = config.appId.split('.').join('/');
-  const outDir = join(target, 'app', 'src', 'main', 'kotlin', pkgPath);
+  const kotlinRoot = join(target, 'app', 'src', 'main', 'kotlin');
+  // The app module's Kotlin is entirely generated (MainActivity, DebugCrashLog);
+  // wipe stale package dirs from previous appId values (e.g. a renamed bundle id).
+  rmSync(kotlinRoot, { recursive: true, force: true });
+  const outDir = join(kotlinRoot, pkgPath);
   mkdirSync(outDir, { recursive: true });
   const e2e = config.edgeToEdge ?? {};
   const e2eEnabled = e2e.enabled !== false;
   const e2eImports = e2eEnabled ? `import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 ` : '';
+  const splashImport = config.splash?.enabled
+    ? 'import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen\n'
+    : '';
+  const splashCall = config.splash?.enabled
+    ? 'val splashScreen = installSplashScreen()\n        '
+    : '';
   const e2eCall = e2eEnabled
     ? `        enableEdgeToEdge(
             statusBarStyle = ${systemBarStyleExpr(e2e.statusBarStyle, config.colors.background, config.darkColors.background)},
@@ -555,7 +664,7 @@ import androidx.activity.result.contract.ActivityResultContracts
     private val mediaPermLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+        ${splashCall}super.onCreate(savedInstanceState)
         if (Thread.getDefaultUncaughtExceptionHandler() !is DebugCrashLog) {
             Thread.setDefaultUncaughtExceptionHandler(DebugCrashLog(Thread.getDefaultUncaughtExceptionHandler()))
         }
@@ -578,7 +687,7 @@ ${e2eCall}        if (intent.getBooleanExtra("vesk_notify_tap", false)) jsSafe({
         setContent {`
     : `
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+        ${splashCall}super.onCreate(savedInstanceState)
         if (Thread.getDefaultUncaughtExceptionHandler() !is DebugCrashLog) {
             Thread.setDefaultUncaughtExceptionHandler(DebugCrashLog(Thread.getDefaultUncaughtExceptionHandler()))
         }
@@ -619,7 +728,7 @@ class DebugCrashLog(private val previous: Thread.UncaughtExceptionHandler?) : Th
     join(outDir, 'MainActivity.kt'),
     `package ${config.appId}
 
-${permImports}${e2eImports}import android.os.Bundle
+${permImports}${splashImport}${e2eImports}import android.os.Bundle
 import android.content.Intent
 import androidx.activity.compose.setContent
 import androidx.compose.material3.Surface
@@ -1361,7 +1470,7 @@ function computeRouteList(appDir: string, config: VeskConfig): { routeLines: str
 function collectVskPages(appDir: string) {
   return collectVskFiles(appDir)
     .map((f) => relative(appDir, f))
-    .filter((r) => !r.includes('layout.vsk'))
+    .filter((r) => !r.includes('layout.vsk') && r !== 'splash.vsk')
     .map((r) => {
       const source = readFileSync(join(appDir, r), 'utf8');
       const ast = parse(source) as unknown as JsNode;
@@ -1409,6 +1518,21 @@ export function generateAppKt(appDir: string, config: VeskConfig): void {
 
   const { routeLines, backArgs, pages } = computeRouteList(appDir, config);
 
+  // Detect splash.vsk component
+  const splashVskPath = join(appDir, 'splash.vsk');
+  let splashComponent: string | null = null;
+  let splashHasProps = false;
+  if (existsSync(splashVskPath)) {
+    const splashSource = readFileSync(splashVskPath, 'utf8');
+    const splashAst = parse(splashSource) as unknown as JsNode;
+    const splashDecls = findComponentDecls(splashAst);
+    if (splashDecls.length > 0 && splashDecls[0]) {
+      splashComponent = splashDecls[0].name;
+      const params = splashDecls[0].params as JsNode[];
+      splashHasProps = params.some((p) => !(p.type === 'Identifier' && p.name === 'content'));
+    }
+  }
+
   const tablet = config.device === 'tablet';
   const tabletImports = tablet
     ? `import androidx.compose.foundation.layout.widthIn
@@ -1428,7 +1552,10 @@ import androidx.compose.ui.Alignment
         ? `    val barsPadding = Modifier.statusBarsPadding().navigationBarsPadding()`
         : `    val barsPadding = Modifier`)
     : `    val barsPadding = if (Build.VERSION.SDK_INT >= 35) Modifier.statusBarsPadding().navigationBarsPadding() else Modifier`;
+  const padDeclNewline = splashComponent ? padDecl + '\n' : padDecl;
   const buildImport = e2eEnabled ? '' : `import android.os.Build\n`;
+
+  // Build content box AFTER routeLines/backArgs are available
   const contentBox = tablet
     ? `        // Tablet layout: content is constrained to a centered 840dp column.
         Box(modifier = Modifier.fillMaxSize()) {
@@ -1451,6 +1578,31 @@ import androidx.compose.ui.Alignment
             }
         }`;
 
+  // Splash screen handling: if splash.vsk exists, show it first then transition
+  const splashStateDecl = splashComponent
+    ? `    var splashDone by remember { mutableStateOf(false) }\n    // Auto-dismiss after 3 seconds if splash doesn't call onReady\n    LaunchedEffect(Unit) { kotlinx.coroutines.delay(3000); splashDone = true }\n`
+    : '';
+  const splashCall = splashComponent
+    ? splashHasProps
+      ? `${splashComponent}(props = ${splashComponent}Props(onReady = { splashDone = true }))`
+      : `${splashComponent}()`
+    : '';
+  const splashContent = splashComponent
+    ? `        if (splashDone) {
+            ${contentBox.replace('\n', '\n            ')}
+        } else {
+            ${splashCall}
+        }`
+    : contentBox;
+
+  const splashImports = splashComponent
+    ? `import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+`
+    : '';
+
   writeFileSync(
     join(outDir, 'App.kt'),
     `package app
@@ -1465,7 +1617,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-${buildImport}${tabletImports}import app.navigation.*
+${splashImports}${buildImport}${tabletImports}import app.navigation.*
 
 @Composable
 fun App() {
@@ -1474,14 +1626,14 @@ fun App() {
     // Register the current activity for browser-API dialogs (alert).
     val veskContext = LocalContext.current
     SideEffect { veskAppSetup(veskContext) }
-${padDecl}
+${padDeclNewline}${splashStateDecl}
     CompositionLocalProvider(LocalNavController provides nav) {
-        ${contentBox.replace('\n', '\n        ')}
+        ${splashContent.replace('\n', '\n        ')}
     }
 }
 `,
   );
-  log('gen', `App.kt -> renders ${pages.length} routed pages${tablet ? ' (tablet layout)' : ''}`);
+  log('gen', `App.kt -> renders ${pages.length} routed pages${splashComponent ? ` + splash screen (${splashComponent})` : ''}${tablet ? ' (tablet layout)' : ''}`);
 }
 
 // iOS Compose Multiplatform entry point: the Swift shell (ContentView.swift)
@@ -1493,6 +1645,22 @@ export function generateMainViewControllerKt(appDir: string, config: VeskConfig)
   const iosOutDir = sharedIosKotlinDir(dirname(appDir));
   mkdirSync(iosOutDir, { recursive: true });
   const { routeLines, backArgs } = computeRouteList(appDir, config);
+
+  // Detect splash.vsk component (same logic as App.kt)
+  const splashVskPath = join(appDir, 'splash.vsk');
+  let splashComponent: string | null = null;
+  let splashHasProps = false;
+  if (existsSync(splashVskPath)) {
+    const splashSource = readFileSync(splashVskPath, 'utf8');
+    const splashAst = parse(splashSource) as unknown as JsNode;
+    const splashDecls = findComponentDecls(splashAst);
+    if (splashDecls.length > 0 && splashDecls[0]) {
+      splashComponent = splashDecls[0].name;
+      const params = splashDecls[0].params as JsNode[];
+      splashHasProps = params.some((p) => !(p.type === 'Identifier' && p.name === 'content'));
+    }
+  }
+
   const tablet = config.device === 'tablet';
   const tabletImports = tablet
     ? `import androidx.compose.foundation.layout.widthIn
@@ -1518,6 +1686,33 @@ import androidx.compose.ui.Alignment
             }
         }`;
 
+  // Splash screen handling for iOS
+  const splashStateDecl = splashComponent
+    ? `    var splashDone by remember { mutableStateOf(false) }\n    LaunchedEffect(Unit) { kotlinx.coroutines.delay(3000); splashDone = true }\n`
+    : '';
+  const splashCall = splashComponent
+    ? splashHasProps
+      ? `${splashComponent}(props = ${splashComponent}Props(onReady = { splashDone = true }))`
+      : `${splashComponent}()`
+    : '';
+  const splashContent = splashComponent
+    ? `        if (splashDone) {
+            ${contentBox.replace('\n', '\n            ')}
+        } else {
+            ${splashCall}
+        }`
+    : contentBox;
+
+  const splashImports = splashComponent
+    ? `import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
+`
+    : `import androidx.compose.runtime.LaunchedEffect
+`;
+
   writeFileSync(
     join(iosOutDir, 'MainViewController.kt'),
     `package app
@@ -1529,20 +1724,21 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.ComposeUIViewController
 import platform.UIKit.UIViewController
-${tabletImports}import app.navigation.*
+${splashImports}${tabletImports}import app.navigation.*
 
 @Composable
 fun App() {
     val nav = rememberNavController()
+${splashStateDecl}
     CompositionLocalProvider(LocalNavController provides nav) {
-        ${contentBox.replace('\n', '\n        ')}
+        ${splashContent.replace('\n', '\n        ')}
     }
 }
 
 fun MainViewController(): UIViewController = ComposeUIViewController { App() }
 `,
   );
-  log('gen', 'MainViewController.kt (iosMain entry)');
+  log('gen', `MainViewController.kt (iosMain entry)${splashComponent ? ` + splash screen (${splashComponent})` : ''}`);
 }
 
 function isTsIdentifier(name: string): boolean {
@@ -1802,6 +1998,8 @@ export function generateProject(target: string, config: VeskConfig): void {
   const deviceNotify = deviceApis.has('notify');
   generateManifest(target, config, deviceMedia, hasMedia || deviceNotify, hasMedia, deviceApis, libs, browserApis);
   generateThemes(target, config);
+  generateIconResources(target, config);
+  generateSplashTheme(target, config);
   generateMainActivity(target, config, deviceMedia, hasMedia || deviceNotify);
   generateThemeKt(target, config);
   generateRouterKt(appDir);

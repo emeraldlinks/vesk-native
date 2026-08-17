@@ -1,0 +1,377 @@
+export const pageProps = {
+    heading: 'Native media lab',
+    blurb: 'camera, recorder, pickers & media broadcast',
+}
+
+component Media(props) {
+    const device = rememberDeviceApi()
+    // Callback-style results land in vesk cells — &[name, cell] binds the
+    // virtual name (read/write directly) and the raw cell (name.value).
+    const &[cbPhoto, cbPhotoCell] = track(null)
+    const &[cbRecording] = track(null)
+    const &[cbVideo] = track(null)
+    const &[cbFile] = track(null)
+    // One cell per system-capability demo below.
+    const &[batteryInfo] = track('tap for battery')
+    const &[networkInfo] = track('tap for network')
+    const &[locInfo] = track('tap for location')
+    const &[firstApp] = track('no app fetched')
+    const &[recentContact] = track('no contact fetched')
+    const &[callRow] = track('no call fetched')
+    const &[msgRow] = track('no message fetched')
+    const &[acctRow] = track('no account fetched')
+    const &[clipTxt] = track('tap to read clipboard')
+    const &[bioInfo] = track('not checked')
+    const &[btInfo] = track('not scanned')
+    const &[qrText] = track('')
+    const &[screenRecPath] = track('none yet')
+    const &[sysInfo] = track('tap for device info')
+    const &[storageTxt] = track('tap for storage')
+    const &[sensorVal] = track('tap to read sensor')
+    const &[calTxt] = track('tap for calendar')
+    const &[fileTxt] = track('tap to scan app files')
+    const &[dropText] = track(null)
+    const &[ttsDone] = track(false)
+
+    <style>
+        .media-note { color: rgb(107, 114, 128); }
+    </style>
+
+    <div class="flex-col gap-6 px-4 py-4">
+
+        <section>
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-lg font-bold tracking-tight">{props.heading}</h2>
+                <p class="media-note text-xs">{props.blurb}</p>
+            </div>
+            <div class="flex-col gap-4">
+                <video src="/media/demo.mp4" controls class="rounded-2xl" />
+                <video src="/media/demo.mp4" loop muted object-cover class="w-full h-40 rounded-2xl" />
+                <audio src="/media/last-train.mp3" controls class="bg-gray-100 rounded-full px-3 py-2" />
+                <audio src="/storage/emulated/0/vesk_media/Last Train Home.mp3" controls class="bg-gray-100 rounded-full px-3 py-2" />
+            </div>
+        </section>
+
+        <section>
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-lg font-bold tracking-tight">Photo picker</h2>
+                <p class="media-note text-xs">system photo picker</p>
+            </div>
+            <button class="bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-full" onClick={() => { device.pickImage() }}>
+                Pick a photo
+            </button>
+            <img src={device.lastImage} class="w-full h-40 rounded-2xl mt-3 object-cover" />
+        </section>
+
+        <section>
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-lg font-bold tracking-tight">Callback style</h2>
+                <p class="media-note text-xs">results land in vesk cells</p>
+            </div>
+            <div class="flex gap-2">
+                <button class="bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-full" onClick={() => { device.pickImage((uri) => { cbPhoto = uri }) }}>
+                    Pick into cell
+                </button>
+                <button class="bg-gray-100 text-gray-700 text-sm font-medium px-4 py-2 rounded-full" onClick={() => { device.notify('Vesk Demo', 'Tapped via onTap', () => { device.pickAudio((uri) => { cbPhoto = uri }) }) }}>
+                    Notify, then pick
+                </button>
+            </div>
+            <p class="media-note text-xs mt-3">picked: {cbPhoto ?? 'none'} (raw cell: {cbPhotoCell.value ?? 'none'})</p>
+            <img src={cbPhoto} class="w-full h-40 rounded-2xl mt-3 object-cover" />
+        </section>
+
+        <section>
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-lg font-bold tracking-tight">Declarative style</h2>
+                <p class="media-note text-xs">photo-picker, camera, recorder, file-input, notification</p>
+            </div>
+            <div class="flex gap-2">
+                <photo-picker label="Pick a photo" onPick={(uri) => { cbPhoto = uri }} />
+                <camera label="Take photo" onDone={(uri) => { cbPhoto = uri }} />
+                <camera video label="Record video" onDone={(uri) => { cbVideo = uri }} />
+            </div>
+            <div class="flex gap-2 mt-2">
+                <recorder label="Record audio" onDone={(path) => { cbRecording = path }} />
+                <file-input label="Attach a file" mime="*/*" onDone={(uri, name) => { cbFile = name }} />
+                <notification title="Vesk Demo" text="Declarative notification" onTap={() => { cbPhoto = 'notification tapped' }} />
+            </div>
+            <p class="media-note text-xs mt-3">recording: {cbRecording ?? 'none'} · file: {cbFile || 'none'}</p>
+            <audio src={cbRecording} controls class="bg-gray-100 rounded-full px-3 py-2 mt-2" />
+            <video src={cbVideo} controls class="rounded-2xl mt-2" />
+        </section>
+
+        <section>
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-lg font-bold tracking-tight">Camera capture</h2>
+                <p class="media-note text-xs">system camera, FileProvider output</p>
+            </div>
+            <div class="flex gap-2">
+                <button class="bg-gray-900 text-white text-sm font-semibold px-4 py-2 rounded-full" onClick={() => { device.capturePhoto() }}>
+                    Take photo
+                </button>
+                <button class="bg-gray-900 text-white text-sm font-semibold px-4 py-2 rounded-full" onClick={() => { device.captureVideo() }}>
+                    Record video
+                </button>
+            </div>
+            <img src={device.lastPhoto} class="w-full h-40 rounded-2xl mt-3 object-cover" />
+            <video src={device.lastVideo} controls class="rounded-2xl mt-3" />
+        </section>
+
+        <section>
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-lg font-bold tracking-tight">Audio</h2>
+                <p class="media-note text-xs">recorder + picker</p>
+            </div>
+            <div class="flex gap-2">
+                <button class="bg-rose-600 text-white text-sm font-semibold px-4 py-2 rounded-full" onClick={() => { if (device.recording) device.stopRecording(); else device.startRecording() }}>
+                    {device.recording ? 'Stop recording' : 'Record audio'}
+                </button>
+                <button class="bg-gray-100 text-gray-700 text-sm font-medium px-4 py-2 rounded-full" onClick={() => { device.pickAudio() }}>
+                    Pick audio
+                </button>
+            </div>
+            <p class="media-note text-xs mt-3">Last recording: {device.lastRecording ?? 'none'}</p>
+            <audio src={device.lastRecording} controls class="bg-gray-100 rounded-full px-3 py-2 mt-2" />
+            <audio src={device.lastAudio} controls class="bg-gray-100 rounded-full px-3 py-2 mt-2" />
+        </section>
+
+        <section>
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-lg font-bold tracking-tight">Files</h2>
+                <p class="media-note text-xs">any type, persistable access</p>
+            </div>
+            <button class="bg-gray-100 text-gray-700 text-sm font-medium px-4 py-2 rounded-full" onClick={() => { device.pickFile() }}>
+                Open a file
+            </button>
+            <p class="media-note text-xs mt-3">Picked: {device.lastFileName ?? 'none'}</p>
+            <p class="media-note text-xs truncate">{device.lastFile ?? ''}</p>
+        </section>
+
+        <section>
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-lg font-bold tracking-tight">Notifications</h2>
+                <p class="media-note text-xs">app channel</p>
+            </div>
+            <button class="bg-indigo-600 text-white text-sm font-semibold px-4 py-2 rounded-full" onClick={() => { device.notify('Vesk Demo', 'Notification from the media page') }}>
+                Send notification
+            </button>
+        </section>
+
+        <section>
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-lg font-bold tracking-tight">Battery · network · location</h2>
+                <p class="media-note text-xs">state & callbacks, no permissions needed for battery</p>
+            </div>
+            <div class="flex gap-2">
+                <battery-status onDone={(level, charging) => { batteryInfo = ('' + level) + '%' + (charging ? ' · charging' : '') }} />
+                <network-status onDone={(type, available) => { networkInfo = (type ?? 'offline') + (available ? ' · online' : '') }} />
+                <location onDone={(lat, lng) => { locInfo = lat ? (lat + ', ' + lng) : 'no fix (location off?)' }} />
+            </div>
+            <p class="media-note text-xs mt-3">portrait: {batteryInfo} · {networkInfo} · {locInfo}</p>
+        </section>
+
+        <section>
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-lg font-bold tracking-tight">Apps</h2>
+                <p class="media-note text-xs">launchable apps via queries declaration — no permission</p>
+            </div>
+            <div class="flex gap-2">
+                <apps onDone={(list) => { firstApp = list[0] ?? 'none' }} />
+                <button class="bg-gray-100 text-gray-700 text-sm font-medium px-4 py-2 rounded-full" onClick={() => { device.listApps((list) => { firstApp = list[0] ?? 'none' }) }}>
+                    Via script
+                </button>
+            </div>
+            <p class="media-note text-xs mt-3">first app: {firstApp}</p>
+        </section>
+
+        <section>
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-lg font-bold tracking-tight">Private data</h2>
+                <p class="media-note text-xs">contacts · call log · messages · accounts (runtime grants)</p>
+            </div>
+            <div class="flex gap-2">
+                <contacts onDone={(list) => { recentContact = list[0] ?? 'none' }} />
+                <call-log onDone={(list) => { callRow = list[0] ?? 'none' }} />
+                <messages onDone={(list) => { msgRow = list[0] ?? 'none' }} />
+                <accounts onDone={(list) => { acctRow = list[0] ?? 'none' }} />
+            </div>
+            <p class="media-note text-xs mt-3">contact: {recentContact}</p>
+            <p class="media-note text-xs">call: {callRow}</p>
+            <p class="media-note text-xs">message: {msgRow}</p>
+            <p class="media-note text-xs">account: {acctRow}</p>
+        </section>
+
+        <section>
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-lg font-bold tracking-tight">Clipboard & device</h2>
+                <p class="media-note text-xs">clipboard, vibrate, torch, screenshot, share</p>
+            </div>
+            <div class="flex gap-2">
+                <clipboard onDone={(text) => { clipTxt = text ?? 'clipboard is empty' }} />
+                <copy-to-clipboard value="copied by vesk" onDone={() => { clipTxt = 'copied "copied by vesk" — now read it back' }} />
+                <vibrate duration="200" />
+                <torch />
+            </div>
+            <div class="flex gap-2 mt-2">
+                <screenshot onDone={(path) => { clipTxt = 'screenshot: ' + (path ?? 'failed') }} />
+                <share-text text="Hello from vesk-native!" />
+                <share-file path={device.lastPhoto || device.lastImage} label="Share last image" />
+            </div>
+            <p class="media-note text-xs mt-3">{clipTxt}</p>
+        </section>
+
+        <section>
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-lg font-bold tracking-tight">Biometrics</h2>
+                <p class="media-note text-xs">fingerprint / face via BiometricPrompt</p>
+            </div>
+            <div class="flex gap-2">
+                <biometric-auth onDone={(ok, reason) => { bioInfo = ok ? 'authenticated ✓' : ('failed: ' + (reason ?? '?')) }} />
+            </div>
+            <p class="media-note text-xs mt-3">{bioInfo}</p>
+        </section>
+
+        <section>
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-lg font-bold tracking-tight">Bluetooth</h2>
+                <p class="media-note text-xs">adapter, bonded devices, discovery</p>
+            </div>
+            <div class="flex gap-2">
+                <bluetooth onDone={(enabled, list) => { btInfo = (enabled ? 'on' : 'off') + ' · ' + (list[0] ?? 'no paired devices') }} />
+                <bluetooth-toggle />
+                <bluetooth-scan onDone={(list) => { btInfo = 'scan: ' + (list[0] ?? 'nothing found') }} />
+            </div>
+            <p class="media-note text-xs mt-3">{btInfo}</p>
+        </section>
+
+        <section>
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-lg font-bold tracking-tight">QR codes</h2>
+                <p class="media-note text-xs">generate (ZXing) + scan (CameraX + ML Kit)</p>
+            </div>
+            <div class="flex gap-2">
+                <button class="bg-gray-900 text-white text-sm font-semibold px-4 py-2 rounded-full" onClick={() => { device.generateQrCode('vesk-native:' + (cbPhoto ?? 'qr'), (path) => { qrText = path ?? '' }) }}>
+                    Generate QR from last image
+                </button>
+                <qr-scanner onResult={(text) => { qrText = 'scanned: ' + (text ?? 'no code') }} />
+            </div>
+            <qr-code value={qrText || 'https://vesk.dev'} class="w-40 h-40 mt-3" />
+            <p class="media-note text-xs mt-1">{qrText || 'qr-code element renders whatever value is set'}</p>
+        </section>
+
+        <section>
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-lg font-bold tracking-tight">Screen recording</h2>
+                <p class="media-note text-xs">MediaProjection, system consent first</p>
+            </div>
+            <screen-record onDone={(path) => { screenRecPath = path ?? 'cancelled' }} />
+            <p class="media-note text-xs mt-3">path: {screenRecPath}</p>
+        </section>
+
+        <section>
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-lg font-bold tracking-tight">System controls</h2>
+                <p class="media-note text-xs">volume · brightness · keep-awake · orientation</p>
+            </div>
+            <div class="flex gap-2">
+                <volume onDone={(level, ringer) => { sysInfo = 'volume ' + level + ' · ' + (ringer ?? '?') }} />
+                <set-volume value="60" label="Volume 60%" />
+                <brightness value="80" label="Brightness 80%" />
+                <brightness value="100" label="Brightness 100%" />
+                <keep-awake value="true" />
+                <orientation mode="landscape" />
+                <orientation mode="auto" label="Unlock rotation" />
+            </div>
+            <p class="media-note text-xs mt-3">{sysInfo}</p>
+        </section>
+
+        <section>
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-lg font-bold tracking-tight">Device · storage · sensors</h2>
+                <p class="media-note text-xs">identity, memory, hardware sensors</p>
+            </div>
+            <div class="flex gap-2">
+                <device-info onDone={(info) => { sysInfo = info }} />
+                <storage-status onDone={(free, total) => { storageTxt = free + ' free of ' + total }} />
+                <sensor type="light" label="Light sensor" onDone={(v) => { sensorVal = v ?? 'no sensor' }} />
+                <sensor type="accelerometer" label="Accelerometer" onDone={(v) => { sensorVal = v ?? 'no sensor' }} />
+            </div>
+            <p class="media-note text-xs mt-3">{sysInfo} · {storageTxt} · {sensorVal}</p>
+        </section>
+
+        <section>
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-lg font-bold tracking-tight">Calendar · NFC · SIM</h2>
+                <p class="media-note text-xs">events need READ_CALENDAR; nfc/sim are reads</p>
+            </div>
+            <div class="flex gap-2">
+                <calendar onDone={(list) => { calTxt = list[0] ?? 'no upcoming events' }} />
+                <nfc onDone={(available, enabled) => { calTxt = 'nfc ' + (available ? (enabled ? 'on' : 'off') : 'absent') }} />
+                <sim onDone={(carrier, state) => { calTxt = (carrier ?? 'no sim') + ' · ' + (state ?? '?') }} />
+            </div>
+            <p class="media-note text-xs mt-3">{calTxt}</p>
+        </section>
+
+        <section>
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-lg font-bold tracking-tight">Intents & extras</h2>
+                <p class="media-note text-xs">dial, sms, email, link, maps, settings, alarm, apps, tts, toast, sounds, wallpaper</p>
+            </div>
+            <div class="flex gap-2">
+                <dial number="+15551234567" />
+                <sms number="+15551234567" text="Hi from vesk!" label="SMS" />
+                <email to="demo@vesk.dev" subject="From vesk" body="Built without Android Studio." label="Email" />
+                <open-link url="https://vesk.dev" />
+                <map query="Berlin" />
+            </div>
+            <div class="flex gap-2 mt-2">
+                <open-settings section="wifi" />
+                <open-app app="com.android.settings" label="Open Settings app" />
+                <alarm hour="8" minute="30" title="Vesk demo alarm" />
+                <toast text="Hello from vesk!" />
+                <sound kind="notification" />
+            </div>
+            <div class="flex gap-2 mt-2">
+                <speak text="Everything in vesk is built from vsk files." onDone={(ok) => { ttsDone = ok }} />
+                <wallpaper path={device.lastPhoto || cbPhoto} label="Set wallpaper from last photo" />
+            </div>
+            <p class="media-note text-xs mt-3">tts: {ttsDone ? 'spoke' : 'idle'}</p>
+        </section>
+
+        <section>
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-lg font-bold tracking-tight">App files</h2>
+                <p class="media-note text-xs">app-private storage: write, read, list, delete</p>
+            </div>
+            <div class="flex gap-2">
+                <button class="bg-gray-100 text-gray-700 text-sm font-medium px-4 py-2 rounded-full" onClick={() => { device.writeFile('notes.txt', 'hello vesk', (path) => { fileTxt = 'wrote: ' + (path ?? 'failed') }) }}>
+                    Write notes.txt
+                </button>
+                <button class="bg-gray-100 text-gray-700 text-sm font-medium px-4 py-2 rounded-full" onClick={() => { device.readFile('notes.txt', (text) => { fileTxt = 'read: ' + (text ?? 'missing') }) }}>
+                    Read it back
+                </button>
+                <button class="bg-gray-100 text-gray-700 text-sm font-medium px-4 py-2 rounded-full" onClick={() => { device.listFiles('', (list) => { fileTxt = 'files: ' + (list[0] ?? 'none') }) }}>
+                    List files
+                </button>
+                <button class="bg-gray-100 text-gray-700 text-sm font-medium px-4 py-2 rounded-full" onClick={() => { device.deleteFile('notes.txt', (ok) => { fileTxt = 'deleted: ' + ok }) }}>
+                    Delete it
+                </button>
+            </div>
+            <p class="media-note text-xs mt-3">{fileTxt}</p>
+        </section>
+
+        <section>
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-lg font-bold tracking-tight">Drag & drop</h2>
+                <p class="media-note text-xs">draggable attribute + ondrop binding</p>
+            </div>
+            <div class="flex gap-2">
+                <span draggable dragdata="dragged from vesk" class="bg-indigo-600 text-white text-sm px-3 py-2 rounded-full">drag me</span>
+                <span draggable class="bg-emerald-600 text-white text-sm px-3 py-2 rounded-full">{cbPhoto ?? 'drag payload default'}</span>
+            </div>
+            <div ondrop={(t) => { dropText = t }} class="mt-2 rounded-xl border-2 border-dashed border-gray-300 p-4">
+                <p class="media-note text-xs">drop here → {dropText || 'nothing dropped yet'}</p>
+            </div>
+        </section>
+    </div>
+}

@@ -455,6 +455,7 @@ export interface ModifierParts {
   flow?: boolean;
   position?: 'absolute' | 'fixed' | 'relative';
   divide?: { axis: 'x' | 'y'; width: number; color: string; style: 'solid' | 'dashed' | 'dotted' };
+  warnings?: string[];
 }
 export function emptyParts(): ModifierParts {
   return {
@@ -499,7 +500,7 @@ export type Axis = 'column' | 'row' | 'grid';
 
 // ---------- utility spec table ----------
 
-type Bucket = 'alpha' | 'margin' | 'scroll' | 'transform' | 'shadow' | 'clip' | 'background' | 'border' | 'size' | 'padding' | 'stacking' | 'align' | 'posMod' | 'textStyle' | 'scale' | 'text' | 'layout' | 'flow' | 'grid' | 'position' | 'drop';
+type Bucket = 'alpha' | 'margin' | 'scroll' | 'transform' | 'shadow' | 'clip' | 'background' | 'border' | 'size' | 'padding' | 'stacking' | 'align' | 'posMod' | 'textStyle' | 'scale' | 'text' | 'layout' | 'flow' | 'grid' | 'position' | 'drop' | 'warn';
 
 // Order in which modifier fragments are chained (outermost first).
 const BUCKET_ORDER: Array<'alpha' | 'margin' | 'scroll' | 'transform' | 'shadow' | 'clip' | 'background' | 'border' | 'size' | 'padding' | 'stacking' | 'align' | 'posMod'> = ['alpha', 'margin', 'transform', 'shadow', 'clip', 'background', 'border', 'size', 'scroll', 'padding', 'stacking', 'align', 'posMod'];
@@ -1174,11 +1175,11 @@ const UTILITIES: UtilitySpec[] = [
   { name: 'bg-blend', bucket: 'drop', ns: [], render: noop },
   { name: 'transform', bucket: 'drop', ns: [], render: noop },
   { name: 'origin', bucket: 'drop', ns: [], render: noop },
-  { name: 'transition', bucket: 'drop', ns: [], render: noop },
-  { name: 'duration', bucket: 'drop', ns: [], render: noop },
-  { name: 'ease', bucket: 'drop', ns: [], render: noop },
-  { name: 'delay', bucket: 'drop', ns: [], render: noop },
-  { name: 'animate', bucket: 'drop', ns: [], render: noop },
+  { name: 'transition', bucket: 'warn', ns: [], render: noop },
+  { name: 'duration', bucket: 'warn', ns: [], render: noop },
+  { name: 'ease', bucket: 'warn', ns: [], render: noop },
+  { name: 'delay', bucket: 'warn', ns: [], render: noop },
+  { name: 'animate', bucket: 'warn', ns: [], render: noop },
   { name: 'break', bucket: 'drop', ns: [], render: noop },
   { name: 'break-after', bucket: 'drop', ns: [], render: noop },
   { name: 'break-before', bucket: 'drop', ns: [], render: noop },
@@ -1265,6 +1266,11 @@ export function classify(classes: string[], custom?: Map<string, ModifierParts>,
     }
     const { spec, value } = m;
     if (spec.bucket === 'drop' || spec.bucket === 'layout' || spec.bucket === 'grid') continue;
+    if (spec.bucket === 'warn') {
+      if (!parts.warnings) parts.warnings = [];
+      parts.warnings.push(cls0);
+      continue;
+    }
     const resolved = spec.ns.length > 0 ? resolveNs(spec.ns, value) : ({ kind: 'none', raw: value } satisfies Resolved);
     if (spec.ns.length > 0 && !resolved) continue; // known utility, unresolvable value -> dropped
     ctx.neg = neg;
