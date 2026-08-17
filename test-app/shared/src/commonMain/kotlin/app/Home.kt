@@ -285,12 +285,11 @@ fun Home(props: HomeProps = HomeProps(), content: @Composable () -> Unit = {}) {
 						Column {
 							Text(
 								text = ("Native media lab").uppercase(),
-								modifier = Modifier.fillMaxWidth(),
 								style = TextStyle(color = Color(0xB3FFFFFF), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.8.sp),
 							)
 							Text(
 								text = "Camera, recorder, pickers & media broadcast",
-								modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+								modifier = Modifier.padding(top = 4.dp),
 								style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 18.sp, lineHeight = 28.sp, fontWeight = FontWeight.ExtraBold),
 							)
 						}
@@ -316,12 +315,11 @@ fun Home(props: HomeProps = HomeProps(), content: @Composable () -> Unit = {}) {
 						Column {
 							Text(
 								text = ("Tailwind lab").uppercase(),
-								modifier = Modifier.fillMaxWidth(),
 								style = TextStyle(color = Color(0xFF4F46E5), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.8.sp),
 							)
 							Text(
 								text = "Grid, positioning & utility tests",
-								modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+								modifier = Modifier.padding(top = 4.dp),
 								style = TextStyle(color = Color(0xFF312E81), fontSize = 18.sp, lineHeight = 28.sp, fontWeight = FontWeight.ExtraBold),
 							)
 						}
@@ -347,12 +345,11 @@ fun Home(props: HomeProps = HomeProps(), content: @Composable () -> Unit = {}) {
 						Column {
 							Text(
 								text = ("Installed libraries").uppercase(),
-								modifier = Modifier.fillMaxWidth(),
 								style = TextStyle(color = Color(0xFF059669), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.8.sp),
 							)
 							Text(
 								text = "Coil images & charts from .vsklib",
-								modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+								modifier = Modifier.padding(top = 4.dp),
 								style = TextStyle(color = Color(0xFF064E3B), fontSize = 18.sp, lineHeight = 28.sp, fontWeight = FontWeight.ExtraBold),
 							)
 						}
@@ -378,12 +375,11 @@ fun Home(props: HomeProps = HomeProps(), content: @Composable () -> Unit = {}) {
 						Column {
 							Text(
 								text = ("Browser APIs lab").uppercase(),
-								modifier = Modifier.fillMaxWidth(),
 								style = TextStyle(color = Color(0xFF0284C7), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.8.sp),
 							)
 							Text(
 								text = "Storage, auth, fetch & sqlite",
-								modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+								modifier = Modifier.padding(top = 4.dp),
 								style = TextStyle(color = Color(0xFF0C4A6E), fontSize = 18.sp, lineHeight = 28.sp, fontWeight = FontWeight.ExtraBold),
 							)
 						}

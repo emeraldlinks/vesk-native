@@ -1380,11 +1380,14 @@ function emitElement(node: StaticNode, em: Emitter, level: number, parentAxis: '
   // so block children must not stretch to the outer Row's width either —
   // that would collapse sibling columns (web shrink-to-fit).
   const fillWidth = fillMaxWidth(classes, node.tag, parentAxis) && !isAbsolute(classes) && !inAutoWidth;
+  // A flex container does not grow along a row parent's main axis (web:
+  // only flex-1/flex-auto/flex-grow stretch) — a bare flex/flex-col stays
+  // shrink-to-fit, so its block children must not stretch either or the
+  // column would absorb the row and collapse its siblings.
   const selfAutoWidth = parentAxis === 'row' && !fillWidth && !hasExplicitWidth(classes)
     && !classes.some((c) => c === 'flex-1' || c === 'flex-auto' || c === 'flex-grow')
     && !(classes.includes('relative') || classes.includes('fixed'))
-    && !(classes.includes('flex') || classes.includes('flex-row') || classes.includes('flex-col') || classes.includes('flex-row-reverse') || classes.includes('flex-col-reverse'))
-    && layoutArgs(classes, elementAxis(classes)).grid === null;
+    && !layoutArgs(classes, elementAxis(classes)).grid;
 
   if (info.kind === 'image') {
     return [...prologue, ...imageLines(node, em, level, parentAxis, extraModifier, boxScope)];

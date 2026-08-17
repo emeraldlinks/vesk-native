@@ -205,22 +205,18 @@ fun FlightDetails(props: FlightDetailsProps = FlightDetailsProps(), content: @Co
 					) {
 						Text(
 							text = ("Departure").uppercase(),
-							modifier = Modifier.fillMaxWidth(),
 							style = TextStyle(fontSize = 11.sp, letterSpacing = 0.4.sp, color = Color(0xFF64748B), fontWeight = FontWeight.Medium),
 						)
 						Text(
 							text = (jsIndex(jsIndex(flight, "from"), "code")).toString(),
-							modifier = Modifier.fillMaxWidth(),
 							style = TextStyle(color = Color(0xFFFFFFFF), fontWeight = FontWeight.Bold, fontSize = 18.sp, lineHeight = 24.sp),
 						)
 						Text(
 							text = (jsIndex(jsIndex(flight, "from"), "city")).toString() + ", " + (jsIndex(jsIndex(flight, "from"), "country")).toString(),
-							modifier = Modifier.fillMaxWidth(),
 							style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF94A3B8)),
 						)
 						Text(
 							text = (jsIndex(jsIndex(flight, "from"), "timezone")).toString(),
-							modifier = Modifier.fillMaxWidth(),
 							style = TextStyle(fontSize = 11.sp, color = Color(0xFF64748B)),
 						)
 					}
@@ -234,22 +230,18 @@ fun FlightDetails(props: FlightDetailsProps = FlightDetailsProps(), content: @Co
 					) {
 						Text(
 							text = ("Arrival").uppercase(),
-							modifier = Modifier.fillMaxWidth(),
 							style = TextStyle(fontSize = 11.sp, letterSpacing = 0.4.sp, color = Color(0xFF64748B), fontWeight = FontWeight.Medium),
 						)
 						Text(
 							text = (jsIndex(jsIndex(flight, "to"), "code")).toString(),
-							modifier = Modifier.fillMaxWidth(),
 							style = TextStyle(color = Color(0xFFFFFFFF), fontWeight = FontWeight.Bold, fontSize = 18.sp, lineHeight = 24.sp),
 						)
 						Text(
 							text = (jsIndex(jsIndex(flight, "to"), "city")).toString() + ", " + (jsIndex(jsIndex(flight, "to"), "country")).toString(),
-							modifier = Modifier.fillMaxWidth(),
 							style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF94A3B8), textAlign = TextAlign.End),
 						)
 						Text(
 							text = (jsIndex(jsIndex(flight, "to"), "timezone")).toString(),
-							modifier = Modifier.fillMaxWidth(),
 							style = TextStyle(fontSize = 11.sp, color = Color(0xFF64748B)),
 						)
 					}
@@ -268,12 +260,10 @@ fun FlightDetails(props: FlightDetailsProps = FlightDetailsProps(), content: @Co
 					) {
 						Text(
 							text = ("Scheduled").uppercase(),
-							modifier = Modifier.fillMaxWidth(),
 							style = TextStyle(fontSize = 11.sp, letterSpacing = 0.4.sp, color = Color(0xFF64748B), fontWeight = FontWeight.Medium),
 						)
 						Text(
 							text = (jsIndex(flight, "scheduledDeparture")).toString(),
-							modifier = Modifier.fillMaxWidth(),
 							style = TextStyle(color = Color(0xFFFFFFFF), fontWeight = FontWeight.SemiBold, fontSize = 16.sp, lineHeight = 24.sp),
 						)
 					}
@@ -283,12 +273,10 @@ fun FlightDetails(props: FlightDetailsProps = FlightDetailsProps(), content: @Co
 					) {
 						Text(
 							text = ("Scheduled").uppercase(),
-							modifier = Modifier.fillMaxWidth(),
 							style = TextStyle(fontSize = 11.sp, letterSpacing = 0.4.sp, color = Color(0xFF64748B), fontWeight = FontWeight.Medium),
 						)
 						Text(
 							text = (jsIndex(flight, "scheduledArrival")).toString(),
-							modifier = Modifier.fillMaxWidth(),
 							style = TextStyle(color = Color(0xFFFFFFFF), fontWeight = FontWeight.SemiBold, fontSize = 16.sp, lineHeight = 24.sp),
 						)
 					}
@@ -303,12 +291,10 @@ fun FlightDetails(props: FlightDetailsProps = FlightDetailsProps(), content: @Co
 					) {
 						Text(
 							text = ("Actual").uppercase(),
-							modifier = Modifier.fillMaxWidth(),
 							style = TextStyle(fontSize = 11.sp, letterSpacing = 0.4.sp, color = Color(0xFF64748B), fontWeight = FontWeight.Medium),
 						)
 						Text(
 							text = (jsIndex(flight, "actualDeparture")).toString(),
-							modifier = Modifier.fillMaxWidth(),
 							style = TextStyle(color = Color(0xFFCBD5E1), fontWeight = FontWeight.SemiBold, fontSize = 16.sp, lineHeight = 24.sp),
 						)
 					}
@@ -317,7 +303,6 @@ fun FlightDetails(props: FlightDetailsProps = FlightDetailsProps(), content: @Co
 						verticalArrangement = Arrangement.spacedBy(2.dp),
 					) {
 						Row(
-							modifier = Modifier.fillMaxWidth(),
 							verticalAlignment = Alignment.CenterVertically,
 							horizontalArrangement = Arrangement.spacedBy(6.dp),
 						) {
@@ -332,7 +317,6 @@ fun FlightDetails(props: FlightDetailsProps = FlightDetailsProps(), content: @Co
 						}
 						Text(
 							text = (jsIndex(flight, "estimatedArrival")).toString(),
-							modifier = Modifier.fillMaxWidth(),
 							style = TextStyle(color = Color(0xFF67E8F9), fontWeight = FontWeight.SemiBold, fontSize = 16.sp, lineHeight = 24.sp),
 						)
 					}
@@ -348,12 +332,10 @@ fun FlightDetails(props: FlightDetailsProps = FlightDetailsProps(), content: @Co
 				) {
 					Text(
 						text = ("Aircraft").uppercase(),
-						modifier = Modifier.fillMaxWidth(),
 						style = TextStyle(fontSize = 11.sp, letterSpacing = 0.4.sp, color = Color(0xFF64748B), fontWeight = FontWeight.Medium),
 					)
 					Text(
 						text = (jsIndex(flight, "airline")).toString() + " · " + (jsIndex(flight, "aircraft")).toString(),
-						modifier = Modifier.fillMaxWidth(),
 						style = TextStyle(color = Color(0xFFFFFFFF), fontWeight = FontWeight.SemiBold, fontSize = 14.sp, lineHeight = 20.sp),
 					)
 				}
