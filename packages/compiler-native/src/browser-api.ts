@@ -11,7 +11,8 @@
 //     (fetch/alert/timers/storage/console/JSON/window) with the exact
 //     vesk-native signatures; and
 //   - as globals for the names that are NOT standard DOM globals
-//     (openSqlite, signUp, signIn, signOut, currentUser, isSignedIn), since
+//     (openSqlite, signUp, signIn, signOut, currentUser, isSignedIn,
+//     navigate, back, goBack, useParams), since
 //     the compiler maps bare identifiers and the helpers are pruned by usage.
 //     The standard globals already get browser-accurate types from the DOM
 //     lib; fetch's DOM type (Promise-based) differs from vesk-native's
@@ -283,6 +284,48 @@ export declare function clearInterval(id: number): void;`,
 export declare function alert(message?: any): void;`,
     ],
   },
+  {
+    name: 'navigate',
+    kind: 'function',
+    global: true,
+    decl: [
+      `/** Navigate to a route path through the NavController (runtime
+ * veskNavigate) — browser history.pushState semantics: no reload, stack-based
+ * back (pop() to the previous route). Also reachable as
+ * history.pushState(null, '', path) or location.href = path. */
+export declare function navigate(path: string): void;`,
+    ],
+  },
+  {
+    name: 'back',
+    kind: 'function',
+    global: true,
+    decl: [
+      `/** Go back to the previous route (runtime veskGoBack -> NavController
+ * pop()); a no-op at the root route. Browser equivalent: history.back(). */
+export declare function back(): void;`,
+    ],
+  },
+  {
+    name: 'goBack',
+    kind: 'function',
+    global: true,
+    decl: [
+      `/** Alias for back() (runtime veskGoBack). */
+export declare function goBack(): void;`,
+    ],
+  },
+  {
+    name: 'useParams',
+    kind: 'function',
+    global: true,
+    decl: [
+      `/** The current route's matched params as a string map (runtime
+ * veskUseParams): the {id} segments of the path currently being shown, e.g.
+ * useParams()['id'] on a /flight/{id} page. */
+export declare function useParams(): Record<string, string>;`,
+    ],
+  },
 ];
 
 const BROWSER_CONSTS: BrowserApiDecl[] = [
@@ -356,7 +399,8 @@ export function browserModuleDecl(): string {
   // VeskAuth, VeskFetch, VeskTimers, jsAlert, JsConsole) — never emulated in JS.
   // These are script functions/values, unlike @vesk/<library> markup components
   // (e.g. <CoilImage>) which are tags. openSqlite, signUp, signIn, signOut,
-  // currentUser and isSignedIn also work as bare globals; the standard browser
+  // currentUser, isSignedIn, navigate, back, goBack and useParams also work as
+  // bare globals; the standard browser
   // globals (fetch, alert, timers, localStorage, sessionStorage, console, JSON,
   // window) keep their DOM-lib types when used bare.`,
     ...BROWSER_INTERFACES.map((d) => d.split('\n').map((l) => `  ${l}`).join('\n')),

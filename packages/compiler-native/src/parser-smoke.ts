@@ -348,6 +348,39 @@ check('js2kt: window.fetch maps to VeskFetch.fetch', (() => {
   const out = j2k.expr(initOf('let r = window.fetch("/api");'));
   return err.errors.length === 0 && out.startsWith('VeskFetch.fetch(');
 })());
+check('js2kt: navigate maps to veskNavigate', kt('navigate("/shop")') === 'veskNavigate("/shop")');
+check('js2kt: navigate dynamic path', kt('navigate(href)') === 'veskNavigate(href)');
+check('js2kt: back maps to veskGoBack', kt('back()') === 'veskGoBack()');
+check('js2kt: goBack maps to veskGoBack', kt('goBack()') === 'veskGoBack()');
+check('js2kt: useParams maps to veskUseParams', (() => {
+  const err = new KtErrors();
+  const j2k = new Js2Kt(err);
+  const out = j2k.expr(initOf('let p = useParams();'));
+  return out === 'veskUseParams()' && err.errors.length === 0;
+})());
+check('js2kt: history.pushState maps to veskNavigate', kt('history.pushState(null, "", "/shop")') === 'veskNavigate("/shop")');
+check('js2kt: history.pushState dynamic url', kt('history.pushState({}, "", href)') === 'veskNavigate(href)');
+check('js2kt: history.back maps to veskGoBack', kt('history.back()') === 'veskGoBack()');
+check('js2kt: history.replaceState stays hard error', (() => {
+  const err = new KtErrors();
+  const j2k = new Js2Kt(err);
+  const out = j2k.expr(initOf('let x = history.replaceState(null, "", "/a");'));
+  return err.errors.length > 0 && out.startsWith('error("vesk: history.replaceState() is not supported');
+})());
+check('js2kt: location.href write maps to veskNavigate', ktStmt('location.href = "/shop"') === 'veskNavigate("/shop");');
+check('js2kt: window.location.href write maps to veskNavigate', ktStmt('window.location.href = "/shop"') === 'veskNavigate("/shop");');
+check('js2kt: location.href compound write is hard error', (() => {
+  const err = new KtErrors();
+  const j2k = new Js2Kt(err);
+  const out = j2k.stmt(stmt0('location.href += "/shop"'));
+  return err.errors.length > 0 && out.startsWith('error("vesk: location.href compound assignment is not supported');
+})());
+check('js2kt: location.assign is hard error', (() => {
+  const err = new KtErrors();
+  const j2k = new Js2Kt(err);
+  const out = j2k.expr(initOf('let x = location.assign("/a");'));
+  return err.errors.length > 0 && out.startsWith('error("vesk: location.assign() is not supported');
+})());
 check('js2kt: atob free fn is hard error', (() => {
   const err = new KtErrors();
   const j2k = new Js2Kt(err);

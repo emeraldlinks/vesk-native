@@ -8,7 +8,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
-data class Route(val path: String, val params: Map<String, String> = emptyMap(), val composable: @Composable () -> Unit)
+data class Route(val path: String, val params: Map<String, String> = emptyMap(), val composable: @Composable (Map<String, String>) -> Unit)
 
 // Back button behaviour, configure via veskconfig.json:
 //   "back": { "mode": "stack", "doubleBackToExit": true, "exitDelayMs": 2000 }
@@ -28,6 +28,11 @@ data class BackBehavior(
 class NavController {
     private val _history = mutableStateOf(listOf<String>("/"))
     private val _currentRoute = mutableStateOf("/")
+    // Params of the currently matched route ({id} segments), kept in sync by
+    // AppRouter. Script-side useParams() (veskUseParams) reads this, so page
+    // props injection and script access agree on the same values.
+    private val _currentParams = mutableStateOf<Map<String, String>>(emptyMap())
+    val currentParams: androidx.compose.runtime.State<Map<String, String>> = _currentParams
     // Scroll state per route currently reachable on the stack. A page's offset
     // lives in its own ScrollState instance, so back-navigation restores it
     // while forward navigation to a never-visited route starts at the top.
@@ -72,6 +77,13 @@ class NavController {
     }
 
     fun canPop(): Boolean = _history.value.size > 1
+
+    // AppRouter hands the matched route's {id} params here just before the
+    // page composes, so script-side useParams() (veskUseParams) reads the
+    // exact params of the route being shown.
+    fun updateParams(params: Map<String, String>) {
+        _currentParams.value = params
+    }
 
     // Pop back to the previous route; returns false when already at the root.
     // The popped route's scroll state is discarded; the restored route keeps
@@ -145,7 +157,10 @@ fun AppRouter(start: String, routes: List<Route>, back: BackBehavior = BackBehav
     val current = nav.currentRoute.value
     val matched = matchRoute(current, routes)
     if (matched != null) {
-        matched.composable()
+        // The matched route's parsed params ({id} segments) are handed to the
+        // page's composable; pages that declared zero-arg lambdas ignore them.
+        nav.updateParams(matched.params)
+        matched.composable(matched.params)
     }
 }
 
@@ -166,5 +181,7 @@ fun matchRoute(current: String, routes: List<Route>): Route? {
         }
         if (match) return route.copy(params = params)
     }
-    return routes.firstOrNull()
+    // No route matched: render nothing (fail closed) rather than silently
+    // showing an unrelated page for an unknown deep link / navigate target.
+    return null
 }

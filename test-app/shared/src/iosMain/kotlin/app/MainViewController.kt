@@ -25,6 +25,7 @@ fun App() {
         Route("/blog/vesk-native") { VeskNativePost() },
         Route("/cart") { Cart() },
         Route("/checkout") { CheckoutPage() },
+        Route("/flights/{id}") { params -> FlightDetail(props = FlightDetailProps(id = params["id"] ?: "")) },
         Route("/lab/badge") { Badge() },
         Route("/lab") { Lab() },
         Route("/labs") { Labs() },

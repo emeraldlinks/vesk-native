@@ -180,6 +180,18 @@ export interface VeskSplash {
   animationDurationMs?: number;
 }
 
+export interface VeskDeepLinks {
+  /** URL scheme of the deep link, e.g. 'vesk.demo3'. Defaults to the
+   * appId-derived scheme when omitted ('com.vesk.demo3' -> 'vesk.demo3'). */
+  scheme?: string;
+  /** URL host of the deep link, e.g. 'vesk.demo3'. When empty, the host is
+   * omitted from the intent-filter and any host matches. */
+  host?: string;
+  /** Optional path prefix restricting which URLs open the app, e.g.
+   * '/flight'. When omitted, every path under the scheme/host matches. */
+  pathPrefix?: string;
+}
+
 export interface VeskConfig {
   appId: string;
   appName: string;
@@ -220,6 +232,11 @@ export interface VeskConfig {
   icon?: VeskIcon;
   /** Splash screen. When omitted or enabled: false, no splash screen. */
   splash?: VeskSplash;
+  /** Android deep links: when present, an external URL
+   * (scheme://host/pathPrefix...) launches the app at the matching route.
+   * When omitted, no intent-filter is emitted and launch intents are not
+   * handled (deep links disabled). */
+  deepLinks?: VeskDeepLinks;
 }
 
 // Identity helper giving full autocompletion and type checking in

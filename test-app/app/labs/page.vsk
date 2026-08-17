@@ -189,6 +189,17 @@ component Labs() {
             </div>
         </section>
 
+        <section class="labs-card">
+            <p class="text-xs font-bold uppercase tracking-widest text-indigo-600">Navigation</p>
+            <h2 class="text-lg font-extrabold mt-1">Routes · script navigation</h2>
+            <div class="flex-col gap-2 mt-3">
+                <NavLink href="/flights/AA-123" class="bg-indigo-600 text-white text-sm font-semibold px-4 py-2 rounded-full self-start">
+                    Open /flights/AA-123 (dynamic route)
+                </NavLink>
+                <p class="labs-note">The [id] route segment arrives as a typed prop; useParams() and navigate()/back() work in scripts.</p>
+            </div>
+        </section>
+
         <p class="text-xs text-center text-gray-400">storage · auth · fetch · sqlite — all native Kotlin, no JS</p>
     </div>
 }

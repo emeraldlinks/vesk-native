@@ -42,6 +42,7 @@ import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.Dp
 import app.navigation.LocalNavController
+import app.navigation.NavController
 import kotlin.time.TimeSource
 import kotlin.math.pow
 import kotlinx.coroutines.CoroutineScope
@@ -416,6 +417,43 @@ fun NavLink(props: NavLinkProps, content: @Composable () -> Unit = {}) {
         content()
     }
 }
+
+
+// Script navigation seam: LocalNavController is only readable in composition,
+// but script handlers (Modifier.clickable, timers) run outside it. Components
+// whose script uses the navigation surface call veskNavSync() as their first
+// composable statement (compiler-emitted), capturing the controller so
+// veskNavigate/veskGoBack/veskUseParams work from any script context.
+private var veskNavController: NavController? = null
+
+@Composable
+fun veskNavSync() {
+    veskNavController = LocalNavController.current
+}
+
+
+// navigate('/shop') / history.pushState(null, '', '/shop') / location.href =
+// '/shop': browser-style navigation through the NavController (no reload,
+// stack-based back). Fails closed when no router page is composed.
+fun veskNavigate(path: String) {
+    val nav = veskNavController ?: error("vesk: navigate() called outside a router page")
+    nav.navigate(path)
+}
+
+
+// back() / goBack() / history.back(): pop to the previous route (a no-op at
+// the root, like NavController.pop()). Fails closed when no router page is
+// composed.
+fun veskGoBack() {
+    val nav = veskNavController ?: error("vesk: back() called outside a router page")
+    nav.pop()
+}
+
+
+// useParams(): the current route's matched params as a Map<String, String>.
+// AppRouter mirrors the matched route's params into NavController.currentParams
+// before the page composes, so this always reflects the route being shown.
+fun veskUseParams(): Map<String, String> = veskNavController?.currentParams?.value ?: emptyMap()
 
 
 fun jsString(v: Any?): String = when (v) {

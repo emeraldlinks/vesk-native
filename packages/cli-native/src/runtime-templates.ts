@@ -172,6 +172,7 @@ import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.Dp
 import app.navigation.LocalNavController
+import app.navigation.NavController
 import kotlin.time.TimeSource
 import kotlin.math.pow
 import kotlinx.coroutines.CoroutineScope
@@ -3851,6 +3852,43 @@ fun Outlet(content: @Composable () -> Unit = {}) {
     }
 }
 ` },
+  'veskNavSync': { deps: [], platform: 'common', src: `
+// Script navigation seam: LocalNavController is only readable in composition,
+// but script handlers (Modifier.clickable, timers) run outside it. Components
+// whose script uses the navigation surface call veskNavSync() as their first
+// composable statement (compiler-emitted), capturing the controller so
+// veskNavigate/veskGoBack/veskUseParams work from any script context.
+private var veskNavController: NavController? = null
+
+@Composable
+fun veskNavSync() {
+    veskNavController = LocalNavController.current
+}
+` },
+  'veskNavigate': { deps: ['veskNavSync'], platform: 'common', src: `
+// navigate('/shop') / history.pushState(null, '', '/shop') / location.href =
+// '/shop': browser-style navigation through the NavController (no reload,
+// stack-based back). Fails closed when no router page is composed.
+fun veskNavigate(path: String) {
+    val nav = veskNavController ?: error("vesk: navigate() called outside a router page")
+    nav.navigate(path)
+}
+` },
+  'veskGoBack': { deps: ['veskNavSync'], platform: 'common', src: `
+// back() / goBack() / history.back(): pop to the previous route (a no-op at
+// the root, like NavController.pop()). Fails closed when no router page is
+// composed.
+fun veskGoBack() {
+    val nav = veskNavController ?: error("vesk: back() called outside a router page")
+    nav.pop()
+}
+` },
+  'veskUseParams': { deps: ['veskNavSync'], platform: 'common', src: `
+// useParams(): the current route's matched params as a Map<String, String>.
+// AppRouter mirrors the matched route's params into NavController.currentParams
+// before the page composes, so this always reflects the route being shown.
+fun veskUseParams(): Map<String, String> = veskNavController?.currentParams?.value ?: emptyMap()
+` },
   'jsString': { deps: [], platform: 'common', src: `
 fun jsString(v: Any?): String = when (v) {
     null -> "null"
@@ -5374,7 +5412,7 @@ fun Modifier.motionFocus(
 ` },
 };
 
-export const RUNTIME_ORDER = ['veskVideo', 'veskAudio', 'veskFileImage', 'veskBundledImage', 'veskBundledMediaUrl', 'veskDeviceCore', 'veskFindActivity', 'veskDeviceApi', 'veskQr', 'veskYchartsLineChart', 'veskDragDrop', 'veskColorFilter', 'veskBrightness', 'veskContrast', 'veskGrayscale', 'veskSaturate', 'veskInvert', 'veskSepia', 'veskHueRotate', 'veskDashedBorder', 'veskSideBorder', 'veskDivideLine', 'veskSkew', 'rememberRouteScrollState', 'Link', 'NavLink', 'Outlet', 'jsString', 'jsHandleError', 'jsSafe', 'jsTypeof', 'jsGlobalIsNaN', 'jsGlobalIsFinite', 'jsStrictIsNaN', 'jsStrictIsFinite', 'jsIsInteger', 'jsParseInt', 'jsParseFloat', 'jsEncodeURIComponent', 'jsDecodeURIComponent', 'jsEncodeURI', 'jsDecodeURI', 'jsRegexExec', 'jsRegexSearch', 'jsStringify', 'jsParseJson', 'jsMapOf', 'jsSetOf', 'jsMapIterable', 'jsMapGet', 'jsMapSet', 'jsHas', 'jsDelete', 'jsClear', 'jsMapKeys', 'jsMapValues', 'jsMapEntries', 'jsIndex', 'jsIndexSet', 'jsSize', 'jsLength', 'jsForEach', 'jsDateValue', 'jsTagged', 'JsConsole', 'VeskTimers', 'VeskAppContext', 'jsAlert', 'VeskWebStorage', 'VeskFetch', 'VeskSqlite', 'VeskAuth', 'motionFocus', 'motionPress', 'motionHover', 'motionDrag', 'motionScroll', 'motionInView', 'motionStagger', 'motionCore'];
+export const RUNTIME_ORDER = ['veskVideo', 'veskAudio', 'veskFileImage', 'veskBundledImage', 'veskBundledMediaUrl', 'veskDeviceCore', 'veskFindActivity', 'veskDeviceApi', 'veskQr', 'veskYchartsLineChart', 'veskDragDrop', 'veskColorFilter', 'veskBrightness', 'veskContrast', 'veskGrayscale', 'veskSaturate', 'veskInvert', 'veskSepia', 'veskHueRotate', 'veskDashedBorder', 'veskSideBorder', 'veskDivideLine', 'veskSkew', 'rememberRouteScrollState', 'Link', 'NavLink', 'Outlet', 'veskNavSync', 'veskNavigate', 'veskGoBack', 'veskUseParams', 'jsString', 'jsHandleError', 'jsSafe', 'jsTypeof', 'jsGlobalIsNaN', 'jsGlobalIsFinite', 'jsStrictIsNaN', 'jsStrictIsFinite', 'jsIsInteger', 'jsParseInt', 'jsParseFloat', 'jsEncodeURIComponent', 'jsDecodeURIComponent', 'jsEncodeURI', 'jsDecodeURI', 'jsRegexExec', 'jsRegexSearch', 'jsStringify', 'jsParseJson', 'jsMapOf', 'jsSetOf', 'jsMapIterable', 'jsMapGet', 'jsMapSet', 'jsHas', 'jsDelete', 'jsClear', 'jsMapKeys', 'jsMapValues', 'jsMapEntries', 'jsIndex', 'jsIndexSet', 'jsSize', 'jsLength', 'jsForEach', 'jsDateValue', 'jsTagged', 'JsConsole', 'VeskTimers', 'VeskAppContext', 'jsAlert', 'VeskWebStorage', 'VeskFetch', 'VeskSqlite', 'VeskAuth', 'motionFocus', 'motionPress', 'motionHover', 'motionDrag', 'motionScroll', 'motionInView', 'motionStagger', 'motionCore'];
 
 // Function/composable names that come from a differently-named helper unit.
 export const BIOMETRIC_CHECK_BODY = `val pm = context.packageManager

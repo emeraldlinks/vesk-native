@@ -34,7 +34,7 @@ import { layoutArgs, elementAxis } from '@compiler-native/layout-args';
 import { classify, buildModifier, buildTextStyle, isHidden, isAbsolute, RADIUS } from '@compiler-native/tailwind';
 import type { ModifierParts } from '@compiler-native/tailwind';
 import { parseCssClasses } from '@compiler-native/css';
-import { walkIR } from '@compiler-native/walk-ir';
+import { walkIR, expressionOf } from '@compiler-native/walk-ir';
 import { relative } from 'node:path';
 import { FRAMEWORK_NPM_SPECIFIERS, collectHeaderSymbols, declarationName, importSource, importSpecifiers, npmImportLines, pkgImportLines, resolveJsTsTarget, resolveVskTarget, sanitizeIdent, slugFor, splitVskHeader, toPosix, transformModuleStatements, vskImportLines } from '@compiler-native/modules';
 import type { ModuleExport, ModuleRegistry } from '@compiler-native/modules';
@@ -2028,6 +2028,127 @@ export function compileProjectModule(source: string, fileRel: string, err: KtErr
   return { registryEntry, kt: [...importLines, ...reAliasLines, ...decls].join('\n') };
 }
 
+// Script-side navigation surface (the names js2kt maps to the runtime
+// veskNavigate/veskGoBack/veskUseParams helpers): bare navigate/back/goBack/
+// useParams calls, history.pushState/back calls, and location.href writes.
+const NAV_FN_NAMES = new Set(['navigate', 'back', 'goBack', 'useParams']);
+
+// Walk a native-parser AST for script-side navigation usage. Covers call
+// sites (bare fns and history members) and location.href writes; nested
+// functions, handlers and timers are found by the generic recursion.
+function astUsesNav(ast: JsNode | null): boolean {
+  if (!ast) return false;
+  if (ast.type === 'CallExpression') {
+    const callee = ast.callee as JsNode | null;
+    if (callee?.type === 'Identifier' && NAV_FN_NAMES.has(callee.name as string)) return true;
+    if (callee?.type === 'MemberExpression') {
+      const obj = callee.object as JsNode | null;
+      const prop = callee.property as JsNode | null;
+      if (
+        obj?.type === 'Identifier' &&
+        obj.name === 'history' &&
+        prop?.type === 'Identifier' &&
+        (prop.name === 'pushState' || prop.name === 'back')
+      ) {
+        return true;
+      }
+    }
+  }
+  if (ast.type === 'AssignmentExpression') {
+    const left = ast.left as JsNode | null;
+    if (left?.type === 'MemberExpression' && !(left as { computed?: boolean }).computed && (left.property as JsNode | null)?.type === 'Identifier' && (left.property as JsNode).name === 'href') {
+      const obj = left.object as JsNode | null;
+      const isLocation =
+        (obj?.type === 'Identifier' && obj.name === 'location') ||
+        (obj?.type === 'MemberExpression' &&
+          !(obj as { computed?: boolean }).computed &&
+          (obj.object as JsNode | null)?.type === 'Identifier' &&
+          (obj.object as JsNode).name === 'window' &&
+          (obj.property as JsNode | null)?.type === 'Identifier' &&
+          (obj.property as JsNode).name === 'location');
+      if (isLocation) return true;
+    }
+  }
+  for (const key of Object.keys(ast)) {
+    if (key === 'type' || key === 'start' || key === 'end' || key === 'line' || key === 'col' || key === 'loc' || key === 'range' || key === 'raw') continue;
+    const v = (ast as unknown as Record<string, unknown>)[key];
+    if (Array.isArray(v)) {
+      for (const c of v) {
+        if (c && typeof c === 'object' && typeof (c as JsNode).type === 'string' && astUsesNav(c as JsNode)) return true;
+      }
+    } else if (v && typeof v === 'object' && typeof (v as JsNode).type === 'string' && astUsesNav(v as JsNode)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// The component IR keeps script code as source text (RuntimeStatement.raw,
+// TrackDecl.init, markup expression .raw), so usage is checked by re-parsing
+// with the same native parse surfaces the translator itself uses — no regex.
+function bodyUsesNav(nodes: IRNode[]): boolean {
+  for (const node of nodes) {
+    if (node instanceof RuntimeStatement) {
+      try {
+        const program = parse(`{ ${node.raw} }`) as unknown as { body: Array<{ body: JsNode[] }> };
+        const stmts = program.body[0]?.body ?? [];
+        if (stmts.some((s) => astUsesNav(s))) return true;
+      } catch {
+        // unparsable statements fail the build elsewhere; no sync needed
+      }
+      continue;
+    }
+    if (node instanceof TrackDecl) {
+      try {
+        const program = parse(`let __vsk_nav_check = ${node.init};`) as unknown as { body: Array<{ declarations: Array<{ init: JsNode }> }> };
+        if (astUsesNav(program.body[0]?.declarations[0]?.init ?? null)) return true;
+      } catch {
+        // unparsable inits fail the build elsewhere; no sync needed
+      }
+      continue;
+    }
+    if (node instanceof ComponentCall) {
+      for (const p of node.props) {
+        try {
+          const program = parse(`let __vsk_nav_check = ${p.value.raw};`) as unknown as { body: Array<{ declarations: Array<{ init: JsNode }> }> };
+          if (astUsesNav(program.body[0]?.declarations[0]?.init ?? null)) return true;
+        } catch {
+          // unparsable props fail the build elsewhere; no sync needed
+        }
+      }
+    }
+    const expr = expressionOf(node);
+    if (expr) {
+      try {
+        const program = parse(`let __vsk_nav_check = ${expr.raw};`) as unknown as { body: Array<{ declarations: Array<{ init: JsNode }> }> };
+        if (astUsesNav(program.body[0]?.declarations[0]?.init ?? null)) return true;
+      } catch {
+        // unparsable expressions fail the build elsewhere; no sync needed
+      }
+    }
+    if (node instanceof StaticNode) {
+      if (bodyUsesNav(node.children)) return true;
+    } else if (node instanceof OpaqueDynamicRegion) {
+      if (bodyUsesNav(node.consequentNodes) || bodyUsesNav(node.alternateNodes)) return true;
+    } else if (node instanceof MapRegion) {
+      if (bodyUsesNav(node.bodyTemplate) || bodyUsesNav(node.alternateNodes)) return true;
+    } else if (node instanceof WhileLoop) {
+      if (bodyUsesNav(node.bodyTemplate)) return true;
+    } else if (node instanceof SwitchBlock) {
+      for (const c of node.cases) if (bodyUsesNav(c.body)) return true;
+    } else if (node instanceof TryCatch) {
+      if (bodyUsesNav(node.bodyTemplate) || bodyUsesNav(node.catchBody)) return true;
+    } else if (node instanceof ForLoop) {
+      if (bodyUsesNav(node.bodyTemplate)) return true;
+    } else if (node instanceof ComponentCall) {
+      if (bodyUsesNav(node.children)) return true;
+    } else if (node instanceof ServerBlock || node instanceof ClientBlock || node instanceof HeadBlock) {
+      if (bodyUsesNav(node.children)) return true;
+    }
+  }
+  return false;
+}
+
 function runCompile(source: string, filename: string, options: CompileOptions): CompileResult {
   const err = new KtErrors();
   const pkg = options.packageName ?? 'app';
@@ -2163,6 +2284,12 @@ function runCompile(source: string, filename: string, options: CompileOptions): 
         out.push(`\tval ${ktIdent(name)} = props.${ktIdent(name)}`);
       }
     }
+
+    // Script navigation surface (navigate/back/goBack/useParams,
+    // history.pushState, location.href): the runtime helpers read the
+    // NavController through a composition-set holder, so a component that
+    // uses them syncs it first — before any script statement or handler runs.
+    if (bodyUsesNav(comp.body)) out.push('\tveskNavSync()');
 
     const isRoot = comp.name === options.rootName;
     const bodyLines: string[] = [];

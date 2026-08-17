@@ -92,6 +92,20 @@ declare global {
   /** True when a session is persisted and its user still exists
    * (runtime VeskAuth.isSignedIn). */
   declare function isSignedIn(): boolean;
+  /** Navigate to a route path through the NavController (runtime
+   * veskNavigate) — browser history.pushState semantics: no reload, stack-based
+   * back (pop() to the previous route). Also reachable as
+   * history.pushState(null, '', path) or location.href = path. */
+  declare function navigate(path: string): void;
+  /** Go back to the previous route (runtime veskGoBack -> NavController
+   * pop()); a no-op at the root route. Browser equivalent: history.back(). */
+  declare function back(): void;
+  /** Alias for back() (runtime veskGoBack). */
+  declare function goBack(): void;
+  /** The current route's matched params as a string map (runtime
+   * veskUseParams): the {id} segments of the path currently being shown, e.g.
+   * useParams()['id'] on a /flight/{id} page. */
+  declare function useParams(): Record<string, string>;
 }
 
 // Makes this file a module so the declare-global surface above actually

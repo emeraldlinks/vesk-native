@@ -339,6 +339,17 @@ ${deps.join('\n')}
   log('gen', `app/build.gradle.kts (${deps.length} chrome dependencies; usage-derived deps live in :shared)`);
 }
 
+// Android deep-link scheme: config.deepLinks.scheme wins; otherwise the
+// appId-derived scheme ('com.vesk.demo3' -> 'vesk.demo3', the two trailing
+// reverse-DNS segments in order). Plain string ops only.
+function deepLinkScheme(config: VeskConfig): string {
+  const dl = config.deepLinks;
+  if (dl?.scheme) return dl.scheme;
+  const segs = config.appId.split('.').filter((s) => s.length > 0);
+  if (segs.length >= 2) return segs[segs.length - 2] + '.' + segs[segs.length - 1];
+  return segs[0] ?? config.appId;
+}
+
 export function generateManifest(target: string, config: VeskConfig, mediaReadPerms: boolean, mediaNotifyPerms: boolean, mediaButtonReceiver: boolean, deviceApis: Set<string>, libs: VskLibRecord[] = [], browserApis: Set<string> = new Set()): void {
   const orientationAttr = config.orientation ? `\n            android:screenOrientation="${config.orientation}"` : '';
   const autoPerms = new Set<string>();
@@ -417,6 +428,19 @@ export function generateManifest(target: string, config: VeskConfig, mediaReadPe
 `
     : '';
   const autoPermsBlock = permLines.length > 0 ? `${permLines}\n` : '';
+  // Deep links: when configured, MainActivity declares a VIEW intent-filter
+  // (DEFAULT + BROWSABLE) so an external URL opens the app at the matching
+  // route. App Links verification (autoVerify) is out of scope — the filter
+  // matches app-scheme and http(s) links alike without web verification.
+  const deepLinkBlock = config.deepLinks
+    ? `        <intent-filter>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="${deepLinkScheme(config)}"${config.deepLinks.host ? ` android:host="${config.deepLinks.host}"` : ''}${config.deepLinks.pathPrefix ? ` android:pathPrefix="${config.deepLinks.pathPrefix}"` : ''} />
+        </intent-filter>
+`
+    : '';
   const receiverBlock = mediaButtonReceiver
     ? `    <receiver android:name="app.VeskMediaReceiver" android:exported="true">
         <intent-filter>
@@ -470,13 +494,13 @@ ${receiverBlock}${providerBlock}${screenRecordBlock}        <activity
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
+${deepLinkBlock}        </activity>
     </application>
 
 </manifest>
 `,
   );
-  log('gen', 'AndroidManifest.xml (appName, orientation from config)');
+  log('gen', `AndroidManifest.xml (appName, orientation${config.deepLinks ? ', deep links' : ''} from config)`);
 }
 
 // Perceived luminance of a '#RRGGBB' color; true for dark backgrounds that
@@ -654,6 +678,31 @@ import androidx.activity.enableEdgeToEdge
             navigationBarStyle = ${systemBarStyleExpr(e2e.navigationBarStyle, config.colors.background, config.darkColors.background)},
         )\n`
     : '';
+  // Deep links: when configured, ACTION_VIEW launch intents are translated to
+  // a route path (Uri.parse(...).path, e.g. '/flight/123') delivered to App()
+  // so AppRouter restarts at the matching route. When not configured, nothing
+  // is emitted — the generated code stays byte-identical to today.
+  const deepLinks = config.deepLinks;
+  const deepLinkImports = deepLinks ? 'import androidx.compose.runtime.mutableStateOf\n' : '';
+  const deepLinkField = deepLinks
+    ? `
+    // Deep-link target: path of the last ACTION_VIEW intent, forwarded to
+    // App() so AppRouter restarts at the matching route.
+    private val deepLinkPath = mutableStateOf<String?>(null)
+
+    private fun handleDeepLink(intent: Intent) {
+        if (intent.action == Intent.ACTION_VIEW) {
+            val path = intent.data?.path
+            if (path != null && path.isNotEmpty()) deepLinkPath.value = path
+        }
+    }
+`
+    : '';
+  const deepLinkCall = deepLinks ? `        handleDeepLink(intent)\n` : '';
+  const deepLinkNewIntent = deepLinks ? `        setIntent(intent)
+        handleDeepLink(intent)
+` : '';
+  const appCall = deepLinks ? 'App(deepLink = deepLinkPath.value)' : 'App()';
   const permImports = (mediaReadPerms || mediaNotifyPerms)
     ? `import android.os.Build
 import androidx.activity.result.contract.ActivityResultContracts
@@ -669,7 +718,7 @@ import androidx.activity.result.contract.ActivityResultContracts
             Thread.setDefaultUncaughtExceptionHandler(DebugCrashLog(Thread.getDefaultUncaughtExceptionHandler()))
         }
 ${e2eCall}        if (intent.getBooleanExtra("vesk_notify_tap", false)) jsSafe({ VeskDeviceSession.notifyTap?.invoke() })
-        if (Build.VERSION.SDK_INT >= 33) {
+${deepLinkCall}        if (Build.VERSION.SDK_INT >= 33) {
             mediaPermLauncher.launch(arrayOf(
                 ${[
                   mediaReadPerms && 'android.Manifest.permission.READ_MEDIA_IMAGES',
@@ -692,7 +741,7 @@ ${e2eCall}        if (intent.getBooleanExtra("vesk_notify_tap", false)) jsSafe({
             Thread.setDefaultUncaughtExceptionHandler(DebugCrashLog(Thread.getDefaultUncaughtExceptionHandler()))
         }
 ${e2eCall}        if (intent.getBooleanExtra("vesk_notify_tap", false)) jsSafe({ VeskDeviceSession.notifyTap?.invoke() })
-        setContent {`;
+${deepLinkCall}        setContent {`;
   writeFileSync(
     join(outDir, 'DebugCrashLog.kt'),
     `package ${config.appId}
@@ -728,7 +777,7 @@ class DebugCrashLog(private val previous: Thread.UncaughtExceptionHandler?) : Th
     join(outDir, 'MainActivity.kt'),
     `package ${config.appId}
 
-${permImports}${splashImport}${e2eImports}import android.os.Bundle
+${deepLinkImports}${permImports}${splashImport}${e2eImports}import android.os.Bundle
 import android.content.Intent
 import androidx.activity.compose.setContent
 import androidx.compose.material3.Surface
@@ -739,10 +788,10 @@ import app.VeskDeviceSession
 import app.VeskTheme
 import app.jsSafe
 
-class MainActivity : FragmentActivity() {${permLaunch}
+class MainActivity : FragmentActivity() {${deepLinkField}${permLaunch}
             VeskTheme {
                 Surface(modifier = Modifier) {
-                    App()
+                    ${appCall}
                 }
             }
         }
@@ -750,7 +799,7 @@ class MainActivity : FragmentActivity() {${permLaunch}
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        if (intent.getBooleanExtra("vesk_notify_tap", false)) jsSafe({ VeskDeviceSession.notifyTap?.invoke() })
+${deepLinkNewIntent}        if (intent.getBooleanExtra("vesk_notify_tap", false)) jsSafe({ VeskDeviceSession.notifyTap?.invoke() })
     }
 }
 `,
@@ -1397,12 +1446,15 @@ function literalValue(node: JsNode | null): unknown {
 // "Home(props = HomeProps(promo = "..."))". Typed props coerce to declared
 // Kotlin types; untyped `component Home(props)` pages pass any scalar-compatible
 // value (fields inferred from usage). Pages without a props param are ignored
-// with a warning so the config stays the source of truth.
-function screenPropsArg(page: { path: string; component: string; props: Array<{ name: string; type: string }>; hasProps: boolean; inferredProps: string[]; defaultProps: Record<string, unknown> }, config: VeskConfig): string {
+// with a warning so the config stays the source of truth. routeOverrides maps
+// prop names to Kotlin expressions from dynamic route params ({id} segments);
+// they are appended after the static values and win for same-name props
+// (browser semantics: URL params override config).
+function screenPropsArg(page: { path: string; component: string; props: Array<{ name: string; type: string }>; hasProps: boolean; inferredProps: string[]; defaultProps: Record<string, unknown> }, config: VeskConfig, routeOverrides: ReadonlyMap<string, string> = new Map()): string {
   const configValues = config.screens?.[page.path]?.props;
   const values: Record<string, unknown> = { ...page.defaultProps, ...(configValues ?? {}) };
-  const keys = Object.keys(values);
-  if (keys.length === 0) return '';
+  const keys = Object.keys(values).filter((name) => !routeOverrides.has(name));
+  if (keys.length === 0 && routeOverrides.size === 0) return '';
   if (!page.hasProps) {
     log('warn', `screens props ignored: ${page.component} declares no props parameter`);
     return '';
@@ -1427,8 +1479,65 @@ function screenPropsArg(page: { path: string; component: string; props: Array<{ 
     }
     args.push(`${name} = ${kt}`);
   }
+  for (const [name, expr] of routeOverrides) args.push(`${name} = ${expr}`);
   if (args.length === 0) return `${page.component}Props()`;
   return `props = ${page.component}Props(${args.join(', ')})`;
+}
+
+// Route paths in veskconfig.json may use "[id]" or "{id}" for dynamic
+// segments; both are route-param syntax. Convert "[name]" segments to
+// "{name}" by plain string scanning — no regex. Other segments pass through
+// untouched, so "a[b]c" stays as authored.
+function routePathToBraces(path: string): string {
+  const segments = path.split('/');
+  const out: string[] = [];
+  for (const s of segments) {
+    if (s.length >= 3 && s.startsWith('[') && s.endsWith(']')) out.push(`{${s.slice(1, -1)}}`);
+    else out.push(s);
+  }
+  return out.join('/');
+}
+
+// "{name}" segment names in a (already braced) route path, in path order.
+function routeParamNames(path: string): string[] {
+  const names: string[] = [];
+  for (const s of path.split('/')) {
+    if (s.length >= 3 && s.startsWith('{') && s.endsWith('}')) names.push(s.slice(1, -1));
+  }
+  return names;
+}
+
+function stripLeadingSlashes(path: string): string {
+  let out = path;
+  while (out.startsWith('/')) out = out.slice(1);
+  return out;
+}
+
+// Route params ("{name}" segments in the path) that bind into the page's
+// props call. Params are always strings (web semantics), so String-typed
+// props take the raw value with an empty-string fallback and Any/Any? props
+// take the raw value as-is. Any other declared type (Int, Boolean, list,
+// custom) cannot be coerced from a runtime string — coercePropValue only maps
+// build-time literal values — so the binding is skipped with a warning
+// (fail closed, never guess).
+function routeParamBindings(page: { path: string; component: string; props: Array<{ name: string; type: string }>; hasProps: boolean; inferredProps: string[]; defaultProps: Record<string, unknown> }, paramNames: string[]): Map<string, string> {
+  const typedByName = new Map(page.props.map((p) => [p.name, p.type]));
+  const bindings = new Map<string, string>();
+  for (const name of paramNames) {
+    let type = typedByName.get(name);
+    if (type === undefined) {
+      if (!page.inferredProps.includes(name)) continue;
+      type = 'Any';
+    }
+    if (type === 'String') {
+      bindings.set(name, `params["${name}"] ?: ""`);
+    } else if (type === 'Any' || type === 'Any?') {
+      bindings.set(name, `params["${name}"]`);
+    } else {
+      log('warn', `route param {${name}} -> ${page.component}.${name}: string params cannot coerce to ${type} — skipped`);
+    }
+  }
+  return bindings;
 }
 
 // The page→route computation shared by the Android App.kt and the iosMain
@@ -1445,10 +1554,19 @@ function computeRouteList(appDir: string, config: VeskConfig): { routeLines: str
 
   const routeLines = routes
     .map((p) => {
-      const routePath = (p.path || '').replace(/\[([^\]]+)\]/g, '{$1}');
+      const routePath = routePathToBraces(p.path || '');
       const page = pages.find((pg) => pg.component === p.component);
-      const propsArg = page ? screenPropsArg(page, config) : '';
-      return `Route("${routePath}") { ${p.component}(${propsArg}) }`;
+      const paramNames = routeParamNames(routePath);
+      if (paramNames.length === 0) {
+        const propsArg = page ? screenPropsArg(page, config) : '';
+        return `Route("${routePath}") { ${p.component}(${propsArg}) }`;
+      }
+      if (!page || !page.hasProps) {
+        if (page) log('warn', `route params ignored: ${p.component} declares no props parameter`);
+        return `Route("${routePath}") { ${p.component}() }`;
+      }
+      const propsArg = screenPropsArg(page, config, routeParamBindings(page, paramNames));
+      return `Route("${routePath}") { params -> ${p.component}(${propsArg}) }`;
     })
     .join(',\n        ');
 
@@ -1456,7 +1574,9 @@ function computeRouteList(appDir: string, config: VeskConfig): { routeLines: str
   // exitOnBack, and components declaring the exitBack prop.
   const exitPaths = new Set<string>(['/']);
   for (const r of config.back?.exitRoutes ?? []) exitPaths.add(r);
-  for (const r of routes) if ('exitOnBack' in r && r.exitOnBack) exitPaths.add('/' + (r.path || '').replace(/^\/+/, '').replace(/\[([^\]]+)\]/g, '{$1}'));
+  for (const r of routes) {
+    if ('exitOnBack' in r && r.exitOnBack) exitPaths.add('/' + stripLeadingSlashes(routePathToBraces(r.path || '')));
+  }
   for (const p of pages) if (p.exitBack) exitPaths.add(p.path);
 
   const back = config.back ?? {};
@@ -1555,13 +1675,21 @@ import androidx.compose.ui.Alignment
   const padDeclNewline = splashComponent ? padDecl + '\n' : padDecl;
   const buildImport = e2eEnabled ? '' : `import android.os.Build\n`;
 
+  // Deep-link entry: when configured, App() receives the ACTION_VIEW path
+  // from MainActivity and AppRouter starts there (a changing start re-runs
+  // LaunchedEffect(start) -> nav.start). When not configured, App() keeps the
+  // plain signature and the start literal stays "/".
+  const deepLinks = config.deepLinks;
+  const appFunSig = deepLinks ? 'fun App(deepLink: String? = null) {' : 'fun App() {';
+  const startExpr = deepLinks ? 'deepLink ?: "/"' : '"/"';
+
   // Build content box AFTER routeLines/backArgs are available
   const contentBox = tablet
     ? `        // Tablet layout: content is constrained to a centered 840dp column.
         Box(modifier = Modifier.fillMaxSize()) {
             Box(modifier = Modifier.fillMaxSize().then(barsPadding).widthIn(max = 840.dp).align(Alignment.Center)) {
                 Layout {
-                    AppRouter(start = "/", routes = listOf(
+                    AppRouter(start = ${startExpr}, routes = listOf(
                         ${routeLines}
                     ),${backArgs})
                 }
@@ -1572,7 +1700,7 @@ import androidx.compose.ui.Alignment
         // above the navigation bar.
         Box(modifier = Modifier.fillMaxSize().then(barsPadding)) {
             Layout {
-                AppRouter(start = "/", routes = listOf(
+                AppRouter(start = ${startExpr}, routes = listOf(
                     ${routeLines}
                 ),${backArgs})
             }
@@ -1620,7 +1748,7 @@ import androidx.compose.ui.platform.LocalContext
 ${splashImports}${buildImport}${tabletImports}import app.navigation.*
 
 @Composable
-fun App() {
+${appFunSig}
     val nav = rememberNavController()
     LaunchedEffect(Unit) { nav.navigate("/") }
     // Register the current activity for browser-API dialogs (alert).

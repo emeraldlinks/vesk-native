@@ -535,6 +535,36 @@ catch (e: Exception) {
 				)
 			}
 		}
+		Column(
+			modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color(0xFFFAFAFA)).padding(16.dp),
+		) {
+			Text(
+				text = ("Navigation").uppercase(),
+				modifier = Modifier.fillMaxWidth(),
+				style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp, color = Color(0xFF4F46E5)),
+			)
+			Text(
+				text = "Routes · script navigation",
+				modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+				style = TextStyle(fontSize = 18.sp, lineHeight = 28.sp, fontWeight = FontWeight.ExtraBold),
+			)
+			Column(
+				modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+				verticalArrangement = Arrangement.spacedBy(8.dp),
+			) {
+				NavLink(props = NavLinkProps(href = "/flights/AA-123", `class` = "bg-indigo-600 text-white text-sm font-semibold px-4 py-2 rounded-full self-start"))
+					{
+						Text(
+							text = " Open /flights/AA-123 (dynamic route) ",
+						)
+					}
+				Text(
+					text = "The [id] route segment arrives as a typed prop; useParams() and navigate()/back() work in scripts.",
+					modifier = Modifier.fillMaxWidth(),
+					style = TextStyle(fontSize = 12.sp, color = Color(0xFF6B7280), lineHeight = 18.sp),
+				)
+			}
+		}
 		Text(
 			text = "storage · auth · fetch · sqlite — all native Kotlin, no JS",
 			modifier = Modifier.fillMaxWidth(),

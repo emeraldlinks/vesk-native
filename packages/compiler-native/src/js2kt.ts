@@ -767,6 +767,12 @@ export class Js2Kt {
         return `VeskTimers.clearTimeout(${this.expr(a0 ?? ({ type: 'Literal', value: 0 } as JsNode))})`;
       }
       if (name === 'alert') return `jsAlert(${a0 ? this.expr(a0) : 'null'})`;
+      // Script navigation surface: navigate()/back()/goBack()/useParams() map
+      // to the runtime's NavController-backed helpers (the same surface
+      // history.pushState/location.href/useParams compile to below).
+      if (name === 'navigate') return `veskNavigate(${a0 ? this.expr(a0) : this.ktString('')})`;
+      if (name === 'back' || name === 'goBack') return 'veskGoBack()';
+      if (name === 'useParams') return 'veskUseParams()';
       if (name === 'confirm' || name === 'prompt') {
         this.err.warn(callee, `${name}() needs a blocking dialog; Android cannot block the main thread`);
         return `error("vesk: ${name}() is not supported on Android (blocking dialogs would deadlock the main thread)")`;
@@ -907,6 +913,16 @@ export class Js2Kt {
           const store = objName === 'localStorage' ? 'local' : 'session';
           const fn = method ? storeMember(store, method) : null;
           if (fn) return `VeskWebStorage.${fn}(${this.argList(args)})`;
+        }
+        if (objName === 'history') {
+          // history.pushState(state, title, url) navigates without a reload
+          // (the state/title arguments have no native counterpart, so only the
+          // url is mapped); history.back() pops the stack. Anything else on
+          // history stays a hard error.
+          if (method === 'pushState' && args.length >= 3 && args[2]) {
+            return `veskNavigate(${this.expr(args[2])})`;
+          }
+          if (method === 'back' && args.length === 0) return 'veskGoBack()';
         }
         if (UNSUPPORTED_BROWSER_OBJS.has(objName)) {
           this.err.warn(callee, `${objName}.${method ?? '?'}() has no native Kotlin mapping yet`);
@@ -1421,6 +1437,27 @@ export class Js2Kt {
           return `jsMapSet(${receiver}, ${key}, ${binary})`;
         }
         return `jsMapSet(${receiver}, ${key}, ${this.expr(right)})`;
+      }
+    }
+    // `location.href = '/x'` / `window.location.href = '/x'` navigates
+    // without a reload (browser semantics), the same runtime path as
+    // navigate('/x') and history.pushState(null, '', '/x').
+    if (left.type === 'MemberExpression' && !left.computed && (left.property as JsNode | null)?.type === 'Identifier' && (left.property as JsNode).name === 'href') {
+      const obj = (left as unknown as { object: JsNode }).object;
+      const isLocation =
+        (obj.type === 'Identifier' && obj.name === 'location') ||
+        (obj.type === 'MemberExpression' &&
+          !(obj as { computed?: boolean }).computed &&
+          (obj.object as JsNode | null)?.type === 'Identifier' &&
+          (obj.object as JsNode).name === 'window' &&
+          (obj.property as JsNode | null)?.type === 'Identifier' &&
+          (obj.property as JsNode).name === 'location');
+      if (isLocation) {
+        if (op !== '=') {
+          this.err.warn(node, 'location.href compound assignment is not supported (the current href is not tracked); use location.href = <path>');
+          return `error("vesk: location.href compound assignment is not supported")`;
+        }
+        return `veskNavigate(${this.expr(right)})`;
       }
     }
     if (op === '??=') return this.evalOnce(left, (l) => `${this.expr(left)} = ${l} ?: ${this.expr(right)}`);

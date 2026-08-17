@@ -47,6 +47,9 @@ const DEFAULT_CONFIG: VeskConfig = {
     doubleBackToExit: true,
     exitDelayMs: 2000,
   },
+  // Deep links are disabled by default: no intent-filter is emitted and
+  // launch intents are not handled until veskconfig.ts sets `deepLinks`.
+  deepLinks: undefined,
 };
 export async function loadConfig(target: string): Promise<VeskConfig> {
   const tsPath = join(target, CONFIG_TS);

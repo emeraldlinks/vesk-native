@@ -85,9 +85,33 @@ fun Shop(content: @Composable () -> Unit = {}) {
 						text = ("6 products, sorted by \"recommended\"").toString(),
 					)
 				} else {
-					Text(
-						text = (if (truthy(filter.value == "Parkas")) "1 product — Parkas" else if (truthy(filter.value == "Hoodies")) "1 product — Hoodies" else if (truthy(filter.value == "Shells")) "1 product — Shells" else if (truthy(filter.value == "Base layers")) "2 products — Base layers" else "2 products — Accessories").toString(),
-					)
+					if (truthy(filter.value == "Parkas")) {
+						Text(
+							text = ("1 product — Parkas").toString(),
+						)
+					} else {
+						if (truthy(filter.value == "Hoodies")) {
+							Text(
+								text = ("1 product — Hoodies").toString(),
+							)
+						} else {
+							if (truthy(filter.value == "Shells")) {
+								Text(
+									text = ("1 product — Shells").toString(),
+								)
+							} else {
+								if (truthy(filter.value == "Base layers")) {
+									Text(
+										text = ("2 products — Base layers").toString(),
+									)
+								} else {
+									Text(
+										text = ("2 products — Accessories").toString(),
+									)
+								}
+							}
+						}
+					}
 				}
 			}
 			Row(
