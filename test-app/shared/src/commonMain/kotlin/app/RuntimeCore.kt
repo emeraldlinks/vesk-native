@@ -817,6 +817,58 @@ expect object VeskAuth {
 }
 
 
+// Shared event primitives for WebSocket / EventSource: the message object
+// scripts receive in their handlers (browser MessageEvent-shaped). Plain
+// commonMain class — android and ios actuals construct it from callbacks.
+class VeskMessageEvent(
+    val data: Any?,
+    val type: String = "message",
+    val lastEventId: String = "",
+    val origin: String = "",
+    val code: Int = 0,
+    val reason: String = "",
+)
+
+
+// Browser WebSocket mapping (OkHttp, okhttp3.WebSocket): the compiler emits
+// `new WebSocket(url)` / `WebSocket(url)` as VeskWebSocket(url). Event
+// handlers are assigned as plain properties (ws.onmessage = (e) => ...) and
+// fire on the main thread with a VeskMessageEvent. readyState constants match
+// the browser (CONNECTING 0 / OPEN 1 / CLOSING 2 / CLOSED 3). The okhttp3
+// dependency is added to the build only when this unit is inlined (usage).
+// KMP: defaults live on this expect side only (android/ios strip them).
+expect class VeskWebSocket(url: String) {
+    val url: String
+    var readyState: Int
+    val protocol: String
+    var onopen: ((VeskMessageEvent) -> Unit)?
+    var onmessage: ((VeskMessageEvent) -> Unit)?
+    var onclose: ((VeskMessageEvent) -> Unit)?
+    var onerror: ((VeskMessageEvent) -> Unit)?
+    fun send(data: String): Unit
+    fun close(code: Int = 1000, reason: String = "")
+}
+
+
+// Browser EventSource mapping (OkHttp streaming GET): the compiler emits
+// `new EventSource(url)` / `EventSource(url)` as VeskEventSource(url). The
+// response is parsed as text/event-stream on a background thread (data/event/
+// id/retry lines; a blank line dispatches). `message` events go to onmessage;
+// custom `event:` types have no listener surface here (browsers route them
+// to addEventListener only) and are dropped. Auto-reconnect follows the
+// browser: CONNECTING -> retry ms -> reopen, resuming from Last-Event-ID.
+expect class VeskEventSource(url: String) {
+    val url: String
+    var readyState: Int
+    var onopen: ((VeskMessageEvent) -> Unit)?
+    var onmessage: ((VeskMessageEvent) -> Unit)?
+    var onerror: ((VeskMessageEvent) -> Unit)?
+    var lastEventId: String
+    var retry: Long
+    fun close()
+}
+
+
 // scroll(onScroll, { axis }): reports scroll progress (0..1) of the current
 // route's scroll container — the same ScrollState the layout shell uses, so
 // progress follows the page content.

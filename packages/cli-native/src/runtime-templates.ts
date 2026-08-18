@@ -5202,6 +5202,272 @@ actual object VeskAuth {
     actual fun isSignedIn(): Boolean = false
 }
 ` },
+  'veskEventCore': { deps: [],
+    expect: `
+// Shared event primitives for WebSocket / EventSource: the message object
+// scripts receive in their handlers (browser MessageEvent-shaped). Plain
+// commonMain class — android and ios actuals construct it from callbacks.
+class VeskMessageEvent(
+    val data: Any?,
+    val type: String = "message",
+    val lastEventId: String = "",
+    val origin: String = "",
+    val code: Int = 0,
+    val reason: String = "",
+)
+`,
+    src: `
+// Main-thread dispatch for OkHttp callbacks (browsers always fire events on
+// the main thread).
+private fun veskPost(fn: () -> Unit) {
+    android.os.Handler(android.os.Looper.getMainLooper()).post(fn)
+}
+` },
+  'veskWebSocket': { deps: ['veskEventCore'],
+    expect: `
+// Browser WebSocket mapping (OkHttp, okhttp3.WebSocket): the compiler emits
+// \`new WebSocket(url)\` / \`WebSocket(url)\` as VeskWebSocket(url). Event
+// handlers are assigned as plain properties (ws.onmessage = (e) => ...) and
+// fire on the main thread with a VeskMessageEvent. readyState constants match
+// the browser (CONNECTING 0 / OPEN 1 / CLOSING 2 / CLOSED 3). The okhttp3
+// dependency is added to the build only when this unit is inlined (usage).
+// KMP: defaults live on this expect side only (android/ios strip them).
+expect class VeskWebSocket(url: String) {
+    val url: String
+    var readyState: Int
+    val protocol: String
+    var onopen: ((VeskMessageEvent) -> Unit)?
+    var onmessage: ((VeskMessageEvent) -> Unit)?
+    var onclose: ((VeskMessageEvent) -> Unit)?
+    var onerror: ((VeskMessageEvent) -> Unit)?
+    fun send(data: String): Unit
+    fun close(code: Int = 1000, reason: String = "")
+}
+`,
+    src: `
+actual class VeskWebSocket actual constructor(url: String) {
+    actual val url: String = url
+    actual var readyState: Int = VeskWebSocket.CONNECTING
+    actual val protocol: String = ""
+    actual var onopen: ((VeskMessageEvent) -> Unit)? = null
+    actual var onmessage: ((VeskMessageEvent) -> Unit)? = null
+    actual var onclose: ((VeskMessageEvent) -> Unit)? = null
+    actual var onerror: ((VeskMessageEvent) -> Unit)? = null
+    private var ws: okhttp3.WebSocket? = null
+
+    init {
+        val req = okhttp3.Request.Builder().url(url).build()
+        val listener = object : okhttp3.WebSocketListener() {
+            override fun onOpen(webSocket: okhttp3.WebSocket, response: okhttp3.Response) {
+                veskPost {
+                    readyState = VeskWebSocket.OPEN
+                    onopen?.invoke(VeskMessageEvent(data = null, type = "open"))
+                }
+            }
+            override fun onMessage(webSocket: okhttp3.WebSocket, text: String) {
+                veskPost {
+                    onmessage?.invoke(VeskMessageEvent(data = text, type = "message"))
+                }
+            }
+            override fun onClosing(webSocket: okhttp3.WebSocket, code: Int, reason: String) {
+                webSocket.close(code, reason)
+            }
+            override fun onClosed(webSocket: okhttp3.WebSocket, code: Int, reason: String) {
+                veskPost {
+                    readyState = VeskWebSocket.CLOSED
+                    onclose?.invoke(VeskMessageEvent(data = null, type = "close", code = code, reason = reason))
+                }
+            }
+            override fun onFailure(webSocket: okhttp3.WebSocket, t: Throwable, response: okhttp3.Response?) {
+                veskPost {
+                    readyState = VeskWebSocket.CLOSED
+                    onerror?.invoke(VeskMessageEvent(data = t.message, type = "error"))
+                    onclose?.invoke(VeskMessageEvent(data = null, type = "close", code = 1006, reason = t.message ?: "connection failed"))
+                }
+            }
+        }
+        ws = okhttp3.OkHttpClient().newWebSocket(req, listener)
+    }
+
+    actual fun send(data: String): Unit {
+        ws?.send(data)
+    }
+
+    actual fun close(code: Int, reason: String) {
+        readyState = VeskWebSocket.CLOSING
+        ws?.close(code, reason)
+    }
+
+    // Extra members (KMP allows actuals to extend the expect surface): the
+    // browser readyState constants. Pages using them are androidMain anyway.
+    companion object {
+        const val CONNECTING = 0
+        const val OPEN = 1
+        const val CLOSING = 2
+        const val CLOSED = 3
+    }
+}
+`,
+    ios: `
+// vesk.websocket on iOS: unimplemented (fail closed) — the surface stays
+// typed and throws loudly instead of silently misbehaving.
+actual class VeskWebSocket actual constructor(url: String) {
+    actual val url: String = url
+    actual var readyState: Int = VeskWebSocket.CONNECTING
+    actual val protocol: String = ""
+    actual var onopen: ((VeskMessageEvent) -> Unit)? = null
+    actual var onmessage: ((VeskMessageEvent) -> Unit)? = null
+    actual var onclose: ((VeskMessageEvent) -> Unit)? = null
+    actual var onerror: ((VeskMessageEvent) -> Unit)? = null
+    actual fun send(data: String): Unit = throw iOSUnimplemented("WebSocket.send")
+    actual fun close(code: Int, reason: String) = throw iOSUnimplemented("WebSocket.close")
+    companion object {
+        const val CONNECTING = 0
+        const val OPEN = 1
+        const val CLOSING = 2
+        const val CLOSED = 3
+    }
+}
+` },
+  'veskEventSource': { deps: ['veskEventCore'],
+    expect: `
+// Browser EventSource mapping (OkHttp streaming GET): the compiler emits
+// \`new EventSource(url)\` / \`EventSource(url)\` as VeskEventSource(url). The
+// response is parsed as text/event-stream on a background thread (data/event/
+// id/retry lines; a blank line dispatches). \`message\` events go to onmessage;
+// custom \`event:\` types have no listener surface here (browsers route them
+// to addEventListener only) and are dropped. Auto-reconnect follows the
+// browser: CONNECTING -> retry ms -> reopen, resuming from Last-Event-ID.
+expect class VeskEventSource(url: String) {
+    val url: String
+    var readyState: Int
+    var onopen: ((VeskMessageEvent) -> Unit)?
+    var onmessage: ((VeskMessageEvent) -> Unit)?
+    var onerror: ((VeskMessageEvent) -> Unit)?
+    var lastEventId: String
+    var retry: Long
+    fun close()
+}
+`,
+    src: `
+actual class VeskEventSource actual constructor(url: String) {
+    actual val url: String = url
+    actual var readyState: Int = VeskEventSource.CONNECTING
+    actual var onopen: ((VeskMessageEvent) -> Unit)? = null
+    actual var onmessage: ((VeskMessageEvent) -> Unit)? = null
+    actual var onerror: ((VeskMessageEvent) -> Unit)? = null
+    actual var lastEventId: String = ""
+    actual var retry: Long = 3000
+    private val client = okhttp3.OkHttpClient()
+    private var closed = false
+    private val worker = Thread {
+        while (!closed) {
+            var opened = false
+            val req = okhttp3.Request.Builder()
+                .url(url)
+                .header("Accept", "text/event-stream")
+                .apply { if (lastEventId.isNotEmpty()) header("Last-Event-ID", lastEventId) }
+                .build()
+            try {
+                client.newCall(req).execute().use { resp ->
+                    val body = resp.body
+                    if (resp.isSuccessful && body != null) {
+                        if (!opened) {
+                            opened = true
+                            readyState = VeskEventSource.OPEN
+                            veskPost { onopen?.invoke(VeskMessageEvent(data = null, type = "open")) }
+                        }
+                        var dataLines = mutableListOf<String>()
+                        var eventType = "message"
+                        var id: String? = null
+                        var retryMs: Long? = null
+                        body.byteStream().bufferedReader().forEachLine { line ->
+                            if (closed) return@forEachLine
+                            if (line.isEmpty()) {
+                                if (dataLines.isNotEmpty()) {
+                                    val text = dataLines.joinToString("\\n")
+                                    dataLines = mutableListOf()
+                                    val pendingId = id
+                                    if (pendingId != null) { lastEventId = pendingId }
+                                    id = null
+                                    val pendingRetry = retryMs
+                                    if (pendingRetry != null) { retry = pendingRetry }
+                                    retryMs = null
+                                    if (eventType == "message") {
+                                        val ev = VeskMessageEvent(data = text, type = "message", lastEventId = lastEventId)
+                                        veskPost { onmessage?.invoke(ev) }
+                                    }
+                                    eventType = "message"
+                                }
+                                return@forEachLine
+                            }
+                            if (line.startsWith(":")) return@forEachLine
+                            val colon = line.indexOf(':')
+                            val field = if (colon < 0) line else line.substring(0, colon)
+                            var value = if (colon < 0) "" else line.substring(colon + 1)
+                            if (value.startsWith(" ")) value = value.substring(1)
+                            when (field) {
+                                "data" -> dataLines.add(value)
+                                "event" -> if (value.isNotEmpty()) eventType = value
+                                "id" -> id = value
+                                "retry" -> retryMs = value.toLongOrNull()
+                            }
+                        }
+                    } else {
+                        veskPost { onerror?.invoke(VeskMessageEvent(data = "HTTP \${resp.code}", type = "error")) }
+                    }
+                }
+            } catch (e: Exception) {
+                if (closed) break
+                veskPost { onerror?.invoke(VeskMessageEvent(data = e.message, type = "error")) }
+            }
+            if (closed) break
+            readyState = VeskEventSource.CONNECTING
+            try {
+                Thread.sleep(retry)
+            } catch (_: InterruptedException) {
+                break
+            }
+        }
+    }
+
+    init {
+        worker.isDaemon = true
+        worker.start()
+    }
+
+    actual fun close() {
+        closed = true
+        readyState = VeskEventSource.CLOSED
+        worker.interrupt()
+    }
+
+    companion object {
+        const val CONNECTING = 0
+        const val OPEN = 1
+        const val CLOSED = 2
+    }
+}
+`,
+    ios: `
+// vesk.eventsource on iOS: unimplemented (fail closed) — the surface stays
+// typed and throws loudly instead of silently misbehaving.
+actual class VeskEventSource actual constructor(url: String) {
+    actual val url: String = url
+    actual var readyState: Int = VeskEventSource.CONNECTING
+    actual var onopen: ((VeskMessageEvent) -> Unit)? = null
+    actual var onmessage: ((VeskMessageEvent) -> Unit)? = null
+    actual var onerror: ((VeskMessageEvent) -> Unit)? = null
+    actual var lastEventId: String = ""
+    actual var retry: Long = 3000
+    actual fun close() = throw iOSUnimplemented("EventSource.close")
+    companion object {
+        const val CONNECTING = 0
+        const val OPEN = 1
+        const val CLOSED = 2
+    }
+}
+` },
   'veskYchartsLineChart': { deps: [],
     expect: `
 @Composable
@@ -5724,7 +5990,7 @@ fun Modifier.motionFocus(
 ` },
 };
 
-export const RUNTIME_ORDER = ['veskVideo', 'veskAudio', 'veskFileImage', 'veskBundledImage', 'veskBundledMediaUrl', 'veskDeviceCore', 'veskFindActivity', 'veskDeviceApi', 'veskQr', 'veskYchartsLineChart', 'veskDragDrop', 'veskColorFilter', 'veskBrightness', 'veskContrast', 'veskGrayscale', 'veskSaturate', 'veskInvert', 'veskSepia', 'veskHueRotate', 'veskDashedBorder', 'veskSideBorder', 'veskDivideLine', 'veskSkew', 'rememberRouteScrollState', 'Link', 'NavLink', 'Outlet', 'PullToRefresh', 'SwipeToDismiss', 'CardStack', 'veskNavSync', 'veskNavigate', 'veskGoBack', 'veskUseParams', 'veskUseRouter', 'veskUseQuery', 'jsString', 'jsHandleError', 'jsSafe', 'jsTypeof', 'jsGlobalIsNaN', 'jsGlobalIsFinite', 'jsStrictIsNaN', 'jsStrictIsFinite', 'jsIsInteger', 'jsParseInt', 'jsParseFloat', 'jsEncodeURIComponent', 'jsDecodeURIComponent', 'jsEncodeURI', 'jsDecodeURI', 'jsRegexExec', 'jsRegexSearch', 'jsStringify', 'jsParseJson', 'jsMapOf', 'jsSetOf', 'jsMapIterable', 'jsMapGet', 'jsMapSet', 'jsHas', 'jsDelete', 'jsClear', 'jsMapKeys', 'jsMapValues', 'jsMapEntries', 'jsIndex', 'jsIndexSet', 'jsSize', 'jsLength', 'jsForEach', 'jsDateValue', 'jsTagged', 'JsConsole', 'VeskTimers', 'VeskAppContext', 'jsAlert', 'VeskWebStorage', 'VeskFetch', 'VeskSqlite', 'VeskAuth', 'motionFocus', 'motionPress', 'motionHover', 'motionDrag', 'motionScroll', 'motionInView', 'motionStagger', 'motionCore'];
+export const RUNTIME_ORDER = ['veskVideo', 'veskAudio', 'veskFileImage', 'veskBundledImage', 'veskBundledMediaUrl', 'veskDeviceCore', 'veskFindActivity', 'veskDeviceApi', 'veskQr', 'veskYchartsLineChart', 'veskDragDrop', 'veskColorFilter', 'veskBrightness', 'veskContrast', 'veskGrayscale', 'veskSaturate', 'veskInvert', 'veskSepia', 'veskHueRotate', 'veskDashedBorder', 'veskSideBorder', 'veskDivideLine', 'veskSkew', 'rememberRouteScrollState', 'Link', 'NavLink', 'Outlet', 'PullToRefresh', 'SwipeToDismiss', 'CardStack', 'veskNavSync', 'veskNavigate', 'veskGoBack', 'veskUseParams', 'veskUseRouter', 'veskUseQuery', 'jsString', 'jsHandleError', 'jsSafe', 'jsTypeof', 'jsGlobalIsNaN', 'jsGlobalIsFinite', 'jsStrictIsNaN', 'jsStrictIsFinite', 'jsIsInteger', 'jsParseInt', 'jsParseFloat', 'jsEncodeURIComponent', 'jsDecodeURIComponent', 'jsEncodeURI', 'jsDecodeURI', 'jsRegexExec', 'jsRegexSearch', 'jsStringify', 'jsParseJson', 'jsMapOf', 'jsSetOf', 'jsMapIterable', 'jsMapGet', 'jsMapSet', 'jsHas', 'jsDelete', 'jsClear', 'jsMapKeys', 'jsMapValues', 'jsMapEntries', 'jsIndex', 'jsIndexSet', 'jsSize', 'jsLength', 'jsForEach', 'jsDateValue', 'jsTagged', 'JsConsole', 'VeskTimers', 'VeskAppContext', 'jsAlert', 'VeskWebStorage', 'VeskFetch', 'VeskSqlite', 'VeskAuth', 'veskEventCore', 'veskWebSocket', 'veskEventSource', 'motionFocus', 'motionPress', 'motionHover', 'motionDrag', 'motionScroll', 'motionInView', 'motionStagger', 'motionCore'];
 
 // Function/composable names that come from a differently-named helper unit.
 export const BIOMETRIC_CHECK_BODY = `val pm = context.packageManager

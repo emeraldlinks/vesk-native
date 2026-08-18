@@ -576,6 +576,8 @@ export class Js2Kt {
           if (callee.name === 'Map') return this.newMap(args);
           if (callee.name === 'Set') return this.newSet(args);
           if (callee.name === 'Date') return this.newDate(args);
+          if (callee.name === 'WebSocket') return `VeskWebSocket(${args.map((a) => this.expr(a)).join(', ')})`;
+          if (callee.name === 'EventSource') return `VeskEventSource(${args.map((a) => this.expr(a)).join(', ')})`;
         }
         return this.callExpr({ ...node, type: 'CallExpression' });
       }
@@ -658,6 +660,20 @@ export class Js2Kt {
       };
       const c = MATH_CONSTS[(prop as { name?: string }).name ?? ''];
       if (c) return c;
+    }
+    if (!computed && object.type === 'Identifier' && prop.type === 'Identifier') {
+      if (object.name === 'WebSocket') {
+        const WS_CONSTS: Record<string, string> = { CONNECTING: 'CONNECTING', OPEN: 'OPEN', CLOSING: 'CLOSING', CLOSED: 'CLOSED' };
+        const c = WS_CONSTS[prop.name as string];
+        if (c) return `VeskWebSocket.${c}`;
+        this.err.warn(node, `WebSocket.${prop.name as string} has no native Kotlin mapping yet`);
+      }
+      if (object.name === 'EventSource') {
+        const ES_CONSTS: Record<string, string> = { CONNECTING: 'CONNECTING', OPEN: 'OPEN', CLOSED: 'CLOSED' };
+        const c = ES_CONSTS[prop.name as string];
+        if (c) return `VeskEventSource.${c}`;
+        this.err.warn(node, `EventSource.${prop.name as string} has no native Kotlin mapping yet`);
+      }
     }
     if (!computed && object.type === 'Identifier' && (object.name === 'localStorage' || object.name === 'sessionStorage') && prop.type === 'Identifier') {
       const store = object.name === 'localStorage' ? 'local' : 'session';
@@ -822,6 +838,8 @@ export class Js2Kt {
       if (name === 'signOut') return `VeskAuth.signOut()`;
       if (name === 'currentUser') return `VeskAuth.currentUser()`;
       if (name === 'isSignedIn') return `VeskAuth.isSignedIn()`;
+      if (name === 'WebSocket') return `VeskWebSocket(${a0 ? this.expr(a0) : ''})`;
+      if (name === 'EventSource') return `VeskEventSource(${a0 ? this.expr(a0) : ''})`;
       if (UNSUPPORTED_BROWSER_FNS.has(name)) {
         this.err.warn(callee, `${name}() has no native Kotlin mapping yet`);
         return `error("vesk: ${name}() is not supported yet")`;

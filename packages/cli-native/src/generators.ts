@@ -121,6 +121,10 @@ function usageDeps(deviceApis: Set<string>, hasMedia: boolean, used: Set<string>
   if (hasMedia || used.has('veskMediaHub') || used.has('veskAudio') || used.has('veskVideo')) {
     deps.push('implementation("androidx.media:media:1.7.0")');
   }
+  if (used.has('veskWebSocket') || used.has('veskEventSource')) {
+    // WebSocket/EventSource runtime units (okhttp3.WebSocket / streaming GET).
+    deps.push('implementation("com.squareup.okhttp3:okhttp:4.12.0")');
+  }
   for (const lib of libs) {
     for (const coord of lib.gradle) deps.push(`implementation("${coord}")`);
   }

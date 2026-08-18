@@ -1004,6 +1004,46 @@ actual object VeskAuth {
 }
 
 
+// vesk.websocket on iOS: unimplemented (fail closed) — the surface stays
+// typed and throws loudly instead of silently misbehaving.
+actual class VeskWebSocket actual constructor(url: String) {
+    actual val url: String = url
+    actual var readyState: Int = VeskWebSocket.CONNECTING
+    actual val protocol: String = ""
+    actual var onopen: ((VeskMessageEvent) -> Unit)? = null
+    actual var onmessage: ((VeskMessageEvent) -> Unit)? = null
+    actual var onclose: ((VeskMessageEvent) -> Unit)? = null
+    actual var onerror: ((VeskMessageEvent) -> Unit)? = null
+    actual fun send(data: String): Unit = throw iOSUnimplemented("WebSocket.send")
+    actual fun close(code: Int, reason: String) = throw iOSUnimplemented("WebSocket.close")
+    companion object {
+        const val CONNECTING = 0
+        const val OPEN = 1
+        const val CLOSING = 2
+        const val CLOSED = 3
+    }
+}
+
+
+// vesk.eventsource on iOS: unimplemented (fail closed) — the surface stays
+// typed and throws loudly instead of silently misbehaving.
+actual class VeskEventSource actual constructor(url: String) {
+    actual val url: String = url
+    actual var readyState: Int = VeskEventSource.CONNECTING
+    actual var onopen: ((VeskMessageEvent) -> Unit)? = null
+    actual var onmessage: ((VeskMessageEvent) -> Unit)? = null
+    actual var onerror: ((VeskMessageEvent) -> Unit)? = null
+    actual var lastEventId: String = ""
+    actual var retry: Long = 3000
+    actual fun close() = throw iOSUnimplemented("EventSource.close")
+    companion object {
+        const val CONNECTING = 0
+        const val OPEN = 1
+        const val CLOSED = 2
+    }
+}
+
+
 // Compose's Darwin main-dispatcher runs on the main queue with a
 // MonotonicFrameClock, exactly the contract the android actual satisfies.
 internal actual fun motionDispatcher(): kotlin.coroutines.CoroutineContext = Dispatchers.Main

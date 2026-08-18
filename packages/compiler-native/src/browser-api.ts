@@ -98,6 +98,25 @@ export declare interface VeskRouter {
   refresh(): void;
 }
 
+/** Message object delivered to WebSocket/EventSource handlers. Maps to the
+ * VeskMessageEvent class in the runtime: data carries the payload (text for
+ * 'message' events), type names the event, lastEventId comes from SSE id
+ * lines, code/reason describe close and error events. */
+export declare interface VeskMessageEvent {
+  /** Payload: message text, or null for state events. */
+  data: any;
+  /** Event type: 'open' | 'message' | 'close' | 'error'. */
+  type: string;
+  /** SSE: the last dispatched id ('' for WebSocket events). */
+  lastEventId: string;
+  /** Origin of the event ('' in the native runtime). */
+  origin: string;
+  /** Close code (WebSocket), or 0. */
+  code: number;
+  /** Close/error reason text. */
+  reason: string;
+}
+
 /** Web Storage (localStorage / sessionStorage). Values are stored as strings
  * (null stores the literal string 'null'); getItem returns null for missing
  * keys; key(i) is the i-th key or null. localStorage persists across app
@@ -453,7 +472,7 @@ export function browserModuleDecl(): string {
 const BROWSER_GLOBAL_INTERFACES: string[] = BROWSER_INTERFACES.flatMap((d) =>
   d
     .split(/\n(?=export declare interface )/)
-    .filter((s) => /^export declare interface (VeskResponse|FetchInit|VeskSqliteDb|WebStorage|VeskRouter) \{/.test(s)),
+    .filter((s) => /^export declare interface (VeskResponse|FetchInit|VeskSqliteDb|WebStorage|VeskRouter|VeskMessageEvent) \{/.test(s)),
 );
 
 export function browserGlobalDecl(): string {

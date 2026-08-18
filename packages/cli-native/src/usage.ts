@@ -60,6 +60,8 @@ const HELPER_FN_NAMES: Record<string, string> = {
   VeskOpenSettings: 'veskDeviceApi',
   VeskOpenApp: 'veskDeviceApi',
   VeskSpeak: 'veskDeviceApi',
+  VeskWebSocket: 'veskWebSocket',
+  VeskEventSource: 'veskEventSource',
   VeskDragData: 'veskDragDrop',
   veskDraggable: 'veskDragDrop',
   veskDropTarget: 'veskDragDrop',
@@ -258,6 +260,8 @@ export const API_PERMISSIONS: Record<string, string[]> = {
   authenticate: ['android.permission.USE_BIOMETRIC'],
   startScreenRecord: ['android.permission.FOREGROUND_SERVICE', 'android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION'],
   fetch: ['android.permission.INTERNET'],
+  WebSocket: ['android.permission.INTERNET'],
+  EventSource: ['android.permission.INTERNET'],
 };
 
 // Permissions that only exist for a bounded SDK range (legacy Bluetooth APIs).
@@ -373,6 +377,7 @@ export function collectDeviceApiUsage(appDir: string): Set<string> {
 const BROWSER_APIS = new Set([
   'fetch', 'localStorage', 'sessionStorage', 'openSqlite',
   'signUp', 'signIn', 'signOut', 'currentUser', 'isSignedIn',
+  'WebSocket', 'EventSource',
 ]);
 
 // iOS Info.plist usage keys derived from device-API usage, the same way
@@ -450,6 +455,11 @@ export function collectBrowserApiUsage(appDir: string): Set<string> {
     if (node.type === 'MemberExpression') {
       const obj = node.object as JsNode | null;
       if (obj?.type === 'Identifier' && (obj.name === 'localStorage' || obj.name === 'sessionStorage')) used.add(obj.name);
+    }
+    if (node.type === 'NewExpression') {
+      const callee = node.callee as JsNode | null;
+      const api = callee?.type === 'Identifier' ? (callee.name as string) : null;
+      if (api && BROWSER_APIS.has(api)) used.add(api);
     }
     for (const key of Object.keys(node)) {
       if (key === 'type') continue;

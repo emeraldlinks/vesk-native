@@ -1,0 +1,29 @@
+component WsDemo() {
+    const &[state] = track('connecting')
+    const &[inbox] = track('')
+    const &[sent] = track(0)
+    const &[ws] = track(new WebSocket('ws://127.0.0.1:8701'))
+
+    ws.onopen = () => { state = 'open' }
+    ws.onmessage = (e) => { inbox = inbox + e.data + '\n' }
+    ws.onerror = () => { state = 'error' }
+    ws.onclose = (e) => { state = 'closed code ' + e.code }
+
+    <style>
+        .ws-console { font-family: monospace; font-size: 11px; line-height: 16px; white-space: pre-wrap; }
+    </style>
+
+    <div class="flex-col gap-4 px-4 py-4">
+        <section class="bg-gray-900 rounded-2xl p-5">
+            <p class="text-white/70 text-xs font-semibold tracking-widest uppercase">WebSocket · OkHttp</p>
+            <h2 class="text-white text-lg font-extrabold mt-1">Echo server on this device</h2>
+            <p class="text-white/70 text-sm mt-1 leading-5">ws://127.0.0.1:8701 — a local node echo server; every message comes back prefixed. Server push arrives every 5s.</p>
+            <div class="flex gap-2 flex-wrap mt-3">
+                <button class="bg-indigo-600 text-white text-sm font-semibold px-4 py-2 rounded-full" onClick={() => { ws.send('hello #' + sent); sent = sent + 1 }}>Send</button>
+                <button class="bg-gray-100 text-gray-700 text-sm font-medium px-4 py-2 rounded-full" onClick={() => { ws.close() }}>Close</button>
+            </div>
+            <p class="text-white/80 text-xs mt-3">state: <span class="text-emerald-400">{state}</span> · sent {sent}</p>
+            <p class="ws-console text-emerald-300 mt-2">{inbox}</p>
+        </section>
+    </div>
+}

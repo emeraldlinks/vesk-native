@@ -47,7 +47,9 @@ fun App() {
         Route("/shop") { Shop() },
         Route("/shop/snow-parka") { SnowParka() },
         Route("/shop/splitshirt-tee") { SplitTee() },
-        Route("/shop/yellowstone-beanie") { Beanie() }
+        Route("/shop/yellowstone-beanie") { Beanie() },
+        Route("/sse") { SseDemo() },
+        Route("/ws") { WsDemo() }
                 ),
             back = BackBehavior(mode = "stack", doubleBackToExit = true, exitDelayMs = 2000, exitRoutes = listOf("/")),)
             }

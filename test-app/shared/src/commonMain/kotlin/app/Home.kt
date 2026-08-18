@@ -393,6 +393,66 @@ fun Home(props: HomeProps = HomeProps(), content: @Composable () -> Unit = {}) {
 					}
 				}
 			}
+		NavLink(props = NavLinkProps(href = "/ws", modifier = Modifier.fillMaxWidth()))
+			{
+				Column(
+				) {
+					Row(
+						modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color(0xFFFAF5FF)).padding(20.dp),
+						verticalAlignment = Alignment.CenterVertically,
+						horizontalArrangement = Arrangement.SpaceBetween,
+					) {
+						Column {
+							Text(
+								text = ("Realtime lab · WebSocket").uppercase(),
+								style = TextStyle(color = Color(0xFF9333EA), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.8.sp),
+							)
+							Text(
+								text = "OkHttp echo client — send, receive, close",
+								modifier = Modifier.padding(top = 4.dp),
+								style = TextStyle(color = Color(0xFF581C87), fontSize = 18.sp, lineHeight = 28.sp, fontWeight = FontWeight.ExtraBold),
+							)
+						}
+						Column(
+							modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF9333EA)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
+						) {
+							Text(
+								text = "Open",
+							)
+						}
+					}
+				}
+			}
+		NavLink(props = NavLinkProps(href = "/sse", modifier = Modifier.fillMaxWidth()))
+			{
+				Column(
+				) {
+					Row(
+						modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color(0xFFF0FDFA)).padding(20.dp),
+						verticalAlignment = Alignment.CenterVertically,
+						horizontalArrangement = Arrangement.SpaceBetween,
+					) {
+						Column {
+							Text(
+								text = ("Realtime lab · SSE").uppercase(),
+								style = TextStyle(color = Color(0xFF0D9488), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.8.sp),
+							)
+							Text(
+								text = "Server-sent events — streaming ticker",
+								modifier = Modifier.padding(top = 4.dp),
+								style = TextStyle(color = Color(0xFF134E4A), fontSize = 18.sp, lineHeight = 28.sp, fontWeight = FontWeight.ExtraBold),
+							)
+						}
+						Column(
+							modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF0D9488)).padding(horizontal = 16.dp).padding(vertical = 8.dp),
+						) {
+							Text(
+								text = "Open",
+							)
+						}
+					}
+				}
+			}
 		Column(
 			modifier = Modifier.fillMaxWidth(),
 		) {

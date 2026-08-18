@@ -1,0 +1,27 @@
+component SseDemo() {
+    const &[state] = track('connecting')
+    const &[events] = track('')
+    const &[lastId] = track('')
+    const &[es] = track(new EventSource('http://127.0.0.1:8700/events'))
+
+    es.onopen = () => { state = 'open' }
+    es.onmessage = (e) => { events = events + e.data + '\n'; lastId = e.lastEventId }
+    es.onerror = () => { state = 'error' }
+
+    <style>
+        .sse-console { font-family: monospace; font-size: 11px; line-height: 16px; white-space: pre-wrap; }
+    </style>
+
+    <div class="flex-col gap-4 px-4 py-4">
+        <section class="bg-gray-900 rounded-2xl p-5">
+            <p class="text-white/70 text-xs font-semibold tracking-widest uppercase">Server-sent events · OkHttp stream</p>
+            <h2 class="text-white text-lg font-extrabold mt-1">SSE ticker on this device</h2>
+            <p class="text-white/70 text-sm mt-1 leading-5">http://127.0.0.1:8700/events — a local node stream pushing a tick every 2s with event ids; auto-reconnects on drop.</p>
+            <div class="flex gap-2 flex-wrap mt-3">
+                <button class="bg-gray-100 text-gray-700 text-sm font-medium px-4 py-2 rounded-full" onClick={() => { es.close(); state = 'closed' }}>Close</button>
+            </div>
+            <p class="text-white/80 text-xs mt-3">state: <span class="text-emerald-400">{state}</span> · lastEventId: <span class="text-sky-400">{lastId}</span></p>
+            <p class="sse-console text-emerald-300 mt-2">{events}</p>
+        </section>
+    </div>
+}

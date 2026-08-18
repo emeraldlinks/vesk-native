@@ -3061,6 +3061,177 @@ actual object VeskAuth {
 }
 
 
+// Main-thread dispatch for OkHttp callbacks (browsers always fire events on
+// the main thread).
+private fun veskPost(fn: () -> Unit) {
+    android.os.Handler(android.os.Looper.getMainLooper()).post(fn)
+}
+
+
+actual class VeskWebSocket actual constructor(url: String) {
+    actual val url: String = url
+    actual var readyState: Int = VeskWebSocket.CONNECTING
+    actual val protocol: String = ""
+    actual var onopen: ((VeskMessageEvent) -> Unit)? = null
+    actual var onmessage: ((VeskMessageEvent) -> Unit)? = null
+    actual var onclose: ((VeskMessageEvent) -> Unit)? = null
+    actual var onerror: ((VeskMessageEvent) -> Unit)? = null
+    private var ws: okhttp3.WebSocket? = null
+
+    init {
+        val req = okhttp3.Request.Builder().url(url).build()
+        val listener = object : okhttp3.WebSocketListener() {
+            override fun onOpen(webSocket: okhttp3.WebSocket, response: okhttp3.Response) {
+                veskPost {
+                    readyState = VeskWebSocket.OPEN
+                    onopen?.invoke(VeskMessageEvent(data = null, type = "open"))
+                }
+            }
+            override fun onMessage(webSocket: okhttp3.WebSocket, text: String) {
+                veskPost {
+                    onmessage?.invoke(VeskMessageEvent(data = text, type = "message"))
+                }
+            }
+            override fun onClosing(webSocket: okhttp3.WebSocket, code: Int, reason: String) {
+                webSocket.close(code, reason)
+            }
+            override fun onClosed(webSocket: okhttp3.WebSocket, code: Int, reason: String) {
+                veskPost {
+                    readyState = VeskWebSocket.CLOSED
+                    onclose?.invoke(VeskMessageEvent(data = null, type = "close", code = code, reason = reason))
+                }
+            }
+            override fun onFailure(webSocket: okhttp3.WebSocket, t: Throwable, response: okhttp3.Response?) {
+                veskPost {
+                    readyState = VeskWebSocket.CLOSED
+                    onerror?.invoke(VeskMessageEvent(data = t.message, type = "error"))
+                    onclose?.invoke(VeskMessageEvent(data = null, type = "close", code = 1006, reason = t.message ?: "connection failed"))
+                }
+            }
+        }
+        ws = okhttp3.OkHttpClient().newWebSocket(req, listener)
+    }
+
+    actual fun send(data: String): Unit {
+        ws?.send(data)
+    }
+
+    actual fun close(code: Int, reason: String) {
+        readyState = VeskWebSocket.CLOSING
+        ws?.close(code, reason)
+    }
+
+    // Extra members (KMP allows actuals to extend the expect surface): the
+    // browser readyState constants. Pages using them are androidMain anyway.
+    companion object {
+        const val CONNECTING = 0
+        const val OPEN = 1
+        const val CLOSING = 2
+        const val CLOSED = 3
+    }
+}
+
+
+actual class VeskEventSource actual constructor(url: String) {
+    actual val url: String = url
+    actual var readyState: Int = VeskEventSource.CONNECTING
+    actual var onopen: ((VeskMessageEvent) -> Unit)? = null
+    actual var onmessage: ((VeskMessageEvent) -> Unit)? = null
+    actual var onerror: ((VeskMessageEvent) -> Unit)? = null
+    actual var lastEventId: String = ""
+    actual var retry: Long = 3000
+    private val client = okhttp3.OkHttpClient()
+    private var closed = false
+    private val worker = Thread {
+        while (!closed) {
+            var opened = false
+            val req = okhttp3.Request.Builder()
+                .url(url)
+                .header("Accept", "text/event-stream")
+                .apply { if (lastEventId.isNotEmpty()) header("Last-Event-ID", lastEventId) }
+                .build()
+            try {
+                client.newCall(req).execute().use { resp ->
+                    val body = resp.body
+                    if (resp.isSuccessful && body != null) {
+                        if (!opened) {
+                            opened = true
+                            readyState = VeskEventSource.OPEN
+                            veskPost { onopen?.invoke(VeskMessageEvent(data = null, type = "open")) }
+                        }
+                        var dataLines = mutableListOf<String>()
+                        var eventType = "message"
+                        var id: String? = null
+                        var retryMs: Long? = null
+                        body.byteStream().bufferedReader().forEachLine { line ->
+                            if (closed) return@forEachLine
+                            if (line.isEmpty()) {
+                                if (dataLines.isNotEmpty()) {
+                                    val text = dataLines.joinToString("\n")
+                                    dataLines = mutableListOf()
+                                    val pendingId = id
+                                    if (pendingId != null) { lastEventId = pendingId }
+                                    id = null
+                                    val pendingRetry = retryMs
+                                    if (pendingRetry != null) { retry = pendingRetry }
+                                    retryMs = null
+                                    if (eventType == "message") {
+                                        val ev = VeskMessageEvent(data = text, type = "message", lastEventId = lastEventId)
+                                        veskPost { onmessage?.invoke(ev) }
+                                    }
+                                    eventType = "message"
+                                }
+                                return@forEachLine
+                            }
+                            if (line.startsWith(":")) return@forEachLine
+                            val colon = line.indexOf(':')
+                            val field = if (colon < 0) line else line.substring(0, colon)
+                            var value = if (colon < 0) "" else line.substring(colon + 1)
+                            if (value.startsWith(" ")) value = value.substring(1)
+                            when (field) {
+                                "data" -> dataLines.add(value)
+                                "event" -> if (value.isNotEmpty()) eventType = value
+                                "id" -> id = value
+                                "retry" -> retryMs = value.toLongOrNull()
+                            }
+                        }
+                    } else {
+                        veskPost { onerror?.invoke(VeskMessageEvent(data = "HTTP ${resp.code}", type = "error")) }
+                    }
+                }
+            } catch (e: Exception) {
+                if (closed) break
+                veskPost { onerror?.invoke(VeskMessageEvent(data = e.message, type = "error")) }
+            }
+            if (closed) break
+            readyState = VeskEventSource.CONNECTING
+            try {
+                Thread.sleep(retry)
+            } catch (_: InterruptedException) {
+                break
+            }
+        }
+    }
+
+    init {
+        worker.isDaemon = true
+        worker.start()
+    }
+
+    actual fun close() {
+        closed = true
+        readyState = VeskEventSource.CLOSED
+        worker.interrupt()
+    }
+
+    companion object {
+        const val CONNECTING = 0
+        const val OPEN = 1
+        const val CLOSED = 2
+    }
+}
+
+
 internal actual fun motionDispatcher(): kotlin.coroutines.CoroutineContext = androidx.compose.ui.platform.AndroidUiDispatcher.Main
 
 
