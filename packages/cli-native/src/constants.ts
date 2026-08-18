@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 // packed `cli-native` tarball is self-contained: template files, the nav
 // Router.kt, sample .vsk sources, and the .vsklib registry all travel inside
 // the package.
-const PKG_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+export const PKG_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const TEMPLATE_DIR = join(PKG_ROOT, 'assets', 'template');
 export const SAMPLE_VSK = join(PKG_ROOT, 'assets', 'sample');
 export const NAVIGATION_KT = join(PKG_ROOT, 'assets', 'navigation', 'Router.kt');

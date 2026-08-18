@@ -1,4 +1,5 @@
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { join, relative, resolve, dirname, basename, extname } from 'node:path';
 import { compileVskResult, collectCustomCss, extractStylesheetLinks, extractMediaSources, parseCssClasses } from '@compiler-native/index';
 import type { VskLibSurface } from '@compiler-native/index';
@@ -12,19 +13,125 @@ import type { ComponentDecl } from '@compiler-native/props';
 import { buildModuleRegistry, buildModuleSlugs, sanitizeIdent, slugFor, toPosix } from '@compiler-native/modules';
 import type { ModuleExport } from '@compiler-native/modules';
 import { compileProjectModule } from '@compiler-native/kotlin-codegen';
+import type { CompileResult } from '@compiler-native/kotlin-codegen';
 import { compileNpmModules } from '@cli-native/npm';
 import { KtErrors } from '@compiler-native/js2kt';
 import type { JsNode } from '@compiler-native/js2kt';
 import type { VeskConfig } from '@vesk/native';
-import { DEFAULT_SDK, NAVIGATION_KT, TEMPLATE_DIR, collectVskFiles, colorLiteral, log, slugify } from '@cli-native/constants';
+import { DEFAULT_SDK, NAVIGATION_KT, PKG_ROOT, TEMPLATE_DIR, collectVskFiles, colorLiteral, log, slugify } from '@cli-native/constants';
 import { API_PERMISSIONS, MAX_SDK_PERMS, collectBrowserApiUsage, collectDeviceApiUsage, collectRuntimeUsage } from '@cli-native/usage';
 import { BIOMETRIC_AUTH_BODY, BIOMETRIC_CHECK_BODY, IOS_RUNTIME_IMPORTS, QRGEN_BODY, QR_OVERLAY_BLOCK, RUNTIME_COMMON_IMPORTS, RUNTIME_CORE, RUNTIME_HELPERS, RUNTIME_ORDER, runtimeImports } from '@cli-native/runtime-templates';
 import { installedLibraries } from '@cli-native/vsklib';
 import type { VskLibRecord } from '@cli-native/vsklib';
 
+// Content-stable writes: identical regenerated content is left untouched so
+// mtime churn never invalidates gradle/kotlin incremental tasks (Phase 0.3 of
+// the preview/HMR plan — plans/vesk-native-preview-hmr.md).
+function writeIfChanged(file: string, content: string): void {
+  if (existsSync(file) && readFileSync(file, 'utf8') === content) return;
+  writeFileSync(file, content);
+}
+
+// Generation cache (same plan, Phase 0.3): page compiles are keyed on the
+// toolchain + config + css + the page's own source; unchanged pages skip
+// parse/IR/codegen and keep their artifact on disk. The cache lives in
+// <target>/.vesk/cache.json — framework-owned like every other generated
+// file, and never committed.
+interface PageCacheEntry {
+  key: string;
+  outName: string;
+  portable: boolean;
+  libraryIds: string[];
+  vskTargets: string[];
+  jsTsTargets: string[];
+  npmTargets: string[];
+}
+
+interface GenerationCache {
+  global: string;
+  pages: Record<string, PageCacheEntry>;
+}
+
+function sha256(data: string): string {
+  return createHash('sha256').update(data).digest('hex');
+}
+
+function hashFilesUnder(dir: string): string {
+  if (!existsSync(dir)) return '';
+  const h = createHash('sha256');
+  const walk = (d: string) => {
+    for (const e of readdirSync(d, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+      const p = join(d, e.name);
+      if (e.isDirectory()) {
+        if (e.name === 'node_modules' || e.name === 'dist' || e.name === '.git' || e.name === '.vesk') continue;
+        walk(p);
+      } else {
+        h.update(p);
+        h.update(readFileSync(p));
+      }
+    }
+  };
+  walk(dir);
+  return h.digest('hex');
+}
+
+function loadGenerationCache(target: string): GenerationCache | null {
+  try {
+    const p = join(target, '.vesk', 'cache.json');
+    if (!existsSync(p)) return null;
+    return JSON.parse(readFileSync(p, 'utf8')) as GenerationCache;
+  } catch {
+    return null;
+  }
+}
+
+function saveGenerationCache(target: string, cache: GenerationCache): void {
+  const dir = join(target, '.vesk');
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, 'cache.json'), JSON.stringify(cache));
+}
+
+// Anything that changes generated page content invalidates every cached
+// page: compiler/cli sources (dev runs compile from src; installed packages
+// ship dist + package.json), the runtime template, veskconfig, and every css
+// file (global styles flow into page compiles via the class registry).
+function generationGlobalKey(target: string, appDir: string): string {
+  const h = createHash('sha256');
+  for (const dir of [join(PKG_ROOT, 'src'), join(PKG_ROOT, 'dist'), join(PKG_ROOT, '..', 'compiler-native', 'src'), join(PKG_ROOT, '..', 'compiler-native', 'dist'), TEMPLATE_DIR]) {
+    h.update(hashFilesUnder(dir));
+  }
+  for (const pkg of [join(PKG_ROOT, 'package.json'), join(PKG_ROOT, '..', 'compiler-native', 'package.json')]) {
+    if (existsSync(pkg)) h.update(readFileSync(pkg));
+  }
+  for (const cf of ['veskconfig.ts', 'veskconfig.json', 'veskconfig.js', 'veskconfig.mjs', 'veskconfig.cjs']) {
+    const p = join(target, cf);
+    if (existsSync(p)) {
+      h.update(cf);
+      h.update(readFileSync(p));
+      break;
+    }
+  }
+  const css = createHash('sha256');
+  const walkCss = (d: string) => {
+    for (const e of readdirSync(d, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+      const p = join(d, e.name);
+      if (e.isDirectory()) {
+        if (e.name === 'node_modules' || e.name === '.vesk') continue;
+        walkCss(p);
+      } else if (e.name.endsWith('.css')) {
+        css.update(p);
+        css.update(readFileSync(p));
+      }
+    }
+  };
+  walkCss(appDir);
+  h.update(css.digest('hex'));
+  return h.digest('hex');
+}
+
 export function generateSettingsGradleKts(target: string, config: VeskConfig): void {
   const name = slugify(config.appName);
-  writeFileSync(
+  writeIfChanged(
     join(target, 'settings.gradle.kts'),
     `pluginManagement {
     repositories {
@@ -193,7 +300,7 @@ ${cmpCommonDeps.map((l) => `            ${l}`).join('\n')}
         }
 `
     : '';
-  writeFileSync(
+  writeIfChanged(
     join(target, 'shared', 'build.gradle.kts'),
     `import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 
@@ -296,7 +403,7 @@ export function generateAppBuildGradleKts(target: string, config: VeskConfig, li
             signingConfig = signingConfigs.getByName("release")`
     : `            // No veskconfig.signing.android — release artifacts sign with the
             // debug keystore (dev flow; never upload these to a store).`;
-  writeFileSync(
+  writeIfChanged(
     join(target, 'app', 'build.gradle.kts'),
     `plugins {
     id("com.android.application")
@@ -471,7 +578,7 @@ export function generateManifest(target: string, config: VeskConfig, mediaReadPe
     : '';
   if (needsProvider) {
     mkdirSync(join(target, 'app', 'src', 'main', 'res', 'xml'), { recursive: true });
-    writeFileSync(
+    writeIfChanged(
       join(target, 'app', 'src', 'main', 'res', 'xml', 'file_paths.xml'),
       `<?xml version="1.0" encoding="utf-8"?>
 <paths>
@@ -480,7 +587,7 @@ export function generateManifest(target: string, config: VeskConfig, mediaReadPe
 `,
     );
   }
-  writeFileSync(
+  writeIfChanged(
     join(target, 'app', 'src', 'main', 'AndroidManifest.xml'),
     `<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
@@ -541,7 +648,7 @@ export function generateThemes(target: string, config: VeskConfig): void {
   // icons) when the background is dark, light bars (dark icons) otherwise.
   const darkBar = isDarkColor(c.background);
   const lightFlags = darkBar ? 'false' : 'true';
-  writeFileSync(
+  writeIfChanged(
     join(target, 'app', 'src', 'main', 'res', 'values', 'themes.xml'),
     `<?xml version="1.0" encoding="utf-8"?>
 <resources>
@@ -580,13 +687,13 @@ export function generateIconResources(target: string, config: VeskConfig): void 
     <foreground android:drawable="${fgRef}"/>
 </adaptive-icon>`;
 
-  writeFileSync(join(anydpiDir, 'ic_launcher.xml'), adaptiveXml);
-  writeFileSync(join(anydpiDir, 'ic_launcher_round.xml'), adaptiveXml);
+  writeIfChanged(join(anydpiDir, 'ic_launcher.xml'), adaptiveXml);
+  writeIfChanged(join(anydpiDir, 'ic_launcher_round.xml'), adaptiveXml);
 
   // Background color resource
   const valuesDir = join(resDir, 'values');
   mkdirSync(valuesDir, { recursive: true });
-  writeFileSync(join(valuesDir, 'ic_launcher_background.xml'),
+  writeIfChanged(join(valuesDir, 'ic_launcher_background.xml'),
     `<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="ic_launcher_background">${bgColor}</color>\n</resources>\n`
   );
 
@@ -611,7 +718,7 @@ export function generateIconResources(target: string, config: VeskConfig): void 
     // Default: letter-on-color vector drawable
     const drawableDir = join(resDir, 'drawable');
     mkdirSync(drawableDir, { recursive: true });
-    writeFileSync(join(drawableDir, 'ic_launcher_foreground.xml'),
+    writeIfChanged(join(drawableDir, 'ic_launcher_foreground.xml'),
       `<?xml version="1.0" encoding="utf-8"?>\n<vector xmlns:android="http://schemas.android.com/apk/res/android"\n    android:width="108dp" android:height="108dp"\n    android:viewportWidth="108" android:viewportHeight="108">\n    <group android:translateX="22" android:translateY="22">\n        <path\n            android:fillColor="#FFFFFF"\n            android:pathData="M32,0 L64,0 A32,32 0 1,1 0,32 L0,0 Z"/>\n    </group>\n</vector>\n`
     );
   }
@@ -651,7 +758,7 @@ export function generateSplashTheme(target: string, config: VeskConfig): void {
     cpSync(join(target, 'assets', 'splash.png'), join(drawableDir, 'splash_bg.png'));
   }
 
-  writeFileSync(join(resDir, 'splash_theme.xml'),
+  writeIfChanged(join(resDir, 'splash_theme.xml'),
     `<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <style name="Theme.VeskApp.Splash" parent="Theme.SplashScreen">\n        <item name="windowSplashScreenBackground">${bgColor}</item>\n        <item name="windowSplashScreenAnimatedIcon">${logoRef}</item>\n        <item name="postSplashScreenTheme">@style/Theme.VeskApp</item>\n    </style>\n</resources>\n`
   );
   log('gen', `splash_theme.xml (${hasSplashImage ? 'auto-detected splash.png' : hasSplashVsk ? 'splash.vsk component' : 'config.splash'})`);
@@ -744,7 +851,7 @@ ${deepLinkCall}        if (Build.VERSION.SDK_INT >= 33) {
         }
 ${e2eCall}        if (intent.getBooleanExtra("vesk_notify_tap", false)) jsSafe({ VeskDeviceSession.notifyTap?.invoke() })
 ${deepLinkCall}        setContent {`;
-  writeFileSync(
+  writeIfChanged(
     join(outDir, 'DebugCrashLog.kt'),
     `package ${config.appId}
 
@@ -775,7 +882,7 @@ class DebugCrashLog(private val previous: Thread.UncaughtExceptionHandler?) : Th
 }
 `,
   );
-  writeFileSync(
+  writeIfChanged(
     join(outDir, 'MainActivity.kt'),
     `package ${config.appId}
 
@@ -856,7 +963,7 @@ export function generateThemeKt(target: string, config: VeskConfig): void {
   if (config.typography?.fontSize || config.typography?.fontFamily) themeArgs.push('typography = VeskTypography');
   themeArgs.push('content = content');
 
-  writeFileSync(
+  writeIfChanged(
     join(sharedKotlinDir(target), 'Theme.kt'),
     `package app
 
@@ -1015,10 +1122,10 @@ export function generateRuntimeKt(
   mkdirSync(outDir, { recursive: true });
   mkdirSync(commonOutDir, { recursive: true });
   mkdirSync(iosOutDir, { recursive: true });
-  writeFileSync(join(commonOutDir, 'RuntimeCore.kt'), `${RUNTIME_COMMON_IMPORTS}\n${RUNTIME_CORE}\n${commonBody.join('\n')}\n`);
-  writeFileSync(join(outDir, 'Runtime.kt'), `${runtimeImports(deviceApis, used)}${androidBody.join('\n')}\n`);
+  writeIfChanged(join(commonOutDir, 'RuntimeCore.kt'), `${RUNTIME_COMMON_IMPORTS}\n${RUNTIME_CORE}\n${commonBody.join('\n')}\n`);
+  writeIfChanged(join(outDir, 'Runtime.kt'), `${runtimeImports(deviceApis, used)}${androidBody.join('\n')}\n`);
   if (iosBody.length > 0) {
-    writeFileSync(join(iosOutDir, 'Runtime.ios.kt'), `${IOS_RUNTIME_IMPORTS}${iosBody.join('\n')}\n`);
+    writeIfChanged(join(iosOutDir, 'Runtime.ios.kt'), `${IOS_RUNTIME_IMPORTS}${iosBody.join('\n')}\n`);
   }
   log('gen', `Runtime.kt (${androidBody.length} android helpers, ${commonBody.length} common helpers of ${RUNTIME_ORDER.length}, media broadcast ${broadcast ? 'on' : 'off'}${iosBody.length ? `, ${iosBody.length} ios helpers` : ''})`);
   return used;
@@ -1039,7 +1146,7 @@ export function generateRouterKt(appDir: string): void {
     // common file in the assets/navigation directory.
     const commonNavDir = join(commonOutDir, 'navigation');
     mkdirSync(commonNavDir, { recursive: true });
-    writeFileSync(join(commonNavDir, 'Router.kt'), readFileSync(src, 'utf8'));
+    writeIfChanged(join(commonNavDir, 'Router.kt'), readFileSync(src, 'utf8'));
     const androidSrc = join(dirname(src), 'Router.android.kt');
     if (existsSync(androidSrc)) {
       const navDir = join(outDir, 'navigation');
@@ -1048,7 +1155,7 @@ export function generateRouterKt(appDir: string): void {
       // from an earlier generation so the two source sets never both define
       // Route/AppRouter/LocalNavController.
       rmSync(join(navDir, 'Router.kt'), { force: true });
-      writeFileSync(join(navDir, 'Router.android.kt'), readFileSync(androidSrc, 'utf8'));
+      writeIfChanged(join(navDir, 'Router.android.kt'), readFileSync(androidSrc, 'utf8'));
       log('gen', 'navigation/Router.kt (common) + Router.android.kt (actuals, from @navigation-native)');
     } else {
       log('warn', `navigation android actuals not found at ${androidSrc}; Router.kt emitted without back-handler seams`);
@@ -1059,7 +1166,7 @@ export function generateRouterKt(appDir: string): void {
     if (existsSync(iosSrc)) {
       const iosNavDir = join(sharedIosKotlinDir(dirname(appDir)), 'navigation');
       mkdirSync(iosNavDir, { recursive: true });
-      writeFileSync(join(iosNavDir, 'Router.ios.kt'), readFileSync(iosSrc, 'utf8'));
+      writeIfChanged(join(iosNavDir, 'Router.ios.kt'), readFileSync(iosSrc, 'utf8'));
       log('gen', 'navigation/Router.ios.kt (ios actuals, from @navigation-native)');
     } else {
       log('warn', `navigation ios actuals not found at ${iosSrc}; Router.kt emitted without ios back-handler seams`);
@@ -1145,17 +1252,8 @@ export function compileVskFiles(appDir: string, config: VeskConfig, target: stri
   mkdirSync(outDir, { recursive: true });
   mkdirSync(commonOutDir, { recursive: true });
 
-  const KEEP = new Set(['App.kt', 'Runtime.kt', 'Router.kt', 'Theme.kt']);
-  for (const f of readdirSync(outDir)) {
-    if (f.endsWith('.kt') && !KEEP.has(f)) unlinkSync(join(outDir, f));
-  }
-  // The commonMain dir hosts the runtime core + router (KEEP), any stale page
-  // files from a previous placement, and project/npm module output that a
-  // portable page imports (written after the page pass below).
-  const COMMON_KEEP = new Set(['RuntimeCore.kt', 'Router.kt', 'Modules.kt']);
-  for (const f of readdirSync(commonOutDir)) {
-    if (f.endsWith('.kt') && !COMMON_KEEP.has(f)) unlinkSync(join(commonOutDir, f));
-  }
+  // Stale page pruning moved to the end of the page pass (after hits and
+  // misses are known), so unchanged cached pages keep their artifacts.
   if (!existsSync(join(outDir, 'navigation'))) mkdirSync(join(outDir, 'navigation'), { recursive: true });
   if (!existsSync(join(commonOutDir, 'navigation'))) mkdirSync(join(commonOutDir, 'navigation'), { recursive: true });
 
@@ -1305,13 +1403,42 @@ export function compileVskFiles(appDir: string, config: VeskConfig, target: stri
     file: string;
     rel: string;
     kt: string;
+    key: string;
     outName: string;
-    result: import('@compiler-native/kotlin-codegen').CompileResult;
+    result: CompileResult;
   }
+  // Per-page compile inputs are shared across every page; the per-file key
+  // adds the page's own source on top.
+  const cache = loadGenerationCache(target);
+  const globalKey = generationGlobalKey(target, appDir);
+  const cacheState = { global: globalKey, pages: {} as Record<string, PageCacheEntry> };
+  const cachedHits = new Map<string, PageCacheEntry>();
+  const compilePage = (source: string, file: string) =>
+    compileVskResult(source, file, { componentsWithoutProps, componentNames, customClasses, scopedCustomClasses: scopedClasses, imageResources, mediaResources, rootName: config.root ?? '', fileRel: relative(appDir, file), appDir, moduleRegistry, moduleSlugs, projectModuleRegistry, npmRegistry, vsklibRegistry });
   const pageResults: PageResult[] = [];
   for (const file of vskFiles) {
+    const rel = toPosix(relative(appDir, file));
     const source = readFileSync(file, 'utf8');
-    const result = compileVskResult(source, file, { componentsWithoutProps, componentNames, customClasses, scopedCustomClasses: scopedClasses, imageResources, mediaResources, rootName: config.root ?? '', fileRel: relative(appDir, file), appDir, moduleRegistry, moduleSlugs, projectModuleRegistry, npmRegistry, vsklibRegistry });
+    const key = sha256(`${globalKey}\u0000${source}`);
+    const hit = cache && cache.global === globalKey ? cache.pages[rel] : undefined;
+    if (hit && hit.key === key && hit.outName) {
+      // Content-identical page: reuse the previous compile result. The
+      // artifact stays on disk and is re-pruned (kept) at the end of the pass.
+      const decls = findComponentDecls(parse(source) as unknown as JsNode);
+      const name = decls[0]?.name ?? `s_${slugFor(rel)}`;
+      seen.set(name, (seen.get(name) ?? 0) + 1);
+      cachedHits.set(rel, hit);
+      pageResults.push({
+        file,
+        rel,
+        kt: '',
+        key,
+        outName: hit.outName,
+        result: { kt: '', errors: [], notes: [], libraryIds: hit.libraryIds, vskTargets: hit.vskTargets, jsTsTargets: hit.jsTsTargets, npmTargets: hit.npmTargets },
+      });
+      continue;
+    }
+    const result = compilePage(source, file);
     if (result.errors.length > 0) {
       console.error(`  [compile] errors in ${relative(appDir, file)}:`);
       for (const e of result.errors) console.error(`    ! ${e}`);
@@ -1319,10 +1446,10 @@ export function compileVskFiles(appDir: string, config: VeskConfig, target: stri
     }
     for (const n of result.notes) console.error(`  [compile] warning: ${n} (in ${relative(appDir, file)})`);
     const decls = findComponentDecls(parse(source) as unknown as JsNode);
-    const name = decls[0]?.name ?? `s_${slugFor(toPosix(relative(appDir, file)))}`;
+    const name = decls[0]?.name ?? `s_${slugFor(rel)}`;
     const count = seen.get(name) ?? 0;
     seen.set(name, count + 1);
-    pageResults.push({ file, rel: toPosix(relative(appDir, file)), kt: result.kt, outName: count === 0 ? name : `${name}_${count}`, result });
+    pageResults.push({ file, rel, kt: result.kt, key, outName: count === 0 ? name : `${name}_${count}`, result });
   }
 
   // Fixed-point: a page is portable iff every library it imports is installed
@@ -1357,7 +1484,7 @@ export function compileVskFiles(appDir: string, config: VeskConfig, target: stri
   }
   if (projectModules.kt.trim()) {
     const kt = `package app\n\n${projectModules.kt.trimEnd()}\n`;
-    writeFileSync(join(modulesInCommon ? commonOutDir : outDir, 'Modules.kt'), kt);
+    writeIfChanged(join(modulesInCommon ? commonOutDir : outDir, 'Modules.kt'), kt);
     log('module', `project JS/TS modules -> ${modulesInCommon ? 'commonMain' : 'androidMain'}/app/Modules.kt`);
   }
   const vmodOutDir = join(npmInCommon ? commonOutDir : outDir, 'vmod');
@@ -1368,16 +1495,57 @@ export function compileVskFiles(appDir: string, config: VeskConfig, target: stri
   }
   for (const f of npmFiles) {
     const t = join(vmodOutDir, f.rel);
-    writeFileSync(t, f.kt);
+    writeIfChanged(t, f.kt);
     log('module', `npm module -> ${npmInCommon ? 'commonMain' : 'androidMain'}/app/${f.rel}`);
   }
 
+  // Placement pass. A cached page is a true hit only when its placement is
+  // unchanged too; a transitive dependency flip (portability changed) forces
+  // a recompile so the artifact lands in the right source set.
+  const written = new Set<string>();
+  const keptHits = new Set<string>();
   for (const p of pageResults) {
     const portable = portableByRel.get(p.rel) === true;
+    const cached = cachedHits.get(p.rel);
+    if (cached && cached.portable === portable) {
+      keptHits.add(`${p.outName}.kt`);
+      log('cache', `${p.rel} -> ${portable ? 'commonMain' : 'androidMain'}/app/${p.outName}.kt (unchanged)`);
+      cacheState.pages[p.rel] = cached;
+      continue;
+    }
+    let kt = p.kt;
+    if (!kt) {
+      // Cached but misplaced (a dependency flipped portability): recompile
+      // now at the page's actual placement.
+      const source = readFileSync(p.file, 'utf8');
+      const result = compilePage(source, p.file);
+      if (result.errors.length > 0) {
+        console.error(`  [compile] errors in ${relative(appDir, p.file)}:`);
+        for (const e of result.errors) console.error(`    ! ${e}`);
+        process.exit(1);
+      }
+      for (const n of result.notes) console.error(`  [compile] warning: ${n} (in ${relative(appDir, p.file)})`);
+      kt = result.kt;
+      p.result = result;
+    }
     const dir = portable ? commonOutDir : outDir;
-    writeFileSync(join(dir, `${p.outName}.kt`), p.kt);
+    writeIfChanged(join(dir, `${p.outName}.kt`), kt);
     log('compile', `${p.rel} -> ${portable ? 'commonMain' : 'androidMain'}/app/${p.outName}.kt`);
+    written.add(`${p.outName}.kt`);
+    cacheState.pages[p.rel] = { key: p.key, outName: p.outName, portable, libraryIds: p.result.libraryIds, vskTargets: p.result.vskTargets, jsTsTargets: p.result.jsTsTargets, npmTargets: p.result.npmTargets };
   }
+
+  // Prune stale page files now that hits and misses are known: anything not
+  // framework-owned or written/kept this run is a removed or moved page.
+  const KEEP = new Set(['App.kt', 'Runtime.kt', 'Router.kt', 'Theme.kt']);
+  for (const f of readdirSync(outDir)) {
+    if (f.endsWith('.kt') && !KEEP.has(f) && !written.has(f) && !keptHits.has(f)) unlinkSync(join(outDir, f));
+  }
+  const COMMON_KEEP = new Set(['RuntimeCore.kt', 'Router.kt', 'Modules.kt']);
+  for (const f of readdirSync(commonOutDir)) {
+    if (f.endsWith('.kt') && !COMMON_KEEP.has(f) && !written.has(f) && !keptHits.has(f)) unlinkSync(join(commonOutDir, f));
+  }
+  saveGenerationCache(target, cacheState);
   return { imageResources, mediaResources };
 }
 
@@ -1798,7 +1966,7 @@ import androidx.compose.runtime.setValue
 `
     : '';
 
-  writeFileSync(
+  writeIfChanged(
     join(outDir, 'App.kt'),
     `package app
 
@@ -1912,7 +2080,7 @@ import androidx.compose.runtime.LaunchedEffect
     : `import androidx.compose.runtime.LaunchedEffect
 `;
 
-  writeFileSync(
+  writeIfChanged(
     join(iosOutDir, 'MainViewController.kt'),
     `package app
 
@@ -2113,7 +2281,7 @@ export function generateVskLibDeclarations(target: string): void {
   }
   const browserModule = browserModuleDecl();
   const browserGlobal = browserGlobalDecl();
-  writeFileSync(
+  writeIfChanged(
     join(target, 'vesk-env.d.ts'),
     `// Generated by vesk-native from libraries.json. The @vesk/* imports the
 // compiler resolves at build time are virtual modules with no npm package, so
@@ -2130,7 +2298,7 @@ ${browserModule}
     // The browser globals (openSqlite, auth) augment the global scope, which
     // requires a module file; ambient @vesk module declarations require a
     // script file — so the two live in separate generated files.
-    writeFileSync(
+    writeIfChanged(
       join(target, 'vesk-browser.d.ts'),
       `// Generated by vesk-native. The vesk browser-API globals (openSqlite,
 // signUp/signIn/signOut/currentUser/isSignedIn + their interfaces) augment the
@@ -2167,7 +2335,7 @@ export function generateProject(target: string, config: VeskConfig): void {
   // when no custom aapt2 is needed — AGP ships a bundled one for x86_64).
   syncAapt2Override(join(target, 'gradle.properties'));
   if (!existsSync(join(target, 'local.properties'))) {
-    writeFileSync(join(target, 'local.properties'), `sdk.dir=${DEFAULT_SDK}\n`);
+    writeIfChanged(join(target, 'local.properties'), `sdk.dir=${DEFAULT_SDK}\n`);
   }
 
   // What the app actually uses drives everything below: media elements decide

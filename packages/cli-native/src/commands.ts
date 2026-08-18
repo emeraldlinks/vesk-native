@@ -67,7 +67,7 @@ export async function buildApp(dir: string): Promise<void> {
   const env = { ...process.env };
   if (!env.ANDROID_HOME) env.ANDROID_HOME = DEFAULT_SDK;
   if (!env.ANDROID_SDK_ROOT) env.ANDROID_SDK_ROOT = DEFAULT_SDK;
-  const result = spawnSync(gradle, ['assembleDebug', '--console=plain', '--no-daemon'], {
+  const result = spawnSync(gradle, ['assembleDebug', '--console=plain'], {
     cwd: target,
     env,
     stdio: 'inherit',
@@ -125,7 +125,7 @@ async function bundleAndroid(target: string, config: VeskConfig): Promise<void> 
 
   const targets = config.bundle?.android ?? ['aab', 'apk'];
   const tasks = targets.map((t) => (t === 'aab' ? 'bundleRelease' : 'assembleRelease'));
-  const result = spawnSync(gradle, [...tasks, '--console=plain', '--no-daemon'], { cwd: target, env, stdio: 'inherit' });
+  const result = spawnSync(gradle, [...tasks, '--console=plain'], { cwd: target, env, stdio: 'inherit' });
   if (result.status !== 0) {
     console.error('  [bundle] gradle failed');
     process.exit(result.status ?? 1);
