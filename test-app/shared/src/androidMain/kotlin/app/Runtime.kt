@@ -92,6 +92,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.os.VibratorManager
 import android.provider.CallLog
 import android.provider.ContactsContract
 import android.provider.Telephony
@@ -754,8 +755,9 @@ actual fun rememberDeviceApi(): DeviceApi {
     var pendingFileCallback by remember { mutableStateOf<((String?, String?) -> Unit)?>(null) }
     var pendingPhotoCallback by remember { mutableStateOf<((String?) -> Unit)?>(null) }
     var pendingVideoCallback by remember { mutableStateOf<((String?) -> Unit)?>(null) }
-    var pendingPerm by remember { mutableStateOf<String?>(null) }
+    var pendingPerms by remember { mutableStateOf<Array<String>?>(null) }
     var pendingPermAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+    var pendingPermDenied by remember { mutableStateOf<(() -> Unit)?>(null) }
 
     // Assigned once at the end of rememberDeviceApi(); the launcher closures
     // reference it for state writes, so it must be declared before them.
@@ -803,14 +805,27 @@ actual fun rememberDeviceApi(): DeviceApi {
         cb?.invoke(if (ok) pendingVideo?.toString() else null)
     }
     // Generic runtime-permission gate: one launcher serves every device API
-    // (mic, location, contacts, call log, sms, accounts). The pending action
-    // runs only when the requested permission is actually granted.
+    // (mic, location, contacts, call log, sms, accounts, bluetooth, camera).
+    // The pending action runs only when every requested permission is granted;
+    // on denial the denied callback runs (each API reports an empty/error
+    // result instead of hanging silently) and the denial is logged.
     val permLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { results ->
         val action = pendingPermAction
-        val perm = pendingPerm
+        val perms = pendingPerms
+        val denied = pendingPermDenied
+        pendingPerms = null
         pendingPermAction = null
-        pendingPerm = null
-        if (perm != null && results[perm] == true) action?.invoke()
+        pendingPermDenied = null
+        if (perms != null && action != null) {
+            val missing = perms.filter { results[it] != true }
+            if (missing.isEmpty()) {
+                veskDebugLine("PERM granted: ${perms.joinToString()}")
+                action()
+            } else {
+                veskDebugLine("PERM denied: ${missing.joinToString()}")
+                denied?.invoke()
+            }
+        }
     }
 
     // QR scanning hosts a camera overlay on demand (only while a callback is
@@ -914,12 +929,13 @@ actual fun rememberDeviceApi(): DeviceApi {
                 pendingVideoCallback = cb
                 takeVideoLauncher.launch(pendingVideo!!)
             },
-            permissionRunner = { perm, action ->
-                if (ContextCompat.checkSelfPermission(context, perm) == PackageManager.PERMISSION_GRANTED) action()
+            permissionRunner = { perms, action, denied ->
+                if (perms.all { ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED }) action()
                 else {
-                    pendingPerm = perm
+                    pendingPerms = perms
                     pendingPermAction = action
-                    permLauncher.launch(arrayOf(perm))
+                    pendingPermDenied = denied
+                    permLauncher.launch(perms)
                 }
             },
             screenshotCapture = { cb ->
@@ -1032,7 +1048,7 @@ actual class DeviceApi internal constructor(
     private val filePicker: (mime: String, cb: ((String?, String?) -> Unit)?) -> Unit,
     private val photoCapture: (cb: ((String?) -> Unit)?) -> Unit,
     private val videoCapture: (cb: ((String?) -> Unit)?) -> Unit,
-    private val permissionRunner: (perm: String, action: () -> Unit) -> Unit,
+    private val permissionRunner: (perms: Array<String>, action: () -> Unit, denied: (() -> Unit)?) -> Unit,
     private val screenshotCapture: (cb: ((String?) -> Unit)?) -> Unit,
     private val scanStarter: (cb: ((String?) -> Unit)?) -> Unit,
     private val screenRecStarter: (cb: ((String?) -> Unit)?) -> Unit,
@@ -1119,12 +1135,15 @@ actual class DeviceApi internal constructor(
     // path (null if recording could not start).
     actual fun startRecording(onStarted: ((String?) -> Unit)?) {
         debugLog("RECORD start requested")
-        permissionRunner(android.Manifest.permission.RECORD_AUDIO) {
+        permissionRunner(arrayOf(android.Manifest.permission.RECORD_AUDIO), {
             debugLog("RECORD permission granted")
             val path = beginRecording()
             debugLog("RECORD beginRecording path=$path")
             onStarted?.invoke(path)
-        }
+        }, {
+            debugLog("RECORD permission denied")
+            onStarted?.invoke(null)
+        })
     }
 
     // Stops the recorder and returns the path of the saved file.
@@ -1162,6 +1181,7 @@ actual class DeviceApi internal constructor(
         val chargingState = status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL
         batteryLevel = level
         charging = chargingState
+        debugLog("BATTERY level=$level charging=$chargingState")
         onDone?.invoke(level, chargingState)
     }
 
@@ -1184,6 +1204,7 @@ actual class DeviceApi internal constructor(
         networkType = type
         networkAvailable = available
         wifiEnabled = wifi
+        debugLog("NETWORK type=$type internet=$available wifi=$wifi")
         onDone?.invoke(type, available)
     }
 
@@ -1200,9 +1221,13 @@ actual class DeviceApi internal constructor(
             val lat = loc?.latitude?.toString()
             val lng = loc?.longitude?.toString()
             lastLocation = if (lat != null && lng != null) "${lat}, ${lng}" else null
+            debugLog("LOCATION enabled=$locationEnabled fix=$lat,$lng")
             onDone?.invoke(lat, lng)
         }
-        permissionRunner(android.Manifest.permission.ACCESS_FINE_LOCATION, ::read)
+        permissionRunner(arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION), ::read, {
+            debugLog("LOCATION permission denied")
+            onDone?.invoke(null, null)
+        })
     }
 
     // Launchable apps (labels, sorted, capped); cached in installedApps.
@@ -1240,9 +1265,13 @@ actual class DeviceApi internal constructor(
                 }
             } catch (_: SecurityException) { }
             contacts = rows
+            debugLog("CONTACTS rows=${rows.size}")
             onDone?.invoke(rows)
         }
-        permissionRunner(android.Manifest.permission.READ_CONTACTS, ::read)
+        permissionRunner(arrayOf(android.Manifest.permission.READ_CONTACTS), ::read, {
+            debugLog("CONTACTS permission denied")
+            onDone?.invoke(emptyList())
+        })
     }
 
     // Call log as "type · age · number" rows; requires READ_CALL_LOG.
@@ -1275,9 +1304,13 @@ actual class DeviceApi internal constructor(
                 }
             } catch (_: SecurityException) { }
             callLogs = rows
+            debugLog("CALLS rows=${rows.size}")
             onDone?.invoke(rows)
         }
-        permissionRunner(android.Manifest.permission.READ_CALL_LOG, ::read)
+        permissionRunner(arrayOf(android.Manifest.permission.READ_CALL_LOG), ::read, {
+            debugLog("CALLS permission denied")
+            onDone?.invoke(emptyList())
+        })
     }
 
     // SMS inbox as "sender: body" rows (body trimmed); requires READ_SMS.
@@ -1300,9 +1333,13 @@ actual class DeviceApi internal constructor(
                 }
             } catch (_: SecurityException) { }
             messages = rows
+            debugLog("SMS rows=${rows.size}")
             onDone?.invoke(rows)
         }
-        permissionRunner(android.Manifest.permission.READ_SMS, ::read)
+        permissionRunner(arrayOf(android.Manifest.permission.READ_SMS), ::read, {
+            debugLog("SMS permission denied")
+            onDone?.invoke(emptyList())
+        })
     }
 
     // Device accounts as "type · name" rows; requires GET_ACCOUNTS.
@@ -1312,9 +1349,13 @@ actual class DeviceApi internal constructor(
                 .take(limit)
                 .map { "${it.type} · ${it.name}" }
             accounts = rows
+            debugLog("ACCOUNTS rows=${rows.size}")
             onDone?.invoke(rows)
         }
-        permissionRunner(android.Manifest.permission.GET_ACCOUNTS, ::read)
+        permissionRunner(arrayOf(android.Manifest.permission.GET_ACCOUNTS), ::read, {
+            debugLog("ACCOUNTS permission denied")
+            onDone?.invoke(emptyList())
+        })
     }
 
     // Current clipboard text; cached in clipboardText.
@@ -1334,14 +1375,31 @@ actual class DeviceApi internal constructor(
     }
 
     // Pulses the vibrator (VIBRATE is a normal permission, granted at install).
+    // On API 31+ the default vibrator comes from VibratorManager; the legacy
+    // Vibrator service path is the fallback. onDone reports whether the
+    // device actually has a vibrator and accepted the pulse — never a silent
+    // success when the hardware is absent.
     actual fun vibrate(millis: Long, onDone: ((Boolean) -> Unit)?) {
         debugLog("VIBRATE start millis=$millis")
-        val v = ContextCompat.getSystemService(context, Vibrator::class.java)
+        val v = if (Build.VERSION.SDK_INT >= 31) {
+            runCatching {
+                (context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
+            }.getOrNull() ?: ContextCompat.getSystemService(context, Vibrator::class.java)
+        } else {
+            ContextCompat.getSystemService(context, Vibrator::class.java)
+        }
         if (v == null) {
             debugLog("VIBRATE: no Vibrator service")
             onDone?.invoke(false)
             return
         }
+        val has = runCatching { v.hasVibrator() }.getOrDefault(false)
+        if (!has) {
+            debugLog("VIBRATE: hasVibrator=false")
+            onDone?.invoke(false)
+            return
+        }
+        var ok = false
         runCatching {
             if (Build.VERSION.SDK_INT >= 31) {
                 v.vibrate(VibrationEffect.createOneShot(millis, VibrationEffect.DEFAULT_AMPLITUDE))
@@ -1349,11 +1407,12 @@ actual class DeviceApi internal constructor(
                 @Suppress("DEPRECATION")
                 v.vibrate(millis)
             }
+            ok = true
         }.onFailure {
             debugLog("VIBRATE FAIL: $it")
         }
-        debugLog("VIBRATE done")
-        onDone?.invoke(true)
+        debugLog("VIBRATE done ok=$ok")
+        onDone?.invoke(ok)
     }
 
     // Toggles the camera flash (torch mode needs no camera permission); state
@@ -1368,6 +1427,7 @@ actual class DeviceApi internal constructor(
             cm.setTorchMode(id, !torchEnabled)
             torchEnabled = !torchEnabled
         }
+        debugLog("TORCH available=$torchAvailable on=$torchEnabled")
         onDone?.invoke(torchEnabled)
     }
 
@@ -1513,7 +1573,7 @@ actual class DeviceApi internal constructor(
     // maxSdkVersion-30 only). Adapter state is never read before the runtime
     // permission is granted — on API 31+ that throws SecurityException.
     actual fun refreshBluetooth(onDone: ((Boolean, List<String>) -> Unit)?) {
-        permissionRunner(android.Manifest.permission.BLUETOOTH_CONNECT) {
+        permissionRunner(arrayOf(android.Manifest.permission.BLUETOOTH_CONNECT), {
             val ba = context.getSystemService(BluetoothManager::class.java)?.adapter
             val enabled = runCatching { ba?.isEnabled == true }.getOrDefault(false)
             bluetoothEnabled = enabled
@@ -1526,8 +1586,12 @@ actual class DeviceApi internal constructor(
                 ba.bondedDevices.map { "${it.name} · ${it.address}" }.sorted()
             }.getOrDefault(emptyList())
             bluetoothDevices = list
+            debugLog("BLUETOOTH state enabled=$enabled bonded=${list.size}")
             onDone?.invoke(true, list)
-        }
+        }, {
+            debugLog("BLUETOOTH_CONNECT permission denied")
+            onDone?.invoke(false, emptyList())
+        })
     }
 
     // Turns the Bluetooth adapter on/off. On modern Android the raw
@@ -1535,7 +1599,7 @@ actual class DeviceApi internal constructor(
     // user through the system enable dialog (on) or the Bluetooth settings
     // screen (off) — the only supported paths since API 30.
     actual fun toggleBluetooth(enabled: Boolean, onDone: ((Boolean) -> Unit)?) {
-        permissionRunner(android.Manifest.permission.BLUETOOTH_CONNECT) {
+        permissionRunner(arrayOf(android.Manifest.permission.BLUETOOTH_CONNECT), {
             val ba = context.getSystemService(BluetoothManager::class.java)?.adapter
             if (ba == null) { onDone?.invoke(false); return@permissionRunner }
             val isOn = runCatching { ba.isEnabled }.getOrDefault(false)
@@ -1547,15 +1611,17 @@ actual class DeviceApi internal constructor(
                 true
             }.getOrDefault(false)
             onDone?.invoke(opened)
-        }
+        }, {
+            debugLog("BLUETOOTH_CONNECT permission denied")
+            onDone?.invoke(false)
+        })
     }
 
     // Discovers nearby devices for a few seconds; BLUETOOTH_SCAN on 12+.
     // Results ("name · address") land in bluetoothDevices too.
     actual fun scanBluetooth(seconds: Int, onDone: ((List<String>) -> Unit)?) {
         debugLog("BLUETOOTH scan start seconds=$seconds")
-        permissionRunner(android.Manifest.permission.BLUETOOTH_SCAN) {
-            permissionRunner(android.Manifest.permission.BLUETOOTH_CONNECT) {
+        permissionRunner(arrayOf(android.Manifest.permission.BLUETOOTH_SCAN, android.Manifest.permission.BLUETOOTH_CONNECT), {
                 val ba = context.getSystemService(BluetoothManager::class.java)?.adapter
                 if (ba == null || runCatching { !ba.isEnabled }.getOrDefault(true)) {
                     debugLog("BLUETOOTH scan adapter=${ba != null} enabled=${runCatching { ba?.isEnabled }}")
@@ -1590,10 +1656,13 @@ actual class DeviceApi internal constructor(
                 runCatching { context.unregisterReceiver(receiver) }
                 val list = results.distinct().sorted()
                 bluetoothDevices = list
+                debugLog("BLUETOOTH scan done found=${list.size}")
                 onDone?.invoke(list)
             }, seconds * 1000L)
-            }
-        }
+        }, {
+            debugLog("BLUETOOTH scan permission denied")
+            onDone?.invoke(emptyList())
+        })
     }
 
     // ---- QR codes ----------------------------------------------------------
@@ -1623,13 +1692,16 @@ actual class DeviceApi internal constructor(
     // runtime permission, granted on first use). While active the
     // device.scanningQr flag is set; onResult receives the decoded text.
     actual fun scanQr(onResult: ((String?) -> Unit)?) {
-        permissionRunner(android.Manifest.permission.CAMERA) {
+        permissionRunner(arrayOf(android.Manifest.permission.CAMERA), {
             scanningQr = true
             scanStarter { text ->
                 scanningQr = false
                 onResult?.invoke(text)
             }
-        }
+        }, {
+            debugLog("CAMERA permission denied")
+            onResult?.invoke(null)
+        })
     }
 
     // ---- Screen recording --------------------------------------------------
@@ -1892,9 +1964,13 @@ actual class DeviceApi internal constructor(
                 }
             } catch (_: SecurityException) { }
             calendarEvents = rows
+            debugLog("CALENDAR rows=${rows.size}")
             onDone?.invoke(rows)
         }
-        permissionRunner(android.Manifest.permission.READ_CALENDAR, ::read)
+        permissionRunner(arrayOf(android.Manifest.permission.READ_CALENDAR), ::read, {
+            debugLog("CALENDAR permission denied")
+            onDone?.invoke(emptyList())
+        })
     }
 
     // NFC presence + adapter state.
@@ -1976,6 +2052,13 @@ actual class DeviceApi internal constructor(
 }
 
 // Best-effort MIME type from a file path (share sheet).
+private fun veskDebugLine(line: String) {
+    runCatching {
+        java.io.File(android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS), "vesk-debug.txt")
+            .appendText("${java.util.Date()}\n$line\n")
+    }
+}
+
 private fun guessMime(path: String): String {
     val ext = path.substringAfterLast('.').lowercase()
     return when (ext) {
