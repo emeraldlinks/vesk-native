@@ -37,6 +37,9 @@ get real compiler/JVM mappings, never workarounds in the demo app.
   transpiled-to-Kotlin-by-runtime). User script code is translated at build
   time by the compiler; anything the compiler cannot translate yet is a
   hard build error — never a runtime fallback to a JS engine.
+  Dev-only tooling is exempt: `vesk dev --web` previews `.vsk` in the browser
+  via the web compiler (@vesk/compiler) + a device.* shim
+  (`web-preview-shim.ts`) — it ships nowhere in a built app.
 - **The script compiler is being rebuilt bottom-up on a real token surface.**
   The end state is a hand-written, regex-free JS/TS lexer + recursive-descent
   parser in `packages/compiler-native/src/lexer.ts` / `parser.ts` producing a

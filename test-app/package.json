@@ -8,7 +8,8 @@
   },
   "dependencies": {
     "@vesk/native": "file:../tarballs/vesk-native-0.1.0.tgz",
+    "@vesk/native-cli": "file:../tarballs/vesk-native-cli-0.1.0.tgz",
     "@vesk/native-compiler": "file:../tarballs/vesk-native-compiler-0.1.0.tgz",
-    "@vesk/native-cli": "file:../tarballs/vesk-native-cli-0.1.0.tgz"
+    "@vesk/runtime": "file:../tarballs/vesk-runtime-0.1.9.tgz"
   }
 }

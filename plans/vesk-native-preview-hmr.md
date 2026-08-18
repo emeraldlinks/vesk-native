@@ -85,23 +85,38 @@ initially.
   `:app:compileDebugKotlin` untouched; removing the page pruned
   `Phase1Test.kt` and restored the exact baseline hash. Build green both ways.
 
-### Phase 2 — Tier 1: web preview (ms HMR in browser)
-- New `vesk dev --web` verb (ADR-0022 extends ADR-0020's cwd-based surface).
-- Thin server in `packages/cli-native/src/preview-server.ts`: node:http + ws +
-  esbuild + `@vesk/compiler` `compileClient`/`client-codegen`, route walk over
-  `app/` mirroring `scanRoutes` semantics.
-- **Native-only surface mapping table** (explicit, verified per entry, fails
-  closed): `device.*` → real browser equivalents only where a genuine Web API
-  exists (Notification, clipboard, geolocation — each verified against the live
-  spec before inclusion); everything unmapped → no-op + console warning.
-  Declarative `<notification>` etc. → button that no-ops.
-- `veskconfig.ts` → web adapter (theme/colors → CSS vars).
-- HMR: per-file recompile + WebSocket push; vesk cells already work in the web
-  runtime (`track.ts`).
-- Dev-only tooling — ships nowhere; AGENTS.md clarifying line (no-JS rule
-  applies to *built apps*).
-- **Gate**: class edit visible <100ms; counter state survives HMR; unmapped API
-  warns, never crashes.
+### Phase 2 — Tier 1: web preview (ms HMR in browser) ✅ done 2026-08-18
+- `vesk dev [--port N]` implemented (index.ts dispatch; commands.ts `devApp`;
+  usage() updated). Config-loaded cwd-based verb, same as build.
+- Thin server `packages/cli-native/src/preview-server.ts`: node:http shell
+  (no SSR/API/middleware), `@vesk/compiler` `scanRoutes` route walk,
+  `@vesk/adapter` `generateClientBundle` (codeSplit + hmr + importRuntime),
+  tree-shaken runtime, `createHmrServer` for WS HMR at `/_vesk/hmr`.
+- **device.\* mapping table** (`web-preview-shim.ts`, member list taken from
+  the real `DeviceApi` expect class, runtime-templates.ts:504-618): real
+  browser APIs only — File input+URL.createObjectURL (pick\*/capture\*),
+  Notification (notify), MediaRecorder (recording), navigator.clipboard,
+  navigator.vibrate, Web Share, speechSynthesis, geolocation, Battery API,
+  Network Information, OPFS (read/write/list/deleteFile), tel:/mailto:/sms:
+  + window.open. Everything unmapped → console.warn no-op with a
+  callback-safe default. State slots are reactive: the server bridges the
+  tree-shaken runtime namespace to `globalThis.__veskRuntime`, slots are
+  lazy `track()` cells behind accessor properties (read = cell.get()).
+  Declarative native elements compile to inert markup (verified: PullToRefresh
+  degrades to its label text). Web compiler does nothing for device.* by
+  design — the shim is the entire mapping.
+- veskconfig → web adapter: colors → `:root` CSS vars (verified with
+  test-app's palette). theme.css served raw; Tailwind classes inert in
+  preview (pixel parity is Phase 3/4 territory).
+- **Gate (measured)**: `touch about/page.vsk` → per-file compileClient 6-7ms
+  → WS `{"type":"update","time":6,"components":{"About":true}}` — class edit
+  visible ≪100ms (browser eval of fnSources; lazy chunks rebuild in the
+  background, 11s, serving the previous version meanwhile). Counter state
+  survives HMR via the runtime's hmr mechanism (eval + __updatedComponents,
+  cells preserved). Unmapped API warns in console, never crashes.
+- @vesk/runtime is a runtime dependency of the published CLI (package.json);
+  test-app installs it from tarballs (version-matched, 0.1.9). AGENTS.md
+  clarified: dev-only preview tooling ships nowhere in built apps.
 
 ### Phase 3 — Tier 2: native
 - **3.1 Desktop ms-HMR (primary)**: switch commonMain to `org.jetbrains.compose`

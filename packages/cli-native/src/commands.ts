@@ -9,6 +9,7 @@ import type { VeskConfig } from '@vesk/native';
 import { deriveLibraryPermissions, installedLibraries, loadLibraries, mavenMetadata, parseLibrarySpec, resolveLibrary, saveLibraries, verifyLibraries, verifyLibrary, withVersion, writeVsklibCache } from '@cli-native/vsklib';
 import type { VskLibRecord } from '@cli-native/vsklib';
 import { findJava } from '@cli-native/toolchain';
+import { startPreviewServer } from '@cli-native/preview-server';
 
 export { setupToolchain } from '@cli-native/toolchain';
 
@@ -77,6 +78,16 @@ export async function buildApp(dir: string): Promise<void> {
     process.exit(result.status ?? 1);
   }
   log('build', 'assembleDebug OK');
+}
+
+// `vesk dev [--port N]` — web preview (Phase 2): client-only dev server with
+// per-file HMR in the browser. Native-only surfaces (device.*) map to real
+// browser APIs where one exists and warn no-op otherwise; the mapping lives
+// in web-preview-shim.ts. Dev tooling only — ships nowhere in a built app.
+export async function devApp(dir: string, port: number): Promise<void> {
+  const target = resolve(dir);
+  const config = await loadConfig(target);
+  await startPreviewServer(target, port, config);
 }
 
 // `vesk bundle [dir] [android|ios]` — release packaging.

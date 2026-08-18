@@ -1,6 +1,6 @@
 import { realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { addLibrary, buildApp, bundleApp, initApp, removeLibrary, setupToolchain, updateLibraries, verifyApp, verifyBundle } from '@cli-native/commands';
+import { addLibrary, buildApp, bundleApp, devApp, initApp, removeLibrary, setupToolchain, updateLibraries, verifyApp, verifyBundle } from '@cli-native/commands';
 import { TOOLCHAIN_ROOT, usage } from '@cli-native/constants';
 
 // Programmatic surface for tooling, scripts, and tests (the CLI entry point
@@ -57,9 +57,12 @@ async function main(): Promise<void> {
       await removeLibrary(cwd, spec);
       break;
     }
-    case 'dev':
-      console.log('  [dev] not implemented yet (Phase 7)');
+    case 'dev': {
+      const portArg = process.argv.findIndex((a) => a === '--port');
+      const port = portArg !== -1 && process.argv[portArg + 1] ? Number(process.argv[portArg + 1]) : 5173;
+      await devApp(cwd, Number.isFinite(port) ? port : 5173);
       break;
+    }
     default:
       usage();
   }
