@@ -505,7 +505,7 @@ function deviceApiLines(node: StaticNode, em: Emitter, level: number, extraModif
         if (v) args.push(`${padIn}${name} = ${v},`);
       }
       for (const cbName of ['onDone', 'onPick', 'onTap', 'onResult']) {
-        const cb = attrs.get(cbName);
+        const cb = attrs.get(cbName.toLowerCase());
         if (cb) args.push(`${padIn}${cbName} = ${em.j2k.expr(cb).trimStart()},`);
       }
       break;

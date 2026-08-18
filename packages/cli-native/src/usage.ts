@@ -241,6 +241,7 @@ const DEVICE_APIS = new Set([
 // carries what the app actually uses, and runtime grants happen on first use.
 export const API_PERMISSIONS: Record<string, string[]> = {
   startRecording: ['android.permission.RECORD_AUDIO'],
+  notify: ['android.permission.POST_NOTIFICATIONS'],
   scanQr: ['android.permission.CAMERA'],
   getLocation: ['android.permission.ACCESS_COARSE_LOCATION', 'android.permission.ACCESS_FINE_LOCATION'],
   listContacts: ['android.permission.READ_CONTACTS'],

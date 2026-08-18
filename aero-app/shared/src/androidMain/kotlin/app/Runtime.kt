@@ -73,10 +73,12 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import androidx.core.app.ActivityCompat
 import android.accounts.AccountManager
 import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
+import android.content.ContentUris
 import android.content.ContextWrapper
 import android.content.IntentFilter
 import android.graphics.Bitmap
@@ -95,6 +97,7 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import android.provider.CallLog
 import android.provider.ContactsContract
+import android.provider.MediaStore
 import android.provider.Telephony
 import androidx.activity.ComponentActivity
 import android.app.ActivityManager
@@ -292,10 +295,18 @@ actual fun rememberDeviceApi(): DeviceApi {
         if (perms != null && action != null) {
             val missing = perms.filter { results[it] != true }
             if (missing.isEmpty()) {
-                veskDebugLine("PERM granted: ${perms.joinToString()}")
+                veskDebugLine(context, "PERM granted: ${perms.joinToString()}")
                 action()
             } else {
-                veskDebugLine("PERM denied: ${missing.joinToString()}")
+                veskDebugLine(context, "PERM denied: ${missing.joinToString()}")
+                // When the system will no longer show a dialog for a
+                // permission (user chose "don't ask again"), re-launching is
+                // a silent no-op. Tell the user where to grant it instead.
+                val activity = findActivity(context)
+                if (activity != null && missing.all { !ActivityCompat.shouldShowRequestPermissionRationale(activity, it) }) {
+                    veskDebugLine(context, "PERM blocked (no dialog available): ${missing.joinToString()}")
+                    Toast.makeText(context, "Permission blocked — grant it in app settings", Toast.LENGTH_LONG).show()
+                }
                 denied?.invoke()
             }
         }
@@ -433,7 +444,17 @@ actual fun rememberDeviceApi(): DeviceApi {
                     }, Handler(Looper.getMainLooper()))
                 }
             },
-            notifyAction = { title, text, onTap -> veskNotify(context, title, text, onTap) },
+            notifyAction = { title, text, onTap ->
+                if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+                    veskNotify(context, title, text, onTap)
+                } else {
+                    veskDebugLine(context, "NOTIFY permission not granted, asking")
+                    pendingPerms = arrayOf(android.Manifest.permission.POST_NOTIFICATIONS)
+                    pendingPermAction = { veskNotify(context, title, text, onTap) }
+                    pendingPermDenied = { veskDebugLine(context, "NOTIFY permission denied") }
+                    permLauncher.launch(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS))
+                }
+            },
             scanStarter = { cb -> pendingScanCb = cb },
             screenRecStarter = { cb ->
                 pendingScreenRecCb = cb
@@ -527,12 +548,7 @@ actual class DeviceApi internal constructor(
     // Diagnostics: appends a line to vesk-debug.txt in Downloads so on-device
     // testing can confirm which device calls actually fire (launchSafe failure
     // lines use the same file). Writes are best-effort and never throw.
-    private fun debugLog(line: String) {
-        runCatching {
-            java.io.File(android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS), "vesk-debug.txt")
-                .appendText("${java.util.Date()}\n$line\n")
-        }
-    }
+    private fun debugLog(line: String) = veskDebugLine(context, line)
 
     // Style B: pass an optional callback to receive the result directly,
     //     device.pickImage { uri -> photo = uri }
@@ -1395,14 +1411,47 @@ actual class DeviceApi internal constructor(
     }
 }
 
-// Best-effort MIME type from a file path (share sheet).
-private fun veskDebugLine(line: String) {
-    runCatching {
-        java.io.File(android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS), "vesk-debug.txt")
-            .appendText("${java.util.Date()}\n$line\n")
+// Best-effort diagnostics: appends a line to vesk-debug.txt in the public
+// Downloads directory. Uses the MediaStore on API 29+ so no storage
+// permission is needed (scoped storage), falling back to a direct file write
+// on older Android. Never throws.
+private fun veskDebugLine(context: Context, line: String) {
+    val text = "${java.util.Date()}\n$line\n"
+    if (Build.VERSION.SDK_INT >= 29) {
+        runCatching {
+            val resolver = context.contentResolver
+            val collection = MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+            var uri: Uri? = null
+            resolver.query(
+                collection,
+                arrayOf(MediaStore.MediaColumns._ID),
+                "${MediaStore.MediaColumns.DISPLAY_NAME} = ?",
+                arrayOf("vesk-debug.txt"),
+                null,
+            )?.use { c -> if (c.moveToFirst()) uri = ContentUris.withAppendedId(collection, c.getLong(0)) }
+            if (uri == null) {
+                val values = android.content.ContentValues().apply {
+                    put(MediaStore.MediaColumns.DISPLAY_NAME, "vesk-debug.txt")
+                    put(MediaStore.MediaColumns.MIME_TYPE, "text/plain")
+                    put(MediaStore.MediaColumns.RELATIVE_PATH, android.os.Environment.DIRECTORY_DOWNLOADS)
+                }
+                uri = resolver.insert(collection, values)
+            }
+            if (uri != null) {
+                resolver.openFileDescriptor(uri, "wa")?.use { fd ->
+                    java.io.FileOutputStream(fd.fileDescriptor).use { it.write(text.toByteArray()) }
+                }
+            }
+        }
+    } else {
+        runCatching {
+            java.io.File(android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS), "vesk-debug.txt")
+                .appendText(text)
+        }
     }
 }
 
+// Best-effort MIME type from a file path (share sheet).
 private fun guessMime(path: String): String {
     val ext = path.substringAfterLast('.').lowercase()
     return when (ext) {

@@ -549,10 +549,13 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				VeskBatteryStatus(
+					onDone = { level, charging -> run __veskret19@ { batteryInfo.value = jsString((("" + level) + "%") + (if (truthy(charging)) " · charging" else "")) } },
 				)
 				VeskNetworkStatus(
+					onDone = { type, available -> run __veskret20@ { networkInfo.value = jsString(((type ?: "offline")) + (if (truthy(available)) " · online" else "")) } },
 				)
 				VeskLocation(
+					onDone = { lat, lng -> run __veskret21@ { locInfo.value = jsString(if (truthy(lat)) (lat + ", ") + lng else "no fix (location off?)") } },
 				)
 			}
 			Text(
@@ -583,9 +586,10 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				VeskApps(
+					onDone = { list -> run __veskret22@ { firstApp.value = jsString((jsIndex(list, 0) ?: "none")) } },
 				)
 				Button(
-					onClick = jsSafe({ run __veskret19@ { device.listApps( { list -> run __veskret20@ { firstApp.value = jsString((jsIndex(list, 0) ?: "none")) } }) } }),
+					onClick = jsSafe({ run __veskret23@ { device.listApps( { list -> run __veskret24@ { firstApp.value = jsString((jsIndex(list, 0) ?: "none")) } }) } }),
 					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)),
 					shape = RoundedCornerShape(9999.dp),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -627,12 +631,16 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				VeskContacts(
+					onDone = { list -> run __veskret25@ { recentContact.value = jsString((jsIndex(list, 0) ?: "none")) } },
 				)
 				VeskCallLog(
+					onDone = { list -> run __veskret26@ { callRow.value = jsString((jsIndex(list, 0) ?: "none")) } },
 				)
 				VeskMessages(
+					onDone = { list -> run __veskret27@ { msgRow.value = jsString((jsIndex(list, 0) ?: "none")) } },
 				)
 				VeskAccounts(
+					onDone = { list -> run __veskret28@ { acctRow.value = jsString((jsIndex(list, 0) ?: "none")) } },
 				)
 			}
 			Text(
@@ -678,10 +686,11 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				VeskClipboard(
+					onDone = { text -> run __veskret29@ { clipTxt.value = jsString((text ?: "clipboard is empty")) } },
 				)
 				VeskCopyToClipboard(
 					value = "copied by vesk",
-					onDone = { run __veskret21@ { clipTxt.value = jsString("copied \"copied by vesk\" — now read it back") } },
+					onDone = { run __veskret30@ { clipTxt.value = jsString("copied \"copied by vesk\" — now read it back") } },
 				)
 				VeskVibrate(
 					duration = 200,
@@ -694,13 +703,14 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				VeskScreenshot(
+					onDone = { path -> run __veskret31@ { clipTxt.value = jsString("screenshot: " + ((path ?: "failed"))) } },
 				)
 				VeskShareText(
 					text = "Hello from vesk-native!",
 				)
 				VeskShareFile(
 					label = "Share last image",
-					path = run { val __vsk_v22 = device.lastPhoto; if (truthy(__vsk_v22)) __vsk_v22 else device.lastImage },
+					path = run { val __vsk_v32 = device.lastPhoto; if (truthy(__vsk_v32)) __vsk_v32 else device.lastImage },
 				)
 			}
 			Text(
@@ -731,6 +741,7 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				VeskBiometricAuth(
+					onDone = { ok, reason -> run __veskret33@ { bioInfo.value = jsString(if (truthy(ok)) "authenticated ✓" else "failed: " + ((reason ?: "?"))) } },
 				)
 			}
 			Text(
@@ -761,10 +772,12 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				VeskBluetooth(
+					onDone = { enabled, list -> run __veskret34@ { btInfo.value = jsString(((if (truthy(enabled)) "on" else "off") + " · ") + ((jsIndex(list, 0) ?: "no paired devices"))) } },
 				)
 				VeskBluetoothToggle(
 				)
 				VeskBluetoothScan(
+					onDone = { list -> run __veskret35@ { btInfo.value = jsString("scan: " + ((jsIndex(list, 0) ?: "nothing found"))) } },
 				)
 			}
 			Text(
@@ -795,7 +808,7 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				Button(
-					onClick = jsSafe({ run __veskret23@ { device.generateQrCode("vesk-native:" + ((cbPhotoCell.value ?: "qr")),  { path -> run __veskret24@ { qrText.value = jsString((path ?: "")) } }) } }),
+					onClick = jsSafe({ run __veskret36@ { device.generateQrCode("vesk-native:" + ((cbPhotoCell.value ?: "qr")),  { path -> run __veskret37@ { qrText.value = jsString((path ?: "")) } }) } }),
 					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0xFF111827)),
 					shape = RoundedCornerShape(9999.dp),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -809,14 +822,15 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				)
 				}
 				VeskQrScanner(
+					onResult = { text -> run __veskret38@ { qrText.value = jsString("scanned: " + ((text ?: "no code"))) } },
 				)
 			}
 			VeskQrCode(
-				value = run { val __vsk_v25 = qrText.value; if (truthy(__vsk_v25)) __vsk_v25 else "https://vesk.dev" },
+				value = run { val __vsk_v39 = qrText.value; if (truthy(__vsk_v39)) __vsk_v39 else "https://vesk.dev" },
 				modifier = Modifier.padding(top = 12.dp).width(160.dp).height(160.dp),
 			)
 			Text(
-				text = (run { val __vsk_v26 = qrText.value; if (truthy(__vsk_v26)) __vsk_v26 else "qr-code element renders whatever value is set" }).toString(),
+				text = (run { val __vsk_v40 = qrText.value; if (truthy(__vsk_v40)) __vsk_v40 else "qr-code element renders whatever value is set" }).toString(),
 				modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
 				style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF6B7280)),
 			)
@@ -839,6 +853,7 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				)
 			}
 			VeskScreenRecord(
+				onDone = { path -> run __veskret41@ { screenRecPath.value = jsString((path ?: "cancelled")) } },
 			)
 			Text(
 				text = "path: " + (screenRecPath.value).toString(),
@@ -868,6 +883,7 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				VeskVolume(
+					onDone = { level, ringer -> run __veskret42@ { sysInfo.value = jsString((("volume " + level) + " · ") + ((ringer ?: "?"))) } },
 				)
 				VeskSetVolume(
 					label = "Volume 60%",
@@ -920,16 +936,20 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				VeskDeviceInfo(
+					onDone = { info -> run __veskret43@ { sysInfo.value = jsString(info) } },
 				)
 				VeskStorage(
+					onDone = { free, total -> run __veskret44@ { storageTxt.value = jsString((free + " free of ") + total) } },
 				)
 				VeskSensor(
 					label = "Light sensor",
 					type = "light",
+					onDone = { v -> run __veskret45@ { sensorVal.value = jsString((v ?: "no sensor")) } },
 				)
 				VeskSensor(
 					label = "Accelerometer",
 					type = "accelerometer",
+					onDone = { v -> run __veskret46@ { sensorVal.value = jsString((v ?: "no sensor")) } },
 				)
 			}
 			Text(
@@ -960,10 +980,13 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				VeskCalendar(
+					onDone = { list -> run __veskret47@ { calTxt.value = jsString((jsIndex(list, 0) ?: "no upcoming events")) } },
 				)
 				VeskNfc(
+					onDone = { available, enabled -> run __veskret48@ { calTxt.value = jsString("nfc " + (if (truthy(available)) if (truthy(enabled)) "on" else "off" else "absent")) } },
 				)
 				VeskSim(
+					onDone = { carrier, state -> run __veskret49@ { calTxt.value = jsString((((carrier ?: "no sim")) + " · ") + ((state ?: "?"))) } },
 				)
 			}
 			Text(
@@ -1045,10 +1068,11 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 			) {
 				VeskSpeak(
 					text = "Everything in vesk is built from vsk files.",
+					onDone = { ok -> run __veskret50@ { ttsDone.value = ok } },
 				)
 				VeskWallpaper(
 					label = "Set wallpaper from last photo",
-					path = run { val __vsk_v27 = device.lastPhoto; if (truthy(__vsk_v27)) __vsk_v27 else cbPhotoCell.value },
+					path = run { val __vsk_v51 = device.lastPhoto; if (truthy(__vsk_v51)) __vsk_v51 else cbPhotoCell.value },
 				)
 			}
 			Column(
@@ -1088,7 +1112,7 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 			) {
 				Button(
-					onClick = jsSafe({ run __veskret28@ { device.writeFile("notes.txt", "hello vesk",  { path -> run __veskret29@ { fileTxt.value = jsString("wrote: " + ((path ?: "failed"))) } }) } }),
+					onClick = jsSafe({ run __veskret52@ { device.writeFile("notes.txt", "hello vesk",  { path -> run __veskret53@ { fileTxt.value = jsString("wrote: " + ((path ?: "failed"))) } }) } }),
 					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)),
 					shape = RoundedCornerShape(9999.dp),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -1102,7 +1126,7 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				)
 				}
 				Button(
-					onClick = jsSafe({ run __veskret30@ { device.readFile("notes.txt",  { text -> run __veskret31@ { fileTxt.value = jsString("read: " + ((text ?: "missing"))) } }) } }),
+					onClick = jsSafe({ run __veskret54@ { device.readFile("notes.txt",  { text -> run __veskret55@ { fileTxt.value = jsString("read: " + ((text ?: "missing"))) } }) } }),
 					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)),
 					shape = RoundedCornerShape(9999.dp),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -1116,7 +1140,7 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				)
 				}
 				Button(
-					onClick = jsSafe({ run __veskret32@ { device.listFiles("",  { list -> run __veskret33@ { fileTxt.value = jsString("files: " + ((jsIndex(list, 0) ?: "none"))) } }) } }),
+					onClick = jsSafe({ run __veskret56@ { device.listFiles("",  { list -> run __veskret57@ { fileTxt.value = jsString("files: " + ((jsIndex(list, 0) ?: "none"))) } }) } }),
 					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)),
 					shape = RoundedCornerShape(9999.dp),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -1130,7 +1154,7 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				)
 				}
 				Button(
-					onClick = jsSafe({ run __veskret34@ { device.deleteFile("notes.txt",  { ok -> run __veskret35@ { fileTxt.value = jsString("deleted: " + ok) } }) } }),
+					onClick = jsSafe({ run __veskret58@ { device.deleteFile("notes.txt",  { ok -> run __veskret59@ { fileTxt.value = jsString("deleted: " + ok) } }) } }),
 					modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)),
 					shape = RoundedCornerShape(9999.dp),
 					colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -1183,10 +1207,10 @@ fun Media(props: MediaProps = MediaProps(), content: @Composable () -> Unit = {}
 				)
 			}
 			Column(
-				modifier = Modifier.veskDropTarget({ t -> run __veskret36@ { dropText.value = t } }).fillMaxWidth().padding(top = 8.dp).clip(RoundedCornerShape(12.dp)).veskDashedBorder(2.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.22f), floatArrayOf(12f, 12f)).padding(16.dp),
+				modifier = Modifier.veskDropTarget({ t -> run __veskret60@ { dropText.value = t } }).fillMaxWidth().padding(top = 8.dp).clip(RoundedCornerShape(12.dp)).veskDashedBorder(2.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.22f), floatArrayOf(12f, 12f)).padding(16.dp),
 			) {
 				Text(
-					text = "drop here → " + (run { val __vsk_v37 = dropText.value; if (truthy(__vsk_v37)) __vsk_v37 else "nothing dropped yet" }).toString(),
+					text = "drop here → " + (run { val __vsk_v61 = dropText.value; if (truthy(__vsk_v61)) __vsk_v61 else "nothing dropped yet" }).toString(),
 					modifier = Modifier.fillMaxWidth(),
 					style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp, color = Color(0xFF6B7280)),
 				)
