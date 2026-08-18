@@ -1,4 +1,4 @@
 {
   "name": "starter",
-  "description": "App with navigation, state management, and basic UI"
+  "description": "Simple counter with a test notification button"
 }

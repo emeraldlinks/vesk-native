@@ -27,6 +27,16 @@ for (const f of readdirSync(join(ROOT, 'runtime', 'vesk-native-template'))) {
 }
 console.log('[assets] template -> assets/template/');
 
+// The create CLI ships the same gradle scaffolding so a packed
+// create-vesk-native tarball is self-contained (its runtime fallback reads
+// the monorepo cli-native assets when running from source).
+const CREATE_OUT = join(ROOT, 'packages', 'create-native', 'assets', 'template');
+mkdirSync(CREATE_OUT, { recursive: true });
+for (const f of readdirSync(join(ROOT, 'runtime', 'vesk-native-template'))) {
+  cpSync(join(ROOT, 'runtime', 'vesk-native-template', f), join(CREATE_OUT, f), { recursive: true });
+}
+console.log('[assets] template -> create-native/assets/template/');
+
 mkdirSync(join(OUT, 'navigation'), { recursive: true });
 // The router is a KMP pair: the portable Router.kt (commonMain) plus the
 // platform actuals. Each platform source file follows Kotlin's

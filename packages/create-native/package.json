@@ -6,15 +6,11 @@
   "bin": {
     "create-vesk-native": "./dist/index.js"
   },
-  "files": ["dist", "templates"],
+  "files": ["dist", "templates", "assets"],
   "scripts": {
-    "build": "tsc"
-  },
-  "dependencies": {
-    "prompts": "^2.4.2"
+    "build": "esbuild src/index.ts --bundle --format=esm --platform=node --outfile=dist/index.js --tsconfig=../../tsconfig.json --banner:js='#!/usr/bin/env node'"
   },
   "devDependencies": {
-    "@types/prompts": "^2.4.9",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.0"
   }
 }

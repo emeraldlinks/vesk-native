@@ -1,5 +1,5 @@
 component Layout(props) {
-    <div class="flex-col w-full h-full bg-gray-100">
+    <div class="flex-col w-full h-full">
         {props.children}
     </div>
 }

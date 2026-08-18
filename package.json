@@ -18,7 +18,8 @@
     "build:native": "npm run build -w @vesk/native",
     "build:compiler": "npm run build -w @vesk/native-compiler",
     "build:cli": "npm run build -w @vesk/native-cli",
-    "build": "npm run build:assets && npm run build:native && npm run build:compiler && npm run build:cli"
+    "build:create": "npm run build -w create-vesk-native",
+    "build": "npm run build:assets && npm run build:native && npm run build:compiler && npm run build:cli && npm run build:create"
   },
   "devDependencies": {
     "@types/node": "^26.1.2",

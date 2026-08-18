@@ -86,9 +86,10 @@ get real compiler/JVM mappings, never workarounds in the demo app.
 - Build commands: `npx tsx packages/cli-native/src/index.ts build test-app`
   (slow, ~5 min), direct Kotlin diagnostics via
   `/opt/vesk-native-toolchain/gradle-9.7.0/bin/gradle -p test-app/app compileDebugKotlin --rerun-tasks`.
-  **Never run a build piped through `tail`/silent — always stream logs to a
-  file and show progress** (e.g. `... build test-app > /tmp/vesk-build.log 2>&1 &`
-  then poll the file; or `| tee /tmp/vesk-build.log`). A silent build looks hung.
+  **Never redirect a build to a log file, background it, or pipe it through
+  `tail`/silent — always run the build command directly so the full log
+  streams to the terminal.** A silent or file-veiled build looks hung and
+  hides the progress the user wants to see.
   The CLI is cwd-based (it runs from a project's node_modules): from inside
   `test-app/` the equivalent is `npx tsx ../packages/cli-native/src/index.ts build`,
   and `bundle [android|ios]` takes the platform as its only positional.

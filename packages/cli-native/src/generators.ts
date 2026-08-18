@@ -16,7 +16,7 @@ import { compileNpmModules } from '@cli-native/npm';
 import { KtErrors } from '@compiler-native/js2kt';
 import type { JsNode } from '@compiler-native/js2kt';
 import type { VeskConfig } from '@vesk/native';
-import { AAPT2_OVERRIDE, DEFAULT_SDK, NAVIGATION_KT, TEMPLATE_DIR, collectVskFiles, colorLiteral, log, slugify } from '@cli-native/constants';
+import { DEFAULT_SDK, NAVIGATION_KT, TEMPLATE_DIR, collectVskFiles, colorLiteral, log, slugify } from '@cli-native/constants';
 import { API_PERMISSIONS, MAX_SDK_PERMS, collectBrowserApiUsage, collectDeviceApiUsage, collectRuntimeUsage } from '@cli-native/usage';
 import { BIOMETRIC_AUTH_BODY, BIOMETRIC_CHECK_BODY, IOS_RUNTIME_IMPORTS, QRGEN_BODY, QR_OVERLAY_BLOCK, RUNTIME_COMMON_IMPORTS, RUNTIME_CORE, RUNTIME_HELPERS, RUNTIME_ORDER, runtimeImports } from '@cli-native/runtime-templates';
 import { installedLibraries } from '@cli-native/vsklib';
@@ -2216,11 +2216,7 @@ export function generateProject(target: string, config: VeskConfig): void {
   generateAppBuildGradleKts(target, config, libs);
 }
 
-export function syncAapt2Override(gradleProperties: string): void {
-  if (!existsSync(gradleProperties)) return;
-  const lines = readFileSync(gradleProperties, 'utf8').split('\n');
-  const kept = lines.filter((l) => !l.startsWith('android.aapt2FromMavenOverride'));
-  if (existsSync(AAPT2_OVERRIDE)) kept.push(`android.aapt2FromMavenOverride=${AAPT2_OVERRIDE}`);
-  writeFileSync(gradleProperties, `${kept.join('\n').replace(/\n{3,}/g, '\n\n').trim()}\n`);
-}
+import { syncAapt2Override } from '@cli-native/toolchain';
+
+export { syncAapt2Override };
 

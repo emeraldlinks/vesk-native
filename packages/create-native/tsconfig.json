@@ -3,7 +3,11 @@
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
-    "noEmit": false
+    "noEmit": false,
+    "baseUrl": ".",
+    "paths": {
+      "@cli-native/*": ["../cli-native/src/*.ts"]
+    }
   },
   "include": ["src"]
 }
