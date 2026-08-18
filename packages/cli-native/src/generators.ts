@@ -1537,7 +1537,7 @@ export function compileVskFiles(appDir: string, config: VeskConfig, target: stri
 
   // Prune stale page files now that hits and misses are known: anything not
   // framework-owned or written/kept this run is a removed or moved page.
-  const KEEP = new Set(['App.kt', 'Runtime.kt', 'Router.kt', 'Theme.kt']);
+  const KEEP = new Set(['App.kt', 'Routes.android.kt', 'Runtime.kt', 'Router.kt', 'Theme.kt']);
   for (const f of readdirSync(outDir)) {
     if (f.endsWith('.kt') && !KEEP.has(f) && !written.has(f) && !keptHits.has(f)) unlinkSync(join(outDir, f));
   }
@@ -1844,6 +1844,35 @@ function collectVskPages(appDir: string) {
     });
 }
 
+// Route registry (plans/vesk-native-preview-hmr.md Phase 1): the AppRouter
+// route table lives in dedicated generated files — Routes.android.kt
+// (androidMain) and Routes.ios.kt (iosMain) — instead of inline lists inside
+// App.kt / MainViewController.kt. Adding or reordering pages then only
+// regenerates the registry; the entry files stay byte-identical. The table is
+// identical for both platforms (computeRouteList is platform-agnostic).
+function generateRoutesKt(appDir: string, config: VeskConfig): void {
+  const { routeLines, errors } = computeRouteList(appDir, config);
+  if (errors.length > 0) {
+    for (const e of errors) console.error(`  [gen] ${e}`);
+    process.exit(1);
+  }
+  const body = `package app
+
+import app.navigation.Route
+
+val appRoutes: List<Route> = listOf(
+${routeLines.split('\n').map((l) => (l.trim() ? `    ${l.trim()}` : '')).join('\n')},
+)
+`;
+  writeIfChanged(join(sharedKotlinDir(dirname(appDir)), 'Routes.android.kt'), body);
+  writeIfChanged(join(sharedIosKotlinDir(dirname(appDir)), 'Routes.ios.kt'), body);
+  log('gen', `Routes.android.kt + Routes.ios.kt (route registry, ${computeRouteCount(routeLines)} routes)`);
+}
+
+function computeRouteCount(routeLines: string): number {
+  return routeLines.split('\n').filter((l) => l.trim().startsWith('Route(')).length;
+}
+
 export function generateAppKt(appDir: string, config: VeskConfig): void {
   const outDir = sharedKotlinDir(dirname(appDir));
   const files = collectVskFiles(appDir);
@@ -1867,7 +1896,7 @@ export function generateAppKt(appDir: string, config: VeskConfig): void {
     process.exit(1);
   }
 
-  const { routeLines, backArgs, pages, errors } = computeRouteList(appDir, config);
+  const { backArgs, pages, errors } = computeRouteList(appDir, config);
   if (errors.length > 0) {
     for (const e of errors) console.error(`  [gen] ${e}`);
     process.exit(1);
@@ -1918,15 +1947,15 @@ import androidx.compose.ui.Alignment
   const appFunSig = deepLinks ? 'fun App(deepLink: String? = null) {' : 'fun App() {';
   const startExpr = deepLinks ? 'deepLink ?: "/"' : '"/"';
 
-  // Build content box AFTER routeLines/backArgs are available
+  // Build content box AFTER backArgs are available; the route table itself
+  // lives in Routes.android.kt (appRoutes) so route changes never rewrite
+  // this file.
   const contentBox = tablet
     ? `        // Tablet layout: content is constrained to a centered 840dp column.
         Box(modifier = Modifier.fillMaxSize()) {
             Box(modifier = Modifier.fillMaxSize().then(barsPadding).widthIn(max = 840.dp).align(Alignment.Center)) {
                 Layout {
-                    AppRouter(start = ${startExpr}, routes = listOf(
-                        ${routeLines}
-                    ),${backArgs})
+                    AppRouter(start = ${startExpr}, routes = appRoutes,${backArgs})
                 }
             }
         }`
@@ -1935,9 +1964,7 @@ import androidx.compose.ui.Alignment
         // above the navigation bar.
         Box(modifier = Modifier.fillMaxSize().then(barsPadding)) {
             Layout {
-                AppRouter(start = ${startExpr}, routes = listOf(
-                    ${routeLines}
-                ),${backArgs})
+                AppRouter(start = ${startExpr}, routes = appRoutes,${backArgs})
             }
         }`;
 
@@ -2007,7 +2034,7 @@ ${padDeclNewline}${splashStateDecl}
 export function generateMainViewControllerKt(appDir: string, config: VeskConfig): void {
   const iosOutDir = sharedIosKotlinDir(dirname(appDir));
   mkdirSync(iosOutDir, { recursive: true });
-  const { routeLines, backArgs, errors } = computeRouteList(appDir, config);
+  const { backArgs, errors } = computeRouteList(appDir, config);
   if (errors.length > 0) {
     for (const e of errors) console.error(`  [gen] ${e}`);
     process.exit(1);
@@ -2039,17 +2066,13 @@ import androidx.compose.ui.Alignment
         Box(modifier = Modifier.fillMaxSize()) {
             Box(modifier = Modifier.fillMaxSize().widthIn(max = 840.dp).align(Alignment.Center)) {
                 Layout {
-                    AppRouter(start = "/", routes = listOf(
-                        ${routeLines}
-                    ),${backArgs})
+                    AppRouter(start = "/", routes = appRoutes,${backArgs})
                 }
             }
         }`
     : `        Box(modifier = Modifier.fillMaxSize()) {
             Layout {
-                AppRouter(start = "/", routes = listOf(
-                    ${routeLines}
-                ),${backArgs})
+                AppRouter(start = "/", routes = appRoutes,${backArgs})
             }
         }`;
 
@@ -2371,6 +2394,7 @@ export function generateProject(target: string, config: VeskConfig): void {
   generateThemeKt(target, config);
   generateRouterKt(appDir);
   const bundledResources = compileVskFiles(appDir, config, target);
+  generateRoutesKt(appDir, config);
   generateAppKt(appDir, config);
   // iosMain Compose Multiplatform entry: the Swift shell is generated by
   // ios.ts (additive); MainViewController.kt mirrors the Android App.kt

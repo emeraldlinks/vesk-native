@@ -72,15 +72,18 @@ initially.
 - **Gates (test-app, this machine)**: cold ≤90s (from ~5 min), no-op warm ≤10s,
   single-page edit ≤20s.
 
-### Phase 1 — Route registry (Tier-3 item)
-- New generated `Routes.kt` in `:shared/commonMain` carrying the route list;
-  App.kt becomes `Layout { AppRouter(start, routes = veskRoutes) }`, regenerated
-  only on config change. Requires a small `@navigation-native` API addition —
-  verify `AppRouter`'s real signature first (no guessing rule). File-based and
-  config-based route semantics (params, root, back args, deep links, exitRoutes)
-  unchanged.
-- **Gate**: adding a page recompiles only `:shared` changed files; `:app`
-  untouched.
+### Phase 1 — Route registry (Tier-3 item) ✅ done 2026-08-18
+- Generated `Routes.android.kt` (androidMain) + `Routes.ios.kt` (iosMain), each
+  exposing `val appRoutes: List<Route>`; App.kt / MainViewController.kt now call
+  `AppRouter(start, routes = appRoutes, ...)`. Same `computeRouteList` semantics
+  (file-based scan + `config.routes`, params, root, back args, exitRoutes,
+  deep links) — no `@navigation-native` changes needed (`Route` verified at
+  `packages/navigation-native/src/Router.kt:12`).
+- **Gate (measured)**: adding `app/phase1test/page.vsk` regenerated only
+  `Routes.*.kt` (23→24 routes, `Route("/phase1test") { Phase1Test() }` added);
+  App.kt + MainViewController.kt stayed byte-identical (sha256) and
+  `:app:compileDebugKotlin` untouched; removing the page pruned
+  `Phase1Test.kt` and restored the exact baseline hash. Build green both ways.
 
 ### Phase 2 — Tier 1: web preview (ms HMR in browser)
 - New `vesk dev --web` verb (ADR-0022 extends ADR-0020's cwd-based surface).
