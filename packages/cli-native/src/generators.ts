@@ -129,8 +129,18 @@ function generationGlobalKey(target: string, appDir: string): string {
   return h.digest('hex');
 }
 
-export function generateSettingsGradleKts(target: string, config: VeskConfig): void {
+export function generateSettingsGradleKts(target: string, config: VeskConfig, devDesktop = false): void {
   const name = slugify(config.appName);
+  // Dev-desktop mode provisions the JetBrains Runtime via the foojay toolchain
+  // resolver — Compose Hot Reload needs a JBR (enhanced class redefinition).
+  // Production builds never touch it.
+  const toolchains = devDesktop
+    ? `plugins {
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
+}
+
+`
+    : '';
   writeIfChanged(
     join(target, 'settings.gradle.kts'),
     `pluginManagement {
@@ -141,7 +151,7 @@ export function generateSettingsGradleKts(target: string, config: VeskConfig): v
     }
 }
 
-dependencyResolutionManagement {
+${toolchains}dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
@@ -153,7 +163,7 @@ rootProject.name = "${name}"
 include(":app", ":shared")
 `,
   );
-  log('gen', 'settings.gradle.kts (rootProject.name from appName; :app + :shared)');
+  log('gen', `settings.gradle.kts (rootProject.name from appName; :app + :shared${devDesktop ? '; foojay toolchain resolver for JBR' : ''})`);
 }
 
 // Generated Kotlin and bundled resources live in the :shared module (a KMP
@@ -246,7 +256,7 @@ function usageDeps(deviceApis: Set<string>, hasMedia: boolean, used: Set<string>
   return deps;
 }
 
-export function generateSharedBuildGradleKts(target: string, config: VeskConfig, deviceApis: Set<string>, hasMedia: boolean, used: Set<string>, libs: VskLibRecord[]): void {
+export function generateSharedBuildGradleKts(target: string, config: VeskConfig, deviceApis: Set<string>, hasMedia: boolean, used: Set<string>, libs: VskLibRecord[], devDesktop = false): void {
   const deps = usageDeps(deviceApis, hasMedia, used, libs);
   const minSdk = Math.max(config.minSdk ?? 24, ...libs.map((l) => l.minSdk ?? 0));
   // CMP 1.11 org.jetbrains.compose.* coordinates are now universal: they
@@ -290,9 +300,12 @@ export function generateSharedBuildGradleKts(target: string, config: VeskConfig,
             // The desktop aggregator brings the window toolkit (ui-window,
             // SingleWindowApplication) plus the awt integration;
             // kotlinx-coroutines-swing supplies Dispatchers.Main (the Swing
-            // EDT) for the motionDispatcher seam.
+            // EDT) for the motionDispatcher seam. skiko's module metadata does
+            // not select the awt runtime on the plain JVM variant, so the
+            // host platform native is declared explicitly.
             implementation("org.jetbrains.compose.desktop:desktop:1.11.0")
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.9.0")
+            implementation("org.jetbrains.skiko:skiko-awt-runtime-${skikoRuntime()}:0.144.6")
         }
 `;
   // macOS-only emission: the iOS targets + shared framework and the iosMain
@@ -316,6 +329,16 @@ ${cmpCommonDeps.map((l) => `            ${l}`).join('\n')}
         }
 `
     : '';
+// Dev-desktop mode: the Compose Hot Reload Gradle plugin hooks into the
+// org.jetbrains.compose plugin to register its run tasks (jvmRunHot) — the
+// CHR runtime + JBR integration are dev tooling only, applied here and never
+// in production builds. Explicit CMP coordinates stay authoritative: the
+// compose plugin's own dependency mappings are not used.
+const hotReloadPlugins = devDesktop
+  ? `    id("org.jetbrains.compose") version "1.11.0"
+    id("org.jetbrains.compose.hot-reload") version "1.1.1"
+`
+  : '';
   writeIfChanged(
     join(target, 'shared', 'build.gradle.kts'),
     `import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
@@ -324,7 +347,7 @@ plugins {
     id("com.android.kotlin.multiplatform.library")
     id("org.jetbrains.kotlin.multiplatform")
     id("org.jetbrains.kotlin.plugin.compose")
-}
+${hotReloadPlugins}}
 
 // The :shared KMP module is the framework's home: generated pages live in
 // src/androidMain today (R class + LocalContext), and the runtime splits
@@ -352,11 +375,42 @@ ${deps.join('\n')}
         }
     }
 }
+
+// Plain JVM run of the desktop preview (no hot reload): same main(), same
+// portable route table — jvmMain.runtimeClasspath is the KMP compilation's
+// runtime configuration (KGP 2.x exposes it on every Kotlin source set).
+// vesk dev --desktop applies the Compose Hot Reload plugin above instead and
+// uses its hotRunJvm task, so release/normal builds never load reload tooling.
+tasks.register<JavaExec>("runDesktop") {
+    group = "application"
+    description = "Runs the desktop preview (jvm target) without hot reload"
+    workingDir = rootProject.layout.projectDirectory.asFile
+    classpath = sourceSets["jvmMain"].runtimeClasspath
+    mainClass = "app.MainKt"
+}
+${devDesktop ? `
+// The hot reload run task (ComposeHotRun) extends JavaExec; its mainClass is
+// the same JavaExec property — the app entry point lives in this module.
+tasks.named<JavaExec>("hotRunJvm") {
+    mainClass = "app.MainKt"
+}
+` : ''}
 `,
   );
   log('gen', isMac
-    ? `shared/build.gradle.kts (macOS: iosArm64 + iosSimulatorArm64, Shared static framework; ${deps.length} androidMain dependencies; commonMain/jvmMain/iosMain: CMP 1.11 org.jetbrains.compose.* coords)`
-    : `shared/build.gradle.kts (android + desktop jvm targets; ${deps.length} androidMain dependencies; commonMain/jvmMain: CMP 1.11 org.jetbrains.compose.* coords)`);
+    ? `shared/build.gradle.kts (macOS: iosArm64 + iosSimulatorArm64, Shared static framework; ${deps.length} androidMain dependencies; commonMain/jvmMain/iosMain: CMP 1.11 org.jetbrains.compose.* coords${devDesktop ? '; Compose Hot Reload plugin' : ''})`
+    : `shared/build.gradle.kts (android + desktop jvm targets; ${deps.length} androidMain dependencies; commonMain/jvmMain: CMP 1.11 org.jetbrains.compose.* coords${devDesktop ? '; Compose Hot Reload plugin' : ''})`);
+}
+
+// skiko's awt runtime natives are published per host platform under
+// skiko-awt-runtime-<os>-<arch> (POM-declared but absent from the module
+// metadata's plain-JVM variant — see the jvmMain dependency block).
+function skikoRuntime(): string {
+  const os = process.platform;
+  const arch = process.arch;
+  if (os === 'darwin') return arch === 'arm64' ? 'macos-arm64' : 'macos-x64';
+  if (os === 'win32') return 'windows-x64';
+  return `linux-${arch === 'arm64' ? 'arm64' : 'x64'}`;
 }
 
 // A signing password may be given inline or as `env:NAME` to read the value
@@ -2369,7 +2423,8 @@ export {};
   log('gen', `vesk-env.d.ts (${libs.length} virtual @vesk modules + @vesk/browser), vesk-browser.d.ts (browser globals)`);
 }
 
-export function generateProject(target: string, config: VeskConfig): void {
+export function generateProject(target: string, config: VeskConfig, opts: { devDesktop?: boolean } = {}): void {
+  const devDesktop = opts.devDesktop === true;
   const appDir = join(target, 'app');
   mkdirSync(join(appDir, 'src', 'main', 'res', 'values'), { recursive: true });
   mkdirSync(sharedKotlinDir(target), { recursive: true });
@@ -2409,7 +2464,7 @@ export function generateProject(target: string, config: VeskConfig): void {
   // them from the same installed-library records the compiler resolves.
   generateVskLibDeclarations(target);
 
-  generateSettingsGradleKts(target, config);
+  generateSettingsGradleKts(target, config, devDesktop);
   // Semantic Tailwind neutrals (surface/onSurface/outline tokens) activate when
   // the project declares darkColors — same .vsk matches web in light and dark.
   setAdaptiveDark(!!config.darkColors);
@@ -2437,7 +2492,7 @@ export function generateProject(target: string, config: VeskConfig): void {
   // Gradle dependencies are derived from the same usage so they stay in lock
   // step with the pruned imports and code.
   const used = generateRuntimeKt(appDir, config, bundledResources);
-  generateSharedBuildGradleKts(target, config, deviceApis, hasMedia, used, libs);
+  generateSharedBuildGradleKts(target, config, deviceApis, hasMedia, used, libs, devDesktop);
   generateAppBuildGradleKts(target, config, libs);
 }
 

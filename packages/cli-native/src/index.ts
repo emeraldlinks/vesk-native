@@ -60,7 +60,8 @@ async function main(): Promise<void> {
     case 'dev': {
       const portArg = process.argv.findIndex((a) => a === '--port');
       const port = portArg !== -1 && process.argv[portArg + 1] ? Number(process.argv[portArg + 1]) : 5173;
-      await devApp(cwd, Number.isFinite(port) ? port : 5173);
+      const desktop = process.argv.includes('--desktop');
+      await devApp(cwd, Number.isFinite(port) ? port : 5173, desktop);
       break;
     }
     default:

@@ -387,6 +387,9 @@ function generatePackageJson(a: Answers, veskRoot: string | null): string {
         type: 'module',
         scripts: {
           build: 'vesk-native build',
+          dev: 'vesk-native dev',
+          'dev:web': 'vesk-native dev --web',
+          'dev:desktop': 'vesk-native dev --desktop',
           clean: 'rm -rf app/build shared/build build .gradle',
         },
         dependencies: deps,
@@ -472,6 +475,11 @@ Kotlin Multiplatform module that also targets iOS).
 - \`npx vesk-native build\` — regenerate everything from source, then run
   gradle assembleDebug. This is the only way to build: edit \`.vsk\`, rebuild,
   verify \`BUILD SUCCESSFUL\`, commit.
+- \`npx vesk-native dev\` — start the web preview server with per-file ms HMR
+  (opens in browser; edit \`.vsk\` and see changes instantly).
+- \`npx vesk-native dev --web\` — same as \`dev\` (explicit web flag).
+- \`npx vesk-native dev --desktop\` — desktop preview via Compose Hot Reload
+  (JVM target; requires JBR 21, auto-provisioned via foojay on first run).
 - \`npx vesk-native bundle android\` — release packaging (AAB + signed APK);
   \`npx vesk-native setup\` — provision the toolchain (JDK 17+, Android SDK,
   Gradle) for this machine.

@@ -1,6 +1,6 @@
-import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { isAbsolute, join, resolve, relative, dirname } from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { CONFIG_JSON, CONFIG_TS, DEFAULT_GRADLE, SAMPLE_VSK, DEFAULT_SDK, TEMPLATE_DIR, collectVskFiles, log } from '@cli-native/constants';
 import { loadConfig, writeDefaultConfig } from '@cli-native/config';
 import { generateProject, generateVskLibDeclarations } from '@cli-native/generators';
@@ -84,10 +84,120 @@ export async function buildApp(dir: string): Promise<void> {
 // per-file HMR in the browser. Native-only surfaces (device.*) map to real
 // browser APIs where one exists and warn no-op otherwise; the mapping lives
 // in web-preview-shim.ts. Dev tooling only — ships nowhere in a built app.
-export async function devApp(dir: string, port: number): Promise<void> {
+//
+// `vesk dev --desktop` — desktop preview (Phase 3.1): the jvm() target runs
+// the commonMain App() under Compose Hot Reload (ms recomposition, cell state
+// preserved). The project regenerates in dev-desktop mode (foojay toolchain
+// resolver provisions the JetBrains Runtime; the compose + hot-reload Gradle
+// plugins are applied), gradle runs `:shared:hotRunJvm --auto` in the
+// foreground, and every .vsk / module change triggers a per-file regen +
+// incremental :shared compile — the CHR recompiler watches the class outputs
+// and pushes the new classes to the running app.
+export async function devApp(dir: string, port: number, desktop = false): Promise<void> {
   const target = resolve(dir);
   const config = await loadConfig(target);
+  if (desktop) {
+    await devDesktop(target, config);
+    return;
+  }
   await startPreviewServer(target, port, config);
+}
+
+// Project JS/TS modules under app/ (same set the compiler emits into
+// Modules.kt) — a change recompiles them into the shared module, and CHR
+// pushes the new classes. Mirrors the compiler's resolver: files under app/,
+// excluding generated/non-source dirs.
+const MODULE_EXTS = new Set(['.ts', '.js', '.mjs', '.tsx', '.jsx']);
+const MODULE_SKIP = new Set(['node_modules', '.vesk', '.git']);
+
+function projectModules(appDir: string): string[] {
+  const out: string[] = [];
+  const walk = (d: string): void => {
+    for (const entry of readdirSync(d, { withFileTypes: true })) {
+      if (entry.isDirectory()) {
+        if (!MODULE_SKIP.has(entry.name)) walk(join(d, entry.name));
+      } else if (MODULE_EXTS.has(entry.name.slice(entry.name.lastIndexOf('.')))) {
+        out.push(join(d, entry.name));
+      }
+    }
+  };
+  walk(appDir);
+  return out;
+}
+
+async function devDesktop(target: string, config: VeskConfig): Promise<void> {
+  const gradle = findGradle();
+  log('dev', 'desktop preview: regenerating in dev-desktop mode (Compose Hot Reload + JBR)');
+  generateProject(target, config, { devDesktop: true });
+
+  const env = { ...process.env };
+  if (!env.ANDROID_HOME) env.ANDROID_HOME = DEFAULT_SDK;
+  if (!env.ANDROID_SDK_ROOT) env.ANDROID_SDK_ROOT = DEFAULT_SDK;
+
+  // The hot-reload run owns the terminal: hotRunJvm starts the app window and
+  // the CHR recompiler and stays alive. --auto makes the recompiler watch the
+  // compiled class outputs, so the per-file regen + :shared:compileKotlinJvm
+  // below is picked up and hot-swapped without a separate `reload` invocation
+  // (a second gradle build touching the orchestration socket kills the app).
+  // Detached so it forms its own process group — Ctrl+C here kills the whole
+  // tree (gradle client, daemon, app JVM), never a stray pkill.
+  const child = spawn(gradle, [':shared:hotRunJvm', '--auto', '--console=plain'], {
+    cwd: target,
+    env,
+    stdio: 'inherit',
+    detached: true,
+  });
+  child.unref();
+
+  const shutdown = (sig: NodeJS.Signals): void => {
+    try {
+      process.kill(-(child.pid ?? 0), sig === 'SIGINT' ? 'SIGINT' : 'SIGTERM');
+    } catch {
+      // already gone
+    }
+    process.exit(0);
+  };
+  process.once('SIGINT', () => shutdown('SIGINT'));
+  process.once('SIGTERM', () => shutdown('SIGTERM'));
+
+  log('dev', 'watching .vsk files + modules for changes (Ctrl+C to stop)');
+  const appDir = join(target, 'app');
+  const watched = (): Map<string, number> => {
+    const m = new Map<string, number>();
+    for (const f of collectVskFiles(appDir)) m.set(f, statSync(f).mtimeMs);
+    for (const f of projectModules(appDir)) m.set(f, statSync(f).mtimeMs);
+    const cfg = [CONFIG_TS, CONFIG_JSON, join(target, 'libraries.json')];
+    for (const c of cfg) if (existsSync(c)) m.set(c, statSync(c).mtimeMs);
+    return m;
+  };
+  const reload = (changed: string[]): void => {
+    for (const f of changed) log('dev', `change: ${relative(target, f)} — recompiling`);
+    const result = spawnSync(gradle, [':shared:compileKotlinJvm', '--console=plain'], { cwd: target, env, stdio: 'inherit' });
+    if (result.status !== 0) log('dev', 'recompile failed — fix the error and save again (CHR keeps the last good UI)');
+    else log('dev', 'recompiled — CHR pushes the change to the running app');
+  };
+
+  let last = watched();
+  let timer: NodeJS.Timeout | undefined;
+  const loop = (): void => {
+    const now = watched();
+    const changed: string[] = [];
+    for (const [f, m] of now) {
+      if ((last.get(f) ?? 0) !== m) changed.push(f);
+    }
+    last = now;
+    if (changed.length > 0) {
+      // Debounce: a save touches files in a burst.
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        // Regenerate (cache keeps it to the changed page), then compile.
+        generateProject(target, config, { devDesktop: true });
+        reload(changed);
+      }, 250);
+    }
+    setTimeout(loop, 500);
+  };
+  loop();
 }
 
 // `vesk bundle [dir] [android|ios]` — release packaging.

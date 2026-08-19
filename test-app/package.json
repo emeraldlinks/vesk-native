@@ -3,6 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build": "vesk-native build",
+    "dev": "vesk-native dev",
+    "dev:web": "vesk-native dev --web",
+    "dev:desktop": "vesk-native dev --desktop",
     "demo": "bash scripts/demo.sh",
     "release": "bash scripts/release.sh"
   },

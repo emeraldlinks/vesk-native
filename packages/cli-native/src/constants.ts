@@ -98,6 +98,7 @@ Usage:
   vesk-native update [pkg]       Bump installed library version(s) to the latest builtin registry version
   vesk-native remove <pkg>       Uninstall a Kotlin library (gradle dep + permissions drop on next build)
   vesk-native dev [--port N]     Web preview with per-file HMR (device.* maps to browser APIs; unmapped = warn no-op)
+  vesk-native dev --desktop      Desktop preview: jvm() target + Compose Hot Reload (ms recomposition, cells preserved)
 `);
 }
 
