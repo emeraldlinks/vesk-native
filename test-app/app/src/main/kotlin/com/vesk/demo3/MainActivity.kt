@@ -13,6 +13,7 @@ import androidx.fragment.app.FragmentActivity
 import app.App
 import app.VeskDeviceSession
 import app.VeskTheme
+import app.appRoutes
 import app.jsSafe
 
 class MainActivity : FragmentActivity() {
@@ -39,7 +40,7 @@ class MainActivity : FragmentActivity() {
         setContent {
             VeskTheme {
                 Surface(modifier = Modifier) {
-                    App()
+                    App(routes = appRoutes)
                 }
             }
         }

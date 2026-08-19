@@ -121,7 +121,9 @@ initially.
 ### Phase 3 — Tier 2: native
 - **3.1 Desktop ms-HMR (primary)**: switch commonMain to `org.jetbrains.compose`
   coordinates (sequence: coords first with Android still green → then `jvm()`
-  target, jvmTarget 21) → generated jvmMain actuals (DeviceApi stub: no-op
+  target, jvmTarget 17 — box JDK is OpenJDK 17.0.20, deviation from the 21 in
+  the blueprint, noted in ADR-0023) → generated jvmMain actuals (DeviceApi
+  stub: no-op
   members; trivially portable ones — clipboard, timers, storage, fetch — real
   JVM impls, each verified; `Vesk*` elements → Button + no-op) → commonMain-safe
   `App()` (move from androidMain; platform-neutral barsPadding/deep-link seams)
@@ -129,6 +131,17 @@ initially.
   provisioning (foojay resolver), dev-gated. `vesk dev --desktop`: .vsk edit →
   per-file regen → incremental compile → CHR push → ms recomposition, cells
   preserved.
+  **DONE (2026-08-19)**: coords → jvm() → jvmMain actuals → commonMain App() →
+  portable route tables (Routes.jvm.kt/Routes.ios.kt; non-portable pages —
+  android-only imports — dropped with a warn) → desktop Main.kt entry. Android
+  and jvm targets both BUILD SUCCESSFUL (test-app). Jvm helpers: 19 emitted,
+  all verified against real APIs (javap: JDK 17 WebSocket.Listener
+  CompletionStage returns; skiko makeRaster/readPixels/allocPixels;
+  Bitmap.asComposeImageBitmap). jsParseJson/jsDecodeURIComponent/jsHandleError
+  + router seams (PlatformBackHandler/veskToast/veskExitApp) got jvm actuals;
+  Router.jvm.kt ships in @vesk/navigation-native like the android/ios actuals.
+  Remaining in 3.1: runDesktop task, dev-gated CMP Hot Reload + JBR (foojay),
+  `vesk dev --desktop` loop.
 - **3.2 On-device fast reload**: `vesk dev` default: watch → regen changed files
   + Routes.kt → `:shared:compileDebugKotlin :app:installDebug` → adb relaunch.
   Target 5–15s. Cell state loss on relaunch accepted (decision); SavedState

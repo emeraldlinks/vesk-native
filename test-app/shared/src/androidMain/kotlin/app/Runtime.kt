@@ -16,7 +16,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -2861,6 +2863,22 @@ actual object VeskAppContext {
 }
 // Top-level entry point the generated App() composable calls at startup.
 fun veskAppSetup(context: Context) = VeskAppContext.setup(context)
+
+
+// Android: the app is edge-to-edge (on Android 15+ the OS forces it), so
+// content is pushed below the status + navigation bars. veskAppSetup()
+// registers the current activity for browser-API dialogs (alert). The pad
+// flag is the config edgeToEdge.paddingBars decision from App.kt; the SDK
+// check handles Android 15+ forced edge-to-edge when padding is off.
+@Composable
+actual fun veskBarsPadding(pad: Boolean): Modifier =
+    if (pad || android.os.Build.VERSION.SDK_INT >= 35) Modifier.statusBarsPadding().navigationBarsPadding() else Modifier
+
+@Composable
+actual fun veskAppSetup() {
+    val veskContext = LocalContext.current
+    androidx.compose.runtime.SideEffect { veskAppSetup(veskContext) }
+}
 
 
 // window.alert: non-blocking native AlertDialog. A blocking dialog cannot run

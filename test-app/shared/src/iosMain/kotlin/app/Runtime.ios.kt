@@ -860,6 +860,15 @@ private class VeskJsonParser(private val text: String) {
 actual object VeskAppContext
 
 
+// iOS/desktop windows have no system bars and no activity anchor — both
+// seams are no-ops.
+@Composable
+actual fun veskBarsPadding(pad: Boolean): Modifier = Modifier
+
+@Composable
+actual fun veskAppSetup() { }
+
+
 // window.alert on iOS: a UIAlertController on the key/top-most window,
 // dispatched to the main queue. Like Android it returns immediately (JS
 // undefined) and shows asynchronously.

@@ -9,10 +9,9 @@ plugins {
 // The :shared KMP module is the framework's home: generated pages live in
 // src/androidMain today (R class + LocalContext), and the runtime splits
 // between commonMain (pure-Kotlin core + expect seams) and androidMain
-// (android actuals). iOS targets are added macOS-gated with the CMP
-// milestone — never configured on Linux; when they land, the commonMain
-// androidx compose coordinates below switch to their org.jetbrains.compose
-// equivalents.
+// (android actuals). The jvm() target hosts the vesk dev --desktop preview.
+// iOS targets are added macOS-gated with the CMP milestone — never configured
+// on Linux.
 @OptIn(ExperimentalKotlinGradlePluginApi::class)
 kotlin {
     android {
@@ -23,21 +22,37 @@ kotlin {
         compilerOptions { jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17 }
     }
 
+    // Desktop JVM target: the vesk dev --desktop preview host. Runs the same
+    // commonMain pages + the jvmMain actuals (Runtime.jvm.kt). jvmTarget
+    // matches the Android target (17) so the preinstalled JDK compiles it
+    // without a toolchain download.
+    jvm {
+        compilerOptions { jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17 }
+    }
+
     sourceSets {
         // The portable core (RuntimeCore.kt) + navigation Router.kt are plain
-        // Kotlin + compose ui/foundation/runtime/animation-core + coroutines
-        // only — no LocalContext, no platform APIs. The versions match what
-        // the android source set resolves (ui/foundation 1.11.4, material3
-        // 1.4.0 from the app BOM, kotlinx-coroutines-core 1.9.0 transitively).
-        // material3 carries a common variant, so portable pages compile here.
+        // Kotlin + compose ui/foundation/runtime/animation + coroutines only —
+        // no LocalContext, no platform APIs. The CMP 1.11 org.jetbrains.compose.*
+        // artifacts are the multiplatform variants: they resolve the androidx
+        // variants on the Android target and the desktop variants on jvm()
+        // (foundation and animation pull foundation-layout / animation-core
+        // transitively).
         commonMain.dependencies {
-            implementation("androidx.compose.runtime:runtime:1.11.4")
-            implementation("androidx.compose.ui:ui:1.11.4")
-            implementation("androidx.compose.foundation:foundation:1.11.4")
-            implementation("androidx.compose.foundation:foundation-layout:1.11.4")
-            implementation("androidx.compose.animation:animation-core:1.11.4")
-            implementation("androidx.compose.material3:material3:1.4.0")
+            implementation("org.jetbrains.compose.runtime:runtime:1.11.0")
+            implementation("org.jetbrains.compose.ui:ui:1.11.0")
+            implementation("org.jetbrains.compose.foundation:foundation:1.11.0")
+            implementation("org.jetbrains.compose.animation:animation:1.11.0")
+            implementation("org.jetbrains.compose.material3:material3:1.9.0")
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
+        }
+        jvmMain.dependencies {
+            // The desktop aggregator brings the window toolkit (ui-window,
+            // SingleWindowApplication) plus the awt integration;
+            // kotlinx-coroutines-swing supplies Dispatchers.Main (the Swing
+            // EDT) for the motionDispatcher seam.
+            implementation("org.jetbrains.compose.desktop:desktop:1.11.0")
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.9.0")
         }
         androidMain.dependencies {
 implementation("androidx.compose.ui:ui:1.11.4")

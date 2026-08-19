@@ -20,7 +20,7 @@ import type { JsNode } from '@compiler-native/js2kt';
 import type { VeskConfig } from '@vesk/native';
 import { DEFAULT_SDK, NAVIGATION_KT, PKG_ROOT, TEMPLATE_DIR, collectVskFiles, colorLiteral, log, slugify } from '@cli-native/constants';
 import { API_PERMISSIONS, MAX_SDK_PERMS, collectBrowserApiUsage, collectDeviceApiUsage, collectRuntimeUsage } from '@cli-native/usage';
-import { BIOMETRIC_AUTH_BODY, BIOMETRIC_CHECK_BODY, IOS_RUNTIME_IMPORTS, QRGEN_BODY, QR_OVERLAY_BLOCK, RUNTIME_COMMON_IMPORTS, RUNTIME_CORE, RUNTIME_HELPERS, RUNTIME_ORDER, runtimeImports } from '@cli-native/runtime-templates';
+import { BIOMETRIC_AUTH_BODY, BIOMETRIC_CHECK_BODY, IOS_RUNTIME_IMPORTS, JVM_RUNTIME_IMPORTS, QRGEN_BODY, QR_OVERLAY_BLOCK, RUNTIME_COMMON_IMPORTS, RUNTIME_CORE, RUNTIME_HELPERS, RUNTIME_ORDER, runtimeImports } from '@cli-native/runtime-templates';
 import { installedLibraries } from '@cli-native/vsklib';
 import type { VskLibRecord } from '@cli-native/vsklib';
 
@@ -180,6 +180,14 @@ function sharedIosKotlinDir(target: string): string {
   return join(target, 'shared', 'src', 'iosMain', 'kotlin', 'app');
 }
 
+// The desktop actuals (jvmMain) mirror the same layout: Runtime.jvm.kt
+// carries every expect/actual seam the app uses, Main.kt is the Compose
+// desktop entry point (vesk dev --desktop), and navigation actuals sit in
+// jvmMain/app/navigation.
+function sharedJvmKotlinDir(target: string): string {
+  return join(target, 'shared', 'src', 'jvmMain', 'kotlin', 'app');
+}
+
 function sharedResDir(target: string): string {
   return join(target, 'shared', 'src', 'androidMain', 'res');
 }
@@ -241,10 +249,11 @@ function usageDeps(deviceApis: Set<string>, hasMedia: boolean, used: Set<string>
 export function generateSharedBuildGradleKts(target: string, config: VeskConfig, deviceApis: Set<string>, hasMedia: boolean, used: Set<string>, libs: VskLibRecord[]): void {
   const deps = usageDeps(deviceApis, hasMedia, used, libs);
   const minSdk = Math.max(config.minSdk ?? 24, ...libs.map((l) => l.minSdk ?? 0));
-  // CMP iOS targets + the org.jetbrains.compose.* coordinate switch are gated
-  // on the host: macOS emits the iOS framework configuration and CMP deps,
-  // every other host (Linux/CI) emits exactly the pre-CMP build.gradle.kts so
-  // the Android build stays byte-identical.
+  // CMP 1.11 org.jetbrains.compose.* coordinates are now universal: they
+  // resolve the androidx variants on the Android target and the desktop/jvm
+  // variants on the jvm() target (the multiplatform variants carry the iOS
+  // targets too). The iOS *targets* stay macOS-gated below — no Apple SDK on
+  // Linux — but the coordinate space is the same on every host.
   const isMac = process.platform === 'darwin';
   const cmpCommonDeps = [
     'implementation("org.jetbrains.compose.runtime:runtime:1.11.0")',
@@ -254,31 +263,38 @@ export function generateSharedBuildGradleKts(target: string, config: VeskConfig,
     'implementation("org.jetbrains.compose.material3:material3:1.9.0")',
     'implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")',
   ];
-  // material3 is 1.9.0 on macOS too: CMP 1.11.0's own dependency mapping
+  // material3 is 1.9.0 on every host: CMP 1.11.0's own dependency mapping
   // resolves compose.material3 to org.jetbrains.compose.material3:material3:1.9.0
   // (the material3 stable line trails the CMP releases — there is no 1.11.0).
-  const commonDeps = isMac ? cmpCommonDeps : [
-    'implementation("androidx.compose.runtime:runtime:1.11.4")',
-    'implementation("androidx.compose.ui:ui:1.11.4")',
-    'implementation("androidx.compose.foundation:foundation:1.11.4")',
-    'implementation("androidx.compose.foundation:foundation-layout:1.11.4")',
-    'implementation("androidx.compose.animation:animation-core:1.11.4")',
-    'implementation("androidx.compose.material3:material3:1.4.0")',
-    'implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")',
-  ];
-  const commonNote = isMac
-    ? `        // The portable core (RuntimeCore.kt) + navigation Router.kt are plain
+  // On the Android target those coordinates resolve the androidx variants
+  // (material3 1.4.0 — what the app BOM pins), so androidMain keeps its
+  // explicit androidx deps and resolution lands on the same artifacts.
+  const commonDeps = cmpCommonDeps;
+  const commonNote = `        // The portable core (RuntimeCore.kt) + navigation Router.kt are plain
         // Kotlin + compose ui/foundation/runtime/animation + coroutines only —
-        // no LocalContext, no platform APIs. macOS hosts resolve these from the
-        // CMP 1.11 org.jetbrains.compose.* artifacts (the multiplatform
-        // variants that carry the iOS targets; foundation and animation pull
-        // foundation-layout / animation-core transitively).`
-    : `        // The portable core (RuntimeCore.kt) + navigation Router.kt are plain
-        // Kotlin + compose ui/foundation/runtime/animation-core + coroutines
-        // only — no LocalContext, no platform APIs. The versions match what
-        // the android source set resolves (ui/foundation 1.11.4, material3
-        // 1.4.0 from the app BOM, kotlinx-coroutines-core 1.9.0 transitively).
-        // material3 carries a common variant, so portable pages compile here.`;
+        // no LocalContext, no platform APIs. The CMP 1.11 org.jetbrains.compose.*
+        // artifacts are the multiplatform variants: they resolve the androidx
+        // variants on the Android target and the desktop variants on jvm()
+        // (foundation and animation pull foundation-layout / animation-core
+        // transitively).`;
+  const jvmTargetBlock = `    // Desktop JVM target: the vesk dev --desktop preview host. Runs the same
+    // commonMain pages + the jvmMain actuals (Runtime.jvm.kt). jvmTarget
+    // matches the Android target (17) so the preinstalled JDK compiles it
+    // without a toolchain download.
+    jvm {
+        compilerOptions { jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17 }
+    }
+
+`;
+  const jvmMainBlock = `        jvmMain.dependencies {
+            // The desktop aggregator brings the window toolkit (ui-window,
+            // SingleWindowApplication) plus the awt integration;
+            // kotlinx-coroutines-swing supplies Dispatchers.Main (the Swing
+            // EDT) for the motionDispatcher seam.
+            implementation("org.jetbrains.compose.desktop:desktop:1.11.0")
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.9.0")
+        }
+`;
   // macOS-only emission: the iOS targets + shared framework and the iosMain
   // dependency block. Every other host leaves these strings empty.
   const iosTargetsBlock = isMac
@@ -313,10 +329,9 @@ plugins {
 // The :shared KMP module is the framework's home: generated pages live in
 // src/androidMain today (R class + LocalContext), and the runtime splits
 // between commonMain (pure-Kotlin core + expect seams) and androidMain
-// (android actuals). iOS targets are added macOS-gated with the CMP
-// milestone — never configured on Linux; when they land, the commonMain
-// androidx compose coordinates below switch to their org.jetbrains.compose
-// equivalents.
+// (android actuals). The jvm() target hosts the vesk dev --desktop preview.
+// iOS targets are added macOS-gated with the CMP milestone — never configured
+// on Linux.
 @OptIn(ExperimentalKotlinGradlePluginApi::class)
 kotlin {
     android {
@@ -327,12 +342,12 @@ kotlin {
         compilerOptions { jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17 }
     }
 
-${iosTargetsBlock}    sourceSets {
+${jvmTargetBlock}${iosTargetsBlock}    sourceSets {
 ${commonNote}
         commonMain.dependencies {
 ${commonDeps.map((l) => `            ${l}`).join('\n')}
         }
-${iosMainBlock}        androidMain.dependencies {
+${jvmMainBlock}${iosMainBlock}        androidMain.dependencies {
 ${deps.join('\n')}
         }
     }
@@ -340,8 +355,8 @@ ${deps.join('\n')}
 `,
   );
   log('gen', isMac
-    ? `shared/build.gradle.kts (macOS: iosArm64 + iosSimulatorArm64, Shared static framework; ${deps.length} androidMain dependencies; commonMain/iosMain: CMP 1.11 org.jetbrains.compose.* coords)`
-    : `shared/build.gradle.kts (${deps.length} androidMain dependencies, ${deps.length - 6} usage-derived; commonMain: runtime + ui + foundation + animation-core + coroutines-core)`);
+    ? `shared/build.gradle.kts (macOS: iosArm64 + iosSimulatorArm64, Shared static framework; ${deps.length} androidMain dependencies; commonMain/jvmMain/iosMain: CMP 1.11 org.jetbrains.compose.* coords)`
+    : `shared/build.gradle.kts (android + desktop jvm targets; ${deps.length} androidMain dependencies; commonMain/jvmMain: CMP 1.11 org.jetbrains.compose.* coords)`);
 }
 
 // A signing password may be given inline or as `env:NAME` to read the value
@@ -813,7 +828,7 @@ import androidx.activity.enableEdgeToEdge
   const deepLinkNewIntent = deepLinks ? `        setIntent(intent)
         handleDeepLink(intent)
 ` : '';
-  const appCall = deepLinks ? 'App(deepLink = deepLinkPath.value)' : 'App()';
+  const appCall = deepLinks ? 'App(start = deepLinkPath.value, routes = appRoutes)' : 'App(routes = appRoutes)';
   const permImports = (mediaReadPerms || mediaNotifyPerms)
     ? `import android.os.Build
 import androidx.core.app.ActivityCompat
@@ -895,6 +910,7 @@ import androidx.fragment.app.FragmentActivity
 import app.App
 import app.VeskDeviceSession
 import app.VeskTheme
+import app.appRoutes
 import app.jsSafe
 
 class MainActivity : FragmentActivity() {${deepLinkField}${permLaunch}
@@ -1037,6 +1053,11 @@ export function generateRuntimeKt(
   // only emitted for onClick handlers, so a click-free app would otherwise
   // fail the Kotlin compile with an unresolved reference.
   used.add('jsSafe');
+  // The generated App() composable (commonMain, every platform) calls the
+  // veskPlatformSeams expects unconditionally — never usage-pruned.
+  used.add('veskPlatformSeams');
+  // The commonMain App() composable calls the platform seams unconditionally.
+  used.add('veskPlatformSeams');
   const deviceApis = collectDeviceApiUsage(appDir);
   const broadcast = config.media?.broadcast ?? true;
   // The bundled-asset seams (veskBundledImage / veskBundledMediaUrl) map each
@@ -1052,6 +1073,7 @@ export function generateRuntimeKt(
   const commonBody: string[] = [];
   const androidBody: string[] = [];
   const iosBody: string[] = [];
+  const jvmBody: string[] = [];
   const emitted = new Set<string>();
   const emit = (name: string): void => {
     if (emitted.has(name)) return;
@@ -1103,7 +1125,11 @@ export function generateRuntimeKt(
     // everything else stays in the android Runtime.kt. Units that also carry
     // an ios actual emit it to the iosMain Runtime.ios.kt (same usage
     // pruning; ios-only units like iosUiKit have no android body at all).
+    // A jvm actual (Runtime.jvm.kt) is emitted from the unit's jvm field —
+    // required for every expect the app uses, since the jvm() target must
+    // resolve all commonMain actuals.
     if (unit.ios != null) iosBody.push(unit.ios);
+    if (unit.jvm != null) jvmBody.push(unit.jvm);
     if (unit.expect != null) {
       commonBody.push(unit.expect);
       androidBody.push(src);
@@ -1119,15 +1145,20 @@ export function generateRuntimeKt(
   const outDir = sharedKotlinDir(dirname(appDir));
   const commonOutDir = sharedCommonKotlinDir(dirname(appDir));
   const iosOutDir = sharedIosKotlinDir(dirname(appDir));
+  const jvmOutDir = sharedJvmKotlinDir(dirname(appDir));
   mkdirSync(outDir, { recursive: true });
   mkdirSync(commonOutDir, { recursive: true });
   mkdirSync(iosOutDir, { recursive: true });
+  mkdirSync(jvmOutDir, { recursive: true });
   writeIfChanged(join(commonOutDir, 'RuntimeCore.kt'), `${RUNTIME_COMMON_IMPORTS}\n${RUNTIME_CORE}\n${commonBody.join('\n')}\n`);
   writeIfChanged(join(outDir, 'Runtime.kt'), `${runtimeImports(deviceApis, used)}${androidBody.join('\n')}\n`);
   if (iosBody.length > 0) {
     writeIfChanged(join(iosOutDir, 'Runtime.ios.kt'), `${IOS_RUNTIME_IMPORTS}${iosBody.join('\n')}\n`);
   }
-  log('gen', `Runtime.kt (${androidBody.length} android helpers, ${commonBody.length} common helpers of ${RUNTIME_ORDER.length}, media broadcast ${broadcast ? 'on' : 'off'}${iosBody.length ? `, ${iosBody.length} ios helpers` : ''})`);
+  if (jvmBody.length > 0) {
+    writeIfChanged(join(jvmOutDir, 'Runtime.jvm.kt'), `${JVM_RUNTIME_IMPORTS}${jvmBody.join('\n')}\n`);
+  }
+  log('gen', `Runtime.kt (${androidBody.length} android helpers, ${commonBody.length} common helpers of ${RUNTIME_ORDER.length}, media broadcast ${broadcast ? 'on' : 'off'}${iosBody.length ? `, ${iosBody.length} ios helpers` : ''}${jvmBody.length ? `, ${jvmBody.length} jvm helpers` : ''})`);
   return used;
 }
 
@@ -1170,6 +1201,17 @@ export function generateRouterKt(appDir: string): void {
       log('gen', 'navigation/Router.ios.kt (ios actuals, from @navigation-native)');
     } else {
       log('warn', `navigation ios actuals not found at ${iosSrc}; Router.kt emitted without ios back-handler seams`);
+    }
+    // JVM actuals (desktop preview) land in jvmMain/app/navigation so the same
+    // common Router.kt compiles for the jvmMain source set.
+    const jvmSrc = join(dirname(src), 'Router.jvm.kt');
+    if (existsSync(jvmSrc)) {
+      const jvmNavDir = join(sharedJvmKotlinDir(dirname(appDir)), 'navigation');
+      mkdirSync(jvmNavDir, { recursive: true });
+      writeIfChanged(join(jvmNavDir, 'Router.jvm.kt'), readFileSync(jvmSrc, 'utf8'));
+      log('gen', 'navigation/Router.jvm.kt (jvm actuals, from @navigation-native)');
+    } else {
+      log('warn', `navigation jvm actuals not found at ${jvmSrc}; Router.kt emitted without jvm back-handler seams`);
     }
   } else {
     log('warn', `navigation module not found at ${src}; skipping Router.kt`);
@@ -1246,7 +1288,7 @@ function compileProjectModules(appDir: string, slugs: Map<string, string>): { re
   return { registry, kt: [...imports].join('\n') + (imports.size > 0 && blocks.length > 0 ? '\n\n' : '') + blocks.join('\n\n'), errors };
 }
 
-export function compileVskFiles(appDir: string, config: VeskConfig, target: string): { imageResources: Map<string, string>; mediaResources: Map<string, string> } {
+export function compileVskFiles(appDir: string, config: VeskConfig, target: string): { imageResources: Map<string, string>; mediaResources: Map<string, string>; portableByRel: Map<string, boolean> } {
   const outDir = sharedKotlinDir(target);
   const commonOutDir = sharedCommonKotlinDir(target);
   mkdirSync(outDir, { recursive: true });
@@ -1537,16 +1579,18 @@ export function compileVskFiles(appDir: string, config: VeskConfig, target: stri
 
   // Prune stale page files now that hits and misses are known: anything not
   // framework-owned or written/kept this run is a removed or moved page.
-  const KEEP = new Set(['App.kt', 'Routes.android.kt', 'Runtime.kt', 'Router.kt', 'Theme.kt']);
+  // App.kt lives in commonMain since the desktop milestone (it is emitted
+  // from there by generateAppKt), so the androidMain KEEP no longer names it.
+  const KEEP = new Set(['Routes.android.kt', 'Runtime.kt', 'Router.kt', 'Theme.kt']);
   for (const f of readdirSync(outDir)) {
     if (f.endsWith('.kt') && !KEEP.has(f) && !written.has(f) && !keptHits.has(f)) unlinkSync(join(outDir, f));
   }
-  const COMMON_KEEP = new Set(['RuntimeCore.kt', 'Router.kt', 'Modules.kt']);
+  const COMMON_KEEP = new Set(['RuntimeCore.kt', 'Router.kt', 'Modules.kt', 'App.kt']);
   for (const f of readdirSync(commonOutDir)) {
     if (f.endsWith('.kt') && !COMMON_KEEP.has(f) && !written.has(f) && !keptHits.has(f)) unlinkSync(join(commonOutDir, f));
   }
   saveGenerationCache(target, cacheState);
-  return { imageResources, mediaResources };
+  return { imageResources, mediaResources, portableByRel };
 }
 
 function ktString(s: string): string {
@@ -1754,13 +1798,35 @@ function routeParamBindings(page: { path: string; component: string; props: Arra
 // that cannot reach the page's typed props, is a hard build error here —
 // never a Kotlin file that resolves to the wrong component or a page that
 // silently renders its default props.
-function computeRouteList(appDir: string, config: VeskConfig): { routeLines: string; backArgs: string; pages: ReturnType<typeof collectVskPages>; errors: string[] } {
+function computeRouteList(appDir: string, config: VeskConfig, portableByRel?: Map<string, boolean>): { routeLines: string; backArgs: string; pages: ReturnType<typeof collectVskPages>; errors: string[] } {
   const pages = collectVskPages(appDir);
   const errors: string[] = [];
 
   const routes = (config.routes && config.routes.length > 0)
     ? config.routes
     : pages;
+
+  // Portable table filtering (desktop jvmMain + iosMain tables): a route is
+  // portable iff its page compiled to commonMain (its .vsk imports only
+  // multiplatform libraries + portable components). Config routes that name
+  // a secondary component (no page entry) cannot be proven portable and are
+  // dropped from the portable table with a warning — the android table keeps
+  // every route.
+  const routeSource = portableByRel
+    ? routes.filter((p) => {
+        const page = pages.find((pg) => pg.component === p.component);
+        const portable = page ? portableByRel.get(page.rel) === true : false;
+        if (!portable) {
+          const path = routePathToBraces(p.path || '');
+          if (page) {
+            log('warn', `route ${p.component} (${path}) is not portable (imports an android-only library/component); dropped from the desktop/iOS route tables`);
+          } else {
+            log('warn', `config route ${p.component} (${path}) has no page file; dropped from the desktop/iOS route tables`);
+          }
+        }
+        return portable;
+      })
+    : routes;
 
   // Every component name any .vsk file declares (in any position), so a
   // config route can reference a secondary component of a page file (which
@@ -1774,7 +1840,7 @@ function computeRouteList(appDir: string, config: VeskConfig): { routeLines: str
     for (const d of findComponentDecls(ast)) declaredComponents.add(d.name);
   }
 
-  const routeLines = routes
+  const routeLines = routeSource
     .map((p) => {
       const routePath = routePathToBraces(p.path || '');
       const page = pages.find((pg) => pg.component === p.component);
@@ -1803,9 +1869,9 @@ function computeRouteList(appDir: string, config: VeskConfig): { routeLines: str
   // AppRouter matches exit routes against the ROUTE PATTERN, not the concrete
   // URL — config.back.exitRoutes and file-derived exitBack paths go through
   // the identical transform so all three sources agree.
-  const exitPaths = new Set<string>(['/']);
+const exitPaths = new Set<string>(['/']);
   for (const r of config.back?.exitRoutes ?? []) exitPaths.add('/' + stripLeadingSlashes(routePathToBraces(r)));
-  for (const r of routes) {
+  for (const r of routeSource) {
     if ('exitOnBack' in r && r.exitOnBack) exitPaths.add('/' + stripLeadingSlashes(routePathToBraces(r.path || '')));
   }
   for (const p of pages) if (p.exitBack) exitPaths.add('/' + stripLeadingSlashes(routePathToBraces(p.path)));
@@ -1840,41 +1906,58 @@ function collectVskPages(appDir: string) {
       const exitBack = decls.some(
         (d) => (d.params[0] ? propsDataType(d.params[0]) ?? [] : []).some((p) => p.name === 'exitBack'),
       );
-      return { path, component: compName, exitBack, props, hasProps, inferredProps, defaultProps: pageDefaultProps(ast) };
+      return { rel: toPosix(r), path, component: compName, exitBack, props, hasProps, inferredProps, defaultProps: pageDefaultProps(ast) };
     });
 }
 
-// Route registry (plans/vesk-native-preview-hmr.md Phase 1): the AppRouter
-// route table lives in dedicated generated files — Routes.android.kt
-// (androidMain) and Routes.ios.kt (iosMain) — instead of inline lists inside
-// App.kt / MainViewController.kt. Adding or reordering pages then only
-// regenerates the registry; the entry files stay byte-identical. The table is
-// identical for both platforms (computeRouteList is platform-agnostic).
-function generateRoutesKt(appDir: string, config: VeskConfig): void {
+// Route registry (plans/vesk-native-preview-hmr.md Phase 1 + desktop
+// milestone): the AppRouter route table lives in dedicated generated files —
+// Routes.android.kt (androidMain, every route), Routes.ios.kt (iosMain) and
+// Routes.jvm.kt (jvmMain, the desktop preview) — instead of inline lists
+// inside App.kt / MainViewController.kt. Adding or reordering pages then only
+// regenerates the registry; the entry files stay byte-identical. The
+// portable tables (ios/jvm) carry only the routes whose page compiled to
+// commonMain — android-only pages (android.* imports, android-only library
+// components) cannot compile in iosMain/jvmMain, so their routes are dropped
+// with a warning (see computeRouteList).
+function generateRoutesKt(appDir: string, config: VeskConfig, portableByRel: Map<string, boolean>): void {
   const { routeLines, errors } = computeRouteList(appDir, config);
   if (errors.length > 0) {
     for (const e of errors) console.error(`  [gen] ${e}`);
     process.exit(1);
   }
-  const body = `package app
+  const { routeLines: portableLines, errors: portableErrors } = computeRouteList(appDir, config, portableByRel);
+  if (portableErrors.length > 0) {
+    for (const e of portableErrors) console.error(`  [gen] ${e}`);
+    process.exit(1);
+  }
+  const body = (lines: string) => `package app
 
 import app.navigation.Route
 
 val appRoutes: List<Route> = listOf(
-${routeLines.split('\n').map((l) => (l.trim() ? `    ${l.trim()}` : '')).join('\n')},
+${lines.split('\n').map((l) => (l.trim() ? `    ${l.trim()}` : '')).join('\n')},
 )
 `;
-  writeIfChanged(join(sharedKotlinDir(dirname(appDir)), 'Routes.android.kt'), body);
-  writeIfChanged(join(sharedIosKotlinDir(dirname(appDir)), 'Routes.ios.kt'), body);
-  log('gen', `Routes.android.kt + Routes.ios.kt (route registry, ${computeRouteCount(routeLines)} routes)`);
+  writeIfChanged(join(sharedKotlinDir(dirname(appDir)), 'Routes.android.kt'), body(routeLines));
+  mkdirSync(sharedIosKotlinDir(dirname(appDir)), { recursive: true });
+  writeIfChanged(join(sharedIosKotlinDir(dirname(appDir)), 'Routes.ios.kt'), body(portableLines));
+  mkdirSync(sharedJvmKotlinDir(dirname(appDir)), { recursive: true });
+  writeIfChanged(join(sharedJvmKotlinDir(dirname(appDir)), 'Routes.jvm.kt'), body(portableLines));
+  log('gen', `Routes.android.kt (${computeRouteCount(routeLines)} routes) + Routes.ios.kt/Routes.jvm.kt (${computeRouteCount(portableLines)} portable routes)`);
 }
 
 function computeRouteCount(routeLines: string): number {
   return routeLines.split('\n').filter((l) => l.trim().startsWith('Route(')).length;
 }
 
-export function generateAppKt(appDir: string, config: VeskConfig): void {
-  const outDir = sharedKotlinDir(dirname(appDir));
+export function generateAppKt(appDir: string, config: VeskConfig, portableByRel: Map<string, boolean>): void {
+  // App() is commonMain since the desktop milestone: every entry point
+  // (MainActivity, MainViewController, desktop Main.kt) calls it with its own
+  // route table + start path. Platform differences are reduced to the
+  // veskPlatformSeams expects (system-bar insets, browser-API anchor).
+  const commonOutDir = sharedCommonKotlinDir(dirname(appDir));
+  mkdirSync(commonOutDir, { recursive: true });
   const files = collectVskFiles(appDir);
   let root: ComponentDecl | null = null;
 
@@ -1915,6 +1998,12 @@ export function generateAppKt(appDir: string, config: VeskConfig): void {
       const params = splashDecls[0].params as JsNode[];
       splashHasProps = params.some((p) => !(p.type === 'Identifier' && p.name === 'content'));
     }
+    // splash.vsk is referenced from commonMain App(), so it must be portable;
+    // an android-only splash would break every platform's compile.
+    if (portableByRel.get('splash.vsk') !== true) {
+      console.error('  [gen] splash.vsk must be portable (only multiplatform libraries/imports) because App() lives in commonMain');
+      process.exit(1);
+    }
   }
 
   const tablet = config.device === 'tablet';
@@ -1923,39 +2012,31 @@ export function generateAppKt(appDir: string, config: VeskConfig): void {
 import androidx.compose.ui.Alignment
 `
     : '';
-  // Edge-to-edge preference drives both the window setup (MainActivity) and
-  // how much room the content reserves for the system bars. With edge-to-edge
-  // disabled the classic window keeps content out of the bars on Android < 15,
-  // but Android 15+ (targetSdk 35) forces edge-to-edge, so the bars still need
-  // padding there.
+  // Edge-to-edge preference drives how much room the content reserves for the
+  // system bars. With edge-to-edge disabled the classic window keeps content
+  // out of the bars on Android < 15, but Android 15+ (targetSdk 35) forces
+  // edge-to-edge, so the bars still need padding there. The padding decision
+  // is passed into the veskPlatformSeams actual (android evaluates the SDK
+  // check at runtime; desktop/iOS ignore the flag).
   const e2e = config.edgeToEdge ?? {};
   const e2eEnabled = e2e.enabled !== false;
   const padBars = e2eEnabled ? e2e.paddingBars !== false : true;
-  const padDecl = e2eEnabled
-    ? (padBars
-        ? `    val barsPadding = Modifier.statusBarsPadding().navigationBarsPadding()`
-        : `    val barsPadding = Modifier`)
-    : `    val barsPadding = if (Build.VERSION.SDK_INT >= 35) Modifier.statusBarsPadding().navigationBarsPadding() else Modifier`;
-  const padDeclNewline = splashComponent ? padDecl + '\n' : padDecl;
-  const buildImport = e2eEnabled ? '' : `import android.os.Build\n`;
+  const padArg = `pad = ${padBars ? 'true' : 'false'}`;
 
-  // Deep-link entry: when configured, App() receives the ACTION_VIEW path
-  // from MainActivity and AppRouter starts there (a changing start re-runs
-  // LaunchedEffect(start) -> nav.start). When not configured, App() keeps the
-  // plain signature and the start literal stays "/".
-  const deepLinks = config.deepLinks;
-  const appFunSig = deepLinks ? 'fun App(deepLink: String? = null) {' : 'fun App() {';
-  const startExpr = deepLinks ? 'deepLink ?: "/"' : '"/"';
+  // Deep-link entry: when configured, the entry points hand App() the
+  // ACTION_VIEW path from MainActivity and AppRouter starts there (a changing
+  // start re-runs LaunchedEffect(start) -> nav.start). When not configured,
+  // start stays null and App() falls back to "/".
+  const startExpr = 'start ?: "/"';
 
   // Build content box AFTER backArgs are available; the route table itself
-  // lives in Routes.android.kt (appRoutes) so route changes never rewrite
-  // this file.
+  // lives in Routes.*.kt (appRoutes) so route changes never rewrite this file.
   const contentBox = tablet
     ? `        // Tablet layout: content is constrained to a centered 840dp column.
         Box(modifier = Modifier.fillMaxSize()) {
             Box(modifier = Modifier.fillMaxSize().then(barsPadding).widthIn(max = 840.dp).align(Alignment.Center)) {
                 Layout {
-                    AppRouter(start = ${startExpr}, routes = appRoutes,${backArgs})
+                    AppRouter(start = ${startExpr}, routes = routes,${backArgs})
                 }
             }
         }`
@@ -1964,7 +2045,7 @@ import androidx.compose.ui.Alignment
         // above the navigation bar.
         Box(modifier = Modifier.fillMaxSize().then(barsPadding)) {
             Layout {
-                AppRouter(start = ${startExpr}, routes = appRoutes,${backArgs})
+                AppRouter(start = ${startExpr}, routes = routes,${backArgs})
             }
         }`;
 
@@ -1994,36 +2075,34 @@ import androidx.compose.runtime.setValue
     : '';
 
   writeIfChanged(
-    join(outDir, 'App.kt'),
+    join(commonOutDir, 'App.kt'),
     `package app
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-${splashImports}${buildImport}${tabletImports}import app.navigation.*
+${splashImports}${tabletImports}import app.navigation.*
 
 @Composable
-${appFunSig}
+fun App(start: String? = null, routes: List<Route>) {
     val nav = rememberNavController()
     LaunchedEffect(Unit) { nav.navigate("/") }
-    // Register the current activity for browser-API dialogs (alert).
-    val veskContext = LocalContext.current
-    SideEffect { veskAppSetup(veskContext) }
-${padDeclNewline}${splashStateDecl}
+    // Platform seams: barsPadding() insets the system bars where the platform
+    // draws edge-to-edge (android); veskAppSetup() registers the browser-API
+    // anchor (android activity; no-op elsewhere).
+    veskAppSetup()
+    val barsPadding = veskBarsPadding(${padArg})
+${splashStateDecl}
     CompositionLocalProvider(LocalNavController provides nav) {
         ${splashContent.replace('\n', '\n        ')}
     }
 }
 `,
   );
-  log('gen', `App.kt -> renders ${pages.length} routed pages${splashComponent ? ` + splash screen (${splashComponent})` : ''}${tablet ? ' (tablet layout)' : ''}`);
+  log('gen', `App.kt (commonMain) -> renders ${pages.length} routed pages${splashComponent ? ` + splash screen (${splashComponent})` : ''}${tablet ? ' (tablet layout)' : ''}`);
 }
 
 // iOS Compose Multiplatform entry point: the Swift shell (ContentView.swift)
@@ -2031,104 +2110,55 @@ ${padDeclNewline}${splashStateDecl}
 // ComposeUIViewController hosting the same AppRouter(start, routes, back) the
 // Android App.kt renders. iOS has no system bars to inset like Android 15, so
 // the content fills the screen.
-export function generateMainViewControllerKt(appDir: string, config: VeskConfig): void {
+export function generateMainViewControllerKt(appDir: string): void {
+  // iOS Compose Multiplatform entry: the Swift shell (ContentView.swift)
+  // calls MainViewControllerKt.MainViewController(), which returns a
+  // ComposeUIViewController hosting the commonMain App() with the portable
+  // route table (Routes.ios.kt — android-only pages cannot compile here).
   const iosOutDir = sharedIosKotlinDir(dirname(appDir));
   mkdirSync(iosOutDir, { recursive: true });
-  const { backArgs, errors } = computeRouteList(appDir, config);
-  if (errors.length > 0) {
-    for (const e of errors) console.error(`  [gen] ${e}`);
-    process.exit(1);
-  }
-
-  // Detect splash.vsk component (same logic as App.kt)
-  const splashVskPath = join(appDir, 'splash.vsk');
-  let splashComponent: string | null = null;
-  let splashHasProps = false;
-  if (existsSync(splashVskPath)) {
-    const splashSource = readFileSync(splashVskPath, 'utf8');
-    const splashAst = parse(splashSource) as unknown as JsNode;
-    const splashDecls = findComponentDecls(splashAst);
-    if (splashDecls.length > 0 && splashDecls[0]) {
-      splashComponent = splashDecls[0].name;
-      const params = splashDecls[0].params as JsNode[];
-      splashHasProps = params.some((p) => !(p.type === 'Identifier' && p.name === 'content'));
-    }
-  }
-
-  const tablet = config.device === 'tablet';
-  const tabletImports = tablet
-    ? `import androidx.compose.foundation.layout.widthIn
-import androidx.compose.ui.Alignment
-`
-    : '';
-  const contentBox = tablet
-    ? `        // Tablet layout: content is constrained to a centered 840dp column.
-        Box(modifier = Modifier.fillMaxSize()) {
-            Box(modifier = Modifier.fillMaxSize().widthIn(max = 840.dp).align(Alignment.Center)) {
-                Layout {
-                    AppRouter(start = "/", routes = appRoutes,${backArgs})
-                }
-            }
-        }`
-    : `        Box(modifier = Modifier.fillMaxSize()) {
-            Layout {
-                AppRouter(start = "/", routes = appRoutes,${backArgs})
-            }
-        }`;
-
-  // Splash screen handling for iOS
-  const splashStateDecl = splashComponent
-    ? `    var splashDone by remember { mutableStateOf(false) }\n    LaunchedEffect(Unit) { kotlinx.coroutines.delay(3000); splashDone = true }\n`
-    : '';
-  const splashCall = splashComponent
-    ? splashHasProps
-      ? `${splashComponent}(props = ${splashComponent}Props(onReady = { splashDone = true }))`
-      : `${splashComponent}()`
-    : '';
-  const splashContent = splashComponent
-    ? `        if (splashDone) {
-            ${contentBox.replace('\n', '\n            ')}
-        } else {
-            ${splashCall}
-        }`
-    : contentBox;
-
-  const splashImports = splashComponent
-    ? `import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.LaunchedEffect
-`
-    : `import androidx.compose.runtime.LaunchedEffect
-`;
-
   writeIfChanged(
     join(iosOutDir, 'MainViewController.kt'),
     `package app
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.ComposeUIViewController
 import platform.UIKit.UIViewController
-${splashImports}${tabletImports}import app.navigation.*
 
 @Composable
-fun App() {
-    val nav = rememberNavController()
-${splashStateDecl}
-    CompositionLocalProvider(LocalNavController provides nav) {
-        ${splashContent.replace('\n', '\n        ')}
-    }
-}
-
-fun MainViewController(): UIViewController = ComposeUIViewController { App() }
+fun MainViewController(): UIViewController = ComposeUIViewController { App(routes = appRoutes) }
 `,
   );
-  log('gen', `MainViewController.kt (iosMain entry)${splashComponent ? ` + splash screen (${splashComponent})` : ''}`);
+  log('gen', 'MainViewController.kt (iosMain, thin: commonMain App() + portable routes)');
+}
+
+// Desktop JVM entry (vesk dev --desktop): a plain Compose window hosting the
+// commonMain App() with the portable route table (Routes.jvm.kt). The window
+// is sized to a phone-ish canvas for preview parity; title from config.
+export function generateDesktopMainKt(appDir: string, config: VeskConfig): void {
+  const jvmOutDir = sharedJvmKotlinDir(dirname(appDir));
+  mkdirSync(jvmOutDir, { recursive: true });
+  writeIfChanged(
+    join(jvmOutDir, 'Main.kt'),
+    `package app
+
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.application
+import androidx.compose.ui.window.rememberWindowState
+
+fun main() = application {
+    Window(
+        onCloseRequest = ::exitApplication,
+        title = "${config.appName.replaceAll('"', '\\"')} (vesk preview)",
+        state = rememberWindowState(width = 420.dp, height = 900.dp),
+    ) {
+        App(routes = appRoutes)
+    }
+}
+`,
+  );
+  log('gen', 'Main.kt (jvmMain desktop entry, commonMain App() + portable routes)');
 }
 
 function isTsIdentifier(name: string): boolean {
@@ -2394,12 +2424,15 @@ export function generateProject(target: string, config: VeskConfig): void {
   generateThemeKt(target, config);
   generateRouterKt(appDir);
   const bundledResources = compileVskFiles(appDir, config, target);
-  generateRoutesKt(appDir, config);
-  generateAppKt(appDir, config);
+  generateRoutesKt(appDir, config, bundledResources.portableByRel);
+  generateAppKt(appDir, config, bundledResources.portableByRel);
   // iosMain Compose Multiplatform entry: the Swift shell is generated by
-  // ios.ts (additive); MainViewController.kt mirrors the Android App.kt
-  // routing so the same AppRouter renders on iOS.
-  generateMainViewControllerKt(appDir, config);
+  // ios.ts (additive); MainViewController.kt hosts the commonMain App() with
+  // the portable route table so the same AppRouter renders on iOS.
+  generateMainViewControllerKt(appDir);
+  // Desktop JVM entry: vesk dev --desktop runs the commonMain App() in a
+  // Compose window with the portable route table.
+  generateDesktopMainKt(appDir, config);
   // Last: Runtime.kt is pruned to the helpers the generated pages actually use.
   // Gradle dependencies are derived from the same usage so they stay in lock
   // step with the pruned imports and code.

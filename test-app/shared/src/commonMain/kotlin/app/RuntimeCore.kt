@@ -763,6 +763,16 @@ object VeskTimers {
 expect object VeskAppContext
 
 
+// Platform seams for the generated commonMain App() composable: system-bar
+// insets (android draws edge-to-edge; desktop/iOS have no bars) and the
+// browser-API anchor registration (android registers the activity; desktop/
+// iOS are no-ops). App.kt is commonMain so every host must provide these.
+@Composable
+expect fun veskBarsPadding(pad: Boolean): Modifier
+@Composable
+expect fun veskAppSetup()
+
+
 expect fun jsAlert(message: Any?)
 
 
