@@ -1,6 +1,6 @@
 {
   "name": "@vesk/native",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "description": "vesk-native app-facing API — defineConfig and config types for .vsk native apps",
   "main": "./dist/index.js",
