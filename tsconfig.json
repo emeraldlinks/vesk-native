@@ -3,6 +3,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
+      "@vesk/native": ["packages/native/src/index.ts"],
       "@compiler-native/*": ["packages/compiler-native/src/*.ts"],
       "@cli-native/*": ["packages/cli-native/src/*.ts"],
       "@navigation-native/*": ["packages/navigation-native/src/*"],
