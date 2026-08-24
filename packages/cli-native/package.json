@@ -16,7 +16,7 @@
     "assets"
   ],
   "scripts": {
-    "build": "esbuild src/index.ts --bundle --format=esm --platform=node --outfile=dist/index.js --tsconfig=../../tsconfig.json --banner:js='#!/usr/bin/env node'"
+    "build": "esbuild src/index.ts --bundle --format=esm --platform=node --outfile=dist/index.js --tsconfig=../../tsconfig.json --banner:js='#!/usr/bin/env node\nimport { createRequire } from \"node:module\"; const require = createRequire(import.meta.url);'"
   },
   "devDependencies": {
     "typescript": "^5.8.0"
