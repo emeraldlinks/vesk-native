@@ -9,7 +9,7 @@
       "@test-app/*": ["test-app/*"]
     }
   },
-  "include": ["packages/**/*.ts", "test-app/**/*.ts"],
+  "include": ["packages/**/*.ts", "test-app/**/*.ts", "tests/**/*.ts"],
   "exclude": [
     "node_modules",
     "dist",
