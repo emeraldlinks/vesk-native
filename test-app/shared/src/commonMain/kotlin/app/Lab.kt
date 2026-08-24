@@ -96,17 +96,33 @@ fun Lab(content: @Composable () -> Unit = {}) {
 				modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
 				style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 14.sp, lineHeight = 20.sp),
 			)
-			NavLink(props = NavLinkProps(href = "/refresh", modifier = Modifier.fillMaxWidth()))
-				{
-					Column(
-					) {
-						Text(
-							text = "Pull-to-refresh demo →",
-							modifier = Modifier.padding(top = 12.dp).clip(RoundedCornerShape(9999.dp)).background(Color(0x33FFFFFF)).padding(horizontal = 12.dp).padding(vertical = 4.dp),
-							style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold),
-						)
+			Row(
+				modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+				horizontalArrangement = Arrangement.spacedBy(8.dp),
+			) {
+				NavLink(props = NavLinkProps(href = "/refresh"))
+					{
+						Column(
+						) {
+							Text(
+								text = "Pull-to-refresh demo",
+								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0x33FFFFFF)).padding(horizontal = 12.dp).padding(vertical = 4.dp),
+								style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold),
+							)
+						}
 					}
-				}
+				NavLink(props = NavLinkProps(href = "/lab/tailwind-test"))
+					{
+						Column(
+						) {
+							Text(
+								text = "Tailwind test",
+								modifier = Modifier.clip(RoundedCornerShape(9999.dp)).background(Color(0x33FFFFFF)).padding(horizontal = 12.dp).padding(vertical = 4.dp),
+								style = TextStyle(color = Color(0xFFFFFFFF), fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold),
+							)
+						}
+					}
+			}
 		}
 		Column(
 			modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surface).border(2.dp, Color(0xFFF3E8FF)).padding(16.dp),

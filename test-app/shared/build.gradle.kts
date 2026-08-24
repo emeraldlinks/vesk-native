@@ -50,9 +50,12 @@ kotlin {
             // The desktop aggregator brings the window toolkit (ui-window,
             // SingleWindowApplication) plus the awt integration;
             // kotlinx-coroutines-swing supplies Dispatchers.Main (the Swing
-            // EDT) for the motionDispatcher seam.
+            // EDT) for the motionDispatcher seam. skiko's module metadata does
+            // not select the awt runtime on the plain JVM variant, so the
+            // host platform native is declared explicitly.
             implementation("org.jetbrains.compose.desktop:desktop:1.11.0")
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.9.0")
+            implementation("org.jetbrains.skiko:skiko-awt-runtime-linux-arm64:0.144.6")
         }
         androidMain.dependencies {
 implementation("androidx.compose.ui:ui:1.11.4")
@@ -103,3 +106,17 @@ implementation("com.composables:icons-lucide-cmp:2.2.1")
         }
     }
 }
+
+// Plain JVM run of the desktop preview (no hot reload): same main(), same
+// portable route table — jvmMain.runtimeClasspath is the KMP compilation's
+// runtime configuration (KGP 2.x exposes it on every Kotlin source set).
+// vesk dev --desktop applies the Compose Hot Reload plugin above instead and
+// uses its hotRunJvm task, so release/normal builds never load reload tooling.
+tasks.register<JavaExec>("runDesktop") {
+    group = "application"
+    description = "Runs the desktop preview (jvm target) without hot reload"
+    workingDir = rootProject.layout.projectDirectory.asFile
+    classpath = sourceSets["jvmMain"].runtimeClasspath
+    mainClass = "app.MainKt"
+}
+

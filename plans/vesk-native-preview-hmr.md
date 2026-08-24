@@ -142,11 +142,20 @@ initially.
   Router.jvm.kt ships in @vesk/navigation-native like the android/ios actuals.
   Remaining in 3.1: runDesktop task, dev-gated CMP Hot Reload + JBR (foojay),
   `vesk dev --desktop` loop.
+  **DONE (2026-08-19, continued)**: runDesktop task, dev-gated CMP Hot Reload +
+  JBR (foojay), `vesk dev --desktop` loop all implemented. Generation verified,
+  gradle tasks registered, compiles clean. CHR runtime launch blocked on
+  proot/Termux environment (orchestration socket failure).
 - **3.2 On-device fast reload**: `vesk dev` default: watch → regen changed files
   + Routes.kt → `:shared:compileDebugKotlin :app:installDebug` → adb relaunch.
   Target 5–15s. Cell state loss on relaunch accepted (decision); SavedState
   wrapper noted as follow-up. Reload classes: body/style/script → fast path; new
   device API/lib → full build (usage diff detects it).
+  **DONE (2026-08-19)**: `devDevice()` function implemented in commands.ts. File
+  watcher polls .vsk + modules every 500ms, debounces at 250ms. On change:
+  generateProject → gradle installDebug → adb shell am start relaunch. Device
+  verified via adb devices before starting loop. `vesk dev` default mode, `--web`
+  for browser preview, `--desktop` for JVM preview. tsc clean.
 
 ### Phase 4 — Ergonomics
 Compile-error overlays (web) / CHR error stream (desktop) / inline errors

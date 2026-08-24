@@ -245,6 +245,85 @@ function parseDeclarations(decls: string, skipped: string[], cls: string): Modif
       if (n !== null) parts.shadow.push(`shadow(${n}.dp)`);
       continue;
     }
+    // ---- sizing constraints ----
+    if (prop === 'min-width') {
+      if (value.trim() === '0') parts.size.push('widthIn(min = 0.dp)');
+      else if (value.trim() === '100%') parts.size.push('fillMaxWidth()');
+      else { const n = lenToDp(value); if (n !== null) parts.size.push(`widthIn(min = ${n}.dp)`); }
+      continue;
+    }
+    if (prop === 'max-width') {
+      if (value.trim() === '100%') parts.size.push('fillMaxWidth()');
+      else { const n = lenToDp(value); if (n !== null) parts.size.push(`widthIn(max = ${n}.dp)`); }
+      continue;
+    }
+    if (prop === 'min-height') {
+      if (value.trim() === '0') parts.size.push('heightIn(min = 0.dp)');
+      else if (value.trim() === '100%') parts.size.push('fillMaxHeight()');
+      else { const n = lenToDp(value); if (n !== null) parts.size.push(`heightIn(min = ${n}.dp)`); }
+      continue;
+    }
+    if (prop === 'max-height') {
+      if (value.trim() === '100%') parts.size.push('fillMaxHeight()');
+      else { const n = lenToDp(value); if (n !== null) parts.size.push(`heightIn(max = ${n}.dp)`); }
+      continue;
+    }
+    // ---- per-side border ----
+    if (prop === 'border-top' || prop === 'border-right' || prop === 'border-bottom' || prop === 'border-left') {
+      const b = parseBorder(value);
+      if (b) parts.border.push(b);
+      continue;
+    }
+    // ---- z-index ----
+    if (prop === 'z-index') {
+      const v = value.trim().toLowerCase();
+      if (v === 'auto') continue;
+      const n = Number.parseInt(v, 10);
+      if (!Number.isNaN(n)) parts.posMod.push(`zIndex(${n}f)`);
+      continue;
+    }
+    // ---- visibility ----
+    if (prop === 'visibility') {
+      if (value.trim().toLowerCase() === 'hidden') parts.alpha.push('alpha(0.000f)');
+      continue;
+    }
+    // ---- overflow ----
+    if (prop === 'overflow') {
+      const v = value.trim().toLowerCase();
+      if (v === 'hidden' || v === 'clip') parts.clip.push('clip(RoundedCornerShape(0.dp))');
+      else if (v === 'auto' || v === 'scroll') parts.scroll.push('verticalScroll(rememberScrollState())');
+      continue;
+    }
+    // ---- letter-spacing ----
+    if (prop === 'letter-spacing') {
+      const n = lenToDp(value);
+      if (n !== null) parts.textStyle.push(`letterSpacing = ${n}.sp`);
+      continue;
+    }
+    // ---- text-transform ----
+    if (prop === 'text-transform') {
+      const v = value.trim().toLowerCase();
+      if (v === 'uppercase') parts.text.transform = 'upper';
+      else if (v === 'lowercase') parts.text.transform = 'lower';
+      else if (v === 'capitalize') parts.text.transform = 'cap';
+      continue;
+    }
+    // ---- text-overflow ----
+    if (prop === 'text-overflow') {
+      const v = value.trim().toLowerCase();
+      if (v === 'ellipsis') { parts.text.maxLines = 1; parts.text.overflow = 'Ellipsis'; }
+      else if (v === 'clip') { parts.text.maxLines = 1; parts.text.overflow = 'Clip'; }
+      continue;
+    }
+    // ---- white-space ----
+    if (prop === 'white-space') {
+      const v = value.trim().toLowerCase();
+      if (v === 'nowrap' || v === 'pre') parts.text.softWrap = false;
+      else parts.text.softWrap = true;
+      continue;
+    }
+    // ---- cursor / outline / object-fit — drop (no Compose equivalent) ----
+    if (prop === 'cursor' || prop === 'outline' || prop === 'object-fit') continue;
     // Unknown props (justify-content, align-items, position, ...) are layout
     // concerns handled by Tailwind classes; ignore them here.
   }

@@ -80,6 +80,55 @@ Diagnose Kotlin directly:
 /opt/vesk-native-toolchain/gradle-9.7.0/bin/gradle -p test-app/app compileDebugKotlin --rerun-tasks
 ```
 
+## Dev server (HMR / fast reload)
+
+`vesk dev` has three modes — pick the one that fits your setup:
+
+### On-device fast reload (default)
+
+Plug in a phone or start an emulator, then:
+
+```sh
+vesk dev
+```
+
+Watches `.vsk` files and project modules. On change it regenerates, runs
+`gradle installDebug`, and relaunches the app via `adb`. Cell state is lost on
+each reload. Target reload time: 5–15 s.
+
+Requires: `adb` on PATH, a connected device or running emulator.
+
+### Browser preview
+
+```sh
+vesk dev --web
+```
+
+Opens a browser-based preview with ms HMR. Edits to `.vsk` files push
+instantly to the browser via WebSocket. `device.*` APIs map to real browser
+APIs where possible; unmapped calls warn no-op. Good for layout and styling
+iteration — not a substitute for on-device testing.
+
+### Desktop JVM preview
+
+```sh
+vesk dev --desktop
+```
+
+Runs the app as a desktop JVM window under Compose Hot Reload. Edits push in
+ms with cell state preserved. Requires JetBrains Runtime (auto-provisioned via
+foojay on first run). The desktop target is a preview convenience — the app
+ships as an Android APK.
+
+### Flags
+
+| Flag | Effect |
+|------|--------|
+| `--port N` | Web preview port (default 5173) |
+| `--web` | Force browser preview |
+| `--desktop` | Force desktop JVM preview |
+| *(none)* | On-device fast reload |
+
 ## Rules
 
 - No regex in the compiler, parser, or code generator — structural source

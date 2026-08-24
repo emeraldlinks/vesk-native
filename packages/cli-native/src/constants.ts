@@ -97,7 +97,8 @@ Usage:
   vesk-native add <pkg>          Add a Kotlin library to libraries.json (id | id@version | group:artifact) — the single committed source of truth
   vesk-native update [pkg]       Bump installed library version(s) to the latest builtin registry version
   vesk-native remove <pkg>       Uninstall a Kotlin library (gradle dep + permissions drop on next build)
-  vesk-native dev [--port N]     Web preview with per-file HMR (device.* maps to browser APIs; unmapped = warn no-op)
+  vesk-native dev [--port N]     On-device fast reload (default): watch → regen → compile → install → adb relaunch
+  vesk-native dev --web          Browser preview with per-file HMR (device.* maps to browser APIs; unmapped = warn no-op)
   vesk-native dev --desktop      Desktop preview: jvm() target + Compose Hot Reload (ms recomposition, cells preserved)
 `);
 }

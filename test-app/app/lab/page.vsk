@@ -13,9 +13,14 @@ component Lab() {
         <div class="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-xl p-6">
             <h1 class="text-white text-2xl font-bold">Lab — vesk-native feature demo</h1>
             <p class="text-white text-sm mt-1">Every card below is a fixed compiler/runtime feature, labeled with what it proves.</p>
-            <NavLink href="/refresh">
-                <span class="inline-block bg-white/20 text-white text-xs font-semibold rounded-full px-3 py-1 mt-3">Pull-to-refresh demo →</span>
-            </NavLink>
+            <div class="flex gap-2 mt-3">
+                <NavLink href="/refresh">
+                    <span class="inline-block bg-white/20 text-white text-xs font-semibold rounded-full px-3 py-1">Pull-to-refresh demo</span>
+                </NavLink>
+                <NavLink href="/lab/tailwind-test">
+                    <span class="inline-block bg-white/20 text-white text-xs font-semibold rounded-full px-3 py-1">Tailwind test</span>
+                </NavLink>
+            </div>
         </div>
 
         <div class="bg-white rounded-xl p-4 border-2 border-purple-100">

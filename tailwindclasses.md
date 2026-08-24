@@ -32,7 +32,7 @@ by the generic tokenizer.
 | Floats | `float-right`, `float-left`, `float-none` | — | ❌ |
 | Clear | `clear-left`, `clear-right`, `clear-both`, `clear-none` | — | ❌ |
 | Isolation | `isolate`, `isolation-auto` | — | ❌ |
-| Object Fit | `object-contain`, `object-cover`, `object-fill`, `object-none`, `object-scale-down` | — | ❌ (no image elements) |
+| Object Fit | `object-contain`, `object-cover`, `object-fill`, `object-none`, `object-scale-down` | `Modifier.*` via `ContentScale.*` | ✅ |
 | Object Position | `object-bottom`, `object-center`, `object-left`, ... | — | ❌ |
 | Overflow | `overflow-auto/visible/hidden/scroll/clip`, `overflow-x-*`, `overflow-y-*` | `overflow-hidden` → `clip(...)`; `overflow-y-auto/scroll` → `verticalScroll(rememberScrollState())`; `overflow-x-*` → `horizontalScroll(...)`; `x-hidden/y-hidden` → `clip(...)` | ✅ |
 | Overscroll | `overscroll-auto/contain/none`, `overscroll-x-*`, `overscroll-y-*` | — | ❌ |
@@ -45,12 +45,12 @@ by the generic tokenizer.
 
 | Namespace | Classes | Output | Status |
 |-----------|---------|--------|--------|
-| Flex Basis | `basis-*`, `basis-auto/full` | — | ❌ |
+| Flex Basis | `basis-*`, `basis-auto/full`, `basis-[N%]`, `basis-[Ndp]` | `fillMaxWidth(f)`/`fillMaxHeight(f)` for fractions; `width(dp)`/`height(dp)` for dp values; `basis-auto` → no-op | 🟡 |
 | Flex Direction | `flex-row`, `flex-row-reverse`, `flex-col`, `flex-col-reverse` | container axis | ✅ |
 | Flex Wrap | `flex-wrap`, `flex-wrap-reverse`, `flex-nowrap` | container switches to `FlowRow`/`FlowColumn` (`@OptIn(ExperimentalLayoutApi)`) | ✅ |
-| Flex | `flex-1`, `flex-auto`, `flex-initial`, `flex-none` | `flex-1/flex-auto` → `Modifier.weight(1f)` (inside Row/Column) | 🟡 |
-| Flex Grow | `grow`, `grow-0` | `grow` → `weight(1f)` | 🟡 |
-| Flex Shrink | `shrink`, `shrink-0` | — | ❌ |
+| Flex | `flex-1`, `flex-auto`, `flex-initial`, `flex-none` | `flex-1`/`flex-auto` → `Modifier.weight(1f)`; `flex-0`/`flex-initial`/`flex-none` → dropped (default behavior) | 🟡 |
+| Flex Grow | `grow`, `grow-0` | `grow` → `weight(1f)`; `grow-0` → dropped (default weight=0) | 🟡 |
+| Flex Shrink | `shrink`, `shrink-0` | no-op (default behavior in Compose) | 🟡 |
 | Order | `order-1..12`, `order-first/last/none` | — | ❌ (Compose order = source order) |
 | Grid Template Columns | `grid-cols-1..12`, `grid-cols-none/subgrid` | — | ❌ |
 | Grid Template Rows | `grid-rows-1..12`, `grid-rows-none/subgrid` | — | ❌ |
@@ -74,20 +74,20 @@ by the generic tokenizer.
 | Namespace | Classes | Output | Status |
 |-----------|---------|--------|--------|
 | Padding | `p-*`, `px-*`, `py-*`, `pt-*`, `pr-*`, `pb-*`, `pl-*` | `Modifier.padding(...)` | ✅ |
-| Margin | `m-*`, `mx-*`, `my-*`, `mt-*`, `mr-*`, `mb-*`, `ml-*`, `-m-*`, ... | positive → `Modifier.padding(...)`; negative → `Modifier.offset(x/y = -dp)` (approximation) | 🟡 |
-| Space Between | `space-x-*`, `space-y-*`, `space-x-reverse`, `space-y-reverse` | `Arrangement.spacedBy(dp)` on container | ✅ |
+| Margin | `m-*`, `mx-*`, `my-*`, `mt-*`, `mr-*`, `mb-*`, `ml-*`, `-m-*`, ... | positive → `Modifier.padding(...)`; negative → `Modifier.offset(x/y = -dp)` (approximation); `m-auto` → silently dropped (Compose centering via Arrangement) | 🟡 |
+| Space Between | `space-x-*`, `space-y-*`, `space-x-reverse`, `space-y-reverse` | `spacedBy(dp)` on container axis; `*-reverse` → dropped (no Compose equivalent) | 🔶 |
 
 ## 4. Sizing
 
 | Namespace | Classes | Output | Status |
 |-----------|---------|--------|--------|
-| Width | `w-0..w-96`, `w-px`, `w-1/2`, `w-full`, `w-screen`, `w-min/max/fit`, `w-[3.5rem]` | `width(dp)`, `fillMaxWidth(f)` | ✅ |
+| Width | `w-0..w-96`, `w-px`, `w-1/2`, `w-full`, `w-screen`, `w-min/max/fit`, `w-[3.5rem]`, `w-svw/dvw/lvw` | `width(dp)`, `fillMaxWidth(f)`; `w-svw/dvw/lvw` → `fillMaxWidth()` (approximated as 100%) | 🟡 |
 | Min-Width | `min-w-0`, `min-w-full`, `min-w-min/max/fit` | `widthIn(min = 0.dp)`; `min-w-full` → `fillMaxWidth()` | 🟡 |
 | Max-Width | `max-w-0`, `max-w-xs..7xl`, `max-w-full`, `max-w-screen-*`, `max-w-prose`, `max-w-min/max/fit` | `widthIn(max = dp)` for named sizes; `max-w-screen-*` supported | ✅ |
-| Height | `h-*`, `h-1/2`, `h-full`, `h-screen`, ... | `height(dp)`, `fillMaxHeight(f)` | ✅ |
+| Height | `h-*`, `h-1/2`, `h-full`, `h-screen`, `h-svh/dvh/lvh` | `height(dp)`, `fillMaxHeight(f)`; `h-svh/dvh/lvh` → `fillMaxHeight()` (approximated as 100%) | 🟡 |
 | Min-Height | `min-h-0`, `min-h-full`, `min-h-screen` | `heightIn(min = 0.dp)`; `min-h-screen` → `fillMaxHeight()` | 🟡 |
 | Max-Height | `max-h-*` | `heightIn(max = dp)` for numeric values | 🟡 |
-| Size | `size-*`, `size-full`, `size-1/2` | `Modifier.size(dp)` | ✅ |
+| Size | `size-*`, `size-full`, `size-1/2`, `size-svw/dvh/lvh` | `Modifier.size(dp)` for dp values; `size-*` for fractions → `fillMaxWidth(f)` + `fillMaxHeight(f)`; `size-svw/dvh/lvh` → `fillMaxWidth()` + `fillMaxHeight()` | ✅ |
 
 ## 5. Typography
 
@@ -96,7 +96,7 @@ by the generic tokenizer.
 | Font Family | `font-sans`, `font-serif`, `font-mono` | `fontFamily = FontFamily.*` | ✅ |
 | Font Size | `text-xs..9xl` | `fontSize = N.sp` (+ paired `lineHeight`) | ✅ |
 | Font Smoothing | `antialiased`, `subpixel-antialiased` | — | ❌ (no-op on Android) |
-| Font Style | `italic`, `not-italic` | `fontStyle = FontStyle.Italic` | ✅ |
+| Font Style | `italic`, `not-italic` | `fontStyle = FontStyle.Italic` / `FontStyle.Normal` | ✅ |
 | Font Weight | `font-thin..font-black` | `fontWeight = FontWeight.*` | ✅ |
 | Font Variant Numeric | `normal-nums`, `ordinal`, `slashed-zero`, `lining-nums`, `oldstyle-nums`, `proportional-nums`, `tabular-nums`, `diagonal-fractions`, `stacked-fractions` | — | ❌ |
 | Letter Spacing | `tracking-tighter..widest` | `letterSpacing = N.sp` | ✅ |
@@ -201,11 +201,11 @@ by the generic tokenizer.
 
 | Namespace | Classes | Output | Status |
 |-----------|---------|--------|--------|
-| Transition Property | `transition`, `transition-none/all/colors/opacity/shadow/transform` | — | ❌ (no CSS transitions; Compose animations are imperative) |
-| Transition Duration | `duration-75..1000` | — | ❌ |
-| Transition Timing | `ease-linear/in/out/in-out` | — | ❌ |
-| Transition Delay | `delay-75..1000` | — | ❌ |
-| Animation | `animate-none/spin/ping/pulse/bounce`, `animate-[...]` | — | ❌ |
+| Transition Property | `transition`, `transition-none/all/colors/opacity/shadow/transform` | — | 🔶 (warn: use `motion.animate()` instead) |
+| Transition Duration | `duration-75..1000` | — | 🔶 |
+| Transition Timing | `ease-linear/in/out/in-out` | — | 🔶 |
+| Transition Delay | `delay-75..1000` | — | 🔶 |
+| Animation | `animate-none/spin/ping/pulse/bounce`, `animate-[...]` | — | 🔶 |
 
 ## 12. Transforms
 

@@ -318,15 +318,26 @@ function generateVeskConfig(a: Answers): string {
   return `import { defineConfig } from '@vesk/native'
 
 export default defineConfig({
+  // ── Identity ──────────────────────────────────────────────────────────
   appId: '${a.appId}',
   appName: '${a.appName}',
   versionName: '1.0.0',
   versionCode: 1,
+
+  // ── SDK targets ───────────────────────────────────────────────────────
   compileSdk: 37,
   minSdk: 24,
   targetSdk: 36,
+
+  // ── Layout ────────────────────────────────────────────────────────────
   orientation: 'portrait',
-  theme: '${a.theme}',
+  device: 'phone',               // 'phone' | 'tablet'
+
+  // ── Root component (first component when omitted) ─────────────────────
+  // root: 'MyComponent',
+
+  // ── Theme ─────────────────────────────────────────────────────────────
+  theme: '${a.theme}',           // 'system' | 'light' | 'dark'
   colors: {
     primary: '${a.primaryColor}',
     background: '#FFFFFF',
@@ -341,23 +352,92 @@ export default defineConfig({
     onPrimary: '#0F172A',
     text: '#E2E8F0',
   },
+
+  // ── Typography (optional; platform defaults when omitted) ─────────────
+  // typography: {
+  //   fontFamily: 'sans-serif',  // Android font family
+  //   fontSize: 16,              // base sp size
+  // },
+
+  // ── Back navigation ──────────────────────────────────────────────────
   back: {
-    mode: 'stack',
+    mode: 'stack',               // 'stack' (history pop) | 'system' (OS default)
     doubleBackToExit: true,
     exitDelayMs: 2000,
-    exitRoutes: [],
+    exitRoutes: [],              // routes where double-back exits (default: root)
   },
+
+  // ── Edge-to-edge / system bars ────────────────────────────────────────
   edgeToEdge: {
     enabled: true,
     paddingBars: true,
-    statusBarStyle: 'auto',
+    statusBarStyle: 'auto',      // 'auto' | 'light' | 'dark'
     navigationBarStyle: 'auto',
   },
+
+  // ── Media ─────────────────────────────────────────────────────────────
   media: {
-    broadcast: true,
+    broadcast: true,             // system media session + lock screen controls
   },
+
+  // ── Extra permissions (auto-derived from usage; add only what's missing)
   permissions: [],
-  device: 'phone',
+
+  // ── Per-screen props ──────────────────────────────────────────────────
+  // screens: {
+  //   '/my-page': { props: { title: 'Hello' } },
+  // },
+
+  // ── Additional routes (file-based routes are automatic) ───────────────
+  // routes: [
+  //   { path: '/custom', component: 'CustomPage' },
+  // ],
+
+  // ── Splash screen ─────────────────────────────────────────────────────
+  // splash: {
+  //   enabled: false,
+  //   backgroundColor: '#FFFFFF',
+  //   logo: 'assets/splash-logo.png',
+  //   animationDurationMs: 0,
+  // },
+
+  // ── App icon ──────────────────────────────────────────────────────────
+  // icon: {
+  //   foreground: 'assets/icon.png',   // 432x432 PNG recommended
+  //   backgroundColor: '${a.primaryColor}',
+  // },
+
+  // ── Deep links ────────────────────────────────────────────────────────
+  // deepLinks: {
+  //   scheme: '${a.appId.split('.').slice(1).join('.')}',  // derived from appId when omitted
+  //   host: '',
+  //   pathPrefix: '',
+  // },
+
+  // ── Release signing (dev builds use debug keystore) ───────────────────
+  // signing: {
+  //   android: {
+  //     storeFile: 'keystore.jks',
+  //     storePassword: 'env:KEYSTORE_PASSWORD',
+  //     keyAlias: 'upload',
+  //     keyPassword: 'env:KEY_PASSWORD',
+  //   },
+  //   ios: {
+  //     teamId: 'XXXXXXXXXX',
+  //     style: 'automatic',
+  //   },
+  // },
+
+  // ── Release packaging ─────────────────────────────────────────────────
+  // bundle: {
+  //   android: ['aab', 'apk'],
+  //   ios: {
+  //     method: 'app-store-connect',
+  //     destination: 'export',
+  //     uploadSymbols: true,
+  //     scheme: 'VeskApp',
+  //   },
+  // },
 })
 `;
 }

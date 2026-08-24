@@ -88,15 +88,26 @@ export function writeDefaultConfig(target: string): void {
     `import { defineConfig } from '@vesk/native'
 
 export default defineConfig({
+  // ── Identity ──────────────────────────────────────────────────────────
   appId: '${c.appId}',
   appName: '${c.appName}',
   versionName: '${c.versionName}',
   versionCode: ${c.versionCode},
+
+  // ── SDK targets ───────────────────────────────────────────────────────
   compileSdk: ${c.compileSdk},
   minSdk: ${c.minSdk},
   targetSdk: ${c.targetSdk},
+
+  // ── Layout ────────────────────────────────────────────────────────────
   orientation: '${c.orientation}',
-  theme: '${c.theme}',
+  device: '${c.device}',          // 'phone' | 'tablet'
+
+  // ── Root component (first component when omitted) ─────────────────────
+  // root: '',
+
+  // ── Theme ─────────────────────────────────────────────────────────────
+  theme: '${c.theme}',            // 'system' | 'light' | 'dark'
   colors: {
     primary: '${c.colors.primary}',
     background: '${c.colors.background}',
@@ -111,23 +122,92 @@ export default defineConfig({
     onPrimary: '${c.darkColors.onPrimary}',
     text: '${c.darkColors.text}',
   },
+
+  // ── Typography (optional; platform defaults when omitted) ─────────────
+  // typography: {
+  //   fontFamily: 'sans-serif',
+  //   fontSize: 16,
+  // },
+
+  // ── Back navigation ──────────────────────────────────────────────────
   back: {
     mode: 'stack',
     doubleBackToExit: true,
     exitDelayMs: 2000,
     exitRoutes: [],
   },
+
+  // ── Edge-to-edge / system bars ────────────────────────────────────────
   edgeToEdge: {
     enabled: true,
     paddingBars: true,
     statusBarStyle: 'auto',
     navigationBarStyle: 'auto',
   },
+
+  // ── Media ─────────────────────────────────────────────────────────────
   media: {
     broadcast: true,
   },
+
+  // ── Extra permissions (auto-derived from usage; add only what's missing)
   permissions: [],
-  device: 'phone',
+
+  // ── Per-screen props ──────────────────────────────────────────────────
+  // screens: {
+  //   '/my-page': { props: { title: 'Hello' } },
+  // },
+
+  // ── Additional routes (file-based routes are automatic) ───────────────
+  // routes: [
+  //   { path: '/custom', component: 'CustomPage' },
+  // ],
+
+  // ── Splash screen ─────────────────────────────────────────────────────
+  // splash: {
+  //   enabled: false,
+  //   backgroundColor: '#FFFFFF',
+  //   logo: 'assets/splash-logo.png',
+  //   animationDurationMs: 0,
+  // },
+
+  // ── App icon ──────────────────────────────────────────────────────────
+  // icon: {
+  //   foreground: 'assets/icon.png',
+  //   backgroundColor: '${c.colors.primary}',
+  // },
+
+  // ── Deep links ────────────────────────────────────────────────────────
+  // deepLinks: {
+  //   scheme: '',
+  //   host: '',
+  //   pathPrefix: '',
+  // },
+
+  // ── Release signing (dev builds use debug keystore) ───────────────────
+  // signing: {
+  //   android: {
+  //     storeFile: 'keystore.jks',
+  //     storePassword: 'env:KEYSTORE_PASSWORD',
+  //     keyAlias: 'upload',
+  //     keyPassword: 'env:KEY_PASSWORD',
+  //   },
+  //   ios: {
+  //     teamId: 'XXXXXXXXXX',
+  //     style: 'automatic',
+  //   },
+  // },
+
+  // ── Release packaging ─────────────────────────────────────────────────
+  // bundle: {
+  //   android: ['aab', 'apk'],
+  //   ios: {
+  //     method: 'app-store-connect',
+  //     destination: 'export',
+  //     uploadSymbols: true,
+  //     scheme: 'VeskApp',
+  //   },
+  // },
 })
 `,
   );

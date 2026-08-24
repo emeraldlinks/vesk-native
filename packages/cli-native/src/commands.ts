@@ -80,27 +80,28 @@ export async function buildApp(dir: string): Promise<void> {
   log('build', 'assembleDebug OK');
 }
 
-// `vesk dev [--port N]` — web preview (Phase 2): client-only dev server with
-// per-file HMR in the browser. Native-only surfaces (device.*) map to real
-// browser APIs where one exists and warn no-op otherwise; the mapping lives
-// in web-preview-shim.ts. Dev tooling only — ships nowhere in a built app.
+// `vesk dev` — three-tier dev server:
 //
-// `vesk dev --desktop` — desktop preview (Phase 3.1): the jvm() target runs
-// the commonMain App() under Compose Hot Reload (ms recomposition, cell state
-// preserved). The project regenerates in dev-desktop mode (foojay toolchain
-// resolver provisions the JetBrains Runtime; the compose + hot-reload Gradle
-// plugins are applied), gradle runs `:shared:hotRunJvm --auto` in the
-// foreground, and every .vsk / module change triggers a per-file regen +
-// incremental :shared compile — the CHR recompiler watches the class outputs
-// and pushes the new classes to the running app.
-export async function devApp(dir: string, port: number, desktop = false): Promise<void> {
+// - (default) on-device fast reload (Phase 3.2): watch → regen → compile →
+//   installDebug → adb relaunch. Cell state lost on relaunch (accepted).
+//
+// - `--web` — browser preview (Phase 2): client-only dev server with per-file
+//   HMR. device.* maps to real browser APIs; unmapped = warn no-op.
+//
+// - `--desktop` — desktop preview (Phase 3.1): jvm() target + Compose Hot
+//   Reload (ms recomposition, cells preserved). Dev-gated foojay + CHR.
+export async function devApp(dir: string, port: number, mode: 'device' | 'web' | 'desktop' = 'device'): Promise<void> {
   const target = resolve(dir);
   const config = await loadConfig(target);
-  if (desktop) {
+  if (mode === 'desktop') {
     await devDesktop(target, config);
     return;
   }
-  await startPreviewServer(target, port, config);
+  if (mode === 'web') {
+    await startPreviewServer(target, port, config);
+    return;
+  }
+  await devDevice(target, config);
 }
 
 // Project JS/TS modules under app/ (same set the compiler emits into
@@ -193,6 +194,78 @@ async function devDesktop(target: string, config: VeskConfig): Promise<void> {
         // Regenerate (cache keeps it to the changed page), then compile.
         generateProject(target, config, { devDesktop: true });
         reload(changed);
+      }, 250);
+    }
+    setTimeout(loop, 500);
+  };
+  loop();
+}
+
+// `vesk dev` (default, no --web / --desktop) — on-device fast reload (Phase
+// 3.2): watch .vsk + modules → regenerate → compile → installDebug → relaunch
+// via adb. Target 5–15 s reload. Cell state is lost on relaunch (accepted).
+// Reload classes: body/style/script → fast path; new device API/lib → full
+// build (usage diff detects it). Device must be connected via adb before
+// running this command.
+async function devDevice(target: string, config: VeskConfig): Promise<void> {
+  const gradle = findGradle();
+  const env = { ...process.env };
+  if (!env.ANDROID_HOME) env.ANDROID_HOME = DEFAULT_SDK;
+  if (!env.ANDROID_SDK_ROOT) env.ANDROID_SDK_ROOT = DEFAULT_SDK;
+
+  // Verify a device is connected before starting the loop.
+  const adbDevices = spawnSync('adb', ['devices'], { encoding: 'utf8' });
+  const lines = adbDevices.stdout.trim().split('\n').slice(1).filter((l) => l.trim() && !l.includes('offline'));
+  if (lines.length === 0) {
+    console.error('  [dev] no adb devices connected — plug in a device or start an emulator');
+    process.exit(1);
+  }
+  const serial = lines[0]!.split('\t')[0]!;
+  log('dev', `device: ${serial}`);
+
+  log('dev', 'generating project from source');
+  generateProject(target, config);
+
+  log('dev', 'building + installing debug APK');
+  const installResult = spawnSync(gradle, ['installDebug', '--console=plain'], { cwd: target, env, stdio: 'inherit' });
+  if (installResult.status !== 0) {
+    console.error('  [dev] initial installDebug failed — fix the error and restart');
+    process.exit(installResult.status ?? 1);
+  }
+  log('dev', 'launching app');
+  spawnSync('adb', ['shell', 'am', 'start', '-n', `${config.appId}/.MainActivity`], { stdio: 'inherit' });
+  log('dev', 'watching .vsk files + modules for changes (Ctrl+C to stop)');
+
+  const appDir = join(target, 'app');
+  const watched = (): Map<string, number> => {
+    const m = new Map<string, number>();
+    for (const f of collectVskFiles(appDir)) m.set(f, statSync(f).mtimeMs);
+    for (const f of projectModules(appDir)) m.set(f, statSync(f).mtimeMs);
+    const cfg = [CONFIG_TS, CONFIG_JSON, join(target, 'libraries.json')];
+    for (const c of cfg) if (existsSync(c)) m.set(c, statSync(c).mtimeMs);
+    return m;
+  };
+
+  let last = watched();
+  let timer: NodeJS.Timeout | undefined;
+  const loop = (): void => {
+    const now = watched();
+    const changed: string[] = [];
+    for (const [f, m] of now) {
+      if ((last.get(f) ?? 0) !== m) changed.push(f);
+    }
+    last = now;
+    if (changed.length > 0) {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        for (const f of changed) log('dev', `change: ${relative(target, f)} — recompiling`);
+        generateProject(target, config);
+        const result = spawnSync(gradle, ['installDebug', '--console=plain'], { cwd: target, env, stdio: 'inherit' });
+        if (result.status !== 0) log('dev', 'recompile failed — fix the error and save again');
+        else {
+          log('dev', 'installed — relaunching');
+          spawnSync('adb', ['shell', 'am', 'start', '-n', `${config.appId}/.MainActivity`], { stdio: 'inherit' });
+        }
       }, 250);
     }
     setTimeout(loop, 500);

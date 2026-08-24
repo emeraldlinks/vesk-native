@@ -13,6 +13,7 @@ val appRoutes: List<Route> = listOf(
     Route("/flights/{id}") { params -> FlightDetail(props = FlightDetailProps(id = params["id"] ?: "")) },
     Route("/lab/badge") { Badge() },
     Route("/lab") { Lab() },
+    Route("/lab/tailwind-test") { TailwindTest() },
     Route("/labs") { Labs() },
     Route("/media") { Media(props = MediaProps(heading = "Native media lab", blurb = "camera, recorder, pickers & media broadcast")) },
     Route("/") { Home(props = HomeProps(promo = "Members save 20% today", cta = "Shop the drop")) },

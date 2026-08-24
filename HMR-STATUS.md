@@ -8,11 +8,18 @@
 
 ## What's working
 
-### Web preview (`vesk dev` / `vesk dev --web`)
+### Web preview (`vesk dev --web`)
 - ms-HMR via `@vesk/compiler` + browser device.* shim (`web-preview-shim.ts`)
 - Thin preview server in cli-native reuses `@vesk/compiler` (not the separate `/root/vesk` repo's `@vesk/cli`)
 - Route registry (new pages never touch `App.kt`)
 - **Status: fully working**
+
+### On-device fast reload (`vesk dev`, default mode)
+- File watcher polls .vsk + modules every 500ms, debounces at 250ms
+- On change: `generateProject` → `gradle installDebug` → `adb shell am start` relaunch
+- Cell state lost on relaunch (accepted per design decision)
+- Device verified via `adb devices` before starting the loop
+- **Status: implemented, tsc clean; needs device to test**
 
 ### Desktop generation-time support (devDesktop flag)
 - `generateProject(target, config, { devDesktop: true })` emits:
@@ -26,9 +33,10 @@
 - **Status: generation verified, gradle tasks registered, compiles clean**
 
 ### CLI integration
-- `commands.ts`: `devDesktop()` watch loop (file watcher → gen → compileKotlinJvm), `devApp(dir, port, desktop)` routing
-- `--desktop` flag on `vesk dev`, projectModules watch for all shared targets
-- `index.ts` dev case dispatches to `devDesktop()` when `--desktop`
+- `commands.ts`: `devDesktop()` watch loop (file watcher → gen → compileKotlinJvm), `devApp(dir, port, mode)` routing with three modes: `device` (default), `web`, `desktop`
+- `devDevice()` — on-device fast reload: file watcher → regen → installDebug → adb relaunch
+- `--desktop`, `--web` flags on `vesk dev`; `projectModules` watch for all shared targets
+- `index.ts` dev case dispatches to `devDesktop()`, `devApp()` web, or `devDevice()` based on flags
 - **Status: implemented, tsc clean**
 
 ### JBR 21 provisioning
@@ -83,16 +91,13 @@ The agent's `OrchestrationClient` opens a socket to the CHR devtools process, bu
    - Test the full edit→regen→compile→push loop
    - Debug any remaining runtime issues with a proper display server
 
-2. **CLI polish:**
-   - Add `vesk dev --desktop` to the CLI help text
-   - Document the desktop preview flow in create-vesk-native AGENTS.md
-   - Add `dev:web` and `dev:desktop` scripts to generated package.json
+2. **On-device fast reload testing:**
+   - Connect a physical device or start an emulator
+   - Test the full `vesk dev` loop: edit → regen → install → relaunch
+   - Measure reload times (target: 5–15s)
+   - Verify cell state loss is acceptable
 
-3. **On-device fast reload** (Slice 5, not started):
-   - ADB-based dex push for sub-second reload on physical devices
-   - In-memory cell-state loss acceptable initially
-
-4. **Build speed** (not started):
+3. **Build speed** (not started):
    - Gradle configuration cache
    - Incremental compilation
    - Module-level builds
@@ -105,7 +110,7 @@ The agent's `OrchestrationClient` opens a socket to the CHR devtools process, bu
 |------|---------|
 | `packages/cli-native/src/generators.ts` | `generateSettingsGradleKts` (~:132), `generateSharedBuildGradleKts` (~:249), `skikoRuntime()` (~:400), `generateProject` (~:2391) |
 | `packages/cli-native/src/runtime-templates.ts` | All jvm actual fixes (jsHandleError ~:5016, veskFileImage ~:4527, etc.) |
-| `packages/cli-native/src/commands.ts` | `devDesktop()` + `devApp()` (~:87) |
+| `packages/cli-native/src/commands.ts` | `devDesktop()` + `devDevice()` + `devApp()` (~:87) |
 | `packages/cli-native/src/index.ts` | dev case dispatch |
 | `packages/cli-native/src/constants.ts` | `projectModules` helper |
 | `plans/vesk-native-preview-hmr.md` | Full construction plan with all slices |

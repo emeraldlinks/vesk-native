@@ -275,7 +275,7 @@ function resolveDp(raw: string): number | null {
 }
 
 function resolveFraction(raw: string): number | null {
-  if (raw === 'full' || raw === 'screen') return 1;
+  if (raw === 'full' || raw === 'screen' || raw === 'svw' || raw === 'dvw' || raw === 'lvw' || raw === 'svh' || raw === 'dvh' || raw === 'lvh') return 1;
   if (raw === 'auto') return null;
   const m = raw.match(/^(\d+)\/(\d+)$/);
   if (m) {
@@ -782,7 +782,14 @@ const UTILITIES: UtilitySpec[] = [
   // ---- sizing ----
   { name: 'w', bucket: 'size', ns: ['size'], render: sizeFill('w') },
   { name: 'h', bucket: 'size', ns: ['size'], render: sizeFill('h') },
-  { name: 'size', bucket: 'size', ns: ['size'], render: (r, ctx) => { if (r.kind === 'dp') ctx.parts.size.push(`size(${r.dp}.dp)`); } },
+  { name: 'size', bucket: 'size', ns: ['size'], render: (r, ctx) => {
+    if (r.kind === 'dp') ctx.parts.size.push(`size(${r.dp}.dp)`);
+    else if (r.kind === 'fraction') {
+      const f = r.fraction;
+      ctx.parts.size.push(f === 1 ? 'fillMaxWidth()' : `fillMaxWidth(${f}f)`);
+      ctx.parts.size.push(f === 1 ? 'fillMaxHeight()' : `fillMaxHeight(${f}f)`);
+    }
+  } },
   { name: 'min-w', bucket: 'size', ns: ['size'], render: sizeIn('w', 'min') },
   { name: 'max-w', bucket: 'size', ns: [], render: (r, ctx) => {
     const v = r.raw;
@@ -1028,6 +1035,7 @@ const UTILITIES: UtilitySpec[] = [
   // ---- flex weight (children of Row/Column) ----
   { name: 'flex', bucket: 'size', ns: [], render: (r, ctx) => { if (r.raw === '1' || r.raw === 'auto') ctx.parts.size.push('weight(1f)'); } },
   { name: 'grow', bucket: 'size', ns: [], render: (r, ctx) => { if (r.raw === '') ctx.parts.size.push('weight(1f)'); } },
+  { name: 'shrink', bucket: 'size', ns: [], render: noop },
   // ---- flex wrap (container switches to FlowRow/FlowColumn) ----
   { name: 'flex-wrap', bucket: 'flow', ns: [], render: (_r, ctx) => { ctx.parts.flow = true; } },
   { name: 'flex-wrap-reverse', bucket: 'flow', ns: [], render: (_r, ctx) => { ctx.parts.flow = true; } },
@@ -1081,6 +1089,8 @@ const UTILITIES: UtilitySpec[] = [
   { name: 'space-y', bucket: 'layout', ns: ['spacing'], render: (r, ctx) => {
     if (r.kind === 'dp' && ctx.axis === 'column') ctx.layout.verticalArrangement = `Arrangement.spacedBy(${r.dp}.dp)`;
   } },
+  { name: 'space-x-reverse', bucket: 'drop', ns: [], render: noop },
+  { name: 'space-y-reverse', bucket: 'drop', ns: [], render: noop },
   // ---- grid (container mode; cells chunked into weighted rows by codegen) ----
   { name: 'grid', bucket: 'grid', ns: [], render: (_r, ctx) => { if (ctx.gridCols === null) ctx.gridCols = 1; } },
   { name: 'inline-grid', bucket: 'grid', ns: [], render: (_r, ctx) => { if (ctx.gridCols === null) ctx.gridCols = 1; } },
@@ -1120,7 +1130,15 @@ const UTILITIES: UtilitySpec[] = [
   { name: 'left', bucket: 'position', ns: [], render: (r, ctx) => { const v = insetValue(r.raw); if (v !== null) ctx.insets.start = ctx.neg ? -v : v; } },
   // ---- recognized but not expressible in Compose -> dropped ----
   { name: 'order', bucket: 'drop', ns: [], render: noop },
-  { name: 'basis', bucket: 'drop', ns: [], render: noop },
+  { name: 'basis', bucket: 'size', ns: ['size'], render: (r, ctx) => {
+    if (r.kind === 'fraction') {
+      const f = r.fraction;
+      if (ctx.axis === 'row') ctx.parts.size.push(f === 1 ? 'fillMaxWidth()' : `fillMaxWidth(${f}f)`);
+      else ctx.parts.size.push(f === 1 ? 'fillMaxHeight()' : `fillMaxHeight(${f}f)`);
+    } else if (r.kind === 'dp') {
+      ctx.parts.size.push(ctx.axis === 'row' ? `width(${r.dp}.dp)` : `height(${r.dp}.dp)`);
+    }
+  } },
   { name: 'col-span', bucket: 'drop', ns: [], render: noop },
   { name: 'row-span', bucket: 'drop', ns: [], render: noop },
   { name: 'col-start', bucket: 'drop', ns: [], render: noop },
@@ -1142,7 +1160,7 @@ const UTILITIES: UtilitySpec[] = [
   { name: 'float', bucket: 'drop', ns: [], render: noop },
   { name: 'clear', bucket: 'drop', ns: [], render: noop },
   { name: 'list', bucket: 'drop', ns: [], render: noop },
-  { name: 'not-italic', bucket: 'drop', ns: [], render: noop },
+  { name: 'not-italic', bucket: 'textStyle', ns: [], render: (_r, ctx) => { pushText(ctx, 'fontStyle = FontStyle.Normal'); } },
   { name: 'normal-nums', bucket: 'drop', ns: [], render: noop },
   { name: 'ordinal', bucket: 'drop', ns: [], render: noop },
   { name: 'slashed-zero', bucket: 'drop', ns: [], render: noop },
@@ -1155,7 +1173,6 @@ const UTILITIES: UtilitySpec[] = [
   { name: 'select', bucket: 'drop', ns: [], render: noop },
   { name: 'cursor', bucket: 'drop', ns: [], render: noop },
   { name: 'pointer-events', bucket: 'drop', ns: [], render: noop },
-  { name: 'object', bucket: 'drop', ns: [], render: noop },
   { name: 'overscroll', bucket: 'drop', ns: [], render: noop },
   { name: 'scroll', bucket: 'drop', ns: [], render: noop },
   { name: 'touch', bucket: 'drop', ns: [], render: noop },

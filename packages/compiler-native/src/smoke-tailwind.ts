@@ -70,6 +70,24 @@ const cases: Array<[string, string[]]> = [
   ['text-lowercase', ['lowercase']],
   ['text-capitalize', ['capitalize']],
   ['text-normal-case', ['uppercase', 'normal-case']],
+  // ---- basis / flex / shrink ----
+  ['basis-1/2', ['basis-1/2']],
+  ['basis-full', ['basis-full']],
+  ['basis-0', ['basis-0']],
+  ['basis-auto', ['basis-auto']],
+  ['basis-px', ['basis-px']],
+  ['flex-0', ['flex-0']],
+  ['flex-initial', ['flex-initial']],
+  ['flex-none', ['flex-none']],
+  ['grow-0', ['grow-0']],
+  ['shrink', ['shrink']],
+  ['shrink-0', ['shrink-0']],
+  // ---- viewport units ----
+  ['w-svw', ['w-svw']],
+  ['w-dvw', ['w-dvw']],
+  ['h-svh', ['h-svh']],
+  ['h-dvh', ['h-dvh']],
+  ['size-lvh', ['size-lvh']],
   // ---- grid ----
   ['grid-2', ['grid', 'grid-cols-2']],
   ['grid-3-gap', ['grid', 'grid-cols-3', 'gap-4']],
@@ -108,9 +126,16 @@ for (const [name, classes] of cases) {
   if (Object.keys(layout).length) console.log('  layout:', JSON.stringify(layout));
 }
 
-// drops
-const drops = ['grid-cols-3', 'hover:bg-red-500', 'md:p-4', 'transition', 'animate-spin', 'z-auto', 'shadow-none', 'truncate-not', 'w-full', 'order-2', 'col-span-2', 'float-left', 'absolute', 'static'];
+// drops — utilities that produce no Compose output (no modifier, no style)
+const drops = ['hover:bg-red-500', 'z-auto', 'shadow-none', 'truncate-not', 'order-2', 'col-span-2', 'float-left', 'absolute', 'static'];
 for (const c of drops) {
   const parts = classify([c], undefined, 'column');
   console.log(`--- drop? [${c}] mod=${buildModifier(parts) ?? '(none)'} style=${buildTextStyle(parts) ?? '(none)'}`);
+}
+
+// warns (transition/animate → use motion.animate() instead)
+const warns = ['transition', 'transition-colors', 'duration-300', 'ease-in-out', 'delay-100', 'animate-spin', 'animate-pulse', 'animate-bounce'];
+for (const c of warns) {
+  const parts = classify([c], undefined, 'column');
+  console.log(`--- warn? [${c}] warnings=${JSON.stringify(parts.warnings ?? [])} mod=${buildModifier(parts) ?? '(none)'}`);
 }
