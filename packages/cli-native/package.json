@@ -1,6 +1,6 @@
 {
   "name": "@vesk/native-cli",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "type": "module",
   "description": "vesk-native CLI — init/build/run a .vsk app as a native Kotlin + Compose app",
   "main": "./dist/index.js",

@@ -1,6 +1,6 @@
 {
   "name": "@vesk/native-compiler",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "type": "module",
   "description": "vesk-native compiler — walks @vesk/compiler IR and emits Kotlin .kt source",
   "main": "./dist/index.js",
