@@ -78,6 +78,65 @@ export async function buildApp(dir: string): Promise<void> {
     process.exit(result.status ?? 1);
   }
   log('build', 'assembleDebug OK');
+  printBuildOutputs(target);
+}
+
+// After a successful build, point at the exact artifacts and sources instead
+// of making the user hunt for them: the installable APK plus every generated
+// Kotlin root (pages + runtime core in commonMain, platform seams in the
+// platform source sets, Android chrome in :app).
+function printBuildOutputs(target: string): void {
+  const apkDir = join(target, 'app', 'build', 'outputs', 'apk', 'debug');
+  const apks = existsSync(apkDir) ? readdirSync(apkDir).filter((f) => f.endsWith('.apk')) : [];
+  const apkName = apks[0];
+  if (apkName) {
+    const apk = join(apkDir, apkName);
+    const mb = (statSync(apk).size / (1024 * 1024)).toFixed(1);
+    log('out', `APK: ${apk} (${mb} MB) — install: adb install -r ${apk}`);
+  } else {
+    log('out', `no APK found under ${apkDir}`);
+  }
+  const roots: Array<[string, string]> = [
+    [join(target, 'shared', 'src', 'commonMain', 'kotlin', 'app'), 'compiled .vsk pages + runtime core (portable)'],
+    [join(target, 'shared', 'src', 'androidMain', 'kotlin', 'app'), 'Runtime.kt, Routes.android.kt, router actuals'],
+    [join(target, 'shared', 'src', 'iosMain', 'kotlin', 'app'), 'iOS actuals + MainViewController.kt'],
+    [join(target, 'shared', 'src', 'jvmMain', 'kotlin', 'app'), 'desktop actuals + Main.kt'],
+  ];
+  const mainActivity = findMainActivity(target);
+  if (mainActivity) roots.push([dirname(mainActivity), 'MainActivity.kt (Android chrome)']);
+  for (const [dir, what] of roots) {
+    if (!existsSync(dir)) continue;
+    const n = countKtFiles(dir);
+    log('out', `${dir} — ${what} (${n} .kt)`);
+  }
+}
+
+function findMainActivity(target: string): string | null {
+  const srcDir = join(target, 'app', 'src', 'main', 'kotlin');
+  if (!existsSync(srcDir)) return null;
+  const stack = [srcDir];
+  while (stack.length > 0) {
+    const dir = stack.pop()!;
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) stack.push(full);
+      else if (entry.name === 'MainActivity.kt') return full;
+    }
+  }
+  return null;
+}
+
+function countKtFiles(dir: string): number {
+  let n = 0;
+  const stack = [dir];
+  while (stack.length > 0) {
+    const d = stack.pop()!;
+    for (const entry of readdirSync(d, { withFileTypes: true })) {
+      if (entry.isDirectory()) stack.push(join(d, entry.name));
+      else if (entry.name.endsWith('.kt')) n++;
+    }
+  }
+  return n;
 }
 
 // `vesk dev` — three-tier dev server:
