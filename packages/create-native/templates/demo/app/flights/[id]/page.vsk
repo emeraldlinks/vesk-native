@@ -1,0 +1,31 @@
+component FlightDetail(props: { id: string, title: string }) {
+    const router = useRouter()
+    const { id: paramId } = useParams()
+    const { id, seat } = useQuery()
+
+    <div class="flex-col gap-4 p-4">
+        <div class="bg-gradient-to-r from-indigo-500 to-blue-500 rounded-xl p-6">
+            <h1 class="text-white text-2xl font-bold">Flight {props.id}</h1>
+            <p class="text-white text-sm mt-1">Dynamic route params — the [id] segment of the URL arrives as a typed prop.</p>
+        </div>
+
+        <div class="bg-white rounded-xl p-4 border-2 border-indigo-100">
+            <h3 class="font-semibold mb-1">Route param → props</h3>
+            <p class="text-sm text-gray-600 mb-2">props.id = <span class="font-mono">{props.id}</span> · props.title = <span class="font-mono">{props.title}</span></p>
+            <p class="text-sm text-gray-600 mb-2">const {'{ id }'} = useParams() → id = <span class="font-mono">{paramId}</span></p>
+            <p class="text-sm text-gray-600">const {'{ id, seat }'} = useQuery() → id = <span class="font-mono">{id}</span>, seat = <span class="font-mono">{seat}</span></p>
+        </div>
+
+        <div class="flex gap-2 flex-wrap">
+            <button class="bg-indigo-600 text-white text-sm font-semibold px-4 py-2 rounded-full" onClick={() => router.push('/labs')}>
+                router.push('/labs')
+            </button>
+            <button class="bg-gray-200 text-gray-700 text-sm font-semibold px-4 py-2 rounded-full" onClick={() => router.back()}>
+                router.back()
+            </button>
+            <button class="bg-purple-600 text-white text-sm font-semibold px-4 py-2 rounded-full" onClick={() => router.refresh()}>
+                router.refresh()
+            </button>
+        </div>
+    </div>
+}

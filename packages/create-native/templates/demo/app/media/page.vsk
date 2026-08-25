@@ -317,14 +317,14 @@ component Media(props) {
                 <h2 class="text-lg font-bold tracking-tight">Intents & extras</h2>
                 <p class="media-note text-xs">dial, sms, email, link, maps, settings, alarm, apps, tts, toast, sounds, wallpaper</p>
             </div>
-            <div class="flex gap-2">
+            <div class="flex flex-wrap gap-2">
                 <dial number="+15551234567" />
                 <sms number="+15551234567" text="Hi from vesk!" label="SMS" />
                 <email to="demo@vesk.dev" subject="From vesk" body="Built without Android Studio." label="Email" />
                 <open-link url="https://vesk.dev" />
                 <map query="Berlin" />
             </div>
-            <div class="flex gap-2 mt-2">
+            <div class="flex flex-wrap gap-2 mt-2">
                 <open-settings section="wifi" />
                 <open-app app="com.android.settings" label="Open Settings app" />
                 <alarm hour="8" minute="30" title="Vesk demo alarm" />

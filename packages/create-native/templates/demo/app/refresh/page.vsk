@@ -1,0 +1,84 @@
+component Refresh() {
+    const &[refreshing] = track(false)
+    const &[stamp] = track('never')
+    const &[count] = track(0)
+
+    <PullToRefresh refreshing={refreshing} onRefresh={() => {
+        refreshing = true
+        setTimeout(() => {
+            refreshing = false
+            count = count + 1
+            stamp = new Date().toISOString()
+        }, 1500)
+    }} class="w-full">
+        <div class="h-96 overflow-y-auto flex-col gap-4 px-4 py-2">
+            <section class="flex-col gap-1">
+                <h1 class="text-2xl font-extrabold tracking-tight">Pull to refresh</h1>
+                <p class="text-gray-600 text-sm">Pull down to sync the feed — refreshes: {count} · last sync {stamp}</p>
+            </section>
+
+            <section class="flex-col gap-3">
+                <div class="bg-white rounded-2xl p-4 shadow-sm flex gap-3 items-start">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center">
+                        <span class="text-white text-sm font-bold">AK</span>
+                    </div>
+                    <div class="flex-1 flex-col gap-0.5">
+                        <div class="flex items-center gap-2">
+                            <p class="text-sm font-semibold">Ava Kim</p>
+                            <p class="text-xs text-gray-400">2m</p>
+                        </div>
+                        <p class="text-sm text-gray-700">First light over the ridge this morning — worth the 4am alarm.</p>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl p-4 shadow-sm flex gap-3 items-start">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center">
+                        <span class="text-white text-sm font-bold">NM</span>
+                    </div>
+                    <div class="flex-1 flex-col gap-0.5">
+                        <div class="flex items-center gap-2">
+                            <p class="text-sm font-semibold">Noah Mercer</p>
+                            <p class="text-xs text-gray-400">14m</p>
+                        </div>
+                        <p class="text-sm text-gray-700">Release notes for the trail app are out — swipeable cards land in this build.</p>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl p-4 shadow-sm flex gap-3 items-start">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center">
+                        <span class="text-white text-sm font-bold">IR</span>
+                    </div>
+                    <div class="flex-1 flex-col gap-0.5">
+                        <div class="flex items-center gap-2">
+                            <p class="text-sm font-semibold">Ines Ríos</p>
+                            <p class="text-xs text-gray-400">1h</p>
+                        </div>
+                        <p class="text-sm text-gray-700">Coffee weather finally. Pull this page down when you want a fresh timestamp.</p>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl p-4 shadow-sm flex gap-3 items-start">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-pink-400 to-rose-600 flex items-center justify-center">
+                        <span class="text-white text-sm font-bold">JW</span>
+                    </div>
+                    <div class="flex-1 flex-col gap-0.5">
+                        <div class="flex items-center gap-2">
+                            <p class="text-sm font-semibold">Jordan Wells</p>
+                            <p class="text-xs text-gray-400">3h</p>
+                        </div>
+                        <p class="text-sm text-gray-700">Native pull-to-refresh: Material3 PullToRefreshBox under the hood — the spinner is the indicator.</p>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl p-4 shadow-sm flex gap-3 items-start">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-violet-400 to-purple-600 flex items-center justify-center">
+                        <span class="text-white text-sm font-bold">SC</span>
+                    </div>
+                    <div class="flex-1 flex-col gap-0.5">
+                        <div class="flex items-center gap-2">
+                            <p class="text-sm font-semibold">Sage Chen</p>
+                            <p class="text-xs text-gray-400">5h</p>
+                        </div>
+                        <p class="text-sm text-gray-700">Every refresh increments the counter and stamps the sync time — watch it tick.</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </PullToRefresh>
+}

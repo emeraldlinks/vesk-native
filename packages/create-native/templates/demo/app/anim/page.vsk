@@ -2,6 +2,9 @@ import { animate, spring, stagger, inView, scroll, easeInOut, backOut } from 'mo
 
 component Anim() {
     const &[box, boxCell] = track(null)
+    const &[boxA, boxACell] = track(null)
+    const &[boxB, boxBCell] = track(null)
+    const &[boxC, boxCCell] = track(null)
     const &[count] = track(0)
     const &[shown] = track(false)
     const &[scrollP] = track(0.0)
@@ -14,12 +17,12 @@ component Anim() {
 
         <div class="bg-white rounded-xl p-4 border-2 border-amber-100">
             <h3 class="font-semibold mb-1">animate() on a ref'd element</h3>
-            <p class="text-xs text-gray-500 mb-2">The ref attribute binds a MotionRef; animate(box, ...) drives graphicsLayer scale/opacity through a Compose spring.</p>
+            <p class="text-xs text-gray-500 mb-2">The ref attribute binds a MotionRef; animate(box, scale [1, 1.2, 1], opacity [1, 0.6, 1] keyframes) pulses the graphicsLayer through a Compose spring, and a new animate() on the same ref stops the previous one.</p>
             <div ref={box} class="bg-rose-500 rounded-xl w-56 h-56 flex items-center justify-center">
                 <span class="text-white font-semibold">box</span>
             </div>
             <div class="flex gap-2 mt-3">
-                <button class="bg-rose-500 text-white rounded-lg px-4 py-2 text-sm" onClick={() => { animate(box, { scale: 1.2, opacity: 0.6 }, { spring: spring({ stiffness: 220, damping: 18 }) }); animate(box, { scale: 1, opacity: 1 }, { spring: spring({ stiffness: 220, damping: 18 }) }) }}>Pulse</button>
+                <button class="bg-rose-500 text-white rounded-lg px-4 py-2 text-sm" onClick={() => animate(box, { scale: [1, 1.2, 1], opacity: [1, 0.6, 1] }, { spring: spring({ stiffness: 220, damping: 18 }) })}>Pulse</button>
             </div>
         </div>
 
@@ -33,13 +36,14 @@ component Anim() {
 
         <div class="bg-white rounded-xl p-4 border-2 border-yellow-100">
             <h3 class="font-semibold mb-1">stagger()</h3>
-            <p class="text-xs text-gray-500 mb-2">motion-utils stagger(duration)(index) — the curried call maps to motionStagger(index, duration).</p>
+            <p class="text-xs text-gray-500 mb-2">motion-utils stagger(duration)(index) — the curried call maps to motionStagger(index, duration) and becomes each element's delay, so the three boxes pop in one after the other.</p>
             <p class="text-sm mb-2">stagger(0.15)(0) = {stagger(0.15)(0)}s · (1) = {stagger(0.15)(1)}s · (2) = {stagger(0.15)(2)}s</p>
             <div class="flex gap-3">
-                <div class="w-16 h-16 rounded bg-emerald-500 flex items-center justify-center"><span class="text-white text-xs font-bold">a</span></div>
-                <div class="w-16 h-16 rounded bg-emerald-500 flex items-center justify-center"><span class="text-white text-xs font-bold">b</span></div>
-                <div class="w-16 h-16 rounded bg-emerald-500 flex items-center justify-center"><span class="text-white text-xs font-bold">c</span></div>
+                <div ref={boxA} class="w-16 h-16 rounded bg-emerald-500 flex items-center justify-center"><span class="text-white text-xs font-bold">a</span></div>
+                <div ref={boxB} class="w-16 h-16 rounded bg-emerald-500 flex items-center justify-center"><span class="text-white text-xs font-bold">b</span></div>
+                <div ref={boxC} class="w-16 h-16 rounded bg-emerald-500 flex items-center justify-center"><span class="text-white text-xs font-bold">c</span></div>
             </div>
+            <button class="mt-3 bg-emerald-500 text-white rounded-lg px-4 py-2 text-sm" onClick={() => { animate(boxA, { scale: [0.4, 1], opacity: [0, 1] }, { delay: stagger(0.15)(0), spring: spring({ stiffness: 220, damping: 18 }) }); animate(boxB, { scale: [0.4, 1], opacity: [0, 1] }, { delay: stagger(0.15)(1), spring: spring({ stiffness: 220, damping: 18 }) }); animate(boxC, { scale: [0.4, 1], opacity: [0, 1] }, { delay: stagger(0.15)(2), spring: spring({ stiffness: 220, damping: 18 }) }) }}>Stagger in</button>
         </div>
 
         <div class="bg-white rounded-xl p-4 border-2 border-lime-100">
