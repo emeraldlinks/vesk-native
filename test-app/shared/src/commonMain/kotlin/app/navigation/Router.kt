@@ -138,9 +138,9 @@ val LocalNavController = staticCompositionLocalOf<NavController> {
 
 // Platform seams for the back flow. Android wraps androidx.activity's
 // BackHandler and uses Toast + activity finish() for the double-back exit
-// prompt; the iOS actuals arrive with the CMP milestone. Keeping these as
-// expect declarations lets AppRouter live in commonMain with identical
-// behavior on every platform.
+// prompt; each platform supplies its own actuals beside this file in the
+// generated app's source sets. Keeping these as expect declarations lets
+// AppRouter live in commonMain with identical behavior on every platform.
 @Composable
 expect fun PlatformBackHandler(enabled: Boolean, onBack: () -> Unit)
 
