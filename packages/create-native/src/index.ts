@@ -451,13 +451,13 @@ function generatePackageJson(a: Answers, veskRoot: string | null): string {
         '@vesk/native-cli': `file:${join(veskRoot!, 'packages', 'cli-native')}`,
       }
     : {
-        '@vesk/native': '^0.1.8',
+        '@vesk/native': '^0.1.9',
       };
   const devDeps = inMonorepo
     ? {}
     : {
-        '@vesk/native-cli': '^0.1.8',
-        '@vesk/native-compiler': '^0.1.8',
+        '@vesk/native-cli': '^0.1.9',
+        '@vesk/native-compiler': '^0.1.9',
       };
   return (
     JSON.stringify(
