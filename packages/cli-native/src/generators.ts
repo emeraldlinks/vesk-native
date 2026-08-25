@@ -8,6 +8,7 @@ import { browserGlobalDecl, browserModuleDecl } from '@compiler-native/browser-a
 import { setAdaptiveDark } from '@compiler-native/tailwind';
 import type { ModifierParts } from '@compiler-native/tailwind';
 import { parse } from '@vesk/compiler';
+import { ROUTER_ANDROID_KT, ROUTER_IOS_KT, ROUTER_JVM_KT, ROUTER_KT } from '@navigation-native/router-kt';
 import { findComponentDecls, propsDataType, inferPropsFromUsage } from '@compiler-native/props';
 import type { ComponentDecl } from '@compiler-native/props';
 import { buildModuleRegistry, buildModuleSlugs, sanitizeIdent, slugFor, toPosix } from '@compiler-native/modules';
@@ -18,7 +19,7 @@ import { compileNpmModules } from '@cli-native/npm';
 import { KtErrors } from '@compiler-native/js2kt';
 import type { JsNode } from '@compiler-native/js2kt';
 import type { VeskConfig } from '@vesk/native';
-import { DEFAULT_SDK, NAVIGATION_KT, PKG_ROOT, TEMPLATE_DIR, collectVskFiles, colorLiteral, log, slugify } from '@cli-native/constants';
+import { DEFAULT_SDK, PKG_ROOT, TEMPLATE_DIR, collectVskFiles, colorLiteral, log, slugify } from '@cli-native/constants';
 import { API_PERMISSIONS, MAX_SDK_PERMS, collectBrowserApiUsage, collectDeviceApiUsage, collectRuntimeUsage } from '@cli-native/usage';
 import { BIOMETRIC_AUTH_BODY, BIOMETRIC_CHECK_BODY, IOS_RUNTIME_IMPORTS, JVM_RUNTIME_IMPORTS, QRGEN_BODY, QR_OVERLAY_BLOCK, RUNTIME_COMMON_IMPORTS, RUNTIME_CORE, RUNTIME_HELPERS, RUNTIME_ORDER, runtimeImports } from '@cli-native/runtime-templates';
 import { installedLibraries } from '@cli-native/vsklib';
@@ -1221,54 +1222,35 @@ export function generateRouterKt(appDir: string): void {
   const commonOutDir = sharedCommonKotlinDir(dirname(appDir));
   mkdirSync(outDir, { recursive: true });
   mkdirSync(commonOutDir, { recursive: true });
-  // Resolved from the CLI's own package location (not cwd) so it works from
-  // inside the user's project, where `packages/navigation-native` does not
-  // exist relative to the working directory.
-  const src = NAVIGATION_KT;
-  if (existsSync(src)) {
+  // The router sources are generated, not shipped assets: ROUTER_KT (common
+  // expect/declarations + AppRouter) plus one actual per platform source set.
+  {
     // The portable router (commonMain) plus its platform actuals. Android
     // actuals follow Kotlin's Platform.android.kt naming and sit beside the
-    // common file in the assets/navigation directory.
+    // common file in the generated navigation package.
     const commonNavDir = join(commonOutDir, 'navigation');
     mkdirSync(commonNavDir, { recursive: true });
-    writeIfChanged(join(commonNavDir, 'Router.kt'), readFileSync(src, 'utf8'));
-    const androidSrc = join(dirname(src), 'Router.android.kt');
-    if (existsSync(androidSrc)) {
-      const navDir = join(outDir, 'navigation');
-      mkdirSync(navDir, { recursive: true });
-      // The router moved to commonMain; drop any stale androidMain Router.kt
-      // from an earlier generation so the two source sets never both define
-      // Route/AppRouter/LocalNavController.
-      rmSync(join(navDir, 'Router.kt'), { force: true });
-      writeIfChanged(join(navDir, 'Router.android.kt'), readFileSync(androidSrc, 'utf8'));
-      log('gen', 'navigation/Router.kt (common) + Router.android.kt (actuals, from @navigation-native)');
-    } else {
-      log('warn', `navigation android actuals not found at ${androidSrc}; Router.kt emitted without back-handler seams`);
-    }
+    writeIfChanged(join(commonNavDir, 'Router.kt'), ROUTER_KT);
+    const navDir = join(outDir, 'navigation');
+    mkdirSync(navDir, { recursive: true });
+    // The router moved to commonMain; drop any stale androidMain Router.kt
+    // from an earlier generation so the two source sets never both define
+    // Route/AppRouter/LocalNavController.
+    rmSync(join(navDir, 'Router.kt'), { force: true });
+    writeIfChanged(join(navDir, 'Router.android.kt'), ROUTER_ANDROID_KT);
+    log('gen', 'navigation/Router.kt (common) + Router.android.kt (actuals)');
     // iOS actuals (CMP milestone) land in iosMain/app/navigation so the same
     // common Router.kt compiles for the iosMain source set.
-    const iosSrc = join(dirname(src), 'Router.ios.kt');
-    if (existsSync(iosSrc)) {
-      const iosNavDir = join(sharedIosKotlinDir(dirname(appDir)), 'navigation');
-      mkdirSync(iosNavDir, { recursive: true });
-      writeIfChanged(join(iosNavDir, 'Router.ios.kt'), readFileSync(iosSrc, 'utf8'));
-      log('gen', 'navigation/Router.ios.kt (ios actuals, from @navigation-native)');
-    } else {
-      log('warn', `navigation ios actuals not found at ${iosSrc}; Router.kt emitted without ios back-handler seams`);
-    }
+    const iosNavDir = join(sharedIosKotlinDir(dirname(appDir)), 'navigation');
+    mkdirSync(iosNavDir, { recursive: true });
+    writeIfChanged(join(iosNavDir, 'Router.ios.kt'), ROUTER_IOS_KT);
+    log('gen', 'navigation/Router.ios.kt (ios actuals)');
     // JVM actuals (desktop preview) land in jvmMain/app/navigation so the same
     // common Router.kt compiles for the jvmMain source set.
-    const jvmSrc = join(dirname(src), 'Router.jvm.kt');
-    if (existsSync(jvmSrc)) {
-      const jvmNavDir = join(sharedJvmKotlinDir(dirname(appDir)), 'navigation');
-      mkdirSync(jvmNavDir, { recursive: true });
-      writeIfChanged(join(jvmNavDir, 'Router.jvm.kt'), readFileSync(jvmSrc, 'utf8'));
-      log('gen', 'navigation/Router.jvm.kt (jvm actuals, from @navigation-native)');
-    } else {
-      log('warn', `navigation jvm actuals not found at ${jvmSrc}; Router.kt emitted without jvm back-handler seams`);
-    }
-  } else {
-    log('warn', `navigation module not found at ${src}; skipping Router.kt`);
+    const jvmNavDir = join(sharedJvmKotlinDir(dirname(appDir)), 'navigation');
+    mkdirSync(jvmNavDir, { recursive: true });
+    writeIfChanged(join(jvmNavDir, 'Router.jvm.kt'), ROUTER_JVM_KT);
+    log('gen', 'navigation/Router.jvm.kt (jvm actuals)');
   }
 }
 

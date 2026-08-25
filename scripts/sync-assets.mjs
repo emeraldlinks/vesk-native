@@ -37,15 +37,8 @@ for (const f of readdirSync(join(ROOT, 'runtime', 'vesk-native-template'))) {
 }
 console.log('[assets] template -> create-native/assets/template/');
 
-mkdirSync(join(OUT, 'navigation'), { recursive: true });
-// The router is a KMP pair: the portable Router.kt (commonMain) plus the
-// platform actuals. Each platform source file follows Kotlin's
-// Platform.android.kt naming and is copied alongside the common file.
-for (const f of readdirSync(join(ROOT, 'packages', 'navigation-native', 'src')).sort()) {
-  if (!f.endsWith('.kt')) continue;
-  cpSync(join(ROOT, 'packages', 'navigation-native', 'src', f), join(OUT, 'navigation', f));
-}
-console.log('[assets] navigation Router.kt* -> assets/navigation/');
+// Navigation Router.kt is generated (packages/navigation-native/src/router-kt.ts)
+// and emitted by the CLI per app — it is deliberately not an asset file.
 
 const sampleSrc = join(ROOT, 'test-app', 'app');
 const sampleOut = join(OUT, 'sample');

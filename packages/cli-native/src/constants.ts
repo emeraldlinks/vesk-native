@@ -5,13 +5,13 @@ import { fileURLToPath } from 'node:url';
 
 // The CLI resolves its shipped assets from its own package location (dist/ or
 // src/ depending on how it runs), never from the working directory — so a
-// packed `cli-native` tarball is self-contained: template files, the nav
-// Router.kt, sample .vsk sources, and the .vsklib registry all travel inside
-// the package.
+// packed `cli-native` tarball is self-contained: template files, sample .vsk
+// sources, and the .vsklib registry all travel inside the package. The
+// navigation Router.kt is not an asset: it is generated (router-kt.ts in
+// @navigation-native) and emitted into each app by generateRouterKt().
 export const PKG_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const TEMPLATE_DIR = join(PKG_ROOT, 'assets', 'template');
 export const SAMPLE_VSK = join(PKG_ROOT, 'assets', 'sample');
-export const NAVIGATION_KT = join(PKG_ROOT, 'assets', 'navigation', 'Router.kt');
 export const CONFIG_TS = 'veskconfig.ts';
 export const CONFIG_JSON = 'veskconfig.json';
 // Termux prefix comes from the environment when present ($PREFIX, $HOME,

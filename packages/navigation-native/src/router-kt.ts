@@ -1,4 +1,9 @@
-package app.navigation
+// Kotlin sources of the navigation module, emitted verbatim into every
+// generated app by @vesk/native-cli's generateRouterKt(). These are code
+// strings, not asset files: nothing ships as a loose .kt on npm, and the
+// CLI works from any install location without reading its package assets.
+
+export const ROUTER_KT = `package app.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -138,9 +143,9 @@ val LocalNavController = staticCompositionLocalOf<NavController> {
 
 // Platform seams for the back flow. Android wraps androidx.activity's
 // BackHandler and uses Toast + activity finish() for the double-back exit
-// prompt; the iOS actuals arrive with the CMP milestone. Keeping these as
-// expect declarations lets AppRouter live in commonMain with identical
-// behavior on every platform.
+// prompt; each platform supplies its own actuals beside this file in the
+// generated app's source sets. Keeping these as expect declarations lets
+// AppRouter live in commonMain with identical behavior on every platform.
 @Composable
 expect fun PlatformBackHandler(enabled: Boolean, onBack: () -> Unit)
 
@@ -235,3 +240,126 @@ fun matchRoute(current: String, routes: List<Route>): Route? {
     // showing an unrelated page for an unknown deep link / navigate target.
     return null
 }
+`;
+
+export const ROUTER_ANDROID_KT = `package app.navigation
+
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import android.widget.Toast
+import androidx.activity.compose.BackHandler
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
+
+// Android actuals for the common Router.kt seams. Behavior matches the
+// pre-CMP router exactly: BackHandler intercepts the activity back press and
+// the exit prompt is a Toast with the compose host context.
+
+@Composable
+actual fun PlatformBackHandler(enabled: Boolean, onBack: () -> Unit) {
+    BackHandler(enabled = enabled, onBack = onBack)
+}
+
+@Composable
+actual fun veskToast(): (String) -> Unit {
+    val context = LocalContext.current
+    return { message -> Toast.makeText(context, message, Toast.LENGTH_SHORT).show() }
+}
+
+@Composable
+actual fun veskExitApp(): () -> Unit {
+    val context = LocalContext.current
+    return { context.findActivity()?.finish() }
+}
+
+fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
+}
+`;
+
+export const ROUTER_IOS_KT = `package app.navigation
+
+import androidx.compose.runtime.Composable
+import platform.UIKit.UIAlertAction
+import platform.UIKit.UIAlertActionStyle
+import platform.UIKit.UIAlertController
+import platform.UIKit.UIAlertControllerStyle
+import platform.UIKit.UIApplication
+import platform.UIKit.UIViewController
+import platform.UIKit.UIWindow
+import platform.UIKit.UIWindowScene
+
+// iOS actuals for the common Router.kt seams. There is no system back button
+// or back-press gesture on iOS — in-app navigation provides its own back UI —
+// so PlatformBackHandler is a no-op. veskToast raises a UIAlertController on
+// the top-most view controller (the same presentation the runtime's jsAlert
+// uses); veskExitApp terminates the process, since iOS has no sanctioned
+// "close the app" API and exit routes mean "leave".
+
+@Composable
+actual fun PlatformBackHandler(enabled: Boolean, onBack: () -> Unit) {
+    // no-op: iOS has no system back press to intercept
+}
+
+@Composable
+actual fun veskToast(): (String) -> Unit {
+    return { message -> showAlert(message) }
+}
+
+@Composable
+actual fun veskExitApp(): () -> Unit {
+    return { platform.posix.exit(0) }
+}
+
+private fun showAlert(message: String) {
+    val alert = UIAlertController.alertControllerWithTitle(
+        null,
+        message = message,
+        preferredStyle = UIAlertControllerStyle.UIAlertControllerStyleAlert,
+    )
+    alert.addAction(UIAlertAction.actionWithTitle("OK", style = UIAlertActionStyle.UIAlertActionStyleDefault, handler = null))
+    currentViewController()?.presentViewController(alert, animated = true, completion = null)
+}
+
+private fun currentViewController(): UIViewController? {
+    UIApplication.sharedApplication.keyWindow?.let { return it.rootViewController }
+    for (scene in UIApplication.sharedApplication.connectedScenes) {
+        val windowScene = scene as? UIWindowScene ?: continue
+        for (w in windowScene.windows) {
+            val window = w as? UIWindow ?: continue
+            if (window.rootViewController != null) return window.rootViewController
+        }
+    }
+    return null
+}
+`;
+
+export const ROUTER_JVM_KT = `package app.navigation
+
+import androidx.compose.runtime.Composable
+import kotlin.system.exitProcess
+
+// JVM (desktop preview) actuals for the common Router.kt seams. The desktop
+// preview has no system back press to intercept, so PlatformBackHandler is a
+// no-op (the preview host's own window chrome handles close). veskToast is a
+// console line — the preview host has no OS toast — and veskExitApp closes the
+// compose desktop application, which is the desktop equivalent of "leave".
+
+@Composable
+actual fun PlatformBackHandler(enabled: Boolean, onBack: () -> Unit) {
+    // no-op: the desktop preview has no system back press to intercept
+}
+
+@Composable
+actual fun veskToast(): (String) -> Unit {
+    return { message -> println("vesk: toast: $message") }
+}
+
+@Composable
+actual fun veskExitApp(): () -> Unit {
+    return { exitProcess(0) }
+}
+`;
