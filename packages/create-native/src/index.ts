@@ -552,6 +552,8 @@ Kotlin Multiplatform module that also targets iOS).
 - Commands run from THIS directory: the CLI lives in this project's
   node_modules and is cwd-based — never pass a project name to it.
 - \`npm install\` — install dependencies once, after scaffolding.
+- \`npx vesk-native install\` — materialize every library pinned in
+  \`libraries.json\` (the template ships it; run once after scaffolding).
 - \`npx vesk-native build\` — regenerate everything from source, then run
   gradle assembleDebug. This is the only way to build: edit \`.vsk\`, rebuild,
   verify \`BUILD SUCCESSFUL\`, commit.
@@ -731,6 +733,21 @@ async function scaffold(answers: Answers): Promise<void> {
     log('scaffold', `.vsk template files copied (${answers.template})`);
   }
 
+  // The template's pinned libraries travel with it: libraries.json is the
+  // single committed source of truth, and `vesk-native install` (next step)
+  // materializes the .vsklib surface from it — offline and idempotent.
+  const tplLibraries = join(srcTemplate, 'libraries.json');
+  let scaffoldedLibraryCount = 0;
+  if (existsSync(tplLibraries)) {
+    cpSync(tplLibraries, join(target, 'libraries.json'));
+    try {
+      scaffoldedLibraryCount = Object.keys(JSON.parse(readFileSync(tplLibraries, 'utf8')).libraries ?? {}).length;
+    } catch {
+      scaffoldedLibraryCount = 0;
+    }
+    log('scaffold', `libraries.json copied (${scaffoldedLibraryCount} template-pinned ${scaffoldedLibraryCount === 1 ? 'library' : 'libraries'})`);
+  }
+
   writeFileSync(join(target, 'package.json'), generatePackageJson(answers, veskRoot));
   log('scaffold', `package.json written (${veskRoot ? 'monorepo file: links' : 'published ^0.1.0 versions'})`);
 
@@ -754,6 +771,9 @@ async function scaffold(answers: Answers): Promise<void> {
   console.log('Next steps:');
   console.log(`  cd ${answers.projectName}`);
   console.log('  npm install');
+  if (scaffoldedLibraryCount > 0) {
+    console.log(`  npx vesk-native install${scaffoldedLibraryCount >= 5 ? dim(`   # installs all ${scaffoldedLibraryCount} template libraries`) : ''}`);
+  }
   console.log('  npx vesk-native build');
   console.log(`  ${dim('(AGENTS.md in the project root explains the conventions + framework structure)')}\n`);
 }

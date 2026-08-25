@@ -743,6 +743,35 @@ export async function addLibrary(dir: string, spec: string): Promise<void> {
   console.log(`\n  next: vesk-native build registers the dependency + permissions.`);
 }
 
+// `vesk install` — materialize every library pinned in the committed
+// libraries.json: derive each record's permissions, rewrite the .vsklib
+// cache, regenerate the @vesk/* declarations. The manifest is the single
+// source of truth and its records are trusted as authored (exactly what the
+// build compiles against), so this is offline and idempotent; `vesk verify`
+// checks the coordinates against Maven. Templates ship their libraries.json,
+// so a freshly scaffolded app installs its full surface with one command.
+export function installAllLibraries(dir: string): void {
+  const target = resolve(dir);
+  requireApp(target);
+  const data = loadLibraries(target);
+  const ids = Object.keys(data.libraries);
+  if (ids.length === 0) {
+    log('install', 'libraries.json pins no libraries');
+    return;
+  }
+  for (const id of ids) {
+    const pinned = data.libraries[id];
+    if (!pinned) continue;
+    const rec = { ...pinned, permissions: deriveLibraryPermissions(pinned) };
+    data.libraries[id] = rec;
+    log('install', `${rec.name} (${rec.gradle.join(', ')})`);
+  }
+  saveLibraries(target, data);
+  writeVsklibCache(target, installedLibraries(target));
+  generateVskLibDeclarations(target);
+  log('install', `${ids.length} ${ids.length === 1 ? 'library' : 'libraries'} installed from libraries.json — next: vesk-native build`);
+}
+
 // Next version for an installed record: an explicit spec version wins, then
 // the builtin registry pin, then the latest published on Maven Central (for
 // auto-generated non-registry libraries like `vesk add group:artifact@version`).

@@ -1,13 +1,13 @@
 import { realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { addLibrary, buildApp, bundleApp, devApp, initApp, removeLibrary, setupToolchain, updateLibraries, verifyApp, verifyBundle } from '@cli-native/commands';
+import { addLibrary, buildApp, bundleApp, devApp, initApp, installAllLibraries, removeLibrary, setupToolchain, updateLibraries, verifyApp, verifyBundle } from '@cli-native/commands';
 import { TOOLCHAIN_ROOT, usage } from '@cli-native/constants';
 
 // Programmatic surface for tooling, scripts, and tests (the CLI entry point
 // is main() below; importing this module never runs the CLI).
 export { loadConfig, writeDefaultConfig } from '@cli-native/config';
 export { generateAppKt, generateAppBuildGradleKts, generateMainActivity, generateManifest, generateProject, generateRouterKt, generateRuntimeKt, generateSettingsGradleKts, generateThemeKt, generateThemes, syncAapt2Override } from '@cli-native/generators';
-export { addLibrary, removeLibrary, updateLibraries, verifyApp, verifyBundle } from '@cli-native/commands';
+export { addLibrary, removeLibrary, updateLibraries, verifyApp, verifyBundle, installAllLibraries } from '@cli-native/commands';
 export { collectBrowserApiUsage, collectDeviceApiUsage, collectRuntimeUsage } from '@cli-native/usage';
 export { API_PERMISSIONS } from '@cli-native/usage';
 export { RUNTIME_ORDER } from '@cli-native/runtime-templates';
@@ -43,6 +43,10 @@ async function main(): Promise<void> {
         process.exit(1);
       }
       await addLibrary(cwd, spec);
+      break;
+    }
+    case 'install': {
+      installAllLibraries(cwd);
       break;
     }
     case 'update':
