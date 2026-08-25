@@ -26,6 +26,7 @@
     "@vesk/compiler": "^0.1.0",
     "@vesk/runtime": "^0.1.0",
     "esbuild": "^0.25.0",
+    "typescript": "^5.8.0",
     "ws": "^8.0.0"
   }
 }
