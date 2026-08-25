@@ -1,17 +1,17 @@
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { isAbsolute, join, resolve, relative, dirname } from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
-import { CONFIG_JSON, CONFIG_TS, DEFAULT_GRADLE, SAMPLE_VSK, DEFAULT_SDK, TEMPLATE_DIR, collectVskFiles, log } from '@cli-native/constants';
+import { CONFIG_JSON, CONFIG_TS, DEFAULT_GRADLE, GRADLE_VERSION, SAMPLE_VSK, DEFAULT_SDK, TEMPLATE_DIR, TOOLCHAIN_ROOT, collectVskFiles, log } from '@cli-native/constants';
 import { loadConfig, writeDefaultConfig } from '@cli-native/config';
 import { generateProject, generateVskLibDeclarations } from '@cli-native/generators';
 import { generateIosProject, iosBuildDir, iosExportOptions, requireIosSigning } from '@cli-native/ios';
 import type { VeskConfig } from '@vesk/native';
 import { deriveLibraryPermissions, installedLibraries, loadLibraries, mavenMetadata, parseLibrarySpec, resolveLibrary, saveLibraries, verifyLibraries, verifyLibrary, withVersion, writeVsklibCache } from '@cli-native/vsklib';
 import type { VskLibRecord } from '@cli-native/vsklib';
-import { findJava } from '@cli-native/toolchain';
+import { findJava, gradleVersionOf, isSupportedGradle } from '@cli-native/toolchain';
 import { startPreviewServer } from '@cli-native/preview-server';
 
-export { setupToolchain } from '@cli-native/toolchain';
+export { setupToolchain, updateTools } from '@cli-native/toolchain';
 
 export async function initApp(dir: string): Promise<void> {
   const target = resolve(dir);
@@ -50,11 +50,29 @@ export async function initApp(dir: string): Promise<void> {
 }
 
 function findGradle(): string {
-  if (process.env.GRADLE_HOME) return join(process.env.GRADLE_HOME, 'bin', 'gradle');
-  const found = spawnSync('which', ['gradle'], { encoding: 'utf8' });
-  if (found.status === 0 && found.stdout.trim()) return found.stdout.trim();
+  // The managed distribution wins: it is exactly the version this CLI is
+  // built and tested against. A system gradle found on PATH/GRADLE_HOME may
+  // be older than the build requires (e.g. 9.4 vs the required minimum), so
+  // it is only used when it satisfies GRADLE_VERSION — otherwise the error
+  // points at update-tools instead of a cryptic AGP failure mid-build.
   if (existsSync(DEFAULT_GRADLE)) return DEFAULT_GRADLE;
-  return 'gradle';
+  const candidates = [process.env.GRADLE_HOME ? join(process.env.GRADLE_HOME, 'bin', 'gradle') : null, 'gradle'];
+  let seen: { bin: string; version: string | null } | null = null;
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+    const probe = spawnSync(candidate, ['--version'], { encoding: 'utf8' });
+    if (probe.status !== 0 && probe.error) continue;
+    const version = gradleVersionOf(candidate);
+    if (version) seen = { bin: candidate, version };
+    if (isSupportedGradle(version)) return candidate;
+  }
+  if (seen) {
+    console.error(`  [build] gradle ${seen.version} at ${seen.bin} is too old — this CLI requires Gradle ${GRADLE_VERSION}+`);
+    console.error(`  [build] fix: run "npx vesk-native update-tools" (installs Gradle ${GRADLE_VERSION} under ${TOOLCHAIN_ROOT}) or upgrade your Gradle`);
+    process.exit(1);
+  }
+  console.error(`  [build] no usable gradle found — run "npx vesk-native update-tools" to install Gradle ${GRADLE_VERSION} + the Android SDK under ${TOOLCHAIN_ROOT}`);
+  process.exit(1);
 }
 
 export async function buildApp(dir: string): Promise<void> {

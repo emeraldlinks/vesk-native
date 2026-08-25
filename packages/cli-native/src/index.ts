@@ -1,6 +1,6 @@
 import { realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { addLibrary, buildApp, bundleApp, devApp, initApp, installAllLibraries, removeLibrary, setupToolchain, updateLibraries, verifyApp, verifyBundle } from '@cli-native/commands';
+import { addLibrary, buildApp, bundleApp, devApp, initApp, installAllLibraries, removeLibrary, setupToolchain, updateLibraries, updateTools, verifyApp, verifyBundle } from '@cli-native/commands';
 import { TOOLCHAIN_ROOT, usage } from '@cli-native/constants';
 
 // Programmatic surface for tooling, scripts, and tests (the CLI entry point
@@ -35,6 +35,9 @@ async function main(): Promise<void> {
       break;
     case 'setup':
       setupToolchain(TOOLCHAIN_ROOT);
+      break;
+    case 'update-tools':
+      updateTools(TOOLCHAIN_ROOT);
       break;
     case 'add': {
       const spec = process.argv[3];

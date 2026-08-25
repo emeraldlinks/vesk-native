@@ -2,8 +2,8 @@
 // command (cli-native) and the create CLI (create-native). The single
 // implementation lives here; both CLIs reuse it rather than forking the
 // install flow or the aapt2-override sync.
-import { chmodSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { chmodSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { basename, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { AAPT2_OVERRIDE, GRADLE_VERSION, GRADLE_URL, SDK_PACKAGES, TERMUX_AAPT2, TERMUX_LIB, cmdlineToolsUrl, hostInfo, log } from '@cli-native/constants';
@@ -117,21 +117,7 @@ export function setupToolchain(root: string): void {
   }
 
   if (!det.sdkmanager) {
-    log('setup', `downloading Android commandline-tools (${host.os}/${host.arch})...`);
-    const zip = join(tmpdir(), 'cmdtools.zip');
-    if (!run('download', 'curl', ['-fsSL', cmdlineToolsUrl(host.os), '-o', zip])) process.exit(1);
-    const staging = join(root, 'sdk', 'cmdline-tools', 'dl');
-    mkdirSync(staging, { recursive: true });
-    if (!unzipTo(zip, staging)) process.exit(1);
-    const inner = readdirSync(staging).find((d) => existsSync(join(staging, d, 'bin', 'sdkmanager')) || existsSync(join(staging, d, 'bin', 'sdkmanager.bat')));
-    if (!inner) {
-      console.error('  [setup] commandline-tools zip layout unexpected — aborting');
-      process.exit(1);
-    }
-    mkdirSync(join(root, 'sdk', 'cmdline-tools', 'latest'), { recursive: true });
-    for (const e of readdirSync(join(staging, inner))) {
-      renameSync(join(staging, inner, e), join(root, 'sdk', 'cmdline-tools', 'latest', e));
-    }
+    installCmdlineTools(root, host);
   } else {
     log('setup', `sdkmanager found (${det.sdkmanager})`);
   }
@@ -149,10 +135,7 @@ export function setupToolchain(root: string): void {
   }
 
   if (!det.gradle) {
-    log('setup', `downloading Gradle ${GRADLE_VERSION} (universal JVM distribution)...`);
-    const zip = join(tmpdir(), `gradle-${GRADLE_VERSION}-bin.zip`);
-    if (!run('download', 'curl', ['-fSL', GRADLE_URL, '-o', zip])) process.exit(1);
-    if (!unzipTo(zip, root)) process.exit(1);
+    downloadGradle(root);
   } else {
     log('setup', `gradle ${GRADLE_VERSION} found`);
   }
@@ -173,21 +156,28 @@ exec ${TERMUX_AAPT2} "$@"
     log('setup', 'aapt2: using AGP\'s bundled (maven) binary — fine for this arch');
   }
 
-  if (host.os !== 'windows' && !existsSync(join(root, 'env.sh'))) {
-    const smBin = join(root, 'sdk', 'cmdline-tools', 'latest', 'bin');
-    const ptBin = join(root, 'sdk', 'platform-tools');
-    const gBin = join(root, `gradle-${GRADLE_VERSION}`, 'bin');
-    writeFileSync(join(root, 'env.sh'), `export ANDROID_HOME=${join(root, 'sdk')}
-export ANDROID_SDK_ROOT="$ANDROID_HOME"
-export GRADLE_HOME=${join(root, `gradle-${GRADLE_VERSION}`)}
-export PATH="${smBin}:${ptBin}:${gBin}:$PATH"
-`);
-    log('setup', `env.sh written — source it: source ${join(root, 'env.sh')}`);
-  } else if (host.os === 'windows') {
-    log('setup', 'windows: add to PATH manually: ' + [join(root, 'sdk', 'cmdline-tools', 'latest', 'bin'), join(root, 'sdk', 'platform-tools'), join(root, `gradle-${GRADLE_VERSION}`, 'bin')].join(';'));
-  }
+  writeEnvSh(root, host);
 
   console.log(`\n  [setup] done. run: vesk-native build <app>`);
+}
+
+// Downloads and stages the Android commandline-tools zip under root/sdk.
+function installCmdlineTools(root: string, host: HostInfo): void {
+  log('setup', `downloading Android commandline-tools (${host.os}/${host.arch})...`);
+  const zip = join(tmpdir(), 'cmdtools.zip');
+  if (!run('download', 'curl', ['-fsSL', cmdlineToolsUrl(host.os), '-o', zip])) process.exit(1);
+  const staging = join(root, 'sdk', 'cmdline-tools', 'dl');
+  mkdirSync(staging, { recursive: true });
+  if (!unzipTo(zip, staging)) process.exit(1);
+  const inner = readdirSync(staging).find((d) => existsSync(join(staging, d, 'bin', 'sdkmanager')) || existsSync(join(staging, d, 'bin', 'sdkmanager.bat')));
+  if (!inner) {
+    console.error('  [setup] commandline-tools zip layout unexpected — aborting');
+    process.exit(1);
+  }
+  mkdirSync(join(root, 'sdk', 'cmdline-tools', 'latest'), { recursive: true });
+  for (const e of readdirSync(join(staging, inner))) {
+    renameSync(join(staging, inner, e), join(root, 'sdk', 'cmdline-tools', 'latest', e));
+  }
 }
 
 // Rewrites gradle.properties so the aapt2 override line points at this
@@ -201,3 +191,120 @@ export function syncAapt2Override(gradleProperties: string): void {
   if (existsSync(AAPT2_OVERRIDE)) kept.push(`android.aapt2FromMavenOverride=${AAPT2_OVERRIDE}`);
   writeFileSync(gradleProperties, `${kept.join('\n').replace(/\n{3,}/g, '\n\n').trim()}\n`);
 }
+
+// ---------------------------------------------------------------------------
+// Version probing + `vesk-native update-tools`
+// ---------------------------------------------------------------------------
+
+export const JDK_MIN_MAJOR = 17;
+
+// Actual version of a gradle binary ("Gradle 9.7" from `--version`), or null
+// when it cannot be executed/probed. Accepts either a distribution root, a
+// binary path, or a bare command name resolved through PATH.
+export function gradleVersionOf(gradleBin: string): string | null {
+  const exe = hostInfo().os === 'windows' ? 'gradle.bat' : 'gradle';
+  const isBare = !gradleBin.includes('/') && !gradleBin.includes('\\');
+  const bin = isBare || basename(gradleBin) === exe ? gradleBin : join(gradleBin, 'bin', exe);
+  if (!isBare && !existsSync(bin)) return null;
+  const r = spawnSync(bin, ['--version'], { encoding: 'utf8' });
+  if ((r.status !== 0 && r.error) || !r.stdout) return null;
+  const m = r.stdout.match(/Gradle (\d+\.\d+(?:\.\d+)?)/);
+  return m?.[1] ?? null;
+}
+
+function versionParts(v: string): number[] {
+  return v.split('.').map((n) => Number(n));
+}
+
+export function isSupportedGradle(version: string | null): boolean {
+  if (!version) return false;
+  const have = versionParts(version);
+  const need = versionParts(GRADLE_VERSION);
+  for (let i = 0; i < Math.max(have.length, need.length); i++) {
+    const h = have[i] ?? 0;
+    const n = need[i] ?? 0;
+    if (h !== n) return h > n;
+  }
+  return true;
+}
+
+function downloadGradle(root: string): void {
+  log('setup', `downloading Gradle ${GRADLE_VERSION} (universal JVM distribution)...`);
+  const zip = join(tmpdir(), `gradle-${GRADLE_VERSION}-bin.zip`);
+  if (!run('download', 'curl', ['-fSL', GRADLE_URL, '-o', zip])) process.exit(1);
+  // Refresh an existing pinned distribution in place: remove first so a
+  // half-updated tree never mixes files across versions.
+  rmSync(join(root, `gradle-${GRADLE_VERSION}`), { recursive: true, force: true });
+  if (!unzipTo(zip, root)) process.exit(1);
+}
+
+function writeEnvSh(root: string, host: HostInfo): void {
+  if (host.os === 'windows') {
+    log('setup', 'windows: add to PATH manually: ' + [join(root, 'sdk', 'cmdline-tools', 'latest', 'bin'), join(root, 'sdk', 'platform-tools'), join(root, `gradle-${GRADLE_VERSION}`, 'bin')].join(';'));
+    return;
+  }
+  const smBin = join(root, 'sdk', 'cmdline-tools', 'latest', 'bin');
+  const ptBin = join(root, 'sdk', 'platform-tools');
+  const gBin = join(root, `gradle-${GRADLE_VERSION}`, 'bin');
+  // Always rewritten (not just on first setup): after an update the stale
+  // file would keep exporting the previous Gradle's home/PATH forever.
+  writeFileSync(join(root, 'env.sh'), `export ANDROID_HOME=${join(root, 'sdk')}
+export ANDROID_SDK_ROOT="$ANDROID_HOME"
+export GRADLE_HOME=${join(root, `gradle-${GRADLE_VERSION}`)}
+export PATH="${smBin}:${ptBin}:${gBin}:$PATH"
+`);
+  log('setup', `env.sh written — source it: source ${join(root, 'env.sh')}`);
+}
+
+// `vesk-native update-tools` — bring the whole environment to the versions
+// this CLI requires: refresh Android SDK packages through sdkmanager (--update),
+// (re)install the pinned Gradle distribution, prune older managed Gradles,
+// and rewrite env.sh. Idempotent; safe to run whenever builds complain about
+// tool versions. The JDK cannot be auto-installed portably — probed and
+// reported with per-OS install hints instead.
+export function updateTools(root: string): void {
+  const host = hostInfo();
+  console.log(`\n  vesk-native update-tools — updating the native toolchain at:\n    ${root}`);
+  console.log(`  host: ${host.os} / ${host.arch}${host.termux ? ' (termux)' : ''}\n`);
+  mkdirSync(root, { recursive: true });
+
+  const det = detectToolchain(root, host);
+  if (det.javaMajor === null || det.javaMajor < JDK_MIN_MAJOR) {
+    console.warn(`  [tools] java ${det.javaMajor ?? 'not found'} — this CLI needs JDK ${JDK_MIN_MAJOR}+ (arch: pacman -S jdk${JDK_MIN_MAJOR}-openjdk / debian: apt install openjdk-${JDK_MIN_MAJOR}-jdk / windows: winget install Microsoft.OpenJDK.${JDK_MIN_MAJOR})`);
+  } else {
+    log('tools', `java ${det.javaMajor} OK (${det.java})`);
+  }
+
+  if (!det.sdkmanager) {
+    log('tools', 'commandline-tools missing — installing');
+    installCmdlineTools(root, host);
+  } else {
+    log('tools', `commandline-tools found (${det.sdkmanager})`);
+  }
+  if (!existsSync(sdkmanagerPath(root, host.os))) process.exit(1);
+
+  log('tools', 'accepting licenses + installing/updating SDK packages...');
+  if (!sdkmanagerRun(root, host.os, ['--licenses'])) process.exit(1);
+  if (!sdkmanagerRun(root, host.os, ['--install', ...SDK_PACKAGES])) process.exit(1);
+  if (!sdkmanagerRun(root, host.os, ['--update'])) log('tools', 'sdkmanager --update reported nothing to do (or failed harmlessly)');
+
+  const current = gradleVersionOf(det.gradle ?? '');
+  if (current) log('tools', `managed gradle ${current} -> refreshing to ${GRADLE_VERSION}`);
+  else log('tools', `managed gradle missing -> installing ${GRADLE_VERSION}`);
+  downloadGradle(root);
+  log('tools', `gradle ${GRADLE_VERSION} ready`);
+
+  // Prune other managed distributions under the toolchain root (they are
+  // vesk-managed state, not user installs) so PATH/env can never pick a stale
+  // one again.
+  for (const entry of readdirSync(root)) {
+    if (/^gradle-\d+\.\d+(\.\d+)?$/.test(entry) && entry !== `gradle-${GRADLE_VERSION}`) {
+      rmSync(join(root, entry), { recursive: true, force: true });
+      log('tools', `removed outdated managed distribution ${entry}`);
+    }
+  }
+
+  writeEnvSh(root, host);
+  console.log(`\n  [tools] done. gradle ${GRADLE_VERSION}, sdk packages current.`);
+}
+

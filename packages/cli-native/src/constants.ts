@@ -94,6 +94,7 @@ Usage:
   vesk-native verify [pkg]       Check pinned libraries resolve (no arg: libraries; bundle: bundling/signing setup probe)
   vesk-native verify bundle [android|ios]  Probe signing + bundling setup (keys, env vars, macOS/Xcode) without building
   vesk-native setup              Install the toolchain (JDK check, Android SDK, Gradle) for this OS/arch
+  vesk-native update-tools       Update the toolchain to the required versions (SDK packages, Gradle GRADLE_VERSION, env.sh) — run when builds complain about tool versions
   vesk-native add <pkg>          Add a Kotlin library to libraries.json (id | id@version | group:artifact) — the single committed source of truth
   vesk-native install            Install every library pinned in libraries.json (offline, idempotent) — run once after scaffolding
   vesk-native update [pkg]       Bump installed library version(s) to the latest builtin registry version
