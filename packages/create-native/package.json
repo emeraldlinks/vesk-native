@@ -1,6 +1,6 @@
 {
   "name": "create-vesk-native",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "type": "module",
   "description": "Scaffold a new vesk-native project",
   "bin": {
