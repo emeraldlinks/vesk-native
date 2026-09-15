@@ -2415,7 +2415,7 @@ export function generateProject(target: string, config: VeskConfig, opts: { devD
 
   // Build scaffolding is framework-owned: the template is the single source of
   // truth and is refreshed on every generation. Users never edit gradle files.
-  for (const f of ['build.gradle.kts', 'gradle.properties', 'settings.gradle.kts']) {
+  for (const f of ['build.gradle.kts', 'gradle.properties', 'settings.gradle.kts', '.gitignore']) {
     const src = join(TEMPLATE_DIR, f);
     const dest = join(target, f);
     if (!existsSync(src)) continue;

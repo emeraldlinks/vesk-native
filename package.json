@@ -28,9 +28,9 @@
     "typescript": "^5.8.0"
   },
   "dependencies": {
-    "@vesk/compiler": "file:tarballs/vesk-compiler-0.1.11.tgz",
-    "@vesk/runtime": "file:tarballs/vesk-runtime-0.1.9.tgz",
-    "@vesk/adapter": "file:tarballs/vesk-adapter-0.1.9.tgz",
+    "@vesk/compiler": "^0.1.14",
+    "@vesk/runtime": "^0.1.14",
+    "@vesk/adapter": "^0.1.14",
     "@vesk/plugin-tailwind": "file:tarballs/vesk-plugin-tailwind-0.1.4.tgz",
     "vesk": "file:tarballs/vesk-0.1.12.tgz"
   }

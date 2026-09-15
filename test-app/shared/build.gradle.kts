@@ -55,7 +55,7 @@ kotlin {
             // host platform native is declared explicitly.
             implementation("org.jetbrains.compose.desktop:desktop:1.11.0")
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.9.0")
-            implementation("org.jetbrains.skiko:skiko-awt-runtime-linux-arm64:0.144.6")
+            implementation("org.jetbrains.skiko:skiko-awt-runtime-linux-x64:0.144.6")
         }
         androidMain.dependencies {
 implementation("androidx.compose.ui:ui:1.11.4")

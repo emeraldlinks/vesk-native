@@ -522,7 +522,7 @@ function gradleTemplateDir(): string {
 
 function scaffoldGradleFiles(projectDir: string): void {
   const assetDir = gradleTemplateDir();
-  for (const f of ['build.gradle.kts', 'gradle.properties', 'settings.gradle.kts']) {
+  for (const f of ['build.gradle.kts', 'gradle.properties', 'settings.gradle.kts', '.gitignore']) {
     const src = join(assetDir, f);
     if (existsSync(src)) cpSync(src, join(projectDir, f));
   }

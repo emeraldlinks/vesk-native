@@ -16,6 +16,7 @@ import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { parse, generateIR } from '@vesk/compiler';
+import { StaticNode, ComponentCall } from '@vesk/compiler/src/ir';
 import type { IRNode } from '@vesk/compiler/src/ir';
 import { scanRoutes } from '@vesk/compiler/src/router';
 import { generateClientBundle, buildTreeShakenRuntime, runtimeExportNames } from '@vesk/adapter/src/client-bundle';
@@ -33,21 +34,54 @@ const DEFAULT_PORT = 5173;
 // time, but the browser needs real CSS. Candidates are collected through the
 // AST surface (parse -> generateIR -> walk of element props), never by
 // regexing source text.
+//
+// Class names arrive in two IR shapes: plain elements are `StaticNode` with
+// an `attributes` list whose values are already-unquoted strings, while
+// custom-component invocations are `ComponentCall` with `props` values as
+// `Expression.raw` (the source text, quotes included). Both are read through
+// the parser/AST surface — never a regex over source.
+function classTokens(value: unknown, out: Set<string>): void {
+  const raw = typeof value === 'string' ? value : (value as { raw?: unknown } | null)?.raw;
+  if (typeof raw !== 'string') return;
+  const first = raw[0];
+  const last = raw[raw.length - 1];
+  const cls = raw.length >= 2 && (first === '"' || first === "'") && last === first ? raw.slice(1, -1) : raw;
+  for (const token of cls.split(/\s+/)) {
+    if (token && !token.includes('{') && !token.includes('$')) out.add(token);
+  }
+}
+
+// The IR node kinds that carry child node lists. Walking all of them (not
+// just `children`) means class attributes inside {items.map(...)} regions,
+// branches, loops, and switch cases also reach the Tailwind candidate set.
+function irChildNodes(node: IRNode): IRNode[] {
+  const out: IRNode[] = [];
+  const record = node as unknown as Record<string, unknown>;
+  for (const field of ['children', 'bodyTemplate', 'consequentNodes', 'alternateNodes', 'catchBody'] as const) {
+    const v = record[field];
+    if (Array.isArray(v)) out.push(...(v as IRNode[]));
+  }
+  const cases = record['cases'];
+  if (Array.isArray(cases)) {
+    for (const c of cases as Array<{ body: IRNode[] }>) {
+      if (c && Array.isArray(c.body)) out.push(...c.body);
+    }
+  }
+  return out;
+}
+
 function collectClassCandidates(ir: IRNode[], out: Set<string>): void {
   const visit = (node: IRNode): void => {
-    if ('props' in node && Array.isArray(node.props)) {
+    if (node instanceof StaticNode) {
+      for (const attr of node.attributes) {
+        if (attr.name === 'class' || attr.name === 'className') classTokens(attr.value, out);
+      }
+    } else if (node instanceof ComponentCall) {
       for (const prop of node.props) {
-        if (prop.name !== 'class' && prop.name !== 'className') continue;
-        const raw = typeof prop.value?.raw === 'string' ? prop.value.raw : '';
-        const cls = raw.length >= 2 && (raw[0] === '"' || raw[0] === "'") && raw[raw.length - 1] === raw[0] ? raw.slice(1, -1) : raw;
-        for (const token of cls.split(/\s+/)) {
-          if (token && !token.includes('{') && !token.includes('$')) out.add(token);
-        }
+        if (prop.name === 'class' || prop.name === 'className') classTokens(prop.value.raw, out);
       }
     }
-    if ('children' in node && Array.isArray(node.children)) {
-      for (const child of node.children) visit(child);
-    }
+    for (const child of irChildNodes(node)) visit(child);
   };
   for (const node of ir) visit(node);
 }

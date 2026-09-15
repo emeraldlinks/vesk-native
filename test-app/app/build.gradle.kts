@@ -20,7 +20,7 @@ android {
 
 signingConfigs {
         create("release") {
-            storeFile = file("/root/vesk-native/test-app/upload-keystore.jks")
+            storeFile = file("/workspaces/vesk-native/test-app/upload-keystore.jks")
             storePassword = System.getenv("VESK_STORE_PASSWORD") ?: ""
             keyAlias = "upload"
             keyPassword = System.getenv("VESK_KEY_PASSWORD") ?: ""

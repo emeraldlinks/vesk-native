@@ -1,34 +1,34 @@
 {
-  "name": "@vesk/native-cli",
-  "version": "0.1.10",
-  "type": "module",
-  "description": "vesk-native CLI — init/build/run a .vsk app as a native Kotlin + Compose app",
-  "main": "./dist/index.js",
-  "exports": {
-    ".": "./dist/index.js"
-  },
-  "bin": {
-    "vesk-native": "./dist/index.js"
-  },
-  "files": [
-    "dist",
-    "registry",
-    "assets"
-  ],
-  "scripts": {
-    "build": "esbuild src/index.ts --bundle --format=esm --platform=node --packages=external --outfile=dist/index.js --tsconfig=../../tsconfig.json --banner:js='#!/usr/bin/env node'"
-  },
-  "devDependencies": {
-    "typescript": "^5.8.0"
-  },
-  "dependencies": {
-    "@tailwindcss/node": "^4.3.0",
-    "@vesk/adapter": "^0.1.0",
-    "@vesk/compiler": "^0.1.0",
-    "@vesk/runtime": "^0.1.0",
-    "esbuild": "^0.25.0",
-    "tailwindcss": "^4.3.0",
-    "typescript": "^5.8.0",
-    "ws": "^8.0.0"
-  }
+	"name": "@vesk/native-cli",
+	"version": "0.1.10",
+	"type": "module",
+	"description": "vesk-native CLI — init/build/run a .vsk app as a native Kotlin + Compose app",
+	"main": "./dist/index.js",
+	"exports": {
+		".": "./dist/index.js"
+	},
+	"bin": {
+		"vesk-native": "./dist/index.js"
+	},
+	"files": [
+		"dist",
+		"registry",
+		"assets"
+	],
+	"scripts": {
+		"build": "esbuild src/index.ts --bundle --format=esm --platform=node --packages=external --outfile=dist/index.js --tsconfig=../../tsconfig.json --banner:js='#!/usr/bin/env node'"
+	},
+	"devDependencies": {
+		"typescript": "^5.8.0"
+	},
+	"dependencies": {
+		"@tailwindcss/node": "^4.3.0",
+		"@vesk/adapter": "^0.1.0",
+		"@vesk/compiler": "^0.1.0",
+		"@vesk/runtime": "^0.1.0",
+		"esbuild": "^0.25.0",
+		"tailwindcss": "^4.3.0",
+		"typescript": "^5.8.0",
+		"ws": "^8.0.0"
+	}
 }
